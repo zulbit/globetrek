@@ -12,7 +12,7 @@ const CHIP_REGEX = /\[\[choose:\s*([^\]]+)\]\]/i;
 const GREETING: ChatMessage = {
   role: "assistant",
   content:
-    "Assalam-o-Alaikum! I'm your GlobeTrek concierge. Tell me where you'd like to travel and I'll find the right package for you. [[choose: Turkey | Thailand | UAE | Europe]]",
+    "Assalam-o-Alaikum! Welcome to GlobeTrek PK. How can I help you today? Aap English ya Roman Urdu mein baat kar sakte hain. [[choose: English 🇬🇧 | Roman Urdu 🇵🇰 | Visa Services | Tour Packages]]",
 };
 
 function parseChips(content: string): { text: string; chips: string[] } {
