@@ -17,11 +17,6 @@ export const Route = createFileRoute("/api/ai-chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const lovableApiKey = process.env.LOVABLE_API_KEY;
-        if (!lovableApiKey) {
-          return new Response("AI is not configured yet", { status: 500 });
-        }
-
         let body: { messages?: ChatMessage[] };
         try {
           body = await request.json();
@@ -56,8 +51,7 @@ export const Route = createFileRoute("/api/ai-chat")({
           console.error("[AI Catalog Load Error]:", error);
         }
 
-        const { createLovableAiGatewayProvider } = await import("@/lib/ai-gateway.server");
-        const provider = createLovableAiGatewayProvider(lovableApiKey);
+        const { openRouterModel } = await import("@/integrations/openrouter/openrouter.server");
 
         const systemPrompt = `You are the GlobeTrek PK travel concierge — a warm, expert helper for Pakistani travelers.
 
@@ -258,7 +252,7 @@ ${catalogText}`;
 
         try {
           const result = streamText({
-            model: provider("google/gemini-3.5-flash"),
+            model: openRouterModel(),
             system: systemPrompt,
             messages: modelMessages,
             tools,

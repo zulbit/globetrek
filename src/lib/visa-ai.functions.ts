@@ -32,12 +32,8 @@ export const lookupEmbassyFeeServer = createServerFn({ method: "POST" })
       throw new Error("AI embassy fee lookup is a Pro feature. Upgrade to unlock.");
     }
 
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("AI is not configured yet.");
-
-    const { createLovableAiGatewayProvider } = await import("@/lib/ai-gateway.server");
-    const provider = createLovableAiGatewayProvider(apiKey);
-    const model = provider("google/gemini-2.5-flash");
+    const { openRouterModel } = await import("@/integrations/openrouter/openrouter.server");
+    const model = openRouterModel();
 
     try {
       const { output } = await generateText({
