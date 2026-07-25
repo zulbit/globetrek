@@ -8,7 +8,10 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
   preview: {
-    allowedHosts: true,
+    allowedHosts: ["tour.testbench.shop", ".testbench.shop", "localhost", "127.0.0.1"],
+  },
+  server: {
+    allowedHosts: ["tour.testbench.shop", ".testbench.shop", "localhost", "127.0.0.1"],
   },
   nitro: {
     preset: "node-server",
