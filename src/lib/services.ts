@@ -120,3 +120,23 @@ export function formatEmbassyFee(v: number | null | undefined): string {
   return isEmbassyFeeTBC(v) ? "To be confirmed" : formatPKR(v);
 }
 
+export function getServiceImage(countryOrType?: string | null, imageUrl?: string | null): string | null {
+  if (imageUrl) return imageUrl;
+  if (!countryOrType) return null;
+
+  const key = countryOrType.toLowerCase();
+  if (key.includes("uae") || key.includes("dubai")) return "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80";
+  if (key.includes("saudi") || key.includes("umrah")) return "https://images.unsplash.com/photo-1591604466107-ec97de577aff?auto=format&fit=crop&w=800&q=80";
+  if (key.includes("turkey") || key.includes("istanbul")) return "https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&fit=crop&w=800&q=80";
+  if (key.includes("thailand") || key.includes("phuket")) return "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?auto=format&fit=crop&w=800&q=80";
+  if (key.includes("schengen") || key.includes("europe")) return "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=800&q=80";
+  if (key.includes("uk") || key.includes("london")) return "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=800&q=80";
+  if (key.includes("usa") || key.includes("america")) return "https://images.unsplash.com/photo-1506146332389-18140dc7b2fb?auto=format&fit=crop&w=800&q=80";
+  if (key.includes("singapore")) return "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=800&q=80";
+  if (key.includes("malaysia")) return "https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&w=800&q=80";
+  if (key.includes("insurance") || key.includes("worldwide")) return "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80";
+  if (key.includes("ticket") || key.includes("flight")) return "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80";
+
+  return "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80";
+}
+

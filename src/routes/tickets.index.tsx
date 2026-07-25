@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ServiceListCard } from "@/components/service-list-card";
 import { ServicePreviewModal } from "@/components/service-preview-modal";
-import { TICKET_ROUTE_TYPES, PAKISTAN_CITIES, formatPKR, type TicketService } from "@/lib/services";
+import { TICKET_ROUTE_TYPES, PAKISTAN_CITIES, formatPKR, getServiceImage, type TicketService } from "@/lib/services";
 
 type VendorInfo = { city: string | null; company_name: string | null; full_name: string | null } | null;
 type TicketRow = TicketService & { profiles: VendorInfo };
@@ -98,7 +98,7 @@ function TicketsMarketplace() {
               return (
                 <ServiceListCard
                   key={r.id} to="/tickets/$id" params={{ id: r.id }}
-                  image_url={r.image_url}
+                  image_url={getServiceImage(r.route_type, r.image_url)}
                   fallback="bg-gradient-to-br from-amber-500/40 via-amber-500/10 to-transparent"
                   category="Tickets" categoryTone="text-amber-100"
                   title={r.service_name}

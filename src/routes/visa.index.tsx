@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ServiceListCard } from "@/components/service-list-card";
 import { ServicePreviewModal } from "@/components/service-preview-modal";
-import { POPULAR_VISA_COUNTRIES, PAKISTAN_CITIES, formatPKR, formatEmbassyFee, isEmbassyFeeTBC, type VisaService } from "@/lib/services";
+import { POPULAR_VISA_COUNTRIES, PAKISTAN_CITIES, formatPKR, formatEmbassyFee, isEmbassyFeeTBC, getServiceImage, type VisaService } from "@/lib/services";
 
 type VendorInfo = { city: string | null; company_name: string | null; full_name: string | null } | null;
 type VisaRow = VisaService & { profiles: VendorInfo };
@@ -106,7 +106,7 @@ function VisaMarketplace() {
                   key={r.id}
                   to="/visa/$id"
                   params={{ id: r.id }}
-                  image_url={r.image_url}
+                  image_url={getServiceImage(r.country, r.image_url)}
                   fallback="bg-gradient-to-br from-sky-500/40 via-sky-500/10 to-transparent"
                   category="Visa"
                   categoryTone="text-sky-100"

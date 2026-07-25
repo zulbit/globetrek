@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ServiceListCard } from "@/components/service-list-card";
 import { ServicePreviewModal } from "@/components/service-preview-modal";
-import { INSURANCE_COVERAGE, PAKISTAN_CITIES, formatPKR, type InsurancePlan } from "@/lib/services";
+import { INSURANCE_COVERAGE, PAKISTAN_CITIES, formatPKR, getServiceImage, type InsurancePlan } from "@/lib/services";
 
 type VendorInfo = { city: string | null; company_name: string | null; full_name: string | null } | null;
 type InsuranceRow = InsurancePlan & { profiles: VendorInfo };
@@ -100,7 +100,7 @@ function InsuranceMarketplace() {
               return (
                 <ServiceListCard
                   key={r.id} to="/insurance/$id" params={{ id: r.id }}
-                  image_url={r.image_url}
+                  image_url={getServiceImage(r.coverage_type, r.image_url)}
                   fallback="bg-gradient-to-br from-emerald-500/40 via-emerald-500/10 to-transparent"
                   category="Insurance" categoryTone="text-emerald-100"
                   title={r.plan_name}
