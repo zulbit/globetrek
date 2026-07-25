@@ -1,0 +1,116 @@
+import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { validateItinerary, wrapItinerary } from "@/lib/tour-admin-utils";
+import type { ItineraryDay, TourRequirement, TourAccommodation } from "@/lib/tours";
+
+
+export type TourInput = {
+  id?: string;
+  vendor_id: string;
+  title: string;
+  description: string;
+  destination_country: string;
+  departure_city: string;
+  duration_days: number;
+  price_pkr: number;
+  total_seats: number;
+  image_url: string;
+  is_active: boolean;
+  itinerary: ItineraryDay[];
+  requirements?: TourRequirement[];
+  accommodation?: TourAccommodation;
+  extra_notes?: string;
+};
+
+function validateTour(t: TourInput): string | null {
+  if (!t.vendor_id) return "Vendor is required.";
+  if (!t.title.trim()) return "Title is required.";
+  if (t.title.trim().length > 160) return "Title must be 160 characters or fewer.";
+  if (!t.destination_country) return "Destination is required.";
+  if (!t.departure_city) return "Departure city is required.";
+  if (!Number.isFinite(t.duration_days) || t.duration_days < 1) return "Duration must be at least 1 day.";
+  if (t.duration_days > 60) return "Duration cannot exceed 60 days.";
+  if (!Number.isFinite(t.price_pkr) || t.price_pkr < 0) return "Price must be ≥ 0.";
+  if (t.price_pkr > 100_000_000) return "Price is unrealistically high.";
+  if (!Number.isFinite(t.total_seats) || t.total_seats < 1) return "Total seats must be ≥ 1.";
+  if (t.image_url && !/^https?:\/\//i.test(t.image_url)) return "Image URL must start with http(s)://.";
+  const iv = validateItinerary(t.itinerary, {
+    durationDays: Number(t.duration_days) || 1,
+    requireForPublish: t.is_active,
+  });
+  return iv.error ?? null;
+}
+
+function cleanRequirements(items?: TourRequirement[]) {
+  if (!items) return null;
+  const out = items
+    .map((r) => ({
+      item: (r.item ?? "").trim(),
+      required: Boolean(r.required),
+      note: r.note?.trim() || undefined,
+    }))
+    .filter((r) => r.item);
+  return out.length ? out : null;
+}
+
+function cleanAccommodation(acc?: TourAccommodation) {
+  if (!acc) return null;
+  const std = acc.standard?.trim();
+  const premDesc = acc.premium?.description?.trim();
+  const premAdd = Number(acc.premium?.additional_pkr ?? 0);
+  const out: Record<string, unknown> = {};
+  if (std) out.standard = std;
+  if (premDesc) out.premium = { description: premDesc, additional_pkr: Number.isFinite(premAdd) ? premAdd : 0 };
+  return Object.keys(out).length ? out : null;
+}
+
+export const saveTourServer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: TourInput) => data)
+  .handler(async ({ data, context }) => {
+    const err = validateTour(data);
+    if (err) throw new Error(err);
+
+    const payload = {
+      vendor_id: data.vendor_id,
+      title: data.title.trim(),
+      description: data.description,
+      destination_country: data.destination_country,
+      departure_city: data.departure_city,
+      duration_days: Number(data.duration_days),
+      price_pkr: Number(data.price_pkr),
+      total_seats: Number(data.total_seats),
+      image_url: data.image_url.trim() || null,
+      is_active: data.is_active,
+      itinerary: wrapItinerary(data.itinerary),
+      requirements: cleanRequirements(data.requirements),
+      accommodation: cleanAccommodation(data.accommodation),
+      extra_notes: data.extra_notes?.trim() || null,
+    };
+
+
+    if (data.id) {
+      const { error } = await context.supabase.from("tours").update(payload as never).eq("id", data.id);
+      if (error) throw new Error(error.message);
+      return { id: data.id, mode: "update" as const };
+    }
+    const { data: inserted, error } = await context.supabase
+      .from("tours")
+      .insert(payload as never)
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    return { id: inserted.id, mode: "insert" as const };
+  });
+
+export const setTourPublishedServer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id: string; is_active: boolean }) => data)
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("tours")
+      .update({ is_active: data.is_active })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
