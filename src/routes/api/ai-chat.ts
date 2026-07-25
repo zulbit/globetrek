@@ -53,13 +53,17 @@ export const Route = createFileRoute("/api/ai-chat")({
 
           const { data: visas } = await supabaseAdmin
             .from("visa_services")
-            .select("id, country, visa_type, processing_days, price_pkr, service_fee_pkr, success_rate")
+            .select("id, country, visa_type, processing_days, price_pkr, service_fee_pkr, success_rate, profiles:vendor_id(company_name, full_name, city)")
             .eq("is_active", true);
           if (visas && visas.length > 0) {
             visaCatalogText = visas
               .map(
-                (v) =>
-                  `- VISA: ${v.country} (${v.visa_type}) · ~${v.processing_days} days · Embassy ₨ ${v.price_pkr.toLocaleString("en-PK")} + Service ₨ ${v.service_fee_pkr.toLocaleString("en-PK")} · Success: ${v.success_rate ?? 98}% · id=${v.id}`,
+                (v) => {
+                  const vendorObj = (v as unknown as { profiles: { company_name?: string; full_name?: string; city?: string } | null }).profiles;
+                  const vendorName = vendorObj?.company_name || vendorObj?.full_name || "Verified Consultant";
+                  const cityTag = vendorObj?.city ? ` (${vendorObj.city})` : "";
+                  return `- VISA: ${v.country} ${v.visa_type} Visa by ${vendorName}${cityTag} · ~${v.processing_days} days · Embassy ₨ ${v.price_pkr.toLocaleString("en-PK")} + Service fee ₨ ${v.service_fee_pkr.toLocaleString("en-PK")} · Total ₨ ${(v.price_pkr + v.service_fee_pkr).toLocaleString("en-PK")} · Success: ${v.success_rate ?? 98}% · id=${v.id}`;
+                },
               )
               .join("\n");
           }
@@ -121,7 +125,7 @@ Rules:
 - Never invent IDs, prices, or itineraries.
 - Keep responses concise (2–5 sentences). Use markdown lists / bold.
 - Before capture_lead, confirm which service the customer wants, then name, then phone.
-- On tour pages, feel free to proactively suggest matching visa or insurance for that destination.
+- MULTI-VENDOR COMPARISON: Multiple vendors will offer visas for the same country at different service fees, processing times, or cities. When a user asks about a country's visa (e.g. Turkey), show the vendors, their service fee, and total cost (e.g. "Vendor A (Lahore) offers total ₨ 32,000 in 7 days, while Vendor B offers ₨ 35,000 in 3 days").
 - QUICK REPLIES: End messages with relevant quick options using [[choose: Option A | Option B | Option C]]. For Visa inquiries, suggest common Visa Types (e.g. Tourist Visa | Business Visa | Student Visa | Work Visa) or top countries.
 
 Current active tour catalog (use these ids):
