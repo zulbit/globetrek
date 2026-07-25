@@ -42,3 +42,26 @@ VALUES
   ('5253eb91-0429-4dca-bef5-6a07570c675c', 'b4d084bb-566d-49b6-8439-bc8b47886bbf', '8-Day UK: London & Edinburgh', 'Royal London, Windsor, Edinburgh Castle and a Scottish Highlands day trip.', 'UK', 'Islamabad', 8, 585000, 15, NULL, true, '2026-07-21 18:17:46.029597+00', '2026-07-21 18:17:46.029597+00'),
   ('462916c5-5fab-4aa4-afd8-2e808a046fdf', 'b4d084bb-566d-49b6-8439-bc8b47886bbf', '5 Days USA ', '4 Nights in Los Angeles', 'USA', 'Karachi', 5, 150000, 20, NULL, true, '2026-07-24 09:35:07.303177+00', '2026-07-24 09:35:07.303177+00')
 ON CONFLICT (id) DO NOTHING;
+
+-- 5. Visa Services Seed Data
+INSERT INTO public.visa_services (id, vendor_id, country, visa_type, processing_days, price_pkr, service_fee_pkr, success_rate, description, is_active)
+VALUES
+  ('a1111111-1111-1111-1111-111111111111', 'b4d084bb-566d-49b6-8439-bc8b47886bbf', 'UAE', 'Tourist Visa', 3, 35000, 5000, 99, '30-day UAE tourist visa with express 72-hour processing. Great for Dubai stopovers and family visits.', true),
+  ('a2222222-2222-2222-2222-222222222222', 'b4d084bb-566d-49b6-8439-bc8b47886bbf', 'Saudi Arabia', 'Umrah Visa', 5, 45000, 7500, 99, 'Umrah visa issuance bundled with Makkah/Madinah hotel confirmation and ground transport advisory.', true),
+  ('a3333333-3333-3333-3333-333333333333', 'b4d084bb-566d-49b6-8439-bc8b47886bbf', 'Turkey', 'Tourist Visa', 7, 28000, 4000, 97, 'Fast-track e-visa filing for Turkey with document review and appointment booking.', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- 6. Insurance Plans Seed Data
+INSERT INTO public.insurance_plans (id, vendor_id, plan_name, coverage_type, coverage_amount_pkr, duration_days, price_pkr, description, is_active)
+VALUES
+  ('b1111111-1111-1111-1111-111111111111', 'b4d084bb-566d-49b6-8439-bc8b47886bbf', 'Schengen Standard Shield', 'Schengen', 15000000, 30, 8500, 'Comprehensive Schengen visa compliant travel insurance covering medical emergencies up to €30,000.', true),
+  ('b2222222-2222-2222-2222-222222222222', 'b4d084bb-566d-49b6-8439-bc8b47886bbf', 'Worldwide Family Protection', 'Worldwide', 25000000, 15, 12500, 'Global family protection plan including baggage loss, flight delays, and emergency medical evacuation.', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- 7. Ticket Services Seed Data
+INSERT INTO public.ticket_services (id, vendor_id, service_name, route_type, airlines_supported, service_fee_pkr, refundable, description, is_active)
+VALUES
+  ('c1111111-1111-1111-1111-111111111111', 'b4d084bb-566d-49b6-8439-bc8b47886bbf', 'Express International Flight Desk', 'International', '["PIA", "Emirates", "Qatar Airways", "FlyDubai"]'::jsonb, 3500, true, 'Priority ticketing desk for international flights from Lahore, Karachi & Islamabad.', true),
+  ('c2222222-2222-2222-2222-222222222222', 'b4d084bb-566d-49b6-8439-bc8b47886bbf', 'Umrah & Hajj Flight Booking', 'Umrah', '["PIA", "Saudi Arabian Airlines", "Airblue"]'::jsonb, 4000, true, 'Dedicated Umrah flight booking service with group discounts and baggage allowance.', true)
+ON CONFLICT (id) DO NOTHING;
+
