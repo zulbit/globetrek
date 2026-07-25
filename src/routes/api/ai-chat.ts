@@ -30,8 +30,9 @@ export const Route = createFileRoute("/api/ai-chat")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        // Preload a small catalog snippet for grounding
+        // Preload active catalog snippets for grounding
         let catalogText = "(no active tours currently listed)";
+        let visaCatalogText = "(no active visa services currently listed)";
         try {
           const { data: catalog } = await supabaseAdmin
             .from("tours")
@@ -43,7 +44,20 @@ export const Route = createFileRoute("/api/ai-chat")({
             catalogText = catalog
               .map(
                 (t) =>
-                  `- ${t.title} · ${t.destination_country} · from ${t.departure_city ?? "?"} · ${t.duration_days ?? "?"} days · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")} · id=${t.id}`,
+                  `- TOUR: ${t.title} · ${t.destination_country} · from ${t.departure_city ?? "?"} · ${t.duration_days ?? "?"} days · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")} · id=${t.id}`,
+              )
+              .join("\n");
+          }
+
+          const { data: visas } = await supabaseAdmin
+            .from("visa_services")
+            .select("id, country, visa_type, processing_days, price_pkr, service_fee_pkr, success_rate")
+            .eq("is_active", true);
+          if (visas && visas.length > 0) {
+            visaCatalogText = visas
+              .map(
+                (v) =>
+                  `- VISA: ${v.country} (${v.visa_type}) · ~${v.processing_days} days · Embassy ₨ ${v.price_pkr.toLocaleString("en-PK")} + Service ₨ ${v.service_fee_pkr.toLocaleString("en-PK")} · Success: ${v.success_rate ?? 98}% · id=${v.id}`,
               )
               .join("\n");
           }
@@ -81,7 +95,10 @@ Rules:
 - QUICK REPLIES: End messages with relevant quick options using [[choose: Option A | Option B | Option C]]. For Visa inquiries, suggest common Visa Types (e.g. Tourist Visa | Business Visa | Student Visa | Work Visa) or top countries.
 
 Current active tour catalog (use these ids):
-${catalogText}`;
+${catalogText}
+
+Current active visa services catalog:
+${visaCatalogText}`;
 
 
         const modelMessages: ModelMessage[] = messages.map((m) => ({
