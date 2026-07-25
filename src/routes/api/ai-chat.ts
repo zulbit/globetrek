@@ -30,9 +30,11 @@ export const Route = createFileRoute("/api/ai-chat")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        // Preload active catalog snippets for grounding
+        // Preload active catalog snippets for grounding across all 4 services
         let catalogText = "(no active tours currently listed)";
         let visaCatalogText = "(no active visa services currently listed)";
+        let insuranceCatalogText = "(no active insurance plans currently listed)";
+        let ticketsCatalogText = "(no active ticket services currently listed)";
         try {
           const { data: catalog } = await supabaseAdmin
             .from("tours")
@@ -58,6 +60,32 @@ export const Route = createFileRoute("/api/ai-chat")({
               .map(
                 (v) =>
                   `- VISA: ${v.country} (${v.visa_type}) · ~${v.processing_days} days · Embassy ₨ ${v.price_pkr.toLocaleString("en-PK")} + Service ₨ ${v.service_fee_pkr.toLocaleString("en-PK")} · Success: ${v.success_rate ?? 98}% · id=${v.id}`,
+              )
+              .join("\n");
+          }
+
+          const { data: insurance } = await supabaseAdmin
+            .from("insurance_plans")
+            .select("id, plan_name, coverage_type, coverage_amount_pkr, duration_days, price_pkr")
+            .eq("is_active", true);
+          if (insurance && insurance.length > 0) {
+            insuranceCatalogText = insurance
+              .map(
+                (i) =>
+                  `- INSURANCE: ${i.plan_name} (${i.coverage_type}) · Cover ₨ ${i.coverage_amount_pkr.toLocaleString("en-PK")} · ${i.duration_days} days · Premium ₨ ${i.price_pkr.toLocaleString("en-PK")} · id=${i.id}`,
+              )
+              .join("\n");
+          }
+
+          const { data: tickets } = await supabaseAdmin
+            .from("ticket_services")
+            .select("id, service_name, route_type, airlines_supported, service_fee_pkr, refundable")
+            .eq("is_active", true);
+          if (tickets && tickets.length > 0) {
+            ticketsCatalogText = tickets
+              .map(
+                (tk) =>
+                  `- TICKET SERVICE: ${tk.service_name} (${tk.route_type}) · Airlines: ${Array.isArray(tk.airlines_supported) ? tk.airlines_supported.join(", ") : "Various"} · Fee ₨ ${tk.service_fee_pkr.toLocaleString("en-PK")} · Refundable: ${tk.refundable ? "Yes" : "No"} · id=${tk.id}`,
               )
               .join("\n");
           }
@@ -98,7 +126,13 @@ Current active tour catalog (use these ids):
 ${catalogText}
 
 Current active visa services catalog:
-${visaCatalogText}`;
+${visaCatalogText}
+
+Current active insurance plans catalog:
+${insuranceCatalogText}
+
+Current active flight ticket services catalog:
+${ticketsCatalogText}`;
 
 
         const modelMessages: ModelMessage[] = messages.map((m) => ({

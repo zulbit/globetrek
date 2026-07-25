@@ -126,7 +126,7 @@ export function getServiceImage(countryOrType?: string | null, imageUrl?: string
 
   const key = countryOrType.toLowerCase();
   if (key.includes("uae") || key.includes("dubai")) return "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80";
-  if (key.includes("saudi") || key.includes("umrah")) return "https://images.unsplash.com/photo-1591604466107-ec97de577aff?auto=format&fit=crop&w=800&q=80";
+  if (key.includes("saudi") || key.includes("umrah") || key.includes("hajj")) return "https://images.unsplash.com/photo-1564769625905-50e93615e769?auto=format&fit=crop&w=800&q=80";
   if (key.includes("turkey") || key.includes("istanbul")) return "https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&fit=crop&w=800&q=80";
   if (key.includes("thailand") || key.includes("phuket")) return "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?auto=format&fit=crop&w=800&q=80";
   if (key.includes("schengen") || key.includes("europe")) return "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=800&q=80";
