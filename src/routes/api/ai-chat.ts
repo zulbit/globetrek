@@ -104,6 +104,7 @@ GlobeTrek PK is a multi-service travel marketplace. You help with:
 4. Flight ticketing — domestic, international, Umrah & Hajj.
 
 Tools available:
+- search_marketplace — UNIVERSAL SEARCH tool across all tours, visas, insurance plans, and tickets by any keyword (e.g. Turkey, Schengen, Umrah, Dubai). Use this first for general inquiries!
 - list_destinations — countries with active tours and how many.
 - search_tours — filter by destination, PKR budget, duration, departure city.
 - get_tour_details — full itinerary for a tour_id.
@@ -162,6 +163,61 @@ ${ticketsCatalogText}`;
               };
             },
           }),
+          search_marketplace: tool({
+            description: "Search all marketplace offerings (tours, visa services, insurance plans, ticket services) dynamically by any country, city, service type, or keyword.",
+            inputSchema: z.object({
+              query: z.string().describe("Search term like 'Turkey', 'Schengen', 'Umrah', 'Dubai', 'Karachi', etc."),
+            }),
+            execute: async ({ query }) => {
+              const qTerm = `%${query.trim()}%`;
+
+              const [toursRes, visaRes, insRes, ticketRes] = await Promise.all([
+                supabaseAdmin.from("tours")
+                  .select("id, title, destination_country, departure_city, duration_days, price_pkr, description")
+                  .eq("is_active", true)
+                  .or(`destination_country.ilike.${qTerm},title.ilike.${qTerm},departure_city.ilike.${qTerm},description.ilike.${qTerm}`)
+                  .limit(5),
+                supabaseAdmin.from("visa_services")
+                  .select("id, country, visa_type, processing_days, price_pkr, service_fee_pkr, success_rate, description")
+                  .eq("is_active", true)
+                  .or(`country.ilike.${qTerm},visa_type.ilike.${qTerm},description.ilike.${qTerm}`)
+                  .limit(5),
+                supabaseAdmin.from("insurance_plans")
+                  .select("id, plan_name, coverage_type, coverage_amount_pkr, duration_days, price_pkr, description")
+                  .eq("is_active", true)
+                  .or(`plan_name.ilike.${qTerm},coverage_type.ilike.${qTerm},description.ilike.${qTerm}`)
+                  .limit(5),
+                supabaseAdmin.from("ticket_services")
+                  .select("id, service_name, route_type, airlines_supported, service_fee_pkr, refundable, description")
+                  .eq("is_active", true)
+                  .or(`service_name.ilike.${qTerm},route_type.ilike.${qTerm},description.ilike.${qTerm}`)
+                  .limit(5),
+              ]);
+
+              const tours = toursRes.data ?? [];
+              const visa = visaRes.data ?? [];
+              const insurance = insRes.data ?? [];
+              const tickets = ticketRes.data ?? [];
+
+              const totalMatches = tours.length + visa.length + insurance.length + tickets.length;
+
+              if (totalMatches === 0) {
+                // Return fallback active listings so AI can still guide user
+                return {
+                  matched: false,
+                  message: `No exact matches for '${query}'. Try searching broader terms like country name or service type.`,
+                };
+              }
+
+              return {
+                matched: true,
+                tours,
+                visa_services: visa,
+                insurance_plans: insurance,
+                ticket_services: tickets,
+              };
+            },
+          }),
           search_tours: tool({
             description: "Search active international tour packages by destination, budget, duration, or departure city.",
             inputSchema: z.object({
@@ -178,7 +234,7 @@ ${ticketsCatalogText}`;
                 .eq("is_active", true)
                 .order("price_pkr", { ascending: true })
                 .limit(10);
-              if (destination) q = q.ilike("destination_country", `%${destination}%`);
+              if (destination) q = q.or(`destination_country.ilike.%${destination}%,title.ilike.%${destination}%`);
               if (max_budget_pkr) q = q.lte("price_pkr", max_budget_pkr);
               if (min_duration_days) q = q.gte("duration_days", min_duration_days);
               if (max_duration_days) q = q.lte("duration_days", max_duration_days);
@@ -223,10 +279,12 @@ ${ticketsCatalogText}`;
             }),
             execute: async ({ country, visa_type }) => {
               let q = supabaseAdmin.from("visa_services")
-                .select("id, country, visa_type, processing_days, price_pkr, service_fee_pkr, success_rate")
+                .select("id, country, visa_type, processing_days, price_pkr, service_fee_pkr, success_rate, description")
                 .eq("is_active", true).order("processing_days", { ascending: true }).limit(8);
-              if (country) q = q.ilike("country", `%${country}%`);
-              if (visa_type) q = q.ilike("visa_type", `%${visa_type}%`);
+              const term = country || visa_type;
+              if (term) {
+                q = q.or(`country.ilike.%${term}%,visa_type.ilike.%${term}%,description.ilike.%${term}%`);
+              }
               const { data, error } = await q;
               if (error) return { error: error.message };
               return { visa_services: data ?? [] };
