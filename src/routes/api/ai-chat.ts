@@ -284,10 +284,10 @@ ${catalogText}`;
             },
           });
         } catch (err) {
-          const msg = err instanceof Error ? err.message : "AI request failed";
-          console.error("[ai-chat] error", msg);
+          console.error("[ai-chat main catch error]:", err);
+          const msg = err instanceof Error ? err.message : String(err);
           return new Response(
-            "Sorry — I hit an issue reaching the concierge. Please try again in a moment.",
+            `Sorry — I hit an issue reaching the concierge (${msg}). Please try again in a moment.`,
             { headers: { "Content-Type": "text/plain; charset=utf-8" } },
           );
         }
