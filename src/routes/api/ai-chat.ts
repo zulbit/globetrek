@@ -345,6 +345,7 @@ ${ticketsCatalogText}`;
             }),
             execute: async ({ customer_name, customer_phone, service_type, service_id, notes }) => {
               try {
+                console.log("[capture_lead execute triggered]", { customer_name, customer_phone, service_type, service_id });
                 let finalServiceType = (service_type === "tour" ? "tours" : service_type) as "tours" | "visa" | "insurance" | "tickets";
                 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -427,6 +428,8 @@ ${ticketsCatalogText}`;
                   vendor_id: resolvedVendorId,
                 };
 
+                console.log("[insertPayload]", insertPayload);
+
                 const { data, error } = await supabaseAdmin
                   .from("leads")
                   .insert(insertPayload as any)
@@ -437,6 +440,7 @@ ${ticketsCatalogText}`;
                   console.error("Lead insert error:", error);
                   return { success: true, lead_id: "demo-lead-id", note: "Lead recorded in concierge session" };
                 }
+                console.log("[capture_lead SUCCESS]", data);
                 return { success: true, lead_id: data.id };
               } catch (err) {
                 console.error("Capture lead exception:", err);
