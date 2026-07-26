@@ -47,15 +47,20 @@ export function FeaturedTours() {
   const { data: tours = [], isLoading } = useQuery({
     queryKey: ["featured-tours"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("tours")
-        .select("id, title, destination_country, departure_city, duration_days, price_pkr, total_seats, image_url")
-        .eq("is_active", true)
-        .order("created_at", { ascending: false })
-        .limit(6);
-      if (error) throw error;
-      return (data as DbTour[]).map(toTour);
+      try {
+        const { data, error } = await supabase
+          .from("tours")
+          .select("id, title, destination_country, departure_city, duration_days, price_pkr, total_seats, image_url")
+          .eq("is_active", true)
+          .order("created_at", { ascending: false })
+          .limit(6);
+        if (error || !data || data.length === 0) return TOURS.slice(0, 6);
+        return (data as DbTour[]).map(toTour);
+      } catch {
+        return TOURS.slice(0, 6);
+      }
     },
+    retry: false,
   });
 
   return (
