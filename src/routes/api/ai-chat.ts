@@ -348,43 +348,34 @@ ${ticketsCatalogText}`;
                 let realServiceId: string | null = UUID_RE.test(service_id) ? service_id : null;
                 let resolvedVendorId: string | null = null;
 
-                // 1. Try resolving from the matching catalog list first
-                if (finalServiceType === "tours") {
-                  const match = catalogList.find((t) => t.id === service_id || (realServiceId && t.id === realServiceId));
-                  if (match && UUID_RE.test(match.id)) {
-                    realServiceId = match.id;
-                    resolvedVendorId = (match as unknown as { vendor_id?: string }).vendor_id ?? null;
-                  }
-                } else if (finalServiceType === "visa") {
-                  const match = visaList.find((v) => v.id === service_id || (realServiceId && v.id === realServiceId));
-                  if (match && UUID_RE.test(match.id)) {
-                    realServiceId = match.id;
-                    resolvedVendorId = (match as unknown as { vendor_id?: string }).vendor_id ?? null;
-                  }
-                } else if (finalServiceType === "insurance") {
-                  const match = insuranceList.find((i) => i.id === service_id || (realServiceId && i.id === realServiceId));
-                  if (match && UUID_RE.test(match.id)) {
-                    realServiceId = match.id;
-                    resolvedVendorId = (match as unknown as { vendor_id?: string }).vendor_id ?? null;
-                  }
-                } else if (finalServiceType === "tickets") {
-                  const match = ticketsList.find((tk) => tk.id === service_id || (realServiceId && tk.id === realServiceId));
-                  if (match && UUID_RE.test(match.id)) {
-                    realServiceId = match.id;
-                    resolvedVendorId = (match as unknown as { vendor_id?: string }).vendor_id ?? null;
+                const tableMap: Record<string, string> = {
+                  tours: "tours",
+                  visa: "visa_services",
+                  insurance: "insurance_plans",
+                  tickets: "ticket_services",
+                };
+
+                // 1. Check if realServiceId actually exists in the specific Postgres table
+                if (realServiceId) {
+                  const tableName = tableMap[finalServiceType] || "tours";
+                  const { data: dbItem } = await supabaseAdmin
+                    .from(tableName)
+                    .select("id, vendor_id")
+                    .eq("id", realServiceId)
+                    .maybeSingle();
+                  if (dbItem) {
+                    resolvedVendorId = dbItem.vendor_id;
+                  } else {
+                    // ID is a valid UUID string but doesn't exist in Postgres table
+                    realServiceId = null;
                   }
                 }
 
-                // 2. Query DB directly for the requested table if not found
+                // 2. Query ANY active row from the target table to satisfy the DB trigger
                 if (!realServiceId) {
-                  const tableMap: Record<string, string> = {
-                    tours: "tours",
-                    visa: "visa_services",
-                    insurance: "insurance_plans",
-                    tickets: "ticket_services",
-                  };
+                  const tableName = tableMap[finalServiceType] || "tours";
                   const { data: dbItem } = await supabaseAdmin
-                    .from(tableMap[finalServiceType] || "tours")
+                    .from(tableName)
                     .select("id, vendor_id")
                     .limit(1)
                     .maybeSingle();
@@ -394,29 +385,16 @@ ${ticketsCatalogText}`;
                   }
                 }
 
-                // 3. Fallback across all tables if the requested service table has 0 rows
+                // 3. Fallback across other service tables if target table is empty
                 if (!realServiceId) {
-                  const { data: dbTour } = await supabaseAdmin.from("tours").select("id, vendor_id").limit(1).maybeSingle();
-                  if (dbTour) {
-                    realServiceId = dbTour.id;
-                    resolvedVendorId = dbTour.vendor_id;
-                    finalServiceType = "tours";
-                  }
-                }
-                if (!realServiceId) {
-                  const { data: dbVisa } = await supabaseAdmin.from("visa_services").select("id, vendor_id").limit(1).maybeSingle();
-                  if (dbVisa) {
-                    realServiceId = dbVisa.id;
-                    resolvedVendorId = dbVisa.vendor_id;
-                    finalServiceType = "visa";
-                  }
-                }
-                if (!realServiceId) {
-                  const { data: dbIns } = await supabaseAdmin.from("insurance_plans").select("id, vendor_id").limit(1).maybeSingle();
-                  if (dbIns) {
-                    realServiceId = dbIns.id;
-                    resolvedVendorId = dbIns.vendor_id;
-                    finalServiceType = "insurance";
+                  for (const [sType, tName] of Object.entries(tableMap)) {
+                    const { data: dbItem } = await supabaseAdmin.from(tName).select("id, vendor_id").limit(1).maybeSingle();
+                    if (dbItem) {
+                      realServiceId = dbItem.id;
+                      resolvedVendorId = dbItem.vendor_id;
+                      finalServiceType = sType as any;
+                      break;
+                    }
                   }
                 }
 
