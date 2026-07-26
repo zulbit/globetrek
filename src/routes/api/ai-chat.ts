@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { streamText, tool, type ModelMessage } from "ai";
+import { generateText, tool, type ModelMessage } from "ai";
 import { z } from "zod";
 
 type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
@@ -526,27 +526,26 @@ ${ticketsCatalogText}`;
           }),
         };
 
-        const result = streamText({
-          model: openRouterModel(),
-          system: systemPrompt,
-          messages: modelMessages,
-          tools,
-          maxSteps: 3,
-        });
-
-        // AI SDK v7: await the full text AFTER all tool-call steps finish.
-        // result.text is a Promise<string> that includes text from every step.
-        // This is more reliable than streaming when maxSteps > 1 with tool calls.
+        // Use generateText (non-streaming) — fully awaits all tool-call steps
+        // and returns the complete text once all maxSteps are resolved.
+        // The widget collects bytes anyway, so streaming gives no UX benefit.
         let fullText: string;
         try {
-          fullText = await result.text;
+          const result = await generateText({
+            model: openRouterModel(),
+            system: systemPrompt,
+            messages: modelMessages,
+            tools,
+            maxSteps: 5,
+          });
+          fullText = result.text;
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           fullText = `Sorry, a server error occurred: ${msg}`;
         }
 
         if (!fullText?.trim()) {
-          fullText = "Mujhe bilkul samajh nahi aaya! 😅 Kya aap thoda aur detail mein bata sakte hain? (Try: 'UAE tour packages' ya 'Turkey visa details')";
+          fullText = "Maafi chahta hoon, mujhe samajh nahi aaya. 🙏 Please try: 'UAE tour packages', 'Turkey visa details', or 'Travel insurance plans'.";
         }
 
         return new Response(fullText, {
