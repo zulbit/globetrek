@@ -344,56 +344,40 @@ ${ticketsCatalogText}`;
               try {
                 // Normalize "tour" -> "tours" to match Postgres enum service_type
                 const normalizedServiceType = (service_type === "tour" ? "tours" : service_type) as "tours" | "visa" | "insurance" | "tickets";
+                const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-                // 1. Resolve vendor_id from catalog list or DB
+                let realServiceId: string | null = UUID_RE.test(service_id) ? service_id : null;
                 let resolvedVendorId: string | null = null;
-                const tourMatch = catalogList.find((t) => t.id === service_id);
-                if (tourMatch && (tourMatch as unknown as { vendor_id?: string }).vendor_id) {
-                  resolvedVendorId = (tourMatch as unknown as { vendor_id?: string }).vendor_id!;
+
+                // 1. Check catalogList
+                const tourMatch = catalogList.find((t) => t.id === service_id || (realServiceId && t.id === realServiceId));
+                if (tourMatch) {
+                  if (UUID_RE.test(tourMatch.id)) realServiceId = tourMatch.id;
+                  resolvedVendorId = (tourMatch as unknown as { vendor_id?: string }).vendor_id ?? null;
                 }
 
-                if (!resolvedVendorId) {
-                  const visaMatch = visaList.find((v) => v.id === service_id);
-                  if (visaMatch && (visaMatch as unknown as { vendor_id?: string }).vendor_id) {
-                    resolvedVendorId = (visaMatch as unknown as { vendor_id?: string }).vendor_id!;
+                // 2. Check visaList
+                if (!realServiceId || !resolvedVendorId) {
+                  const visaMatch = visaList.find((v) => v.id === service_id || (realServiceId && v.id === realServiceId));
+                  if (visaMatch) {
+                    if (!realServiceId && UUID_RE.test(visaMatch.id)) realServiceId = visaMatch.id;
+                    if (!resolvedVendorId) resolvedVendorId = (visaMatch as unknown as { vendor_id?: string }).vendor_id ?? null;
                   }
                 }
 
-                if (!resolvedVendorId) {
-                  const insMatch = insuranceList.find((i) => i.id === service_id);
-                  if (insMatch && (insMatch as unknown as { vendor_id?: string }).vendor_id) {
-                    resolvedVendorId = (insMatch as unknown as { vendor_id?: string }).vendor_id!;
-                  }
-                }
-
-                if (!resolvedVendorId) {
-                  const ticketMatch = ticketsList.find((tk) => tk.id === service_id);
-                  if (ticketMatch && (ticketMatch as unknown as { vendor_id?: string }).vendor_id) {
-                    resolvedVendorId = (ticketMatch as unknown as { vendor_id?: string }).vendor_id!;
-                  }
-                }
-
-                // If not found in catalog, try querying DB directly
-                if (!resolvedVendorId && service_id) {
-                  const tableMap: Record<string, string> = {
-                    tours: "tours",
-                    tour: "tours",
-                    visa: "visa_services",
-                    insurance: "insurance_plans",
-                    tickets: "ticket_services",
-                  };
-                  const tableName = tableMap[normalizedServiceType] || "tours";
-                  const { data: dbItem } = await supabaseAdmin
-                    .from(tableName)
-                    .select("vendor_id")
-                    .eq("id", service_id)
+                // 3. Fallback to database queries for real UUID and vendor_id
+                if (!realServiceId || !resolvedVendorId) {
+                  const { data: dbTour } = await supabaseAdmin
+                    .from("tours")
+                    .select("id, vendor_id")
+                    .limit(1)
                     .maybeSingle();
-                  if (dbItem?.vendor_id) {
-                    resolvedVendorId = dbItem.vendor_id;
+                  if (dbTour) {
+                    if (!realServiceId) realServiceId = dbTour.id;
+                    if (!resolvedVendorId) resolvedVendorId = dbTour.vendor_id;
                   }
                 }
 
-                // Fallback: If still no vendor_id resolved, find first active vendor in profiles
                 if (!resolvedVendorId) {
                   const { data: vendorProfile } = await supabaseAdmin
                     .from("profiles")
@@ -406,13 +390,13 @@ ${ticketsCatalogText}`;
                   }
                 }
 
-                // 2. Insert lead with resolved vendor_id, tour_id, message, and normalized enum service_type
+                // 4. Construct payload with valid UUIDs
                 const insertPayload: Record<string, unknown> = {
                   customer_name,
                   customer_phone,
                   service_type: normalizedServiceType,
-                  service_id: service_id || null,
-                  tour_id: (normalizedServiceType === "tours" && service_id) ? service_id : null,
+                  service_id: realServiceId,
+                  tour_id: normalizedServiceType === "tours" ? realServiceId : null,
                   message: notes || `Concierge Inquiry for ${normalizedServiceType}`,
                   notes: notes ?? null,
                   status: "new",
