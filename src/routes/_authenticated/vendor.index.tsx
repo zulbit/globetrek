@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { Sparkles, Zap, Wand2 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Sparkles, Zap, Wand2, Bell, MessageSquare } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { StatCard } from "@/components/dashboard-shell";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,8 @@ const AI_LIMITS: Record<Tier, { description: number | null; plan: number | null 
 };
 
 function VendorOverview() {
+  const queryClient = useQueryClient();
+
   const { data } = useQuery({
     queryKey: ["vendor-overview"],
     queryFn: async () => {
@@ -51,7 +54,51 @@ function VendorOverview() {
         aiPlans: events.filter((e) => e.kind === "plan").length,
       };
     },
+    refetchInterval: 3000,
   });
+
+  // Supabase Realtime Subscription for Instant Leads Updates & Toast Alert
+  useEffect(() => {
+    let channel: any;
+    async function initRealtime() {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return;
+      const vendorId = u.user.id;
+
+      channel = supabase
+        .channel(`overview-leads-${vendorId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "leads",
+            filter: `vendor_id=eq.${vendorId}`,
+          },
+          (payload: any) => {
+            const lead = payload.new;
+            const serviceTypeFormatted = (lead.service_type || "Service").toUpperCase();
+            toast.success(`🎉 New ${serviceTypeFormatted} Inquiry Received!`, {
+              description: `${lead.customer_name || "Customer"} (${lead.customer_phone || "Phone"}) left an inquiry!`,
+              duration: 10000,
+              action: {
+                label: "View Inbox",
+                onClick: () => window.location.href = "/vendor/leads",
+              },
+            });
+            queryClient.invalidateQueries({ queryKey: ["vendor-overview"] });
+            queryClient.invalidateQueries({ queryKey: ["vendor-leads-poly"] });
+          }
+        )
+        .subscribe();
+    }
+
+    initRealtime();
+
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const isPro = data?.tier === "pro";
   const [upgradeOpen, setUpgradeOpen] = useState(false);

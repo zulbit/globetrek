@@ -49,7 +49,47 @@ function VendorLeads() {
       if (error) throw error;
       return data as unknown as LeadRow[];
     },
+    refetchInterval: 3000,
   });
+
+  // Supabase Realtime Subscription for Instant Leads Inbox Update
+  useEffect(() => {
+    let channel: any;
+    async function initRealtime() {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return;
+      const vendorId = u.user.id;
+
+      channel = supabase
+        .channel(`leads-inbox-${vendorId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "leads",
+            filter: `vendor_id=eq.${vendorId}`,
+          },
+          (payload: any) => {
+            const lead = payload.new;
+            const serviceTypeFormatted = (lead.service_type || "Service").toUpperCase();
+            toast.success(`🎉 New ${serviceTypeFormatted} Inquiry Received!`, {
+              description: `New lead from ${lead.customer_name || "Customer"} (${lead.customer_phone || "Contact"})`,
+              duration: 10000,
+            });
+            qc.invalidateQueries({ queryKey: ["vendor-leads-poly"] });
+            qc.invalidateQueries({ queryKey: ["vendor-overview"] });
+          }
+        )
+        .subscribe();
+    }
+
+    initRealtime();
+
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [qc]);
 
   const filtered = useMemo(() => {
     const list = data ?? [];
