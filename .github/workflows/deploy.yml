@@ -18,9 +18,14 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
           script: |
-            cd /var/www/globetrek
+            export PATH=$PATH:/usr/local/bin:~/.nvm/versions/node/$(ls ~/.nvm/versions/node 2>/dev/null | tail -n 1)/bin
+            [ -s "$HOME/.nvm/nvm.sh" ] && \. "$HOME/.nvm/nvm.sh"
+            [ -s "$HOME/.bashrc" ] && \. "$HOME/.bashrc"
+            
+            cd /var/www/globetrek || cd ~/globetrek || pwd
             git pull origin main
-            npm ci
+            npm ci || npm install
             npm run build
-            pm2 restart globetrek || pm2 start .output/server/index.mjs --name "globetrek"
+            pm2 restart globetrek || pm2 start .output/server/index.mjs --name "globetrek" || node .output/server/index.mjs
+
 
