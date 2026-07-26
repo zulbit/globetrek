@@ -527,13 +527,11 @@ ${ticketsCatalogText}`;
         };
 
         const result = streamText({
-          model: openRouterModel,
+          model: openRouterModel(),
           system: systemPrompt,
           messages: modelMessages,
           tools,
-          stopSequences: ["\n\n\n"],
-          experimental_transform: undefined,
-          stepCountIs: stepCountIs({ maxSteps: 3 }),
+          maxSteps: 3,
         });
 
         return result.toDataStreamResponse();
