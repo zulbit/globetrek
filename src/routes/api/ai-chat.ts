@@ -406,18 +406,18 @@ ${ticketsCatalogText}`;
                   }
                 }
 
-                // 2. Insert lead with resolved vendor_id and normalized enum service_type
+                // 2. Insert lead with resolved vendor_id, tour_id, message, and normalized enum service_type
                 const insertPayload: Record<string, unknown> = {
                   customer_name,
                   customer_phone,
                   service_type: normalizedServiceType,
                   service_id: service_id || null,
+                  tour_id: (normalizedServiceType === "tours" && service_id) ? service_id : null,
+                  message: notes || `Concierge Inquiry for ${normalizedServiceType}`,
                   notes: notes ?? null,
                   status: "new",
+                  vendor_id: resolvedVendorId,
                 };
-                if (resolvedVendorId) {
-                  insertPayload.vendor_id = resolvedVendorId;
-                }
 
                 const { data, error } = await supabaseAdmin
                   .from("leads")
