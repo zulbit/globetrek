@@ -338,23 +338,79 @@ ${ticketsCatalogText}`;
             }),
             execute: async ({ customer_name, customer_phone, service_type, service_id, notes }) => {
               try {
+                // 1. Resolve vendor_id from catalog list or DB
+                let resolvedVendorId: string | null = null;
+                const tourMatch = catalogList.find((t) => t.id === service_id);
+                if (tourMatch && (tourMatch as unknown as { vendor_id?: string }).vendor_id) {
+                  resolvedVendorId = (tourMatch as unknown as { vendor_id?: string }).vendor_id!;
+                }
+
+                if (!resolvedVendorId) {
+                  const visaMatch = visaList.find((v) => v.id === service_id);
+                  if (visaMatch && (visaMatch as unknown as { vendor_id?: string }).vendor_id) {
+                    resolvedVendorId = (visaMatch as unknown as { vendor_id?: string }).vendor_id!;
+                  }
+                }
+
+                if (!resolvedVendorId) {
+                  const insMatch = insuranceList.find((i) => i.id === service_id);
+                  if (insMatch && (insMatch as unknown as { vendor_id?: string }).vendor_id) {
+                    resolvedVendorId = (insMatch as unknown as { vendor_id?: string }).vendor_id!;
+                  }
+                }
+
+                if (!resolvedVendorId) {
+                  const ticketMatch = ticketsList.find((tk) => tk.id === service_id);
+                  if (ticketMatch && (ticketMatch as unknown as { vendor_id?: string }).vendor_id) {
+                    resolvedVendorId = (ticketMatch as unknown as { vendor_id?: string }).vendor_id!;
+                  }
+                }
+
+                // If not found in catalog, try querying DB directly
+                if (!resolvedVendorId && service_id) {
+                  const tableMap: Record<string, string> = {
+                    tour: "tours",
+                    visa: "visa_services",
+                    insurance: "insurance_plans",
+                    tickets: "ticket_services",
+                  };
+                  const tableName = tableMap[service_type] || "tours";
+                  const { data: dbItem } = await supabaseAdmin
+                    .from(tableName)
+                    .select("vendor_id")
+                    .eq("id", service_id)
+                    .maybeSingle();
+                  if (dbItem?.vendor_id) {
+                    resolvedVendorId = dbItem.vendor_id;
+                  }
+                }
+
+                // 2. Insert lead with resolved vendor_id
+                const insertPayload: Record<string, unknown> = {
+                  customer_name,
+                  customer_phone,
+                  service_type,
+                  service_id,
+                  notes: notes ?? null,
+                  status: "new",
+                };
+                if (resolvedVendorId) {
+                  insertPayload.vendor_id = resolvedVendorId;
+                }
+
                 const { data, error } = await supabaseAdmin
                   .from("leads")
-                  .insert({
-                    customer_name,
-                    customer_phone,
-                    service_type,
-                    service_id,
-                    notes: notes ?? null,
-                    status: "new",
-                  })
+                  .insert(insertPayload)
                   .select("id")
                   .single();
+
                 if (error) {
+                  console.error("Lead insert error:", error);
                   return { success: true, lead_id: "demo-lead-id", note: "Lead recorded in concierge session" };
                 }
                 return { success: true, lead_id: data.id };
-              } catch {
+              } catch (err) {
+                console.error("Capture lead exception:", err);
                 return { success: true, lead_id: "demo-lead-id" };
               }
             },
