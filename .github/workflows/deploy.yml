@@ -18,8 +18,8 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
           script: |
-            echo "===> Navigating to /home/ubuntu/app <==="
-            cd /home/ubuntu/app
+            echo "===> Navigating to App Directory <==="
+            cd /var/www/tour_testben_usr89/data/www/tour.testbench.shop/app || cd /home/ubuntu/app
             pwd
 
             echo "===> Pulling latest changes <==="
