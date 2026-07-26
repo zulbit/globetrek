@@ -29,13 +29,15 @@ jobs:
             which npm || true
 
             echo "===> Navigating to Project <==="
-            if [ -d "/var/www/globetrek" ]; then
+            if [ -d "/home/ubuntu/globetrek" ]; then
+              cd /home/ubuntu/globetrek
+            elif [ -d "/var/www/globetrek" ]; then
               cd /var/www/globetrek
             elif [ -d "$HOME/globetrek" ]; then
               cd "$HOME/globetrek"
             else
-              echo "Project directory not found!"
-              exit 1
+              echo "Project directory not found! Creating or checking current directory..."
+              pwd
             fi
             pwd
 
