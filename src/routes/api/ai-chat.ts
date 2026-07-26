@@ -339,6 +339,8 @@ ${ticketsCatalogText}`;
           content: m.content,
         })) as ModelMessage[];
 
+        let requestLeadsCount = 0;
+
         const tools = {
           capture_lead: tool({
             description: "Save a customer lead / inquiry after collecting customer name, phone, service_type, and service_id.",
@@ -351,6 +353,11 @@ ${ticketsCatalogText}`;
             }),
             execute: async ({ customer_name, customer_phone, service_type, service_id, notes }) => {
               try {
+                if (requestLeadsCount > 0) {
+                  console.log("[capture_lead THROTTLED] lead already captured in this request");
+                  return { success: true, lead_id: "duplicate-throttled" };
+                }
+                requestLeadsCount++;
                 console.log("[capture_lead execute triggered]", { customer_name, customer_phone, service_type, service_id });
                 let finalServiceType = (service_type === "tour" ? "tours" : service_type) as "tours" | "visa" | "insurance" | "tickets";
                 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
