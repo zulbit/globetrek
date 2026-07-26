@@ -191,13 +191,14 @@ export const Route = createFileRoute("/api/ai-chat")({
         try {
           const { data: dbTours } = await supabaseAdmin
             .from("tours")
-            .select("id, title, destination_country, departure_city, duration_days, price_pkr, description")
+            .select("id, vendor_id, title, destination_country, departure_city, duration_days, price_pkr, description")
             .eq("is_active", true)
             .order("price_pkr", { ascending: true })
             .limit(30);
           if (dbTours && dbTours.length > 0) {
             catalogList = dbTours.map((t) => ({
               id: t.id,
+              vendor_id: t.vendor_id,
               title: String(t.title || "Tour Package"),
               destination_country: String(t.destination_country || "Europe"),
               departure_city: String(t.departure_city || "Lahore"),
@@ -210,7 +211,7 @@ export const Route = createFileRoute("/api/ai-chat")({
 
           const { data: dbVisas } = await supabaseAdmin
             .from("visa_services")
-            .select("id, country, visa_type, processing_days, price_pkr, service_fee_pkr, success_rate, description, profiles:vendor_id(company_name, full_name, city)")
+            .select("id, vendor_id, country, visa_type, processing_days, price_pkr, service_fee_pkr, success_rate, description, profiles:vendor_id(company_name, full_name, city)")
             .eq("is_active", true);
           if (dbVisas && dbVisas.length > 0) {
             visaList = dbVisas.map((v) => {
@@ -219,6 +220,7 @@ export const Route = createFileRoute("/api/ai-chat")({
               const cityTag = vendorObj?.city ? ` (${vendorObj.city})` : "";
               return {
                 id: v.id,
+                vendor_id: v.vendor_id,
                 country: String(v.country || "UAE"),
                 visa_type: String(v.visa_type || "Tourist Visa"),
                 processing_days: Number(v.processing_days || 3),
@@ -233,11 +235,12 @@ export const Route = createFileRoute("/api/ai-chat")({
 
           const { data: dbInsurance } = await supabaseAdmin
             .from("insurance_plans")
-            .select("id, plan_name, coverage_type, coverage_amount_pkr, duration_days, price_pkr, description")
+            .select("id, vendor_id, plan_name, coverage_type, coverage_amount_pkr, duration_days, price_pkr, description")
             .eq("is_active", true);
           if (dbInsurance && dbInsurance.length > 0) {
             insuranceList = dbInsurance.map((i) => ({
               id: i.id,
+              vendor_id: i.vendor_id,
               plan_name: String(i.plan_name || "Schengen Standard Shield"),
               coverage_type: String(i.coverage_type || "Schengen"),
               coverage_amount_pkr: Number(i.coverage_amount_pkr || 15000000),
@@ -249,11 +252,12 @@ export const Route = createFileRoute("/api/ai-chat")({
 
           const { data: dbTickets } = await supabaseAdmin
             .from("ticket_services")
-            .select("id, service_name, route_type, airlines_supported, service_fee_pkr, refundable, description")
+            .select("id, vendor_id, service_name, route_type, airlines_supported, service_fee_pkr, refundable, description")
             .eq("is_active", true);
           if (dbTickets && dbTickets.length > 0) {
             ticketsList = dbTickets.map((tk) => ({
               id: tk.id,
+              vendor_id: tk.vendor_id,
               service_name: String(tk.service_name || "Express Flight Desk"),
               route_type: String(tk.route_type || "International"),
               airlines_supported: Array.isArray(tk.airlines_supported) ? tk.airlines_supported.map(String) : ["PIA", "Emirates"],
@@ -302,7 +306,7 @@ Rules:
 - PRICES: Always show prices as bold PKR (e.g. **₨ 385,000**).
 - Language: Match the user's language. English request → English reply. Roman Urdu request → warm Roman Urdu reply.
 - Keep responses concise (3–8 lines). Use bullet lists and bold headers.
-- For bookings/inquiries: use the capture_lead tool to save the customer's name, phone, and desired service.
+- For bookings/inquiries: use the capture_lead tool to save the customer's name, phone, service_type, and service_id.
 - QUICK REPLIES: End EVERY response with [[choose: Option A | Option B | Option C]] with 3–5 options including emojis.
 - When asked about itinerary/details of a tour, describe it from the catalog data below. Include duration, price, highlights, and departure city.
 - MULTI-VENDOR: Highlight vendor, turnaround, and price when multiple options exist.
@@ -332,12 +336,15 @@ ${ticketsCatalogText}`;
             inputSchema: z.object({
               customer_name: z.string(),
               customer_phone: z.string(),
-              service_type: z.enum(["tour", "visa", "insurance", "tickets"]),
+              service_type: z.enum(["tours", "tour", "visa", "insurance", "tickets"]),
               service_id: z.string(),
               notes: z.string().optional(),
             }),
             execute: async ({ customer_name, customer_phone, service_type, service_id, notes }) => {
               try {
+                // Normalize "tour" -> "tours" to match Postgres enum service_type
+                const normalizedServiceType = (service_type === "tour" ? "tours" : service_type) as "tours" | "visa" | "insurance" | "tickets";
+
                 // 1. Resolve vendor_id from catalog list or DB
                 let resolvedVendorId: string | null = null;
                 const tourMatch = catalogList.find((t) => t.id === service_id);
@@ -369,12 +376,13 @@ ${ticketsCatalogText}`;
                 // If not found in catalog, try querying DB directly
                 if (!resolvedVendorId && service_id) {
                   const tableMap: Record<string, string> = {
+                    tours: "tours",
                     tour: "tours",
                     visa: "visa_services",
                     insurance: "insurance_plans",
                     tickets: "ticket_services",
                   };
-                  const tableName = tableMap[service_type] || "tours";
+                  const tableName = tableMap[normalizedServiceType] || "tours";
                   const { data: dbItem } = await supabaseAdmin
                     .from(tableName)
                     .select("vendor_id")
@@ -385,12 +393,25 @@ ${ticketsCatalogText}`;
                   }
                 }
 
-                // 2. Insert lead with resolved vendor_id
+                // Fallback: If still no vendor_id resolved, find first active vendor in profiles
+                if (!resolvedVendorId) {
+                  const { data: vendorProfile } = await supabaseAdmin
+                    .from("profiles")
+                    .select("id")
+                    .eq("role", "vendor")
+                    .limit(1)
+                    .maybeSingle();
+                  if (vendorProfile?.id) {
+                    resolvedVendorId = vendorProfile.id;
+                  }
+                }
+
+                // 2. Insert lead with resolved vendor_id and normalized enum service_type
                 const insertPayload: Record<string, unknown> = {
                   customer_name,
                   customer_phone,
-                  service_type,
-                  service_id,
+                  service_type: normalizedServiceType,
+                  service_id: service_id || null,
                   notes: notes ?? null,
                   status: "new",
                 };
@@ -400,7 +421,7 @@ ${ticketsCatalogText}`;
 
                 const { data, error } = await supabaseAdmin
                   .from("leads")
-                  .insert(insertPayload)
+                  .insert(insertPayload as any)
                   .select("id")
                   .single();
 
