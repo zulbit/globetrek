@@ -534,31 +534,25 @@ ${ticketsCatalogText}`;
           maxSteps: 3,
         });
 
-        // AI SDK v7: pipe textStream into a plain-text streaming Response.
-        // Using result.textStream (AsyncIterable<string>) which correctly
-        // yields all text tokens across every tool-call step (maxSteps: 3).
-        const encoder = new TextEncoder();
-        const readable = new ReadableStream({
-          async start(controller) {
-            try {
-              for await (const chunk of result.textStream) {
-                controller.enqueue(encoder.encode(chunk));
-              }
-            } catch (err) {
-              const msg = err instanceof Error ? err.message : String(err);
-              controller.enqueue(encoder.encode(`\n\nSorry, a server error occurred: ${msg}`));
-            } finally {
-              controller.close();
-            }
-          },
-        });
+        // AI SDK v7: await the full text AFTER all tool-call steps finish.
+        // result.text is a Promise<string> that includes text from every step.
+        // This is more reliable than streaming when maxSteps > 1 with tool calls.
+        let fullText: string;
+        try {
+          fullText = await result.text;
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          fullText = `Sorry, a server error occurred: ${msg}`;
+        }
 
-        return new Response(readable, {
+        if (!fullText?.trim()) {
+          fullText = "Mujhe bilkul samajh nahi aaya! 😅 Kya aap thoda aur detail mein bata sakte hain? (Try: 'UAE tour packages' ya 'Turkey visa details')";
+        }
+
+        return new Response(fullText, {
           headers: {
             "Content-Type": "text/plain; charset=utf-8",
-            "Transfer-Encoding": "chunked",
             "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no",
           },
         });
       },
