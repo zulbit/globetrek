@@ -374,28 +374,41 @@ export function AIChatWidget() {
           </div>
 
           {/* Composer */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              sendMessage(input);
-            }}
-            className="flex items-center gap-2 border-t border-border/70 bg-gradient-to-r from-surface-2/70 via-surface/70 to-surface-2/70 p-3"
-          >
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about Turkey 🇹🇷, Visas 📄, Prices in PKR ₨…"
-              disabled={sending}
-              className="flex-1 rounded-full border border-border bg-background/90 px-4 py-2 text-sm outline-none placeholder:text-muted-foreground focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/40"
-            />
-            <Button
-              type="submit"
-              disabled={sending || !input.trim()}
-              className="h-9 w-9 shrink-0 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white p-0 shadow-md shadow-emerald-950/40 hover:from-emerald-500 hover:to-teal-400"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </form>
+          {(() => {
+            const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant")?.content ?? "";
+            let dynamicPlaceholder = "Ask about Turkey 🇹🇷, Visas 📄, Prices in PKR ₨…";
+            if (/phone|mobile|contact|number|whatsapp/i.test(lastAssistant) && /name|naam/i.test(lastAssistant)) {
+              dynamicPlaceholder = "Please type your name and mobile number...";
+            } else if (/phone|mobile|contact|number|whatsapp/i.test(lastAssistant)) {
+              dynamicPlaceholder = "Please type your mobile number...";
+            } else if (/name|naam/i.test(lastAssistant) || /details/i.test(lastAssistant)) {
+              dynamicPlaceholder = "Please type your name...";
+            }
+            return (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  sendMessage(input);
+                }}
+                className="flex items-center gap-2 border-t border-border/70 bg-gradient-to-r from-surface-2/70 via-surface/70 to-surface-2/70 p-3"
+              >
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder={dynamicPlaceholder}
+                  disabled={sending}
+                  className="flex-1 rounded-full border border-border bg-background/90 px-4 py-2 text-sm outline-none placeholder:text-muted-foreground focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/40 transition-all duration-300 font-medium"
+                />
+                <Button
+                  type="submit"
+                  disabled={sending || !input.trim()}
+                  className="h-9 w-9 shrink-0 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white p-0 shadow-md shadow-emerald-950/40 hover:from-emerald-500 hover:to-teal-400"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </form>
+            );
+          })()}
         </div>
       )}
     </>

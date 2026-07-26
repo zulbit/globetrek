@@ -305,14 +305,15 @@ Rules:
   - Services: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets
 - PRICES: Always show prices as bold PKR (e.g. **₨ 385,000**).
 - Language: Match the user's language. English request → English reply. Roman Urdu request → warm Roman Urdu reply.
-- 💡 LEAD PROMPTING: Whenever you describe or recommend a tour package, visa service, or deal, ALWAYS explicitly prompt the user to share their Name and Phone number (e.g., "Aap apli details (Naam aur Phone Number) share karein taake hum aapki booking / inquiry forward kar sakein! 📞").
+- 💡 LEAD PROMPTING: Whenever you describe or recommend a tour package, visa service, or deal (or when user clicks Book/Inquire), ALWAYS explicitly prompt the user to type their details in the chatbox: "Please type your Name and Mobile Number in the chatbox below so we can process your inquiry! 📞"
+- ⛔ NO MISLEADING CHIPS WHEN ASKING FOR CONTACT INFO: When you are prompting the user to type their Name or Phone Number, DO NOT output category chips (like Tour Packages, Visa Services). Instead, end with NO chips or only [[choose: ✏️ I will type my details]].
 - ⚠️ MANDATORY LEAD CAPTURE: Whenever the user provides their phone number (or shares contact info after an inquiry/booking request), YOU MUST IMMEDIATELY CALL THE capture_lead TOOL with:
   - customer_name: User's name (from conversation history)
   - customer_phone: User's phone number
   - service_type: "tours", "visa", "insurance", or "tickets"
   - service_id: The ID of the package/service from the catalog below (e.g. tour ID or visa ID)
   Do NOT skip calling capture_lead when phone number is provided!
-- 🏷️ MANDATORY CHIPS ON EVERY RESPONSE: You MUST end EVERY response with a single line containing contextual quick-reply chips using [[choose: Option 1 | Option 2 | Option 3]] syntax!
+- 🏷️ CONTEXTUAL CHIPS ON GENERAL RESPONSES:
   - When showing tours: [[choose: 📝 Book / Inquire Now | ℹ️ Full Itinerary | 🌴 View Other Packages]]
   - When showing visas: [[choose: 📝 Apply Visa | 📄 Visa Requirements | 🛡️ Travel Insurance]]
   - When greeting / general: [[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]
@@ -485,10 +486,9 @@ ${ticketsCatalogText}`;
             leadCaptured = true;
             if (!fullText?.trim()) {
               fullText =
-                "✅ **Shukriya! Aapki inquiry successfully record ho gayi hai!** 🎉\n\n" +
-                "Hamara team bahut jald — usually **24 ghante ke andar** — aap se phone par contact karega.\n\n" +
-                "Kya aur kuch madad chahiye?\n\n" +
-                "[[choose: 🌴 More Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]";
+                "✅ **Shukriya! Aapki inquiry kamyabi k saath record ho gayi hai!** 🎉\n\n" +
+                "Hamara numainda bahut jald — usually **24 ghante ke andar** — aap se phone par contact karega. Shukriya!\n\n" +
+                "[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]";
             }
           }
         } catch (err) {
