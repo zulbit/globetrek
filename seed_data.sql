@@ -1,12 +1,14 @@
 -- Seed Data SQL Script for GlobeTrek.pk (rcldabxkcwfemnigwutk)
 
--- 1. Insert dummy/seed auth users into Supabase auth.users table first
+-- 1. Insert dummy/seed auth users into Supabase auth.users table first with valid bcrypt passwords
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, role, aud)
 VALUES
-  ('1f985a36-facf-4e14-bbac-cb9dec2efbfe', '00000000-0000-0000-0000-000000000000', 'customer.demo@globetrek.pk', '$2a$10$abcdefghijklmnopqrstuuuuuuuuuuuuuuuuuuuuuuuuuuuuu', now(), '{"provider":"email","providers":["email"]}', '{"full_name":"Demo Traveler","role":"customer"}', '2026-07-21 15:59:01.545206+00', '2026-07-21 15:59:01.545206+00', 'authenticated', 'authenticated'),
-  ('ce083b9c-d6d3-46b4-827a-2bd3a569e978', '00000000-0000-0000-0000-000000000000', 'admin.demo@globetrek.pk', '$2a$10$abcdefghijklmnopqrstuuuuuuuuuuuuuuuuuuuuuuuuuuuuu', now(), '{"provider":"email","providers":["email"]}', '{"full_name":"GlobeTrek Admin","role":"admin"}', '2026-07-23 21:36:40.042253+00', '2026-07-23 21:36:41.046994+00', 'authenticated', 'authenticated'),
-  ('b4d084bb-566d-49b6-8439-bc8b47886bbf', '00000000-0000-0000-0000-000000000000', 'vendor.demo@globetrek.pk', '$2a$10$abcdefghijklmnopqrstuuuuuuuuuuuuuuuuuuuuuuuuuuuuu', now(), '{"provider":"email","providers":["email"]}', '{"full_name":"Demo Vendor","company_name":"GlobeTrek Demo Tours","role":"vendor"}', '2026-07-21 15:59:59.870181+00', '2026-07-24 12:42:54.041938+00', 'authenticated', 'authenticated')
-ON CONFLICT (id) DO NOTHING;
+  ('1f985a36-facf-4e14-bbac-cb9dec2efbfe', '00000000-0000-0000-0000-000000000000', 'customer.demo@globetrek.pk', crypt('Gl0beTrek!Demo#2026', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"full_name":"Demo Traveler","role":"customer"}', '2026-07-21 15:59:01.545206+00', '2026-07-21 15:59:01.545206+00', 'authenticated', 'authenticated'),
+  ('ce083b9c-d6d3-46b4-827a-2bd3a569e978', '00000000-0000-0000-0000-000000000000', 'admin.demo@globetrek.pk', crypt('Gl0beTrek!Admin#2026', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"full_name":"GlobeTrek Admin","role":"admin"}', '2026-07-23 21:36:40.042253+00', '2026-07-23 21:36:41.046994+00', 'authenticated', 'authenticated'),
+  ('b4d084bb-566d-49b6-8439-bc8b47886bbf', '00000000-0000-0000-0000-000000000000', 'vendor.demo@globetrek.pk', crypt('Gl0beTrek!Vendor#2026', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"full_name":"Demo Vendor","company_name":"GlobeTrek Demo Tours","role":"vendor"}', '2026-07-21 15:59:59.870181+00', '2026-07-24 12:42:54.041938+00', 'authenticated', 'authenticated')
+ON CONFLICT (id) DO UPDATE SET encrypted_password = EXCLUDED.encrypted_password;
 
 -- 2. Update profiles table with subscription and extra metadata
 INSERT INTO public.profiles (id, email, full_name, company_name, vendor_status, created_at, updated_at, subscription_tier, lead_credits_balance, vendor_services, city)

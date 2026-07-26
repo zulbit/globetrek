@@ -42,12 +42,51 @@ function InsuranceMarketplace() {
     },
   });
 
-  const filtered = useMemo(() => data.filter((r) => {
+  const fallbackData: InsuranceRow[] = [
+    {
+      id: "b1111111-1111-1111-1111-111111111111",
+      vendor_id: "b4d084bb-566d-49b6-8439-bc8b47886bbf",
+      plan_name: "Schengen Standard Shield",
+      coverage_type: "Schengen",
+      coverage_amount_pkr: 15000000,
+      duration_days: 30,
+      price_pkr: 8500,
+      age_min: 0,
+      age_max: 99,
+      benefits: ["Emergency medical treatment", "Trip cancellation & interruption", "Baggage loss / delay"],
+      exclusions: ["Pre-existing conditions"],
+      description: "Comprehensive Schengen visa compliant travel insurance covering medical emergencies up to €30,000.",
+      image_url: null,
+      is_active: true,
+      profiles: { city: "Lahore", company_name: "GlobeTrek Demo Tours", full_name: "Demo Vendor" },
+    },
+    {
+      id: "b2222222-2222-2222-2222-222222222222",
+      vendor_id: "b4d084bb-566d-49b6-8439-bc8b47886bbf",
+      plan_name: "Worldwide Family Protection",
+      coverage_type: "Worldwide",
+      coverage_amount_pkr: 25000000,
+      duration_days: 15,
+      price_pkr: 12500,
+      age_min: 0,
+      age_max: 99,
+      benefits: ["24/7 global emergency assistance", "Baggage loss & flight delays", "Medical evacuation"],
+      exclusions: [],
+      description: "Global family protection plan including baggage loss, flight delays, and emergency medical evacuation.",
+      image_url: null,
+      is_active: true,
+      profiles: { city: "Karachi", company_name: "GlobeTrek Demo Tours", full_name: "Demo Vendor" },
+    },
+  ];
+
+  const activeData = data.length > 0 ? data : fallbackData;
+
+  const filtered = useMemo(() => activeData.filter((r) => {
     if (coverage !== "all" && r.coverage_type !== coverage) return false;
     if (city !== "all" && (r.profiles?.city ?? "") !== city) return false;
     if (q && !`${r.plan_name} ${r.coverage_type} ${r.description}`.toLowerCase().includes(q.toLowerCase())) return false;
     return true;
-  }), [data, coverage, city, q]);
+  }), [activeData, coverage, city, q]);
 
   return (
     <SiteShell>

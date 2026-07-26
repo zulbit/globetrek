@@ -42,12 +42,65 @@ function VisaMarketplace() {
     },
   });
 
-  const filtered = useMemo(() => data.filter((r) => {
+  const fallbackData: VisaRow[] = [
+    {
+      id: "a1111111-1111-1111-1111-111111111111",
+      vendor_id: "b4d084bb-566d-49b6-8439-bc8b47886bbf",
+      country: "UAE",
+      visa_type: "Tourist Visa",
+      processing_days: 3,
+      price_pkr: 35000,
+      service_fee_pkr: 5000,
+      success_rate: 99,
+      description: "30-day UAE tourist visa with express 72-hour processing. Great for Dubai stopovers and family visits.",
+      extra_notes: "Express processing option available",
+      documents_required: ["Passport", "Photo", "CNIC"],
+      image_url: null,
+      is_active: true,
+      profiles: { city: "Lahore", company_name: "GlobeTrek Demo Tours", full_name: "Demo Vendor" },
+    },
+    {
+      id: "a2222222-2222-2222-2222-222222222222",
+      vendor_id: "b4d084bb-566d-49b6-8439-bc8b47886bbf",
+      country: "Saudi Arabia",
+      visa_type: "Umrah Visa",
+      processing_days: 5,
+      price_pkr: 45000,
+      service_fee_pkr: 7500,
+      success_rate: 99,
+      description: "Umrah visa issuance bundled with Makkah/Madinah hotel confirmation and ground transport advisory.",
+      extra_notes: null,
+      documents_required: ["Passport", "Photo", "Vaccination Certificate"],
+      image_url: null,
+      is_active: true,
+      profiles: { city: "Lahore", company_name: "GlobeTrek Demo Tours", full_name: "Demo Vendor" },
+    },
+    {
+      id: "a3333333-3333-3333-3333-333333333333",
+      vendor_id: "b4d084bb-566d-49b6-8439-bc8b47886bbf",
+      country: "Turkey",
+      visa_type: "Tourist Visa",
+      processing_days: 7,
+      price_pkr: 28000,
+      service_fee_pkr: 4000,
+      success_rate: 97,
+      description: "Fast-track e-visa filing for Turkey with document review and appointment booking.",
+      extra_notes: null,
+      documents_required: ["Passport", "Bank Statement", "Flight Booking"],
+      image_url: null,
+      is_active: true,
+      profiles: { city: "Islamabad", company_name: "GlobeTrek Demo Tours", full_name: "Demo Vendor" },
+    },
+  ];
+
+  const activeData = data.length > 0 ? data : fallbackData;
+
+  const filtered = useMemo(() => activeData.filter((r) => {
     if (country !== "all" && r.country !== country) return false;
     if (city !== "all" && (r.profiles?.city ?? "") !== city) return false;
     if (q && !`${r.country} ${r.visa_type} ${r.description}`.toLowerCase().includes(q.toLowerCase())) return false;
     return true;
-  }), [data, country, city, q]);
+  }), [activeData, country, city, q]);
 
   return (
     <SiteShell>

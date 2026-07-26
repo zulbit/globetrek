@@ -42,12 +42,51 @@ function TicketsMarketplace() {
     },
   });
 
-  const filtered = useMemo(() => data.filter((r) => {
+  const fallbackData: TicketRow[] = [
+    {
+      id: "c1111111-1111-1111-1111-111111111111",
+      vendor_id: "b4d084bb-566d-49b6-8439-bc8b47886bbf",
+      service_name: "Express International Flight Desk",
+      route_type: "International",
+      airlines_supported: ["PIA", "Emirates", "Qatar Airways", "FlyDubai"],
+      service_fee_pkr: 3500,
+      refundable: true,
+      sample_routes: [
+        { from: "Lahore", to: "Dubai", from_pkr: 75000 },
+        { from: "Islamabad", to: "London", from_pkr: 185000 },
+      ],
+      description: "Priority ticketing desk for international flights from Lahore, Karachi & Islamabad.",
+      image_url: null,
+      is_active: true,
+      profiles: { city: "Lahore", company_name: "GlobeTrek Demo Tours", full_name: "Demo Vendor" },
+    },
+    {
+      id: "c2222222-2222-2222-2222-222222222222",
+      vendor_id: "b4d084bb-566d-49b6-8439-bc8b47886bbf",
+      service_name: "Umrah & Hajj Flight Booking",
+      route_type: "Umrah",
+      airlines_supported: ["PIA", "Saudi Arabian Airlines", "Airblue"],
+      service_fee_pkr: 4000,
+      refundable: true,
+      sample_routes: [
+        { from: "Karachi", to: "Jeddah", from_pkr: 120000 },
+        { from: "Lahore", to: "Madinah", from_pkr: 135000 },
+      ],
+      description: "Dedicated Umrah flight booking service with group discounts and baggage allowance.",
+      image_url: null,
+      is_active: true,
+      profiles: { city: "Karachi", company_name: "GlobeTrek Demo Tours", full_name: "Demo Vendor" },
+    },
+  ];
+
+  const activeData = data.length > 0 ? data : fallbackData;
+
+  const filtered = useMemo(() => activeData.filter((r) => {
     if (route !== "all" && r.route_type !== route) return false;
     if (city !== "all" && (r.profiles?.city ?? "") !== city) return false;
     if (q && !`${r.service_name} ${(r.airlines_supported ?? []).join(" ")} ${r.description}`.toLowerCase().includes(q.toLowerCase())) return false;
     return true;
-  }), [data, route, city, q]);
+  }), [activeData, route, city, q]);
 
   return (
     <SiteShell>
