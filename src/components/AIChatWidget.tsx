@@ -373,28 +373,6 @@ export function AIChatWidget() {
             })()}
           </div>
 
-          {/* Quick Suggestion Chips (Always present above input) */}
-          <div className="flex items-center gap-1.5 overflow-x-auto border-t border-border/40 bg-surface-2/50 px-3 py-2 no-scrollbar">
-            {[
-              { label: "🌴 Tour Packages", action: "Show me popular tour packages" },
-              { label: "📄 Visa Services", action: "What visa services do you offer?" },
-              { label: "🛡️ Travel Insurance", action: "Tell me about travel insurance plans" },
-              { label: "✈️ Flight Tickets", action: "Help me book flight tickets" },
-              { label: "🇹🇷 Turkey Tours", action: "Show Turkey tour packages" },
-              { label: "🇦🇪 Dubai / UAE", action: "Show Dubai UAE packages" },
-            ].map((chip) => (
-              <button
-                key={chip.label}
-                type="button"
-                disabled={sending}
-                onClick={() => sendMessage(chip.action)}
-                className="shrink-0 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-300 transition hover:bg-emerald-500/25 hover:border-emerald-400 disabled:opacity-50"
-              >
-                {chip.label}
-              </button>
-            ))}
-          </div>
-
           {/* Composer */}
           <form
             onSubmit={(e) => {
