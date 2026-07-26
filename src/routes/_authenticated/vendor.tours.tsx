@@ -680,17 +680,20 @@ function VendorTours() {
                         onChange={(e) => setEditing({ ...editing, description: e.target.value })}
                         placeholder="One-paragraph pitch: highlights, inclusions, what makes it special." />
                     </div>
-                    <div>
-                      <Label>Destination country</Label>
+                    <div className="sm:col-span-2">
+                      <Label>Destination country / countries</Label>
                       <Input
                         value={editing.destination_country}
                         onChange={(e) => setEditing({ ...editing, destination_country: e.target.value })}
-                        placeholder="e.g. Turkey, Switzerland, Japan"
+                        placeholder="e.g. Malaysia-Vietnam-Thailand (use hyphens for multiple countries)"
                         list="global-countries"
                       />
                       <datalist id="global-countries">
                         {DESTINATIONS.map((d) => <option key={d} value={d} />)}
                       </datalist>
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        For multi-country tours, separate countries with a hyphen (e.g. <strong>Malaysia-Vietnam-Thailand</strong> or enter <strong>Europe</strong>). Separate visa entries will be generated automatically.
+                      </p>
                     </div>
                     <div>
                       <Label>Departure city</Label>
