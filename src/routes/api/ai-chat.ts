@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { streamText, stepCountIs, tool, type ModelMessage } from "ai";
+import { streamText, tool, type ModelMessage } from "ai";
 import { z } from "zod";
 
 type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
@@ -534,7 +534,7 @@ ${ticketsCatalogText}`;
           maxSteps: 3,
         });
 
-        return result.toDataStreamResponse();
+        return result.toTextStreamResponse();
       },
     },
   },
