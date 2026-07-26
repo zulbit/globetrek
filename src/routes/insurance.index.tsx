@@ -80,10 +80,10 @@ function InsuranceMarketplace() {
           .eq("is_active", true).order("price_pkr", { ascending: true })
           .abortSignal(controller.signal);
         clearTimeout(timer);
-        if (error) return [];
-        return (data ?? []) as unknown as InsuranceRow[];
+        if (error || !data || data.length === 0) return fallbackData;
+        return data as unknown as InsuranceRow[];
       } catch {
-        return [];
+        return fallbackData;
       }
     },
     retry: false,

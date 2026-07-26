@@ -30,7 +30,7 @@ jobs:
             npm run build
 
             echo "===> Restarting Server with PM2 <==="
-            pm2 restart globetrek || pm2 start .output/server/index.mjs --name "globetrek"
+            pm2 restart globetrek-tour || pm2 restart globetrek || pm2 start .output/server/index.mjs --name "globetrek-tour"
             pm2 save
 
 

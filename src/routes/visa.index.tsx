@@ -94,10 +94,10 @@ function VisaMarketplace() {
           .eq("is_active", true).order("processing_days", { ascending: true })
           .abortSignal(controller.signal);
         clearTimeout(timer);
-        if (error) return [];
-        return (data ?? []) as unknown as VisaRow[];
+        if (error || !data || data.length === 0) return fallbackData;
+        return data as unknown as VisaRow[];
       } catch {
-        return [];
+        return fallbackData;
       }
     },
     retry: false,

@@ -80,10 +80,10 @@ function TicketsMarketplace() {
           .eq("is_active", true).order("service_fee_pkr", { ascending: true })
           .abortSignal(controller.signal);
         clearTimeout(timer);
-        if (error) return [];
-        return (data ?? []) as unknown as TicketRow[];
+        if (error || !data || data.length === 0) return fallbackData;
+        return data as unknown as TicketRow[];
       } catch {
-        return [];
+        return fallbackData;
       }
     },
     retry: false,
