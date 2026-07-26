@@ -305,6 +305,7 @@ Tools available:
 
 Rules:
 - CRITICAL: You ALREADY have the full active database of tours, visas, insurance plans, and flight ticket services listed right below in "Current active catalogs". NEVER say that any country, visa, or service is missing or unavailable without offering the matching package from the catalog below!
+- ⚠️ MANDATORY TEXT OUTPUT: You MUST ALWAYS write a text response in every message. NEVER respond with tool calls only. After every tool call, write a human-readable summary of the results. If you search for packages, list them with prices. The text output is REQUIRED.
 - VISUAL & COLORFUL PRESENTATION: Be vibrant, clear, and engaging! Use country flags and colorful service emojis generously:
   - Countries: 🇹🇷 Turkey | 🇹🇭 Thailand | 🇦🇪 UAE / Dubai | 🇪🇺 Europe | 🇲🇾 Malaysia | 🇸🇬 Singapore | 🇻🇳 Vietnam | 🇬🇧 UK | 🇸🇦 Saudi Arabia / 🕋 Umrah
   - Services: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets
@@ -538,7 +539,13 @@ ${ticketsCatalogText}`;
             tools,
             maxSteps: 5,
           });
-          fullText = result.text;
+          // Collect text from all steps — result.text may be empty if the model
+          // only made tool calls in the final step, so we also check each step.
+          const allStepsText = result.steps
+            .map((s) => s.text)
+            .filter(Boolean)
+            .join("\n\n");
+          fullText = result.text?.trim() ? result.text : allStepsText;
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           fullText = `Sorry, a server error occurred: ${msg}`;
