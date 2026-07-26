@@ -534,7 +534,33 @@ ${ticketsCatalogText}`;
           maxSteps: 3,
         });
 
-        return result.toTextStreamResponse();
+        // AI SDK v7: pipe textStream into a plain-text streaming Response.
+        // Using result.textStream (AsyncIterable<string>) which correctly
+        // yields all text tokens across every tool-call step (maxSteps: 3).
+        const encoder = new TextEncoder();
+        const readable = new ReadableStream({
+          async start(controller) {
+            try {
+              for await (const chunk of result.textStream) {
+                controller.enqueue(encoder.encode(chunk));
+              }
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : String(err);
+              controller.enqueue(encoder.encode(`\n\nSorry, a server error occurred: ${msg}`));
+            } finally {
+              controller.close();
+            }
+          },
+        });
+
+        return new Response(readable, {
+          headers: {
+            "Content-Type": "text/plain; charset=utf-8",
+            "Transfer-Encoding": "chunked",
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+          },
+        });
       },
     },
   },
