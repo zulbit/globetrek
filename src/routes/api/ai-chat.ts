@@ -292,32 +292,22 @@ GlobeTrek PK is a multi-service travel marketplace. You help with:
 3. Travel insurance — Schengen, medical, family, adventure plans.
 4. Flight ticketing — domestic, international, Umrah & Hajj.
 
-Tools available:
-- search_marketplace — UNIVERSAL SEARCH tool across all tours, visas, insurance plans, and tickets by any keyword (e.g. Turkey, Schengen, Umrah, Dubai). Use this first for general inquiries!
-- list_destinations — countries with active tours and how many.
-- search_tours — filter by destination, PKR budget, duration, departure city.
-- get_tour_details — full itinerary for a tour_id.
-- compare_tours — compare 2–4 tour_ids.
-- search_visa — visa services by country / visa type.
-- search_insurance — insurance plans by coverage type / max PKR premium.
-- search_tickets — ticketing agents by route type / airline.
-- capture_lead — save inquiry. Requires name + phone + service_type + service_id (tour_id, visa_id, plan_id, or ticket_service_id).
+IMPORTANT: The complete catalog is embedded below. Answer ALL questions about tours, visas, insurance, and tickets DIRECTLY from this catalog. Do NOT say packages are unavailable if they exist below.
 
 Rules:
-- CRITICAL: You ALREADY have the full active database of tours, visas, insurance plans, and flight ticket services listed right below in "Current active catalogs". NEVER say that any country, visa, or service is missing or unavailable without offering the matching package from the catalog below!
-- ⚠️ MANDATORY TEXT OUTPUT: You MUST ALWAYS write a text response in every message. NEVER respond with tool calls only. After every tool call, write a human-readable summary of the results. If you search for packages, list them with prices. The text output is REQUIRED.
-- VISUAL & COLORFUL PRESENTATION: Be vibrant, clear, and engaging! Use country flags and colorful service emojis generously:
+- ALWAYS write a full, helpful text response. Never leave a response empty.
+- VISUAL & COLORFUL PRESENTATION: Use country flags and emojis generously:
   - Countries: 🇹🇷 Turkey | 🇹🇭 Thailand | 🇦🇪 UAE / Dubai | 🇪🇺 Europe | 🇲🇾 Malaysia | 🇸🇬 Singapore | 🇻🇳 Vietnam | 🇬🇧 UK | 🇸🇦 Saudi Arabia / 🕋 Umrah
   - Services: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets
-- PRICES: Highlight all prices clearly in bold PKR format (e.g. **₨ 385,000** or **₨ 35,000**).
-- Language: Match the user's language choice. If the user clicks "English" or speaks in English, reply in English. If the user clicks "Roman Urdu" or speaks in Roman Urdu (e.g., "Bhai...", "Aapka naam..."), reply in warm, friendly Roman Urdu!
-- Never invent IDs, prices, or itineraries.
-- Keep responses concise (2–5 sentences). Use structured bullet lists and bold headers so information is easy to scan.
-- Before capture_lead, confirm which service the customer wants, then name, then phone.
-- MULTI-VENDOR COMPARISON: Multiple vendors offer visas/tours for the same country at different rates. When presenting options, highlight vendor location, turnaround, and total cost clearly (e.g. "🏢 **Vendor A (Lahore)**: ₨ 32,000 in 7 days vs 🏢 **Vendor B (Karachi)**: ₨ 35,000 in 3 days").
-- QUICK REPLIES: End EVERY response with 3-5 relevant quick options using [[choose: Option A | Option B | Option C]]. Include emojis and flags in quick options (e.g. [[choose: 🇹🇷 Turkey Tours | 🇦🇪 UAE Visas | 🌴 Tour Packages | 🇵🇰 Roman Urdu | 🇬🇧 English]]).
+- PRICES: Always show prices as bold PKR (e.g. **₨ 385,000**).
+- Language: Match the user's language. English request → English reply. Roman Urdu request → warm Roman Urdu reply.
+- Keep responses concise (3–8 lines). Use bullet lists and bold headers.
+- For bookings/inquiries: use the capture_lead tool to save the customer's name, phone, and desired service.
+- QUICK REPLIES: End EVERY response with [[choose: Option A | Option B | Option C]] with 3–5 options including emojis.
+- When asked about itinerary/details of a tour, describe it from the catalog data below. Include duration, price, highlights, and departure city.
+- MULTI-VENDOR: Highlight vendor, turnaround, and price when multiple options exist.
 
-Current active tour catalog (use these ids):
+Current active tour catalog:
 ${catalogText}
 
 Current active visa services catalog:
@@ -329,170 +319,14 @@ ${insuranceCatalogText}
 Current active flight ticket services catalog:
 ${ticketsCatalogText}`;
 
+        // Only keep capture_lead — AI answers from catalog context in system prompt.
+        // Lookup tools caused empty responses when the model only called tools with no text.
         const modelMessages: ModelMessage[] = messages.map((m) => ({
           role: m.role,
           content: m.content,
         })) as ModelMessage[];
 
         const tools = {
-          list_destinations: tool({
-            description: "List all destinations with an active tour and how many tours are available for each.",
-            inputSchema: z.object({}),
-            execute: async () => {
-              const counts = new Map<string, number>();
-              for (const r of catalogList) {
-                const country = String(r.destination_country || "Europe");
-                counts.set(country, (counts.get(country) ?? 0) + 1);
-              }
-              return {
-                destinations: Array.from(counts.entries())
-                  .map(([name, count]) => ({ name, count }))
-                  .sort((a, b) => b.count - a.count),
-              };
-            },
-          }),
-          search_marketplace: tool({
-            description: "Search all marketplace offerings (tours, visa services, insurance plans, ticket services) dynamically by any country, city, service type, or keyword.",
-            inputSchema: z.object({
-              query: z.string().describe("Search term like 'Turkey', 'Schengen', 'Umrah', 'Dubai', 'Karachi', etc."),
-            }),
-            execute: async ({ query }) => {
-              const qTerm = query.trim().toLowerCase();
-              const tours = catalogList.filter(
-                (t) =>
-                  String(t.destination_country || "").toLowerCase().includes(qTerm) ||
-                  String(t.title || "").toLowerCase().includes(qTerm) ||
-                  String(t.departure_city || "").toLowerCase().includes(qTerm) ||
-                  String(t.description || "").toLowerCase().includes(qTerm),
-              );
-              const visa = visaList.filter(
-                (v) =>
-                  String(v.country || "").toLowerCase().includes(qTerm) ||
-                  String(v.visa_type || "").toLowerCase().includes(qTerm) ||
-                  String(v.description || "").toLowerCase().includes(qTerm),
-              );
-              const insurance = insuranceList.filter(
-                (i) =>
-                  String(i.plan_name || "").toLowerCase().includes(qTerm) ||
-                  String(i.coverage_type || "").toLowerCase().includes(qTerm) ||
-                  String(i.description || "").toLowerCase().includes(qTerm),
-              );
-              const tickets = ticketsList.filter(
-                (tk) =>
-                  String(tk.service_name || "").toLowerCase().includes(qTerm) ||
-                  String(tk.route_type || "").toLowerCase().includes(qTerm) ||
-                  String(tk.description || "").toLowerCase().includes(qTerm),
-              );
-
-              return {
-                matched: tours.length + visa.length + insurance.length + tickets.length > 0,
-                tours: tours.length > 0 ? tours : catalogList.slice(0, 3),
-                visa_services: visa.length > 0 ? visa : visaList.slice(0, 3),
-                insurance_plans: insurance.length > 0 ? insurance : insuranceList.slice(0, 2),
-                ticket_services: tickets.length > 0 ? tickets : ticketsList.slice(0, 2),
-              };
-            },
-          }),
-          search_tours: tool({
-            description: "Search active international tour packages by destination, budget, duration, or departure city.",
-            inputSchema: z.object({
-              destination: z.string().nullable().describe("Country name, e.g. Turkey"),
-              max_budget_pkr: z.number().nullable().describe("Maximum price in PKR"),
-              min_duration_days: z.number().nullable(),
-              max_duration_days: z.number().nullable(),
-              departure_city: z.string().nullable().describe("Karachi, Lahore, or Islamabad"),
-            }),
-            execute: async ({ destination, max_budget_pkr, min_duration_days, max_duration_days, departure_city }) => {
-              let res = catalogList;
-              if (destination) {
-                const destLower = destination.toLowerCase();
-                res = res.filter(
-                  (t) =>
-                    String(t.destination_country || "").toLowerCase().includes(destLower) ||
-                    String(t.title || "").toLowerCase().includes(destLower),
-                );
-              }
-              if (max_budget_pkr) res = res.filter((t) => Number(t.price_pkr || 0) <= max_budget_pkr);
-              if (min_duration_days) res = res.filter((t) => Number(t.duration_days || 0) >= min_duration_days);
-              if (max_duration_days) res = res.filter((t) => Number(t.duration_days || 0) <= max_duration_days);
-              if (departure_city) {
-                const cityLower = departure_city.toLowerCase();
-                res = res.filter((t) => String(t.departure_city || "").toLowerCase().includes(cityLower));
-              }
-              return { tours: res.length > 0 ? res : catalogList };
-            },
-          }),
-          get_tour_details: tool({
-            description: "Fetch full details for a single tour_id: description, itinerary, seats, price.",
-            inputSchema: z.object({ tour_id: z.string() }),
-            execute: async ({ tour_id }) => {
-              const tour = catalogList.find((t) => t.id === tour_id) ?? catalogList[0];
-              return { tour };
-            },
-          }),
-          compare_tours: tool({
-            description: "Compare 2–4 tours side-by-side by tour_id.",
-            inputSchema: z.object({ tour_ids: z.array(z.string()).min(2).max(4) }),
-            execute: async ({ tour_ids }) => {
-              const tours = catalogList.filter((t) => tour_ids.includes(t.id));
-              return { tours: tours.length > 0 ? tours : catalogList.slice(0, 2) };
-            },
-          }),
-          search_visa: tool({
-            description: "Search active visa services by country and/or visa type.",
-            inputSchema: z.object({
-              country: z.string().nullable(),
-              visa_type: z.string().nullable().describe("Tourist / Business / Student / etc."),
-            }),
-            execute: async ({ country, visa_type }) => {
-              let res = visaList;
-              const term = (country || visa_type || "").toLowerCase();
-              if (term) {
-                res = res.filter(
-                  (v) =>
-                    String(v.country || "").toLowerCase().includes(term) ||
-                    String(v.visa_type || "").toLowerCase().includes(term) ||
-                    String(v.description || "").toLowerCase().includes(term),
-                );
-              }
-              return { visa_services: res.length > 0 ? res : visaList };
-            },
-          }),
-          search_insurance: tool({
-            description: "Search active travel insurance plans by coverage type or maximum premium.",
-            inputSchema: z.object({
-              coverage_type: z.string().nullable().describe("Schengen, Worldwide, etc."),
-              max_premium_pkr: z.number().nullable(),
-            }),
-            execute: async ({ coverage_type, max_premium_pkr }) => {
-              let res = insuranceList;
-              if (coverage_type) {
-                const cLower = coverage_type.toLowerCase();
-                res = res.filter((i) => String(i.coverage_type || "").toLowerCase().includes(cLower));
-              }
-              if (max_premium_pkr) res = res.filter((i) => Number(i.price_pkr || 0) <= max_premium_pkr);
-              return { insurance_plans: res.length > 0 ? res : insuranceList };
-            },
-          }),
-          search_tickets: tool({
-            description: "Search active ticketing services by route type or airline.",
-            inputSchema: z.object({
-              route_type: z.string().nullable().describe("International / Domestic / Umrah"),
-              airline: z.string().nullable(),
-            }),
-            execute: async ({ route_type, airline }) => {
-              let res = ticketsList;
-              if (route_type) {
-                const rLower = route_type.toLowerCase();
-                res = res.filter((tk) => String(tk.route_type || "").toLowerCase().includes(rLower));
-              }
-              if (airline) {
-                const aLower = airline.toLowerCase();
-                res = res.filter((tk) => (tk.airlines_supported ?? []).some((a) => String(a || "").toLowerCase().includes(aLower)));
-              }
-              return { ticket_services: res.length > 0 ? res : ticketsList };
-            },
-          }),
           capture_lead: tool({
             description: "Save a customer lead / inquiry after collecting customer name, phone, service_type, and service_id.",
             inputSchema: z.object({
