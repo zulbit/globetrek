@@ -157,3 +157,49 @@ export const createSafepayCheckout = createServerFn({ method: "POST" })
 
     return { ok: true, checkoutUrl, trackerToken: trackerId };
   });
+
+// -------- Admin: get dynamic subscription plans --------
+export const getSubscriptionPlans = createServerFn({ method: "GET" }).handler(async () => {
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_nk5WJj0qOmSimrFmwh7ZWQ_teiVWYtE";
+  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "https://rcldabxkcwfemnigwutk.supabase.co";
+  const supabase = createClient<Database>(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: {
+      fetch: (input, init) => {
+        const h = new Headers(init?.headers);
+        if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) h.delete("Authorization");
+        h.set("apikey", key);
+        return fetch(input, { ...init, headers: h });
+      },
+    },
+  });
+  const { data, error } = await supabase
+    .from("payment_gateway_settings")
+    .select("config")
+    .eq("provider", "subscription_plans")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data?.config ? (data.config as any[]) : null;
+});
+
+// -------- Admin: save dynamic subscription plans --------
+export const saveSubscriptionPlans = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: any[]) => input)
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("payment_gateway_settings")
+      .upsert(
+        { provider: "subscription_plans", config: data, enabled: true, updated_at: new Date().toISOString() },
+        { onConflict: "provider" },
+      );
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

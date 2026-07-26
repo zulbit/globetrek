@@ -1,10 +1,20 @@
-import { Fragment } from "react";
+import { Fragment, useMemo } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Check, Minus, Sparkles, Globe2, FileCheck, Shield, Ticket, ArrowRight, Star } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { Check, Minus, Sparkles, Globe2, FileCheck, Shield, Ticket, ArrowRight, Star, Zap, Crown, Rocket } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { BottomNav } from "@/components/bottom-nav";
 import { Button } from "@/components/ui/button";
 import { TIERS, formatTierPrice, SERVICE_LABELS, type ServiceCategory } from "@/lib/pricing";
+import { getSubscriptionPlans } from "@/lib/payments.functions";
+
+const ICON_MAP: Record<string, typeof Sparkles> = {
+  Sparkles,
+  Zap,
+  Crown,
+  Rocket,
+};
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -93,6 +103,20 @@ function CellValue({ value, highlight }: { value: string; highlight?: boolean })
 }
 
 function PricingPage() {
+  const getPlansFn = useServerFn(getSubscriptionPlans);
+  const { data: dbPlans } = useQuery({
+    queryKey: ["subscription-plans-config-public"],
+    queryFn: () => getPlansFn(),
+  });
+
+  const activePlans = useMemo(() => {
+    if (!dbPlans || dbPlans.length === 0) return TIERS;
+    return dbPlans.map((p) => ({
+      ...p,
+      icon: ICON_MAP[p.iconName] || Crown,
+    }));
+  }, [dbPlans]);
+
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">
       <SiteHeader />
@@ -118,7 +142,7 @@ function PricingPage() {
       {/* Archetype picker */}
       <section className="mx-auto -mt-4 max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="grid gap-3 sm:grid-cols-3">
-          {TIERS.filter((t) => t.id !== "free").map((t) => {
+          {activePlans.filter((t) => t.id !== "free").map((t) => {
             const Icon = t.icon;
             return (
               <a
@@ -158,7 +182,7 @@ function PricingPage() {
       {/* Tier cards */}
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {TIERS.map((tier) => {
+          {activePlans.map((tier) => {
             const Icon = tier.icon;
             return (
               <div
@@ -282,7 +306,7 @@ function PricingPage() {
                       All prices in PKR, billed monthly.
                     </p>
                   </th>
-                  {TIERS.map((t) => {
+                  {activePlans.map((t) => {
                     const Icon = t.icon;
                     return (
                       <th
@@ -359,7 +383,7 @@ function PricingPage() {
                   <Fragment key={group.title}>
                     <tr>
                       <td
-                        colSpan={TIERS.length + 1}
+                        colSpan={activePlans.length + 1}
                         className={`border-t border-border bg-surface/40 px-5 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground ${
                           gi === 0 ? "border-t-2" : ""
                         }`}
@@ -375,7 +399,7 @@ function PricingPage() {
                             <div className="mt-0.5 text-[11px] text-muted-foreground">{row.hint}</div>
                           )}
                         </td>
-                        {TIERS.map((t) => (
+                        {activePlans.map((t) => (
                           <td
                             key={t.id}
                             className={`px-5 py-3.5 align-top ${
