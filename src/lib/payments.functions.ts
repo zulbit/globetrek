@@ -5,8 +5,9 @@ import type { Database } from "@/integrations/supabase/types";
 
 // -------- Public: read gateway settings --------
 export const getGatewaySettings = createServerFn({ method: "GET" }).handler(async () => {
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
-  const supabase = createClient<Database>(process.env.SUPABASE_URL!, key, {
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_nk5WJj0qOmSimrFmwh7ZWQ_teiVWYtE";
+  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "https://rcldabxkcwfemnigwutk.supabase.co";
+  const supabase = createClient<Database>(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: {
       fetch: (input, init) => {
