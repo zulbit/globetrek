@@ -23,6 +23,7 @@ jobs:
             pwd
 
             echo "===> Pulling latest changes <==="
+            git reset --hard
             git pull origin main
 
             echo "===> Installing & Building <==="
