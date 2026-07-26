@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 function AdminLayout() {
   return (
     <RoleGuard allow={["admin"]}>
-      <DashboardShell title="Platform Admin" subtitle="System overview" nav={NAV}>
+      <DashboardShell title="Platform Admin" subtitle="System overview" nav={NAV} wide={true}>
         <Outlet />
       </DashboardShell>
     </RoleGuard>

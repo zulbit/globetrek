@@ -4,6 +4,7 @@ import { Mountain, LogOut, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { cn } from "@/lib/utils";
 
 export interface NavItem {
   to: string;
@@ -16,11 +17,13 @@ export function DashboardShell({
   subtitle,
   nav,
   children,
+  wide = false,
 }: {
   title: string;
   subtitle: string;
   nav: NavItem[];
   children: ReactNode;
+  wide?: boolean;
 }) {
   const navigate = useNavigate();
   const path = useRouterState({ select: (r) => r.location.pathname });
@@ -33,7 +36,7 @@ export function DashboardShell({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto flex max-w-7xl">
+      <div className={cn("mx-auto flex", wide ? "max-w-none w-full px-4 md:px-8" : "max-w-7xl")}>
         {/* Sidebar */}
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-surface/40 px-4 py-6 md:flex">
           <Link to="/" className="mb-6 flex items-center gap-2 px-2">

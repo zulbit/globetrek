@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import {
   ArrowUpRight,
   Users,
@@ -7,13 +8,16 @@ import {
   Crown,
   Globe2,
   Sparkles,
-  Wallet,
   Inbox,
   TrendingUp,
   Activity,
   FileCheck,
   Shield,
   Ticket,
+  Calendar,
+  Layers,
+  ArrowRight,
+  Loader2,
 } from "lucide-react";
 
 import type { LucideIcon } from "lucide-react";
@@ -21,115 +25,311 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatPKR } from "@/lib/tours";
 import { cn } from "@/lib/utils";
 
-const CREDIT_PRICE_PKR = 500;
 const PRO_MONTHLY_PKR = 10000;
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   component: AdminOverview,
 });
 
+interface LeadItem {
+  created_at: string;
+  service_type: string;
+  customer_name: string;
+}
+
 function AdminOverview() {
   const { data, isLoading } = useQuery({
-    queryKey: ["admin-overview"],
+    queryKey: ["admin-overview-enhanced"],
     queryFn: async () => {
       const monthStart = new Date();
       monthStart.setDate(1);
       monthStart.setHours(0, 0, 0, 0);
       const iso = monthStart.toISOString();
 
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
       const [
         vendors,
         customers,
         proVendors,
         starterVendors,
-        unlocked,
         totalLeads,
         newLeadsMonth,
         tours,
         publishedTours,
         aiEvents,
+        recentLeadsData,
+        visaCount,
+        insuranceCount,
+        ticketCount,
       ] = await Promise.all([
         supabase.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "vendor"),
         supabase.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "customer"),
         supabase.from("profiles").select("id", { count: "exact", head: true }).eq("subscription_tier", "pro"),
         supabase.from("profiles").select("id", { count: "exact", head: true }).eq("subscription_tier", "free"),
-        supabase.from("leads").select("id", { count: "exact", head: true }).eq("is_unlocked", true),
         supabase.from("leads").select("id", { count: "exact", head: true }),
         supabase.from("leads").select("id", { count: "exact", head: true }).gte("created_at", iso),
         supabase.from("tours").select("id", { count: "exact", head: true }),
         supabase.from("tours").select("id", { count: "exact", head: true }).eq("is_active", true),
         supabase.from("ai_usage_events").select("id", { count: "exact", head: true }).gte("created_at", iso),
-      ]);
-
-      const [visaCount, insuranceCount, ticketCount, serviceLeads] = await Promise.all([
+        supabase
+          .from("leads")
+          .select("created_at, service_type, customer_name")
+          .order("created_at", { ascending: false })
+          .limit(100),
         supabase.from("visa_services").select("id", { count: "exact", head: true }).eq("is_active", true),
         supabase.from("insurance_plans").select("id", { count: "exact", head: true }).eq("is_active", true),
         supabase.from("ticket_services").select("id", { count: "exact", head: true }).eq("is_active", true),
-        supabase.from("leads").select("id", { count: "exact", head: true }).neq("service_type", "tours"),
       ]);
 
+      const leadsList = (recentLeadsData.data as LeadItem[] | null) ?? [];
 
-      const creditRevenue = (unlocked.count ?? 0) * CREDIT_PRICE_PKR;
+      // Calculate recent 7 days leads daily distribution
+      const dailyLeads: Record<string, number> = {};
+      const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const key = d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+        dailyLeads[key] = 0;
+      }
+
+      leadsList.forEach((l) => {
+        const dateKey = new Date(l.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+        if (dateKey in dailyLeads) {
+          dailyLeads[dateKey]++;
+        }
+      });
+
+      const chartData = Object.entries(dailyLeads).map(([date, count]) => ({ date, count }));
+
       const subRevenue = (proVendors.count ?? 0) * PRO_MONTHLY_PKR;
+
       return {
         vendors: vendors.count ?? 0,
         customers: customers.count ?? 0,
         proVendors: proVendors.count ?? 0,
-        starterVendors: starterVendors.count ?? 0, // free-tier vendors
-        unlockedLeads: unlocked.count ?? 0,
+        starterVendors: starterVendors.count ?? 0,
         totalLeads: totalLeads.count ?? 0,
         newLeadsMonth: newLeadsMonth.count ?? 0,
         tours: tours.count ?? 0,
         publishedTours: publishedTours.count ?? 0,
         aiEvents: aiEvents.count ?? 0,
-        revenue: creditRevenue + subRevenue,
-        creditRevenue,
-        subRevenue,
+        revenue: subRevenue,
         visaCount: visaCount.count ?? 0,
         insuranceCount: insuranceCount.count ?? 0,
         ticketCount: ticketCount.count ?? 0,
-        serviceLeads: serviceLeads.count ?? 0,
+        chartData,
+        recentLeads: leadsList.slice(0, 5),
       };
     },
+    refetchInterval: 5000,
   });
 
+  const chartPoints = useMemo(() => {
+    if (!data?.chartData || data.chartData.length === 0) return "";
+    const maxVal = Math.max(...data.chartData.map((d) => d.count), 5);
+    const height = 140;
+    const width = 500;
+    const padding = 20;
+    const usableHeight = height - padding * 2;
+    const usableWidth = width - padding * 2;
 
-  const conv = data && data.totalLeads > 0 ? Math.round((data.unlockedLeads / data.totalLeads) * 100) : 0;
+    return data.chartData
+      .map((d, index) => {
+        const x = padding + (index / (data.chartData.length - 1)) * usableWidth;
+        const y = height - padding - (d.count / maxVal) * usableHeight;
+        return `${x},${y}`;
+      })
+      .join(" ");
+  }, [data?.chartData]);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[60vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-3 text-sm text-muted-foreground">Loading platform analytics…</span>
+      </div>
+    );
+  }
+
   const publishedRate = data && data.tours > 0 ? Math.round((data.publishedTours / data.tours) * 100) : 0;
 
   return (
-    <div className="space-y-8">
-      {/* Hero revenue card */}
-      <Link
-        to="/admin/vendors"
-        className="group relative block overflow-hidden rounded-3xl border border-primary/30 bg-gradient-to-br from-primary/20 via-card to-card p-6 shadow-card transition hover:border-primary/60"
-      >
-        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/30 blur-3xl" />
-        <div className="relative flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+    <div className="space-y-8 pb-10">
+      {/* Top Banner & Stats Overview */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Hero revenue card */}
+        <Link
+          to="/admin/vendors"
+          className="group relative col-span-1 lg:col-span-2 overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card p-6 shadow-card transition hover:border-primary/40"
+        >
+          <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
+          <div className="relative flex flex-col justify-between h-full min-h-[160px]">
+            <div>
+              <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-primary">
+                <TrendingUp className="h-3.5 w-3.5" /> Platform monthly revenue
+              </div>
+              <div className="mt-3 text-4xl font-bold tabular-nums sm:text-5xl">
+                {formatPKR(data?.revenue ?? 0)}
+              </div>
+              <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                Monthly recurring revenue generated from premium Pro vendor subscriptions.
+              </p>
+            </div>
+            <div className="mt-4 flex items-center gap-2 text-sm text-primary opacity-80 group-hover:opacity-100">
+              Manage subscribers & details <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+            </div>
+          </div>
+        </Link>
+
+        {/* Dynamic mini summary */}
+        <div className="rounded-3xl border border-border bg-card/60 p-6 flex flex-col justify-between">
           <div>
-            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-primary">
-              <TrendingUp className="h-3.5 w-3.5" /> Platform revenue
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-sky-400">
+              <Calendar className="h-3.5 w-3.5" /> Quick Status
             </div>
-            <div className="mt-3 text-4xl font-bold tabular-nums sm:text-5xl">
-              {isLoading ? "—" : formatPKR(data?.revenue ?? 0)}
+            <div className="mt-4 space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Total Listings:</span>
+                <span className="font-semibold text-foreground">{(data?.tours ?? 0) + (data?.visaCount ?? 0) + (data?.insuranceCount ?? 0) + (data?.ticketCount ?? 0)}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Monthly Inquiries:</span>
+                <span className="font-semibold text-foreground">{data?.newLeadsMonth ?? 0}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">AI Assist Executions:</span>
+                <span className="font-semibold text-foreground">{data?.aiEvents ?? 0}</span>
+              </div>
             </div>
-            <p className="mt-2 max-w-md text-sm text-muted-foreground">
-              Combined earnings from lead credit unlocks and Pro subscriptions this cycle.
-            </p>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:min-w-[280px]">
-            <MiniStat label="Lead credits" value={formatPKR(data?.creditRevenue ?? 0)} />
-            <MiniStat label="Subscriptions" value={formatPKR(data?.subRevenue ?? 0)} />
+          <div className="mt-6 border-t border-border pt-4 text-xs text-muted-foreground">
+            System status: <span className="font-semibold text-emerald-400">Fully operational</span>
           </div>
         </div>
-        <div className="relative mt-6 flex items-center gap-2 text-sm text-primary opacity-0 transition group-hover:opacity-100">
-          Break down by vendor <ArrowUpRight className="h-4 w-4" />
+      </div>
+
+      {/* Analytics & Activity Split Grid */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Leads activity trend graph */}
+        <div className="lg:col-span-2 rounded-3xl border border-border bg-card p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-sm font-semibold tracking-tight uppercase text-muted-foreground">Inquiry Traffic Trend</h3>
+              <p className="text-xs text-muted-foreground">Customer inquiries received across the last 7 days</p>
+            </div>
+            <Badge variant="outline" className="text-emerald-400 border-emerald-500/20 bg-emerald-500/5">
+              Live updates
+            </Badge>
+          </div>
+
+          <div className="relative w-full h-[160px] mt-4">
+            {data?.chartData && data.chartData.length > 0 ? (
+              <svg className="w-full h-full" viewBox="0 0 500 140" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="chart-grad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="rgb(16, 185, 129)" stopOpacity="0.25" />
+                    <stop offset="100%" stopColor="rgb(16, 185, 129)" stopOpacity="0.0" />
+                  </linearGradient>
+                </defs>
+                {/* Area under the line */}
+                {chartPoints && (
+                  <path
+                    d={`M 20,120 L ${chartPoints} L 480,120 Z`}
+                    fill="url(#chart-grad)"
+                  />
+                )}
+                {/* The trend line */}
+                {chartPoints && (
+                  <polyline
+                    fill="none"
+                    stroke="rgb(16, 185, 129)"
+                    strokeWidth="3"
+                    points={chartPoints}
+                    className="transition-all duration-500"
+                  />
+                )}
+                {/* Data Points */}
+                {data.chartData.map((d, index) => {
+                  const maxVal = Math.max(...data.chartData.map((val) => val.count), 5);
+                  const x = 20 + (index / (data.chartData.length - 1)) * 460;
+                  const y = 140 - 20 - (d.count / maxVal) * 100;
+                  return (
+                    <g key={index} className="group/point">
+                      <circle
+                        cx={x}
+                        cy={y}
+                        r="5"
+                        fill="rgb(16, 185, 129)"
+                        className="cursor-pointer stroke-background stroke-2 transition hover:scale-150"
+                      />
+                      <text
+                        x={x}
+                        y={y - 10}
+                        textAnchor="middle"
+                        fill="currentColor"
+                        className="text-[10px] font-semibold opacity-0 group-hover/point:opacity-100 fill-foreground transition-opacity"
+                      >
+                        {d.count}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+            ) : (
+              <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+                No inquiry traffic data recorded recently.
+              </div>
+            )}
+          </div>
+          {/* X axis labels */}
+          <div className="flex justify-between px-4 mt-2 text-[10px] font-medium text-muted-foreground">
+            {data?.chartData.map((d, index) => (
+              <span key={index}>{d.date}</span>
+            ))}
+          </div>
         </div>
-      </Link>
+
+        {/* Recent Platform Inquiries Log */}
+        <div className="rounded-3xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
+          <div>
+            <h3 className="text-sm font-semibold tracking-tight uppercase text-muted-foreground mb-4">Recent Activity</h3>
+            {data?.recentLeads && data.recentLeads.length > 0 ? (
+              <div className="space-y-4">
+                {data.recentLeads.map((lead, idx) => (
+                  <div key={idx} className="flex items-start justify-between border-b border-border/40 pb-3 last:border-0 last:pb-0">
+                    <div>
+                      <div className="text-xs font-semibold text-foreground">{lead.customer_name}</div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                        Inquired for <span className="font-medium text-primary">{lead.service_type}</span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground/80 font-mono">
+                      {new Date(lead.created_at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">
+                No recent inquires logged.
+              </div>
+            )}
+          </div>
+          <Link
+            to="/admin/vendors"
+            className="mt-6 flex items-center justify-center gap-1.5 rounded-xl border border-border bg-surface/50 py-2.5 text-xs font-medium text-foreground hover:bg-surface transition"
+          >
+            Manage Vendors & Leads <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      </div>
 
       {/* Primary metrics grid */}
       <section>
-        <h2 className="mb-3 text-xs uppercase tracking-[0.18em] text-muted-foreground">Community</h2>
+        <h2 className="mb-4 text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold">Community & Membership</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <MetricCard
             to="/admin/vendors"
@@ -144,7 +344,7 @@ function AdminOverview() {
             icon={Crown}
             label="Pro subscribers"
             value={data?.proVendors ?? 0}
-            hint={`${formatPKR(PRO_MONTHLY_PKR)} / mo each`}
+            hint={`${formatPKR(PRO_MONTHLY_PKR)} / mo subscription`}
             tone="amber"
           />
           <MetricCard
@@ -167,66 +367,16 @@ function AdminOverview() {
         </div>
       </section>
 
-      {/* Lead funnel */}
-      <section>
-        <h2 className="mb-3 text-xs uppercase tracking-[0.18em] text-muted-foreground">Lead marketplace</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricCard
-            to="/admin/vendors"
-            icon={Inbox}
-            label="Total inquiries"
-            value={data?.totalLeads ?? 0}
-            hint="Lifetime lead volume"
-            tone="sky"
-          />
-          <MetricCard
-            to="/admin/vendors"
-            icon={Activity}
-            label="New this month"
-            value={data?.newLeadsMonth ?? 0}
-            hint="Fresh customer intent"
-            tone="emerald"
-          />
-          <MetricCard
-            to="/admin/vendors"
-            icon={Wallet}
-            label="Unlocked leads"
-            value={data?.unlockedLeads ?? 0}
-            hint={`${conv}% conversion · ${formatPKR(CREDIT_PRICE_PKR)}/unlock`}
-            tone="amber"
-            progress={conv}
-          />
-          <MetricCard
-            to="/admin/tours"
-            icon={Sparkles}
-            label="AI generations"
-            value={data?.aiEvents ?? 0}
-            hint="Descriptions & plans this month"
-            tone="violet"
-          />
-        </div>
-      </section>
-
       {/* Services marketplace */}
       <section>
-        <h2 className="mb-3 text-xs uppercase tracking-[0.18em] text-muted-foreground">Services marketplace</h2>
+        <h2 className="mb-4 text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold font-semibold">Marketplace Channels</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <MetricCard to="/admin/services" icon={FileCheck} label="Visa listings" value={data?.visaCount ?? 0} hint="Active visa consultants" tone="sky" />
           <MetricCard to="/admin/services" icon={Shield} label="Insurance plans" value={data?.insuranceCount ?? 0} hint="Active travel insurance" tone="emerald" />
           <MetricCard to="/admin/services" icon={Ticket} label="Ticketing services" value={data?.ticketCount ?? 0} hint="Active ticketing desks" tone="amber" />
-          <MetricCard to="/admin/services" icon={Inbox} label="Service leads" value={data?.serviceLeads ?? 0} hint="Visa · Insurance · Tickets" tone="violet" />
+          <MetricCard to="/admin/services" icon={Inbox} label="Total leads" value={data?.totalLeads ?? 0} hint="All customer interactions" tone="violet" />
         </div>
       </section>
-    </div>
-
-  );
-}
-
-function MiniStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-border/60 bg-background/40 p-3 backdrop-blur">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="mt-1 text-base font-semibold tabular-nums">{value}</div>
     </div>
   );
 }
@@ -282,5 +432,13 @@ function MetricCard({
         </div>
       ) : null}
     </Link>
+  );
+}
+
+function Badge({ variant, className, children }: { variant: string; className: string; children: React.ReactNode }) {
+  return (
+    <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide", className)}>
+      {children}
+    </span>
   );
 }
