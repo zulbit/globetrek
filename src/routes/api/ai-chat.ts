@@ -342,8 +342,6 @@ ${ticketsCatalogText}`;
             }),
             execute: async ({ customer_name, customer_phone, service_type, service_id, notes }) => {
               try {
-            execute: async ({ customer_name, customer_phone, service_type, service_id, notes }) => {
-              try {
                 let finalServiceType = (service_type === "tour" ? "tours" : service_type) as "tours" | "visa" | "insurance" | "tickets";
                 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
