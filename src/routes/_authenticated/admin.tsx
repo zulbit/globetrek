@@ -5,9 +5,9 @@ import { RoleGuard } from "@/components/role-guard";
 
 const NAV = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard },
-  { to: "/admin/vendors", label: "Vendors", icon: Users },
-  { to: "/admin/tours", label: "Global Tours", icon: Globe2 },
-  { to: "/admin/services", label: "Services marketplace", icon: Boxes },
+  { to: "/admin/vendors", label: "Vendors & Subscriptions", icon: Users },
+  { to: "/admin/tours", label: "Tours Catalog", icon: Globe2 },
+  { to: "/admin/services", label: "Services Catalog", icon: Boxes },
   { to: "/admin/payments", label: "Payment gateways", icon: CreditCard },
 ];
 

@@ -27,14 +27,23 @@ function AdminVendors() {
   const { data, isLoading } = useQuery({
     queryKey: ["admin-vendors"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: rolesData, error: rolesError } = await supabase
         .from("user_roles")
-        .select("user_id, profiles:profiles!user_roles_user_id_fkey(id, email, full_name, company_name, vendor_status, subscription_tier, lead_credits_balance, created_at)")
+        .select("user_id")
         .eq("role", "vendor");
-      if (error) throw error;
-      return (data ?? [])
-        .map((r) => (r as unknown as { profiles: VendorProfile | null }).profiles)
-        .filter((p): p is VendorProfile => !!p);
+      if (rolesError) throw rolesError;
+
+      const ids = (rolesData ?? []).map((r) => r.user_id);
+      if (ids.length === 0) return [];
+
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, email, full_name, company_name, vendor_status, subscription_tier, lead_credits_balance, created_at")
+        .in("id", ids)
+        .order("created_at", { ascending: false });
+      if (profilesError) throw profilesError;
+
+      return (profilesData ?? []) as VendorProfile[];
     },
   });
 
