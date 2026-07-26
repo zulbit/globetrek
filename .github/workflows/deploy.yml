@@ -18,42 +18,21 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
           script: |
-            echo "===> Checking Current User & Directory <==="
-            whoami
-            pwd
-
-            echo "===> Loading Node & Path <==="
-            export PATH=$PATH:/usr/local/bin:/usr/bin:~/.nvm/versions/node/$(ls ~/.nvm/versions/node 2>/dev/null | tail -n 1)/bin
-            [ -s "$HOME/.nvm/nvm.sh" ] && . "$HOME/.nvm/nvm.sh"
-            which node || true
-            which npm || true
-
-            echo "===> Navigating to Project <==="
-            if [ -d "/home/ubuntu/globetrek" ]; then
-              cd /home/ubuntu/globetrek
-            elif [ -d "/var/www/globetrek" ]; then
-              cd /var/www/globetrek
-            elif [ -d "$HOME/globetrek" ]; then
-              cd "$HOME/globetrek"
-            else
-              echo "Project directory not found! Creating or checking current directory..."
-              pwd
-            fi
+            echo "===> Navigating to /home/ubuntu/app <==="
+            cd /home/ubuntu/app
             pwd
 
             echo "===> Pulling latest changes <==="
             git pull origin main
 
-            echo "===> Building Application <==="
+            echo "===> Installing & Building <==="
             npm install --production=false
             npm run build
 
-            echo "===> Restarting App <==="
-            if command -v pm2 >/dev/null 2>&1; then
-              pm2 restart globetrek || pm2 start .output/server/index.mjs --name "globetrek"
-            else
-              echo "PM2 not found in PATH, skipping PM2 restart"
-            fi
+            echo "===> Restarting Server with PM2 <==="
+            pm2 restart globetrek || pm2 start .output/server/index.mjs --name "globetrek"
+            pm2 save
+
 
 
 
