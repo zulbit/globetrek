@@ -382,12 +382,12 @@ ${ticketsCatalogText}`;
             .join("\n\n");
           fullText = result.text?.trim() ? result.text : allStepsText;
 
-          // Detect if capture_lead tool was called successfully (gpt-4o-mini often
-          // doesn't generate text after calling a tool, so we inject confirmation).
-          const leadResult = result.steps
-            .flatMap((s) => (s.toolResults as Array<{ toolName: string; result: { success?: boolean; lead_id?: string } }> | undefined) ?? [])
-            .find((r) => r.toolName === "capture_lead" && r.result?.success);
-          if (leadResult) {
+          // Detect if capture_lead tool was called in any step
+          const hasCaptureLeadCall = result.steps.some((step) =>
+            step.toolCalls?.some((tc) => tc.toolName === "capture_lead"),
+          );
+
+          if (hasCaptureLeadCall) {
             leadCaptured = true;
             if (!fullText?.trim()) {
               fullText =
