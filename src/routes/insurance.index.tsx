@@ -32,22 +32,6 @@ function InsuranceMarketplace() {
   const [city, setCity] = useState<string>("all");
   const [q, setQ] = useState("");
 
-  const { data = [], isLoading } = useQuery({
-    queryKey: ["public-insurance"],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase.from("insurance_plans")
-          .select("*, profiles:vendor_id(city, company_name, full_name)")
-          .eq("is_active", true).order("price_pkr", { ascending: true });
-        if (error) return [];
-        return (data ?? []) as unknown as InsuranceRow[];
-      } catch {
-        return [];
-      }
-    },
-    retry: false,
-  });
-
   const fallbackData: InsuranceRow[] = [
     {
       id: "b1111111-1111-1111-1111-111111111111",
@@ -84,6 +68,27 @@ function InsuranceMarketplace() {
       profiles: { city: "Karachi", company_name: "GlobeTrek Demo Tours", full_name: "Demo Vendor" },
     },
   ];
+
+  const { data = [] } = useQuery({
+    queryKey: ["public-insurance"],
+    queryFn: async () => {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 5000);
+        const { data, error } = await supabase.from("insurance_plans")
+          .select("*, profiles:vendor_id(city, company_name, full_name)")
+          .eq("is_active", true).order("price_pkr", { ascending: true })
+          .abortSignal(controller.signal);
+        clearTimeout(timer);
+        if (error) return [];
+        return (data ?? []) as unknown as InsuranceRow[];
+      } catch {
+        return [];
+      }
+    },
+    retry: false,
+    placeholderData: fallbackData,
+  });
 
   const activeData = data.length > 0 ? data : fallbackData;
 
@@ -132,9 +137,7 @@ function InsuranceMarketplace() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        {isLoading ? (
-          <div className="grid place-items-center py-24 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
-        ) : filtered.length === 0 ? (
+        {filtered.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border p-16 text-center text-muted-foreground">
             No insurance plans match your filters yet.
           </div>

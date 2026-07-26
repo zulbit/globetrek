@@ -44,16 +44,20 @@ function toTour(row: DbTour): Tour {
 }
 
 export function FeaturedTours() {
-  const { data: tours = [], isLoading } = useQuery({
+  const { data: tours = [] } = useQuery({
     queryKey: ["featured-tours"],
     queryFn: async () => {
       try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 5000);
         const { data, error } = await supabase
           .from("tours")
           .select("id, title, destination_country, departure_city, duration_days, price_pkr, total_seats, image_url")
           .eq("is_active", true)
           .order("created_at", { ascending: false })
-          .limit(6);
+          .limit(6)
+          .abortSignal(controller.signal);
+        clearTimeout(timer);
         if (error || !data || data.length === 0) return TOURS.slice(0, 6);
         return (data as DbTour[]).map(toTour);
       } catch {
@@ -61,6 +65,7 @@ export function FeaturedTours() {
       }
     },
     retry: false,
+    placeholderData: TOURS.slice(0, 6),
   });
 
   return (
@@ -87,14 +92,7 @@ export function FeaturedTours() {
 
 
       <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {isLoading
-          ? Array.from({ length: 3 }).map((_, i) => (
-              <div
-                key={i}
-                className="aspect-[4/5] animate-pulse rounded-2xl border border-border bg-card"
-              />
-            ))
-          : tours.length === 0
+        {tours.length === 0
           ? <p className="text-sm text-muted-foreground">No tours available yet.</p>
           : tours.map((t) => <TourCard key={t.id} tour={t} />)}
       </div>

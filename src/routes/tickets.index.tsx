@@ -32,22 +32,6 @@ function TicketsMarketplace() {
   const [city, setCity] = useState<string>("all");
   const [q, setQ] = useState("");
 
-  const { data = [], isLoading } = useQuery({
-    queryKey: ["public-tickets"],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase.from("ticket_services")
-          .select("*, profiles:vendor_id(city, company_name, full_name)")
-          .eq("is_active", true).order("service_fee_pkr", { ascending: true });
-        if (error) return [];
-        return (data ?? []) as unknown as TicketRow[];
-      } catch {
-        return [];
-      }
-    },
-    retry: false,
-  });
-
   const fallbackData: TicketRow[] = [
     {
       id: "c1111111-1111-1111-1111-111111111111",
@@ -84,6 +68,27 @@ function TicketsMarketplace() {
       profiles: { city: "Karachi", company_name: "GlobeTrek Demo Tours", full_name: "Demo Vendor" },
     },
   ];
+
+  const { data = [] } = useQuery({
+    queryKey: ["public-tickets"],
+    queryFn: async () => {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 5000);
+        const { data, error } = await supabase.from("ticket_services")
+          .select("*, profiles:vendor_id(city, company_name, full_name)")
+          .eq("is_active", true).order("service_fee_pkr", { ascending: true })
+          .abortSignal(controller.signal);
+        clearTimeout(timer);
+        if (error) return [];
+        return (data ?? []) as unknown as TicketRow[];
+      } catch {
+        return [];
+      }
+    },
+    retry: false,
+    placeholderData: fallbackData,
+  });
 
   const activeData = data.length > 0 ? data : fallbackData;
 
@@ -132,9 +137,7 @@ function TicketsMarketplace() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        {isLoading ? (
-          <div className="grid place-items-center py-24 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
-        ) : filtered.length === 0 ? (
+        {filtered.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border p-16 text-center text-muted-foreground">No ticketing services match your filters yet.</div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
