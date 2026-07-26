@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { generateText, Output, NoObjectGeneratedError } from "ai";
+import { generateText, Output } from "ai";
 import { z } from "zod";
 
 type Mode = "description" | "plan";
@@ -114,7 +114,7 @@ ${ctxLine}`,
         prompt: `You are a senior tour planner for GlobeTrek PK, a Pakistani travel marketplace selling international packages priced in PKR.
 
 Design a realistic day-by-day itinerary for the tour below. Return exactly ${data.duration_days} days (day numbering 1..${data.duration_days}).
-
+${data.destination_country.toLowerCase().includes("europe") ? "\n- Since the destination is Europe, design a multi-country tour! Do not limit the itinerary to a single country. Include transition details between popular European countries (e.g. France, Switzerland, Italy, Germany) and show border crossings/trains.\n" : ""}
 You MUST return your response as a valid, parsable JSON object matching this structure:
 {
   "description": "one crisp marketing paragraph (~60 words, plain text, no markdown)",
