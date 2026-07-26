@@ -35,11 +35,17 @@ function InsuranceMarketplace() {
   const { data = [], isLoading } = useQuery({
     queryKey: ["public-insurance"],
     queryFn: async () => {
-      const { data } = await supabase.from("insurance_plans")
-        .select("*, profiles:vendor_id(city, company_name, full_name)")
-        .eq("is_active", true).order("price_pkr", { ascending: true });
-      return (data ?? []) as unknown as InsuranceRow[];
+      try {
+        const { data, error } = await supabase.from("insurance_plans")
+          .select("*, profiles:vendor_id(city, company_name, full_name)")
+          .eq("is_active", true).order("price_pkr", { ascending: true });
+        if (error) return [];
+        return (data ?? []) as unknown as InsuranceRow[];
+      } catch {
+        return [];
+      }
     },
+    retry: false,
   });
 
   const fallbackData: InsuranceRow[] = [

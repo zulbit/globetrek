@@ -35,11 +35,17 @@ function VisaMarketplace() {
   const { data = [], isLoading } = useQuery({
     queryKey: ["public-visa"],
     queryFn: async () => {
-      const { data } = await supabase.from("visa_services")
-        .select("*, profiles:vendor_id(city, company_name, full_name)")
-        .eq("is_active", true).order("processing_days", { ascending: true });
-      return (data ?? []) as unknown as VisaRow[];
+      try {
+        const { data, error } = await supabase.from("visa_services")
+          .select("*, profiles:vendor_id(city, company_name, full_name)")
+          .eq("is_active", true).order("processing_days", { ascending: true });
+        if (error) return [];
+        return (data ?? []) as unknown as VisaRow[];
+      } catch {
+        return [];
+      }
     },
+    retry: false,
   });
 
   const fallbackData: VisaRow[] = [

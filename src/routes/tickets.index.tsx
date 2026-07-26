@@ -35,11 +35,17 @@ function TicketsMarketplace() {
   const { data = [], isLoading } = useQuery({
     queryKey: ["public-tickets"],
     queryFn: async () => {
-      const { data } = await supabase.from("ticket_services")
-        .select("*, profiles:vendor_id(city, company_name, full_name)")
-        .eq("is_active", true).order("service_fee_pkr", { ascending: true });
-      return (data ?? []) as unknown as TicketRow[];
+      try {
+        const { data, error } = await supabase.from("ticket_services")
+          .select("*, profiles:vendor_id(city, company_name, full_name)")
+          .eq("is_active", true).order("service_fee_pkr", { ascending: true });
+        if (error) return [];
+        return (data ?? []) as unknown as TicketRow[];
+      } catch {
+        return [];
+      }
     },
+    retry: false,
   });
 
   const fallbackData: TicketRow[] = [
