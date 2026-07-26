@@ -38,6 +38,9 @@ export type TourRequirement = { item: string; required: boolean; note?: string }
 export type TourAccommodation = {
   standard?: string;
   premium?: { description: string; additional_pkr: number };
+  return_tickets_included?: boolean;
+  visa_included?: boolean;
+  insurance_included?: boolean;
 };
 
 
@@ -369,7 +372,16 @@ function parseAccommodation(raw: unknown): TourAccommodation | undefined {
     const add = Number(p.additional_pkr ?? 0);
     if (desc) acc.premium = { description: desc, additional_pkr: Number.isFinite(add) ? add : 0 };
   }
-  return acc.standard || acc.premium ? acc : undefined;
+  if (typeof o.return_tickets_included === "boolean") {
+    acc.return_tickets_included = o.return_tickets_included;
+  }
+  if (typeof o.visa_included === "boolean") {
+    acc.visa_included = o.visa_included;
+  }
+  if (typeof o.insurance_included === "boolean") {
+    acc.insurance_included = o.insurance_included;
+  }
+  return acc.standard || acc.premium || typeof acc.return_tickets_included === "boolean" || typeof acc.visa_included === "boolean" || typeof acc.insurance_included === "boolean" ? acc : undefined;
 }
 
 // Fallback image lookup for tours (esp. seeded ones without image_url)
@@ -409,7 +421,33 @@ export function mapDbTour(row: DbTourRow): Tour {
     reviews: match?.reviews ?? 120,
     summary: row.description || match?.summary || "",
     itinerary: dbItinerary.length > 0 ? dbItinerary : match?.itinerary ?? [],
-    requirements: parseRequirements(row.requirements),
+    requirements: (() => {
+      const requirements = parseRequirements(row.requirements) || [];
+      const dest = row.destination_country || "";
+      if (dest.includes("-") || dest.includes(",") || dest.includes("/")) {
+        const countries = dest.split(/[-,\/]+/).map(c => c.trim()).filter(Boolean);
+        countries.forEach(country => {
+          const hasVisa = requirements.some(r => r.item.toLowerCase().includes("visa") && r.item.toLowerCase().includes(country.toLowerCase()));
+          if (!hasVisa && country.toLowerCase() !== "europe" && country.toLowerCase() !== "multi") {
+            requirements.push({
+              item: `Visa for ${country}`,
+              required: true,
+              note: `Separate visa filing required for entry into ${country}`,
+            });
+          }
+        });
+      } else if (dest.toLowerCase() === "europe") {
+        const hasSchengen = requirements.some(r => r.item.toLowerCase().includes("schengen") || r.item.toLowerCase().includes("visa"));
+        if (!hasSchengen) {
+          requirements.push({
+            item: "Schengen Visa",
+            required: true,
+            note: "Required for entry into Schengen zone countries",
+          });
+        }
+      }
+      return requirements;
+    })(),
     accommodation: parseAccommodation(row.accommodation),
     extraNotes: row.extra_notes ?? undefined,
   };

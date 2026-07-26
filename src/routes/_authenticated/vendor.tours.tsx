@@ -583,6 +583,28 @@ function VendorTours() {
                   <span className="inline-flex items-center gap-1"><Plane className="size-3" />{t.departure_city}</span>
                   <span className="inline-flex items-center gap-1"><Calendar className="size-3" />{t.duration_days}d</span>
                   <span className="inline-flex items-center gap-1"><Users className="size-3" />{t.total_seats} seats</span>
+                  {(() => {
+                    const acc = (t.accommodation && typeof t.accommodation === "object" ? t.accommodation as any : {});
+                    return (
+                      <>
+                        {acc.return_tickets_included === true && (
+                          <span className="inline-flex items-center gap-1 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-400">
+                            ✓ Return tickets
+                          </span>
+                        )}
+                        {acc.visa_included === true && (
+                          <span className="inline-flex items-center gap-1 rounded bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-sky-400">
+                            ✓ Visa included
+                          </span>
+                        )}
+                        {acc.insurance_included === true && (
+                          <span className="inline-flex items-center gap-1 rounded bg-violet-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-violet-400">
+                            ✓ Travel Insurance
+                          </span>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
                 <div className="mt-3 flex items-baseline justify-between">
                   <span className="text-lg font-semibold tabular-nums text-highlight">{formatPKR(Number(t.price_pkr))}</span>
@@ -1005,6 +1027,53 @@ function VendorTours() {
                             },
                           })} />
                       </div>
+                    </div>
+                    <div className="sm:col-span-2 pt-2 border-t border-border/40 space-y-2">
+                      <label className="flex items-center gap-2 cursor-pointer text-sm font-medium">
+                        <input
+                          type="checkbox"
+                          className="rounded border-border bg-surface text-primary focus:ring-primary size-4"
+                          checked={editing.accommodation.return_tickets_included ?? false}
+                          onChange={(e) => setEditing({
+                            ...editing,
+                            accommodation: {
+                              ...editing.accommodation,
+                              return_tickets_included: e.target.checked,
+                            },
+                          })}
+                        />
+                        <span>Return flight tickets included for the whole itinerary</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer text-sm font-medium">
+                        <input
+                          type="checkbox"
+                          className="rounded border-border bg-surface text-primary focus:ring-primary size-4"
+                          checked={editing.accommodation.visa_included ?? false}
+                          onChange={(e) => setEditing({
+                            ...editing,
+                            accommodation: {
+                              ...editing.accommodation,
+                              visa_included: e.target.checked,
+                            },
+                          })}
+                        />
+                        <span>Visa processing included in package</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer text-sm font-medium">
+                        <input
+                          type="checkbox"
+                          className="rounded border-border bg-surface text-primary focus:ring-primary size-4"
+                          checked={editing.accommodation.insurance_included ?? false}
+                          onChange={(e) => setEditing({
+                            ...editing,
+                            accommodation: {
+                              ...editing.accommodation,
+                              insurance_included: e.target.checked,
+                            },
+                          })}
+                        />
+                        <span>Travel Insurance included in package</span>
+                      </label>
                     </div>
                   </div>
                 </section>

@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Clock, MapPin, Plane, Star, Heart, GitCompare } from "lucide-react";
+import { Clock, MapPin, Plane, Star, Heart, GitCompare, Globe } from "lucide-react";
 import { toast } from "sonner";
 import type { Tour } from "@/lib/tours";
 import { formatPKR } from "@/lib/tours";
@@ -113,8 +113,18 @@ export function TourCard({ tour }: { tour: Tour }) {
 
         <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between text-white">
           <div className="min-w-0">
-            <div className="flex items-center gap-1 text-[11px] text-white/80">
-              <MapPin className="size-3" /> {tour.destination}
+            <div className="flex items-center gap-1.5 text-[11px] text-white/80">
+              {tour.destination.includes("-") || tour.destination.toLowerCase().includes("multi") || tour.destination.includes(",") || tour.destination.toLowerCase() === "europe" ? (
+                <>
+                  <Globe className="size-3 text-emerald-400 animate-pulse" />
+                  <span className="rounded bg-emerald-500/30 px-1 py-0.2 text-[8px] font-bold text-emerald-200 uppercase tracking-wider">Multi-Country</span>
+                  <span className="truncate">{tour.destination}</span>
+                </>
+              ) : (
+                <>
+                  <MapPin className="size-3" /> {tour.destination}
+                </>
+              )}
             </div>
             <h3 className="mt-0.5 truncate text-base font-semibold">{tour.title}</h3>
           </div>

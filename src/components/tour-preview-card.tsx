@@ -1,4 +1,4 @@
-import { Clock, MapPin, Plane, Star } from "lucide-react";
+import { Clock, MapPin, Plane, Star, Globe } from "lucide-react";
 import { TOURS, formatPKR, type Destination, type DepartureCity } from "@/lib/tours";
 import europeImg from "@/assets/tour-europe.jpg";
 
@@ -64,8 +64,18 @@ export function TourPreviewCard({ input }: { input: PreviewInput }) {
         </div>
         <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between text-white">
           <div className="min-w-0">
-            <div className="flex items-center gap-1 text-[11px] text-white/80">
-              <MapPin className="size-3" /> {input.destination_country || "Destination"}
+            <div className="flex items-center gap-1.5 text-[11px] text-white/80">
+              {input.destination_country?.includes("-") || input.destination_country?.toLowerCase().includes("multi") || input.destination_country?.includes(",") || input.destination_country?.toLowerCase() === "europe" ? (
+                <>
+                  <Globe className="size-3 text-emerald-400 animate-pulse" />
+                  <span className="rounded bg-emerald-500/30 px-1 py-0.2 text-[8px] font-bold text-emerald-200 uppercase tracking-wider">Multi-Country</span>
+                  <span className="truncate">{input.destination_country}</span>
+                </>
+              ) : (
+                <>
+                  <MapPin className="size-3" /> {input.destination_country || "Destination"}
+                </>
+              )}
             </div>
             <h3 className="mt-0.5 truncate text-base font-semibold">
               {input.title || "Untitled tour"}
