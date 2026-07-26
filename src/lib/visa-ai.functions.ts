@@ -36,7 +36,7 @@ export const lookupEmbassyFeeServer = createServerFn({ method: "POST" })
     const model = openRouterModel();
 
     try {
-      const { output } = await generateText({
+      const { text } = await generateText({
         model,
         prompt: `You are a Pakistani travel-industry researcher. A Lahore-based agency needs the current EMBASSY / VISA-CENTRE fee (government fee only, not agent service fee) for filing a visa application from Pakistan.
 
@@ -45,19 +45,23 @@ Visa type: ${data.visa_type}
 
 Return your best estimate based on the most recent publicly known embassy or VFS/TLS fee schedule you remember. Convert to Pakistani Rupees using a recent typical rate (roughly PKR 280/USD, PKR 300/EUR). Round to the nearest 500.
 
-Rules:
-- fee_pkr: integer PKR, or null if you truly have no basis.
-- fee_original: the original currency amount you converted from (e.g. "USD 185", "EUR 90", "GBP 127") or null.
-- source_note: ONE short sentence naming the source type (e.g. "Turkish e-Visa portal", "VFS Global Schengen fee for Pakistan", "UK gov.uk visa fee schedule") and any caveat.
-- confidence: low | medium | high — be honest; embassy fees change frequently.
-- last_known_update: rough date you last recall this fee changing (e.g. "2024 Q2"), or null.
+You MUST return your response as a valid, parsable JSON object matching this structure:
+{
+  "fee_pkr": number | null,
+  "fee_original": "e.g. USD 185, EUR 90, GBP 127" | null,
+  "source_note": "ONE short sentence naming the source type (e.g. Turkish e-Visa portal, VFS Global Schengen fee for Pakistan, UK gov.uk visa fee schedule) and any caveat.",
+  "confidence": "low" | "medium" | "high",
+  "last_known_update": "e.g. 2024 Q2" | null
+}
 
 Never invent a specific URL. Always caveat that the vendor must verify with the embassy before quoting the client.`,
-        output: Output.object({ schema: FeeSchema }),
+        responseFormat: "json",
       });
 
-      // Log usage against the "description" bucket (existing enum) since this
-      // is a lightweight text-generation call.
+      const parsed = JSON.parse(text);
+      const output = FeeSchema.parse(parsed);
+
+      // Log usage against the "description" bucket
       await context.supabase
         .from("ai_usage_events")
         .insert({ user_id: context.userId, kind: "description" });
@@ -71,9 +75,7 @@ Never invent a specific URL. Always caveat that the vendor must verify with the 
         disclaimer: "AI estimate based on last-known public fee schedules. Verify with the embassy or VFS/TLS centre before quoting the client — embassy fees change frequently.",
       };
     } catch (error) {
-      if (NoObjectGeneratedError.isInstance(error)) {
-        throw new Error("AI couldn't produce a reliable estimate. Please look it up manually.");
-      }
-      throw error;
+      console.error("AI Visa Fee Error:", error);
+      throw new Error("AI couldn't produce a reliable estimate. Please look it up manually.");
     }
   });
