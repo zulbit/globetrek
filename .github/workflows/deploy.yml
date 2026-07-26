@@ -24,9 +24,18 @@ jobs:
 
       - name: Build application
         env:
+          VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          SAFEPAY_API_KEY: ${{ secrets.SAFEPAY_API_KEY }}
+          SAFEPAY_SECRET_KEY: ${{ secrets.SAFEPAY_SECRET_KEY }}
+          SAFEPAY_WEBHOOK_SECRET: ${{ secrets.SAFEPAY_WEBHOOK_SECRET }}
+          SAFEPAY_ENV: ${{ secrets.SAFEPAY_ENV }}
+          WHATSAPP_API_KEY: ${{ secrets.WHATSAPP_API_KEY }}
         run: npm run build
 
       - name: Deploy to VPS via SSH
