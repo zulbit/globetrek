@@ -131,10 +131,9 @@ function VendorVisa() {
         </Button>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <StatTile label="Total listings" value={String(stats.total)} />
         <StatTile label="Active" value={String(stats.active)} />
-        <StatTile label="Category fee" value={`${formatPKR(300)} / unlock`} tone="sky" />
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-border">

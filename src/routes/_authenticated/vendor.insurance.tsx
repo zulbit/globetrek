@@ -126,10 +126,9 @@ function VendorInsurance() {
         </Button>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <Tile label="Total plans" value={String(stats.total)} />
         <Tile label="Active" value={String(stats.active)} />
-        <Tile label="Category fee" value={`${formatPKR(200)} / unlock`} />
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-border">

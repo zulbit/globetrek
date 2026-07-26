@@ -102,18 +102,7 @@ function VendorLeads() {
     return c;
   }, [data]);
 
-  const unlock = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.rpc("unlock_lead", { _lead_id: id });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Lead unlocked · 1 credit used");
-      qc.invalidateQueries({ queryKey: ["vendor-leads-poly"] });
-      qc.invalidateQueries({ queryKey: ["vendor-overview"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+
 
   function waLink(phone: string, subject: string) {
     const digits = phone.replace(/\D/g, "");
@@ -168,27 +157,16 @@ function VendorLeads() {
                 </div>
                 <div className="truncate text-xs text-muted-foreground">{subject}</div>
                 <div className="font-mono text-xs">
-                  {l.is_unlocked
-                    ? <span className="text-foreground">{l.customer_phone}</span>
-                    : <span className="select-none rounded-md bg-surface px-2 py-1 text-muted-foreground blur-sm">{l.customer_phone.replace(/./g, "•")}</span>}
+                  <span className="text-foreground">{l.customer_phone}</span>
                 </div>
                 <div className="flex justify-end gap-2">
-                  {l.is_unlocked ? (
-                    <>
-                      <a href={`tel:${l.customer_phone}`} className="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs hover:bg-surface/70">
-                        <Phone className="size-3.5" /> Call
-                      </a>
-                      <a href={waLink(l.customer_phone, subject)} target="_blank" rel="noreferrer"
-                        className="inline-flex items-center gap-1 rounded-md border border-primary/40 bg-primary/15 px-2.5 py-1.5 text-xs text-primary hover:bg-primary/25">
-                        <MessageCircle className="size-3.5" /> WhatsApp
-                      </a>
-                    </>
-                  ) : (
-                    <Button size="sm" disabled={unlock.isPending} onClick={() => unlock.mutate(l.id)} className="bg-primary text-primary-foreground hover:bg-primary/90">
-                      {unlock.isPending ? <Loader2 className="mr-1.5 size-3.5 animate-spin" /> : <Lock className="mr-1.5 size-3.5" />}
-                      Unlock (1 credit)
-                    </Button>
-                  )}
+                  <a href={`tel:${l.customer_phone}`} className="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs hover:bg-surface/70">
+                    <Phone className="size-3.5" /> Call
+                  </a>
+                  <a href={waLink(l.customer_phone, subject)} target="_blank" rel="noreferrer"
+                    className="inline-flex items-center gap-1 rounded-md border border-primary/40 bg-primary/15 px-2.5 py-1.5 text-xs text-primary hover:bg-primary/25">
+                    <MessageCircle className="size-3.5" /> WhatsApp
+                  </a>
                 </div>
               </div>
             );
