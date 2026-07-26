@@ -137,7 +137,11 @@ ${ctxLine}`,
         responseFormat: "json",
       });
 
-      const parsed = JSON.parse(text);
+      let cleaned = text.trim();
+      if (cleaned.startsWith("```")) {
+        cleaned = cleaned.replace(/^```[a-zA-Z]*\n/, "").replace(/\n```$/, "");
+      }
+      const parsed = JSON.parse(cleaned.trim());
       const output = PlanSchema.parse(parsed);
 
       // Clamp/normalize in code
