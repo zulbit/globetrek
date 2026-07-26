@@ -109,25 +109,38 @@ ${ctxLine}`,
 
     // mode === "plan"
     try {
-      const { output } = await generateText({
+      const { text } = await generateText({
         model,
         prompt: `You are a senior tour planner for GlobeTrek PK, a Pakistani travel marketplace selling international packages priced in PKR.
 
-Design a realistic day-by-day itinerary for the tour below. Return exactly ${data.duration_days} days (day numbering 1..${data.duration_days}). For each day:
-- title: short evocative title (e.g. "Istanbul arrival & Bosphorus cruise")
-- detail: 1-2 sentences summarising the day (transfers, meals, main sights)
-- activities: 3 to 6 time-slotted entries. time is 24h "HH:MM" local destination time. title is a short action (e.g. "Airport pickup & hotel check-in", "Lunch at old bazaar", "Blue Mosque visit").
+Design a realistic day-by-day itinerary for the tour below. Return exactly ${data.duration_days} days (day numbering 1..${data.duration_days}).
+
+You MUST return your response as a valid, parsable JSON object matching this structure:
+{
+  "description": "one crisp marketing paragraph (~60 words, plain text, no markdown)",
+  "itinerary": [
+    {
+      "day": number,
+      "title": "short evocative title (e.g. 'Istanbul arrival & Bosphorus cruise')",
+      "detail": "1-2 sentences summarising the day (transfers, meals, main sights)",
+      "activities": [
+        { "time": "HH:MM", "title": "short action (e.g. 'Airport pickup & hotel check-in')" }
+      ]
+    }
+  ]
+}
 
 Day 1 must begin with departure from ${data.departure_city} and arrival at the destination airport. The final day must include the return flight home to ${data.departure_city}.
 
-Also write a description: one crisp marketing paragraph (~60 words, plain text, no markdown).
-
 Tour context:
 ${ctxLine}`,
-        output: Output.object({ schema: PlanSchema }),
+        responseFormat: "json",
       });
 
-      // Clamp/normalize in code (schema stays constraint-free per gateway rules).
+      const parsed = JSON.parse(text);
+      const output = PlanSchema.parse(parsed);
+
+      // Clamp/normalize in code
       const days = Math.max(1, Math.min(60, Number(data.duration_days) || 1));
       const itinerary = (output.itinerary ?? [])
         .slice(0, days)
@@ -148,9 +161,7 @@ ${ctxLine}`,
       };
 
     } catch (error) {
-      if (NoObjectGeneratedError.isInstance(error)) {
-        throw new Error("AI couldn't produce a valid plan this time — try again.");
-      }
-      throw error;
+      console.error("AI Plan Error:", error);
+      throw new Error("AI couldn't produce a valid plan this time — try again.");
     }
   });

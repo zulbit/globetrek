@@ -57,7 +57,10 @@ type TourRow = {
 type VendorOption = { id: string; label: string };
 
 const DESTINATIONS = [
-  "Turkey", "Thailand", "UAE", "Singapore", "Vietnam", "Malaysia", "UK", "Europe",
+  "Turkey", "Thailand", "UAE", "Saudi Arabia", "Malaysia", "Singapore", "Vietnam", "Maldives",
+  "Azerbaijan", "UK", "USA", "Canada", "Europe", "Switzerland", "Germany", "France", "Italy",
+  "Spain", "Japan", "China", "Australia", "Indonesia", "Sri Lanka", "Egypt", "Kenya", "South Africa",
+  "Qatar", "Bahrain", "Oman", "Kuwait"
 ];
 const DEPARTURE_CITIES = ["Karachi", "Lahore", "Islamabad"];
 
@@ -854,17 +857,15 @@ function AdminTours() {
                 </div>
                 <div>
                   <Label>Destination</Label>
-                  <Select
+                  <Input
                     value={editing.destination_country}
-                    onValueChange={(v) => setEditing({ ...editing, destination_country: v })}
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {DESTINATIONS.map((d) => (
-                        <SelectItem key={d} value={d}>{d}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={(e) => setEditing({ ...editing, destination_country: e.target.value })}
+                    placeholder="e.g. Turkey, Switzerland, Japan"
+                    list="admin-global-countries"
+                  />
+                  <datalist id="admin-global-countries">
+                    {DESTINATIONS.map((d) => <option key={d} value={d} />)}
+                  </datalist>
                 </div>
                 <div>
                   <Label>Departure city</Label>

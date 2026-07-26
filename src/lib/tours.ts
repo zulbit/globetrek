@@ -8,15 +8,7 @@ import uk from "@/assets/tour-uk.jpg";
 import malaysia from "@/assets/tour-malaysia.jpg";
 
 export type TourType = "Honeymoon" | "Family" | "Cultural" | "Adventure" | "City Break";
-export type Destination =
-  | "Turkey"
-  | "Thailand"
-  | "UAE"
-  | "Singapore"
-  | "Vietnam"
-  | "Malaysia"
-  | "UK"
-  | "Europe";
+export type Destination = string;
 export type DepartureCity = "Lahore" | "Karachi" | "Islamabad";
 
 export interface Tour {
@@ -50,7 +42,10 @@ export type TourAccommodation = {
 
 
 export const DESTINATIONS: Destination[] = [
-  "Turkey", "Thailand", "UAE", "Singapore", "Vietnam", "Malaysia", "UK", "Europe",
+  "Turkey", "Thailand", "UAE", "Saudi Arabia", "Malaysia", "Singapore", "Vietnam", "Maldives",
+  "Azerbaijan", "UK", "USA", "Canada", "Europe", "Switzerland", "Germany", "France", "Italy",
+  "Spain", "Japan", "China", "Australia", "Indonesia", "Sri Lanka", "Egypt", "Kenya", "South Africa",
+  "Qatar", "Bahrain", "Oman", "Kuwait"
 ];
 export const TOUR_TYPES: TourType[] = ["Honeymoon", "Family", "Cultural", "Adventure", "City Break"];
 export const DEPARTURE_CITIES: DepartureCity[] = ["Lahore", "Karachi", "Islamabad"];
