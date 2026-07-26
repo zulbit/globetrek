@@ -365,6 +365,7 @@ ${ticketsCatalogText}`;
         // and returns the complete text once all maxSteps are resolved.
         // The widget collects bytes anyway, so streaming gives no UX benefit.
         let fullText: string;
+        let leadCaptured = false;
         try {
           const result = await generateText({
             model: openRouterModel(),
@@ -380,12 +381,28 @@ ${ticketsCatalogText}`;
             .filter(Boolean)
             .join("\n\n");
           fullText = result.text?.trim() ? result.text : allStepsText;
+
+          // Detect if capture_lead tool was called successfully (gpt-4o-mini often
+          // doesn't generate text after calling a tool, so we inject confirmation).
+          const leadResult = result.steps
+            .flatMap((s) => (s.toolResults as Array<{ toolName: string; result: { success?: boolean; lead_id?: string } }> | undefined) ?? [])
+            .find((r) => r.toolName === "capture_lead" && r.result?.success);
+          if (leadResult) {
+            leadCaptured = true;
+            if (!fullText?.trim()) {
+              fullText =
+                "✅ **Shukriya! Aapki inquiry successfully record ho gayi hai!** 🎉\n\n" +
+                "Hamara team bahut jald — usually **24 ghante ke andar** — aap se phone par contact karega.\n\n" +
+                "Kya aur kuch madad chahiye?\n\n" +
+                "[[choose: 🌴 More Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]";
+            }
+          }
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           fullText = `Sorry, a server error occurred: ${msg}`;
         }
 
-        if (!fullText?.trim()) {
+        if (!leadCaptured && !fullText?.trim()) {
           fullText = "Maafi chahta hoon, mujhe samajh nahi aaya. 🙏 Please try: 'UAE tour packages', 'Turkey visa details', or 'Travel insurance plans'.";
         }
 
