@@ -206,16 +206,19 @@ export const verifyLeadUnlockPayment = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // 1. Fetch pending payment record
-    const { data: payment, error: payErr } = await supabaseAdmin
+    // 1. Fetch most recent pending payment record (handles duplicate payments gracefully)
+    const { data: payments, error: payErr } = await supabaseAdmin
       .from("lead_unlock_payments")
-      .select("id, lead_id, vendor_id, payment_intent_id, status")
+      .select("id, lead_id, vendor_id, payment_intent_id, status, created_at")
       .eq("lead_id", data.leadId)
       .eq("vendor_id", vendorId)
       .eq("status", "pending")
-      .maybeSingle();
+      .order("created_at", { ascending: false })
+      .limit(1);
 
     if (payErr) throw new Error(payErr.message);
+    const payment = payments?.[0] ?? null;
+
     if (!payment) {
       // Check if already unlocked
       const { data: purchase } = await supabaseAdmin
