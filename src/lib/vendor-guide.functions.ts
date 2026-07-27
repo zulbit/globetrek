@@ -17,13 +17,72 @@ export interface VendorGuideSection {
 
 export const FALLBACK_VENDOR_GUIDE_SECTIONS: VendorGuideSection[] = [
   {
+    id: "fallback-0",
+    slug: "introduction-ecosystem-overview",
+    title: "Introduction to the GlobeTrek Ecosystem",
+    category: "Onboarding & Setup",
+    description: "Welcome to GlobeTrek PK — understanding the vision, digital architecture, operating model, and commercial benefits for Pakistani travel agencies.",
+    icon_name: "BookOpen",
+    display_order: 1,
+    is_published: true,
+    content: `# Introduction to the GlobeTrek Ecosystem
+
+Welcome to **GlobeTrek PK** — Pakistan's premier digital B2B marketplace and AI-powered travel ecosystem. Built specifically for verified Pakistani tour operators, visa consultants, travel insurance brokers, and ticketing desks, GlobeTrek PK bridges the traditional gap between ambitious travel agencies and digital-first travelers across Pakistan and the international diaspora.
+
+---
+
+### What is the GlobeTrek Portal & Ecosystem?
+
+GlobeTrek PK is a unified digital infrastructure designed to modernize travel commerce in Pakistan. Historically, travel agencies faced high customer acquisition costs, fragmented WhatsApp communication, manual quotation crafting, and payment collection friction. 
+
+GlobeTrek PK unifies these operations into a single, high-performance web platform featuring transparent pricing in Pakistani Rupees (**PKR**), automated bilingual AI concierges, real-time custom lead bidding, and direct SafePay digital settlements.
+
+> [!NOTE]
+> **The GlobeTrek Core Philosophy**: We do not compete with travel agencies — we empower them. GlobeTrek PK operates on a partner-first model where verified agencies maintain direct client relationships while leveraging enterprise-grade AI and automated lead generation.
+
+---
+
+### How the Ecosystem Operates
+
+The platform operates across four synchronized pillars to drive continuous lead flow and agency efficiency:
+
+1. **Marketplace Discovery & Universal Search**: Travelers browse multi-category services (Tour Packages, Visas, Travel Insurance, and Flights) categorized by country, departure city, and budget in PKR with 0% hidden FX conversion fees.
+2. **AI-Powered Lead Engine**: Our built-in bilingual (English & Roman Urdu) AI Concierge engages web visitors 24/7, answering destination questions, providing visa guidance, and capturing qualified customer contact leads.
+3. **Custom Lead Bidding Desk**: Travelers requesting bespoke group itineraries submit custom requests. Verified vendors receive real-time alerts and submit structured online quotations directly to traveler WhatsApp inboxes.
+4. **Verified Partner Governance**: Every agency undergoes rigorous Department of Tourist Services (**DTS**) and NTN verification, building immense traveler trust and ensuring a high-quality marketplace standard.
+
+---
+
+### Key Commercial Benefits for GlobeTrek Vendors
+
+Partnering with GlobeTrek PK grants your travel agency an unfair competitive advantage in the Pakistani market:
+
+#### 1. High-Intent Direct Customer Leads
+Eliminate wasted ad spend. GlobeTrek PK delivers pre-qualified traveler leads directly to your vendor dashboard and WhatsApp inbox with full travel dates, group size, and PKR budget details.
+
+#### 2. AI-Driven Tour Generation & Efficiency
+Cut itinerary creation time from hours to seconds. Our integrated AI tools generate day-by-day itineraries, lookup live embassy visa requirements, and draft compelling package descriptions.
+
+#### 3. Transparent PKR Pricing & Fast SafePay Payouts
+Build instant customer confidence with transparent PKR pricing. Process debit/credit card and mobile wallet payments seamlessly through integrated SafePay QuickLinks V2 with zero hidden FX markup.
+
+#### 4. Tiered Growth & Scalable Subscription Plans
+Whether you are a specialized visa desk (Starter Plan) or a national tour operator (Pro/Agency Plan), select flexible subscription tiers designed to match your agency scale and lead requirements.
+
+---
+
+### Navigating This Operating Manual
+
+This guide provides step-by-step procedures for every operational facet of the platform. Use the chapter sidebar to explore **KYC Verification**, **Custom Lead Bidding**, **Dashboard Analytics**, **SafePay Payouts**, **Quality Standards**, and **AI Engine Tools**. You can also ask any operational question to the **AI Partner Assistant** embedded above.`
+  },
+  {
     id: "fallback-1",
     slug: "vendor-onboarding-kyc",
     title: "Vendor Registration & Verification (KYC)",
     category: "Onboarding & Setup",
     description: "Complete guide to joining GlobeTrek PK as a verified Tour Operator, Visa Desk, Insurance Partner, or Ticketing Desk.",
     icon_name: "UserCheck",
-    display_order: 1,
+    display_order: 2,
     is_published: true,
     content: `# Vendor Registration & Verification (KYC)
 
