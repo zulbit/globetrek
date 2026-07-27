@@ -4,9 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchVendorGuideSections, VendorGuideSection } from "@/lib/vendor-guide.functions";
+import { askVendorGuideAIServer } from "@/lib/guide-ai.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -23,12 +23,13 @@ import {
   Compass,
   Edit3,
   Calculator,
-  ChevronRight,
   Sparkles,
-  ArrowRight,
-  CheckCircle2,
-  FileText,
+  Send,
+  Loader2,
+  Bot,
+  HelpCircle,
 } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/vendor-guide")({
   component: VendorGuidePage,
@@ -38,7 +39,7 @@ export const Route = createFileRoute("/vendor-guide")({
       {
         name: "description",
         content:
-          "Official partner operating guide for tour operators, visa consultants, insurance brokers, and ticketing desks on GlobeTrek PK. Onboarding, KYC, custom lead bidding, SafePay payouts, and ROI calculator.",
+          "Official partner operating guide for tour operators, visa consultants, insurance brokers, and ticketing desks on GlobeTrek PK. Onboarding, KYC, custom lead bidding, SafePay payouts, AI tools, and ROI calculator.",
       },
     ],
   }),
@@ -52,13 +53,26 @@ const ICON_MAP: Record<string, any> = {
   Building2,
   Wallet,
   Compass,
+  Sparkles,
   BookOpen,
 };
+
+const SUGGESTED_AI_PROMPTS = [
+  "What documents are required for vendor KYC verification?",
+  "How does the Max 3 lead unlock cap work?",
+  "SafePay payment lead unlock procedure kitna time leta hai?",
+  "How can I generate AI itineraries for my tour packages?",
+];
 
 function VendorGuidePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [activeSlug, setActiveSlug] = useState<string>("vendor-onboarding-kyc");
+
+  // AI Assistant State
+  const [aiQuestion, setAiQuestion] = useState("");
+  const [aiAnswer, setAiAnswer] = useState<string | null>(null);
+  const [isAskingAI, setIsAskingAI] = useState(false);
 
   // Calculator State for Lead ROI Simulator
   const [monthlyLeadsCount, setMonthlyLeadsCount] = useState<number>(10);
@@ -109,6 +123,25 @@ function VendorGuidePage() {
   const activeSection = useMemo(() => {
     return sections.find((s) => s.slug === activeSlug) || sections[0];
   }, [sections, activeSlug]);
+
+  // Handle Ask AI Assistant
+  const handleAskAI = async (queryText?: string) => {
+    const q = (queryText || aiQuestion).trim();
+    if (!q) return;
+
+    setIsAskingAI(true);
+    setAiQuestion(q);
+
+    try {
+      const res = await askVendorGuideAIServer({ data: { question: q } });
+      setAiAnswer(res.answer);
+      toast.success("AI Partner Assistant answered your query!");
+    } catch (err: any) {
+      toast.error(`AI Assistant error: ${err.message}`);
+    } finally {
+      setIsAskingAI(false);
+    }
+  };
 
   // Handle PDF Print
   const handlePrintPDF = () => {
@@ -179,13 +212,13 @@ function VendorGuidePage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2 max-w-3xl">
               <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-xs font-bold text-primary">
-                <Sparkles className="size-3.5" /> Master Partner Operating Documentation
+                <Sparkles className="size-3.5" /> Master Partner Operating Documentation &amp; AI Assistant
               </div>
               <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
                 GlobeTrek PK Vendor Operating Guide
               </h1>
               <p className="text-sm text-muted-foreground">
-                Everything you need to know about registration, KYC verification, bidding on verified custom tour leads, submitting online quotations, and SafePay payouts.
+                Detailed step-by-step procedures for partner onboarding, KYC compliance, custom lead bidding, SafePay payouts, and built-in OpenRouter AI tools.
               </p>
             </div>
 
@@ -209,7 +242,7 @@ function VendorGuidePage() {
                 size="sm"
                 variant={selectedCategory === cat ? "default" : "outline"}
                 onClick={() => setSelectedCategory(cat)}
-                className="text-xs rounded-xl h-8"
+                className="text-xs rounded-xl h-8 font-semibold"
               >
                 {cat}
               </Button>
@@ -221,14 +254,14 @@ function VendorGuidePage() {
       {/* Main Body: Sidebar Navigation + Content Area */}
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Sidebar Table of Contents */}
-        <aside className="lg:col-span-4 space-y-4 print:hidden">
+        <aside className="lg:col-span-4 space-y-6 print:hidden">
           <div className="sticky top-24 space-y-4">
             <div className="rounded-2xl border border-border bg-card p-4 shadow-sm space-y-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <BookOpen className="size-4 text-primary" /> Guide Chapters ({filteredSections.length})
               </h3>
 
-              <div className="space-y-1 max-h-[60vh] overflow-y-auto pr-1">
+              <div className="space-y-1 max-h-[50vh] overflow-y-auto pr-1">
                 {filteredSections.map((sec) => {
                   const IconComp = ICON_MAP[sec.icon_name] || BookOpen;
                   const isActive = sec.slug === activeSlug;
@@ -268,6 +301,76 @@ function VendorGuidePage() {
 
         {/* Right Main Content Panel */}
         <section className="lg:col-span-8 space-y-8">
+          {/* AI Partner Assistant Interactive Q&A Box */}
+          <div className="rounded-3xl border border-purple-500/30 bg-gradient-to-br from-purple-500/10 via-card to-card p-6 sm:p-8 shadow-sm space-y-5 print:hidden">
+            <div className="flex items-center justify-between gap-4 border-b border-border/80 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-2xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                  <Bot className="size-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                    AI Partner Operational Assistant
+                    <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-[10px]">OpenRouter AI</Badge>
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Ask any operational question in English or Roman Urdu to get instant structured guidance.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Suggested Prompt Chips */}
+            <div className="space-y-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                <HelpCircle className="size-3 text-purple-400" /> Suggested Quick Prompts:
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {SUGGESTED_AI_PROMPTS.map((promptText, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleAskAI(promptText)}
+                    className="text-[11px] text-left rounded-xl bg-surface/80 hover:bg-purple-500/20 border border-border/80 hover:border-purple-500/30 px-3 py-1.5 text-foreground transition-all"
+                  >
+                    💡 {promptText}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Input Form */}
+            <div className="flex gap-2">
+              <Input
+                placeholder="Ask about KYC, SafePay payouts, custom lead limits, or AI tools..."
+                value={aiQuestion}
+                onChange={(e) => setAiQuestion(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAskAI()}
+                className="text-xs rounded-xl bg-card border-border flex-1"
+              />
+              <Button
+                onClick={() => handleAskAI()}
+                disabled={isAskingAI || !aiQuestion.trim()}
+                className="gap-1.5 font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white rounded-xl"
+              >
+                {isAskingAI ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+                Ask AI
+              </Button>
+            </div>
+
+            {/* AI Answer Display */}
+            {aiAnswer && (
+              <div className="rounded-2xl border border-purple-500/30 bg-purple-500/10 p-5 space-y-2 text-xs leading-relaxed">
+                <div className="flex items-center gap-2 font-bold text-purple-300">
+                  <Sparkles className="size-4" /> AI Partner Assistant Response:
+                </div>
+                <div className="prose prose-sm dark:prose-invert max-w-none text-xs text-foreground">
+                  <ReactMarkdown>{aiAnswer}</ReactMarkdown>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Main Active Chapter Content */}
           {isLoading ? (
             <div className="flex items-center justify-center py-20 text-sm text-muted-foreground">
               <div className="animate-spin mr-2 size-5 border-2 border-primary border-t-transparent rounded-full" />
@@ -287,7 +390,7 @@ function VendorGuidePage() {
                 <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
                   {activeSection.title}
                 </h2>
-                <p className="text-xs sm:text-sm text-muted-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground font-medium">
                   {activeSection.description}
                 </p>
               </div>

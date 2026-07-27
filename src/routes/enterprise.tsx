@@ -1,9 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { generateEnterpriseDemoAIServer } from "@/lib/guide-ai.functions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import ReactMarkdown from "react-markdown";
 import {
   ShieldCheck,
   Building2,
@@ -25,7 +28,12 @@ import {
   FileCheck,
   Ticket,
   BookOpen,
+  Bot,
+  Loader2,
+  Wand2,
+  Cpu,
 } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/enterprise")({
   component: EnterpriseShowcase,
@@ -152,6 +160,28 @@ function EnterpriseShowcase() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
+  // AI Demo Generator State
+  const [demoDestination, setDemoDestination] = useState("Hunza & Skardu Valley");
+  const [demoDuration, setDemoDuration] = useState<number>(5);
+  const [demoItinerary, setDemoItinerary] = useState<string | null>(null);
+  const [isGeneratingDemo, setIsGeneratingDemo] = useState(false);
+
+  const handleGenerateAIDemo = async () => {
+    if (!demoDestination.trim()) return;
+    setIsGeneratingDemo(true);
+    try {
+      const res = await generateEnterpriseDemoAIServer({
+        data: { destination: demoDestination, duration_days: demoDuration },
+      });
+      setDemoItinerary(res.itinerary);
+      toast.success("Generated AI Itinerary Demo!");
+    } catch (err: any) {
+      toast.error(`AI Demo error: ${err.message}`);
+    } finally {
+      setIsGeneratingDemo(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header Bar */}
@@ -182,15 +212,15 @@ function EnterpriseShowcase() {
       <section className="relative overflow-hidden py-16 sm:py-24 border-b bg-gradient-to-b from-primary/10 via-background to-background">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center space-y-6">
           <Badge className="bg-primary/20 text-primary border border-primary/30 font-bold px-3 py-1 text-xs">
-            ⚡ Enterprise B2B Travel Marketplace Stack
+            ⚡ Enterprise B2B Travel Marketplace &amp; AI Engine Stack
           </Badge>
 
           <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-foreground max-w-4xl mx-auto leading-tight">
-            The Modern Travel Marketplace Engine for Tour Operators &amp; Agencies
+            The Modern B2B Travel Marketplace Engine for Tour Operators &amp; Agencies
           </h1>
 
           <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
-            A high-performance Server-Side Rendered platform built with TanStack Start, React 19, Supabase RLS, SafePay Gateway, WhatsApp Automation, and Bilingual AI Concierge.
+            A high-performance Server-Side Rendered platform built with TanStack Start, React 19, Supabase RLS, SafePay Gateway, WhatsApp Automation, and OpenRouter AI.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
@@ -209,6 +239,71 @@ function EnterpriseShowcase() {
         </div>
       </section>
 
+      {/* Interactive AI Itinerary Generator Demo Widget */}
+      <section className="py-16 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="rounded-3xl border border-purple-500/40 bg-gradient-to-br from-purple-500/10 via-card to-card p-6 sm:p-10 shadow-card space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
+            <div className="space-y-1">
+              <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-xs font-bold gap-1">
+                <Wand2 className="size-3.5" /> Interactive AI Technology Demo
+              </Badge>
+              <h2 className="text-2xl font-extrabold text-foreground">
+                Test the OpenRouter AI Tour Generator Live
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Experience how GlobeTrek's embedded AI creates instant, marketing-ready itineraries for tour vendors.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">Destination Name</label>
+              <Input
+                placeholder="e.g. Hunza Valley, Skardu, Turkey"
+                value={demoDestination}
+                onChange={(e) => setDemoDestination(e.target.value)}
+                className="text-xs rounded-xl bg-card border-border"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">Duration (Days)</label>
+              <Input
+                type="number"
+                min={1}
+                max={15}
+                value={demoDuration}
+                onChange={(e) => setDemoDuration(parseInt(e.target.value, 10) || 5)}
+                className="text-xs rounded-xl bg-card border-border"
+              />
+            </div>
+
+            <div className="flex items-end">
+              <Button
+                onClick={handleGenerateAIDemo}
+                disabled={isGeneratingDemo || !demoDestination.trim()}
+                className="w-full h-10 gap-2 font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white rounded-xl"
+              >
+                {isGeneratingDemo ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+                Generate AI Itinerary Demo
+              </Button>
+            </div>
+          </div>
+
+          {demoItinerary && (
+            <div className="rounded-2xl border border-purple-500/30 bg-purple-500/10 p-6 space-y-3">
+              <div className="flex items-center gap-2 font-bold text-purple-300 text-sm">
+                <Bot className="size-4" /> OpenRouter AI Generated Itinerary Preview:
+              </div>
+              <div className="prose prose-sm dark:prose-invert max-w-none text-xs text-foreground leading-relaxed">
+                <ReactMarkdown>{demoItinerary}</ReactMarkdown>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* Screenshot Showcase Gallery */}
       <section className="py-16 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
         <div className="text-center space-y-2 max-w-2xl mx-auto">
@@ -218,7 +313,7 @@ function EnterpriseShowcase() {
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
             Inspected Platform Interfaces
           </h2>
-          <p className="text-xs sm:text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground font-medium">
             Clean, responsive UI design built with custom CSS design tokens, dynamic charts, and micro-animations.
           </p>
         </div>
@@ -235,7 +330,6 @@ function EnterpriseShowcase() {
                   alt={s.title}
                   className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
                   onError={(e) => {
-                    // Fallback visual container if image loading
                     (e.target as HTMLElement).style.display = "none";
                   }}
                 />
@@ -248,16 +342,16 @@ function EnterpriseShowcase() {
                 </button>
               </div>
 
-              <div className="p-4 space-y-1">
+              <div className="p-4 space-y-1.5">
                 <h3 className="font-bold text-sm text-foreground">{s.title}</h3>
-                <p className="text-xs text-muted-foreground line-clamp-2">{s.caption}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{s.caption}</p>
               </div>
             </Card>
           ))}
         </div>
       </section>
 
-      {/* Technology Stack Matrix */}
+      {/* Technology Stack Matrix with Heading & Detail Layout */}
       <section className="py-16 border-t bg-surface/50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center space-y-2 max-w-2xl mx-auto">
@@ -265,8 +359,11 @@ function EnterpriseShowcase() {
               Core Tech Stack
             </Badge>
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Production Architecture
+              Production Architecture &amp; Engine Breakdown
             </h2>
+            <p className="text-xs text-muted-foreground font-medium">
+              Every layer optimized for speed, reliability, and B2B scalability across Pakistan.
+            </p>
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -274,8 +371,11 @@ function EnterpriseShowcase() {
               <div className="size-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-lg">
                 ⚡
               </div>
-              <h3 className="font-bold text-base">TanStack Start &amp; React 19</h3>
-              <p className="text-xs text-muted-foreground">
+              <h3 className="font-bold text-base text-foreground">TanStack Start &amp; React 19</h3>
+              <p className="text-xs text-muted-foreground font-medium">
+                <strong>Heading: Edge SSR Performance</strong>
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 Ultra-fast Server-Side Rendering (SSR) powered by Nitro `node-server` preset for optimal SEO and instant page loads.
               </p>
             </Card>
@@ -284,9 +384,12 @@ function EnterpriseShowcase() {
               <div className="size-10 rounded-2xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold text-lg">
                 🛡️
               </div>
-              <h3 className="font-bold text-base">Supabase Security Definer</h3>
-              <p className="text-xs text-muted-foreground">
-                Row Level Security (RLS) policies protecting vendor lead purchases, custom tour proposals, and profiles.
+              <h3 className="font-bold text-base text-foreground">Supabase Security Definer</h3>
+              <p className="text-xs text-muted-foreground font-medium">
+                <strong>Heading: Row Level Security (RLS)</strong>
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Row Level Security policies protecting vendor lead purchases, custom tour proposals, and profiles.
               </p>
             </Card>
 
@@ -294,19 +397,25 @@ function EnterpriseShowcase() {
               <div className="size-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-lg">
                 💳
               </div>
-              <h3 className="font-bold text-base">SafePay Gateway Integration</h3>
-              <p className="text-xs text-muted-foreground">
+              <h3 className="font-bold text-base text-foreground">SafePay Gateway Integration</h3>
+              <p className="text-xs text-muted-foreground font-medium">
+                <strong>Heading: Automated PKR Payouts</strong>
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 Native PKR gateway checkout for vendor subscriptions and custom lead unlocks with automated webhook reconciliation.
               </p>
             </Card>
 
             <Card className="p-6 space-y-3 border-border bg-card">
               <div className="size-10 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-lg">
-                💬
+                🤖
               </div>
-              <h3 className="font-bold text-base">WhatsApp API &amp; AI Concierge</h3>
-              <p className="text-xs text-muted-foreground">
-                Automated instant WhatsApp receipts, quote notifications, and bilingual AI concierge travel assistant.
+              <h3 className="font-bold text-base text-foreground">OpenRouter AI &amp; WhatsApp API</h3>
+              <p className="text-xs text-muted-foreground font-medium">
+                <strong>Heading: Bilingual NLP &amp; WhatsApp</strong>
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Automated instant WhatsApp receipts, quote notifications, and bilingual (English &amp; Roman Urdu) AI Concierge.
               </p>
             </Card>
           </div>

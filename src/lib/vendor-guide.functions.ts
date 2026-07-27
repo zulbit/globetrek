@@ -169,6 +169,35 @@ To protect traveler confidence across Pakistan, all GlobeTrek PK partner agencie
 2. **Timely Quotations**: Custom tour lead quotations must be submitted within **12 hours** of unlocking a lead.
 3. **No Unsolicited Spam**: Travelers' contact details unlocked via custom leads must be used strictly for requested travel inquiries.
 4. **Honest Hotel Ratings**: Hotel star ratings listed in tour packages must match official hotel classifications.`
+  },
+  {
+    id: "fallback-6",
+    slug: "ai-tools-itinerary-generator",
+    title: "AI Concierge & Automated Itinerary Generator Tools",
+    category: "AI Tools & Automation",
+    description: "Leveraging GlobeTrek's OpenRouter AI engine to autogenerate multi-day itineraries, package descriptions, and bilingual customer chat.",
+    icon_name: "Sparkles",
+    display_order: 6,
+    is_published: true,
+    content: `# AI Concierge & Automated Itinerary Generator Tools
+
+GlobeTrek PK incorporates built-in **Artificial Intelligence Tools** powered by OpenRouter (\`openai/gpt-4o-mini\`) to save travel vendors hours of manual writing.
+
+---
+
+### 1. Automated Tour Itinerary & Description Generator
+When creating or editing a tour package in your Vendor Console:
+- Simply enter the destination country, departure city, duration (days), and base price (PKR).
+- Click **"Generate AI Description & Plan"**.
+- The AI automatically drafts a rich, marketing-optimized package summary and a day-by-day activity plan tailored to Pakistani travelers.
+
+---
+
+### 2. Bilingual Customer AI Concierge
+The platform features an embedded AI Concierge widget (`/api/ai-chat`):
+- Operates fluently in both **English** and **Roman Urdu** (e.g., *"Mujhe Skardu ka 5-day tour package dikhao"*).
+- Scans live catalog listings across Tours, Visa Filing, Insurance, and Flight Desks.
+- Directly routes interested travelers to your agency's listing or custom lead bidding inbox.`
   }
 ];
 
