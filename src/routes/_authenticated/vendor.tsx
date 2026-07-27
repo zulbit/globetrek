@@ -2,7 +2,7 @@ import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard, Package, Inbox, CreditCard, Settings2,
-  FileCheck, Shield, Ticket,
+  FileCheck, Shield, Ticket, BookOpen,
 } from "lucide-react";
 import { DashboardShell, type NavItem } from "@/components/dashboard-shell";
 import { RoleGuard } from "@/components/role-guard";
