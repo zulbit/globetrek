@@ -444,32 +444,50 @@ function VendorLeads() {
                         </div>
 
                         <div className="flex gap-2">
-                          <Button
-                            className="flex-1 gap-2 bg-gradient-to-r from-amber-500 to-primary text-white shadow-glow hover:from-amber-600 hover:to-primary/90"
-                            disabled={unlockMutation.isPending}
-                            onClick={() => unlockMutation.mutate(l.id)}
-                          >
-                            {unlockMutation.isPending ? (
-                              <Loader2 className="size-4 animate-spin" />
-                            ) : (
-                              <Lock className="size-4" />
-                            )}
-                            Unlock Lead Info — ₨ 5,000
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="border-primary/20 hover:bg-primary/5 hover:text-primary gap-1.5"
-                            disabled={verifyPaymentMutation.isPending}
-                            onClick={() => verifyPaymentMutation.mutate(l.id)}
-                            title="Verify if you have already completed payment"
-                          >
-                            {verifyPaymentMutation.isPending ? (
-                              <Loader2 className="size-4 animate-spin" />
-                            ) : (
-                              <RefreshCw className="size-4" />
-                            )}
-                            Verify Payment
-                          </Button>
+                          {l.has_pending_payment ? (
+                            // Payment was initiated but not yet verified — only show Verify
+                            <Button
+                              className="flex-1 gap-2 bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow hover:from-amber-600 hover:to-amber-700"
+                              disabled={verifyPaymentMutation.isPending}
+                              onClick={() => verifyPaymentMutation.mutate(l.id)}
+                            >
+                              {verifyPaymentMutation.isPending ? (
+                                <Loader2 className="size-4 animate-spin" />
+                              ) : (
+                                <RefreshCw className="size-4" />
+                              )}
+                              Confirm Payment &amp; Unlock
+                            </Button>
+                          ) : (
+                            <>
+                              <Button
+                                className="flex-1 gap-2 bg-gradient-to-r from-amber-500 to-primary text-white shadow-glow hover:from-amber-600 hover:to-primary/90"
+                                disabled={unlockMutation.isPending}
+                                onClick={() => unlockMutation.mutate(l.id)}
+                              >
+                                {unlockMutation.isPending ? (
+                                  <Loader2 className="size-4 animate-spin" />
+                                ) : (
+                                  <Lock className="size-4" />
+                                )}
+                                Unlock Lead Info — ₨ 5,000
+                              </Button>
+                              <Button
+                                variant="outline"
+                                className="border-primary/20 hover:bg-primary/5 hover:text-primary gap-1.5"
+                                disabled={verifyPaymentMutation.isPending}
+                                onClick={() => verifyPaymentMutation.mutate(l.id)}
+                                title="Verify if you have already completed payment"
+                              >
+                                {verifyPaymentMutation.isPending ? (
+                                  <Loader2 className="size-4 animate-spin" />
+                                ) : (
+                                  <RefreshCw className="size-4" />
+                                )}
+                                Verify Payment
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </div>
                     )}

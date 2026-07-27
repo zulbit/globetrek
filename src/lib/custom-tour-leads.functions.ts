@@ -19,6 +19,7 @@ export interface CustomTourLead {
   status: string;
   created_at: string;
   is_unlocked: boolean;
+  has_pending_payment: boolean;
   contact_name?: string;
   contact_email?: string;
   contact_phone?: string;
@@ -48,7 +49,15 @@ export const getMarketplaceLeads = createServerFn({ method: "GET" })
 
     if (purErr) throw new Error(purErr.message);
 
+    // Fetch leads with a pending (initiated but unverified) payment by this vendor
+    const { data: pendingPayments } = await context.supabase
+      .from("lead_unlock_payments")
+      .select("lead_id")
+      .eq("vendor_id", vendorId)
+      .eq("status", "pending");
+
     const purchasedIds = new Set((purchased ?? []).map((p) => p.lead_id));
+    const pendingIds = new Set((pendingPayments ?? []).map((p) => p.lead_id));
 
     // Map through leads. If unlocked, include contact details. Otherwise, omit/hide.
     return leads.map((lead: any) => {
@@ -69,6 +78,7 @@ export const getMarketplaceLeads = createServerFn({ method: "GET" })
         status: lead.status,
         created_at: lead.created_at,
         is_unlocked: isUnlocked,
+        has_pending_payment: !isUnlocked && pendingIds.has(lead.id),
         ...(isUnlocked
           ? {
               contact_name: lead.contact_name,
@@ -99,7 +109,27 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
       .maybeSingle();
 
     if (existing) {
-      throw new Error("You have already unlocked this lead");
+      throw new Error("You have already unlocked this lead.");
+    }
+
+    // Check for an existing PENDING payment — reuse its checkout URL instead of creating a duplicate
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: pendingRows } = await supabaseAdmin
+      .from("lead_unlock_payments")
+      .select("payment_intent_id")
+      .eq("lead_id", data.leadId)
+      .eq("vendor_id", vendorId)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if (pendingRows?.[0]?.payment_intent_id) {
+      const env2 = (process.env.SAFEPAY_ENV || "sandbox").toLowerCase();
+      const base2 = env2 === "production" || env2 === "live"
+        ? "https://api.getsafepay.com"
+        : "https://sandbox.api.getsafepay.com";
+      const existingUrl = `${base2}/io/quick-link?ql=${pendingRows[0].payment_intent_id}`;
+      return { ok: true, checkoutUrl: existingUrl, trackerToken: pendingRows[0].payment_intent_id };
     }
 
     // Get lead details (to show in invoice / metadata)
