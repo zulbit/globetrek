@@ -36,7 +36,7 @@ const CUSTOMER_NAV = [
   { to: "/tickets", label: "Flight Desks", icon: Ticket },
 ];
 
-export const Route = createFileRoute("/_authenticated/customer")({
+export const Route = createFileRoute("/_authenticated/customer/")({
   component: CustomerDashboard,
 });
 
