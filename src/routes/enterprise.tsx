@@ -24,6 +24,7 @@ import {
   CreditCard,
   FileCheck,
   Ticket,
+  BookOpen,
 } from "lucide-react";
 
 export const Route = createFileRoute("/enterprise")({
