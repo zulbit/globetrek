@@ -135,14 +135,23 @@ function VendorLeads() {
 
   // Realtime subscription for direct leads
   useEffect(() => {
-    let channel: any;
+    let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
     async function initRealtime() {
       const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return;
+      if (!u.user || cancelled) return;
       const vendorId = u.user.id;
+      const channelName = `leads-inbox-${vendorId}`;
+
+      // Remove any stale channel with the same name before subscribing
+      const existing = supabase.getChannels().find((c) => c.topic === `realtime:${channelName}`);
+      if (existing) await supabase.removeChannel(existing);
+
+      if (cancelled) return;
 
       channel = supabase
-        .channel(`leads-inbox-${vendorId}`)
+        .channel(channelName)
         .on(
           "postgres_changes",
           {
@@ -166,6 +175,7 @@ function VendorLeads() {
     initRealtime();
 
     return () => {
+      cancelled = true;
       if (channel) supabase.removeChannel(channel);
     };
   }, [qc]);

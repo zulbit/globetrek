@@ -230,7 +230,7 @@ export const verifyLeadUnlockPayment = createServerFn({ method: "POST" })
       throw new Error("No pending payment found for this lead.");
     }
 
-    // 2. Fetch status from Safepay API
+    // 2. Fetch QuickLink status from Safepay Invoice API
     const env = (process.env.SAFEPAY_ENV || "sandbox").toLowerCase();
     const baseUrl = env === "production" || env === "live"
       ? "https://api.getsafepay.com"
@@ -238,7 +238,8 @@ export const verifyLeadUnlockPayment = createServerFn({ method: "POST" })
     const secretKey = process.env.SAFEPAY_SECRET_KEY;
     if (!secretKey) throw new Error("SafePay secret key not configured");
 
-    const url = `${baseUrl}/v1/payments/track_${payment.payment_intent_id}`;
+    // QuickLink status endpoint: GET /invoice/quick-links/v2/{id}
+    const url = `${baseUrl}/invoice/quick-links/v2/${payment.payment_intent_id}`;
     const sfRes = await fetch(url, {
       method: "GET",
       headers: {
@@ -253,11 +254,27 @@ export const verifyLeadUnlockPayment = createServerFn({ method: "POST" })
 
     const sfJson = (await sfRes.json()) as {
       ok?: boolean;
-      data?: { state?: string };
+      data?: {
+        state?: string;
+        status?: string;
+        payments?: Array<{ state?: string; status?: string }>;
+      };
     };
 
-    const state = sfJson.data?.state?.toUpperCase();
-    const successStates = new Set(["PAYMENT.COMPLETED", "TRACKER_COMPLETED", "COMPLETED", "PAID", "SUCCEEDED"]);
+    // QuickLink response uses data.status or data.payments[].state
+    // Tracker response uses data.state
+    const rawState =
+      sfJson.data?.status ||
+      sfJson.data?.state ||
+      sfJson.data?.payments?.[0]?.state ||
+      sfJson.data?.payments?.[0]?.status ||
+      "";
+    const state = rawState.toUpperCase().replace(/\./g, "_");
+    const successStates = new Set([
+      "PAYMENT_COMPLETED", "PAYMENT_AUTHORIZED", "PAYMENT_SUCCEEDED",
+      "TRACKER_COMPLETED", "COMPLETED", "PAID", "SUCCEEDED",
+      "PAYMENT.COMPLETED", "PAYMENT.AUTHORIZED", "PAYMENT.SUCCEEDED",
+    ]);
 
     if (state && successStates.has(state)) {
       // 3. Mark as completed and unlock
@@ -304,6 +321,6 @@ export const verifyLeadUnlockPayment = createServerFn({ method: "POST" })
 
       return { ok: true, unlocked: true, message: "Lead unlocked successfully!" };
     } else {
-      return { ok: true, unlocked: false, message: `Payment status is: ${state || "unknown"}` };
+      return { ok: true, unlocked: false, message: `Payment status is: ${rawState || "unknown"} (raw: ${JSON.stringify(sfJson.data).slice(0, 200)})` };
     }
   });
