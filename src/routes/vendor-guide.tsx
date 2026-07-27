@@ -68,6 +68,111 @@ const SUGGESTED_AI_PROMPTS = [
   "How does the bilingual Roman Urdu AI Concierge capture leads?",
 ];
 
+// ---- Rich Markdown Renderer Components ----
+const mdComponents: import("react-markdown").Components = {
+  h1: ({ children }) => (
+    <h1 className="text-xl sm:text-2xl font-extrabold text-primary border-b border-primary/30 pb-2 mb-4 mt-6 tracking-tight flex items-center gap-2">
+      <span className="inline-block w-1 h-6 rounded-full bg-primary shrink-0" />
+      {children}
+    </h1>
+  ),
+  h2: ({ children }) => (
+    <h2 className="text-base sm:text-lg font-bold text-purple-400 border-l-4 border-purple-500/60 pl-3 py-0.5 mt-7 mb-3 bg-purple-500/5 rounded-r-xl">
+      {children}
+    </h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="text-sm font-bold text-amber-400 mt-5 mb-2 flex items-center gap-2">
+      <span className="inline-block w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+      {children}
+    </h3>
+  ),
+  h4: ({ children }) => (
+    <h4 className="text-xs font-extrabold uppercase tracking-widest text-sky-400 mt-4 mb-1">
+      {children}
+    </h4>
+  ),
+  strong: ({ children }) => (
+    <strong className="font-bold text-foreground">{children}</strong>
+  ),
+  blockquote: ({ children }) => (
+    <blockquote className="border-l-4 border-amber-500/60 bg-amber-500/8 rounded-r-xl px-4 py-3 my-4 text-xs text-amber-200 italic space-y-1">
+      {children}
+    </blockquote>
+  ),
+  code: ({ children, className }) => {
+    const isBlock = className?.includes("language-");
+    return isBlock ? (
+      <code className={`block bg-surface border border-border rounded-xl p-3 font-mono text-[11px] text-primary overflow-x-auto my-3 ${className ?? ""}`}>
+        {children}
+      </code>
+    ) : (
+      <code className="bg-surface border border-border/60 rounded px-1.5 py-0.5 font-mono text-[11px] text-primary">
+        {children}
+      </code>
+    );
+  },
+  table: ({ children }) => (
+    <div className="overflow-x-auto rounded-xl border border-border my-4 shadow-sm">
+      <table className="w-full text-xs">{children}</table>
+    </div>
+  ),
+  thead: ({ children }) => (
+    <thead className="bg-surface/80 border-b border-border text-muted-foreground uppercase text-[10px] font-bold">{children}</thead>
+  ),
+  tbody: ({ children }) => (
+    <tbody className="divide-y divide-border/60">{children}</tbody>
+  ),
+  tr: ({ children }) => (
+    <tr className="hover:bg-surface/40 transition-colors">{children}</tr>
+  ),
+  th: ({ children }) => (
+    <th className="p-3 text-left font-bold tracking-wider">{children}</th>
+  ),
+  td: ({ children }) => (
+    <td className="p-3 text-foreground">{children}</td>
+  ),
+  hr: () => (
+    <hr className="border-none h-px bg-gradient-to-r from-transparent via-border to-transparent my-6" />
+  ),
+  ul: ({ children }) => (
+    <ul className="space-y-1.5 my-3 pl-1">{children}</ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="space-y-1.5 my-3 pl-4 list-decimal">{children}</ol>
+  ),
+  li: ({ children }) => (
+    <li className="flex items-start gap-2 text-xs text-muted-foreground leading-relaxed">
+      <span className="mt-1.5 size-1.5 rounded-full bg-primary/60 shrink-0" />
+      <span>{children}</span>
+    </li>
+  ),
+  p: ({ children }) => (
+    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed my-2">{children}</p>
+  ),
+};
+
+// Ordered list items need their own marker, override li for ol context via parent
+const mdComponentsAI: import("react-markdown").Components = {
+  ...mdComponents,
+  h1: ({ children }) => (
+    <h1 className="text-base font-extrabold text-primary border-b border-primary/30 pb-1.5 mb-3 mt-4 tracking-tight flex items-center gap-2">
+      <span className="inline-block w-1 h-4 rounded-full bg-primary shrink-0" />
+      {children}
+    </h1>
+  ),
+  h2: ({ children }) => (
+    <h2 className="text-sm font-bold text-purple-400 border-l-3 border-purple-500/60 pl-2.5 mt-4 mb-2 bg-purple-500/5 rounded-r-lg py-0.5">
+      {children}
+    </h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="text-xs font-bold text-amber-400 mt-3 mb-1 flex items-center gap-1.5">
+      <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+      {children}
+    </h3>
+  ),
+};
 
 function VendorGuidePage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -368,8 +473,8 @@ function VendorGuidePage() {
                 <div className="flex items-center gap-2 font-bold text-purple-300">
                   <Sparkles className="size-4" /> AI Partner Assistant Response:
                 </div>
-                <div className="prose prose-sm dark:prose-invert max-w-none text-xs text-foreground">
-                  <ReactMarkdown>{aiAnswer}</ReactMarkdown>
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <ReactMarkdown components={mdComponentsAI}>{aiAnswer}</ReactMarkdown>
                 </div>
               </div>
             )}
@@ -401,8 +506,8 @@ function VendorGuidePage() {
               </div>
 
               {/* Rendered Markdown Content */}
-              <div className="prose prose-sm dark:prose-invert max-w-none text-xs sm:text-sm leading-relaxed space-y-4">
-                <ReactMarkdown>{activeSection.content}</ReactMarkdown>
+              <div className="max-w-none space-y-1">
+                <ReactMarkdown components={mdComponents}>{activeSection.content}</ReactMarkdown>
               </div>
             </div>
           ) : (
