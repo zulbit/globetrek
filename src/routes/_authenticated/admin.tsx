@@ -1,10 +1,11 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { LayoutDashboard, Users, Globe2, Boxes, CreditCard, Sparkles } from "lucide-react";
+import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { LayoutDashboard, Users, Globe2, Boxes, CreditCard, Sparkles, Compass } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { RoleGuard } from "@/components/role-guard";
 
 const NAV = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard },
+  { to: "/admin/custom-leads", label: "Custom Tour Leads", icon: Compass },
   { to: "/admin/vendors", label: "Vendors & Subscriptions", icon: Users },
   { to: "/admin/subscriptions", label: "Subscription Plans", icon: Sparkles },
   { to: "/admin/tours", label: "Tours Catalog", icon: Globe2 },

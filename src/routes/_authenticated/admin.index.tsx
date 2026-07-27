@@ -10,20 +10,29 @@ import {
   Sparkles,
   Inbox,
   TrendingUp,
-  Activity,
   FileCheck,
   Shield,
   Ticket,
   Calendar,
-  Layers,
   ArrowRight,
   Loader2,
+  Compass,
 } from "lucide-react";
 
 import type { LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPKR } from "@/lib/tours";
 import { cn } from "@/lib/utils";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 const PRO_MONTHLY_PKR = 10000;
 
@@ -45,9 +54,6 @@ function AdminOverview() {
       monthStart.setDate(1);
       monthStart.setHours(0, 0, 0, 0);
       const iso = monthStart.toISOString();
-
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
       const [
         vendors,
@@ -83,11 +89,19 @@ function AdminOverview() {
         supabase.from("ticket_services").select("id", { count: "exact", head: true }).eq("is_active", true),
       ]);
 
+      // Query custom tour leads (with grace for missing table)
+      let customLeadsCount = 0;
+      try {
+        const { count } = await supabase.from("custom_tour_leads").select("id", { count: "exact", head: true });
+        customLeadsCount = count ?? 0;
+      } catch (err) {
+        console.error("custom_tour_leads check failed (might not exist yet):", err);
+      }
+
       const leadsList = (recentLeadsData.data as LeadItem[] | null) ?? [];
 
       // Calculate recent 7 days leads daily distribution
       const dailyLeads: Record<string, number> = {};
-      const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
       for (let i = 6; i >= 0; i--) {
         const d = new Date();
         d.setDate(d.getDate() - i);
@@ -103,7 +117,6 @@ function AdminOverview() {
       });
 
       const chartData = Object.entries(dailyLeads).map(([date, count]) => ({ date, count }));
-
       const subRevenue = (proVendors.count ?? 0) * PRO_MONTHLY_PKR;
 
       return {
@@ -111,7 +124,7 @@ function AdminOverview() {
         customers: customers.count ?? 0,
         proVendors: proVendors.count ?? 0,
         starterVendors: starterVendors.count ?? 0,
-        totalLeads: totalLeads.count ?? 0,
+        totalLeads: (totalLeads.count ?? 0) + customLeadsCount,
         newLeadsMonth: newLeadsMonth.count ?? 0,
         tours: tours.count ?? 0,
         publishedTours: publishedTours.count ?? 0,
@@ -120,30 +133,13 @@ function AdminOverview() {
         visaCount: visaCount.count ?? 0,
         insuranceCount: insuranceCount.count ?? 0,
         ticketCount: ticketCount.count ?? 0,
+        customLeadsCount,
         chartData,
         recentLeads: leadsList.slice(0, 5),
       };
     },
     refetchInterval: 5000,
   });
-
-  const chartPoints = useMemo(() => {
-    if (!data?.chartData || data.chartData.length === 0) return "";
-    const maxVal = Math.max(...data.chartData.map((d) => d.count), 5);
-    const height = 140;
-    const width = 500;
-    const padding = 20;
-    const usableHeight = height - padding * 2;
-    const usableWidth = width - padding * 2;
-
-    return data.chartData
-      .map((d, index) => {
-        const x = padding + (index / (data.chartData.length - 1)) * usableWidth;
-        const y = height - padding - (d.count / maxVal) * usableHeight;
-        return `${x},${y}`;
-      })
-      .join(" ");
-  }, [data?.chartData]);
 
   if (isLoading) {
     return (
@@ -157,9 +153,9 @@ function AdminOverview() {
   const publishedRate = data && data.tours > 0 ? Math.round((data.publishedTours / data.tours) * 100) : 0;
 
   return (
-    <div className="space-y-8 pb-10">
+    <div className="space-y-8 pb-10 w-full">
       {/* Top Banner & Stats Overview */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-3 w-full">
         {/* Hero revenue card */}
         <Link
           to="/admin/vendors"
@@ -193,7 +189,12 @@ function AdminOverview() {
             <div className="mt-4 space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Total Listings:</span>
-                <span className="font-semibold text-foreground">{(data?.tours ?? 0) + (data?.visaCount ?? 0) + (data?.insuranceCount ?? 0) + (data?.ticketCount ?? 0)}</span>
+                <span className="font-semibold text-foreground">
+                  {(data?.tours ?? 0) +
+                    (data?.visaCount ?? 0) +
+                    (data?.insuranceCount ?? 0) +
+                    (data?.ticketCount ?? 0)}
+                </span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Monthly Inquiries:</span>
@@ -212,10 +213,10 @@ function AdminOverview() {
       </div>
 
       {/* Analytics & Activity Split Grid */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Leads activity trend graph */}
-        <div className="lg:col-span-2 rounded-3xl border border-border bg-card p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
+      <div className="grid gap-6 lg:grid-cols-3 w-full">
+        {/* Leads activity trend graph using Recharts */}
+        <div className="lg:col-span-2 rounded-3xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-semibold tracking-tight uppercase text-muted-foreground">Inquiry Traffic Trend</h3>
               <p className="text-xs text-muted-foreground">Customer inquiries received across the last 7 days</p>
@@ -225,70 +226,28 @@ function AdminOverview() {
             </Badge>
           </div>
 
-          <div className="relative w-full h-[160px] mt-4">
+          <div className="h-[200px] w-full mt-4">
             {data?.chartData && data.chartData.length > 0 ? (
-              <svg className="w-full h-full" viewBox="0 0 500 140" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="chart-grad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="rgb(16, 185, 129)" stopOpacity="0.25" />
-                    <stop offset="100%" stopColor="rgb(16, 185, 129)" stopOpacity="0.0" />
-                  </linearGradient>
-                </defs>
-                {/* Area under the line */}
-                {chartPoints && (
-                  <path
-                    d={`M 20,120 L ${chartPoints} L 480,120 Z`}
-                    fill="url(#chart-grad)"
-                  />
-                )}
-                {/* The trend line */}
-                {chartPoints && (
-                  <polyline
-                    fill="none"
-                    stroke="rgb(16, 185, 129)"
-                    strokeWidth="3"
-                    points={chartPoints}
-                    className="transition-all duration-500"
-                  />
-                )}
-                {/* Data Points */}
-                {data.chartData.map((d, index) => {
-                  const maxVal = Math.max(...data.chartData.map((val) => val.count), 5);
-                  const x = 20 + (index / (data.chartData.length - 1)) * 460;
-                  const y = 140 - 20 - (d.count / maxVal) * 100;
-                  return (
-                    <g key={index} className="group/point">
-                      <circle
-                        cx={x}
-                        cy={y}
-                        r="5"
-                        fill="rgb(16, 185, 129)"
-                        className="cursor-pointer stroke-background stroke-2 transition hover:scale-150"
-                      />
-                      <text
-                        x={x}
-                        y={y - 10}
-                        textAnchor="middle"
-                        fill="currentColor"
-                        className="text-[10px] font-semibold opacity-0 group-hover/point:opacity-100 fill-foreground transition-opacity"
-                      >
-                        {d.count}
-                      </text>
-                    </g>
-                  );
-                })}
-              </svg>
+              <ChartContainer config={{ count: { label: "Inquiries", color: "var(--primary)" } }} className="h-full w-full">
+                <AreaChart data={data.chartData} margin={{ left: 0, right: 0, top: 10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="rgb(16, 185, 129)" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="rgb(16, 185, 129)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" vertical={false} />
+                  <XAxis dataKey="date" stroke="currentColor" className="text-muted-foreground fill-current" fontSize={10} tickLine={false} axisLine={false} />
+                  <YAxis stroke="currentColor" className="text-muted-foreground fill-current" fontSize={10} tickLine={false} axisLine={false} allowDecimals={false} />
+                  <Tooltip content={<ChartTooltipContent />} />
+                  <Area type="monotone" dataKey="count" stroke="rgb(16, 185, 129)" strokeWidth={2} fillOpacity={1} fill="url(#colorCount)" />
+                </AreaChart>
+              </ChartContainer>
             ) : (
               <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
                 No inquiry traffic data recorded recently.
               </div>
             )}
-          </div>
-          {/* X axis labels */}
-          <div className="flex justify-between px-4 mt-2 text-[10px] font-medium text-muted-foreground">
-            {data?.chartData.map((d, index) => (
-              <span key={index}>{d.date}</span>
-            ))}
           </div>
         </div>
 
@@ -303,7 +262,7 @@ function AdminOverview() {
                     <div>
                       <div className="text-xs font-semibold text-foreground">{lead.customer_name}</div>
                       <div className="text-[10px] text-muted-foreground mt-0.5">
-                        Inquired for <span className="font-medium text-primary">{lead.service_type}</span>
+                        Inquired for <span className="font-medium text-primary capitalize">{lead.service_type}</span>
                       </div>
                     </div>
                     <span className="text-[10px] text-muted-foreground/80 font-mono">
@@ -314,7 +273,7 @@ function AdminOverview() {
               </div>
             ) : (
               <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">
-                No recent inquires logged.
+                No recent inquiries logged.
               </div>
             )}
           </div>
@@ -328,9 +287,9 @@ function AdminOverview() {
       </div>
 
       {/* Primary metrics grid */}
-      <section>
+      <section className="w-full">
         <h2 className="mb-4 text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold">Community & Membership</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 w-full">
           <MetricCard
             to="/admin/vendors"
             icon={Users}
@@ -368,12 +327,13 @@ function AdminOverview() {
       </section>
 
       {/* Services marketplace */}
-      <section>
-        <h2 className="mb-4 text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold font-semibold">Marketplace Channels</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="w-full">
+        <h2 className="mb-4 text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold">Marketplace Channels</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 w-full">
           <MetricCard to="/admin/services" icon={FileCheck} label="Visa listings" value={data?.visaCount ?? 0} hint="Active visa consultants" tone="sky" />
           <MetricCard to="/admin/services" icon={Shield} label="Insurance plans" value={data?.insuranceCount ?? 0} hint="Active travel insurance" tone="emerald" />
           <MetricCard to="/admin/services" icon={Ticket} label="Ticketing services" value={data?.ticketCount ?? 0} hint="Active ticketing desks" tone="amber" />
+          <MetricCard to="/admin/services" icon={Compass} label="Custom tour leads" value={data?.customLeadsCount ?? 0} hint="Exclusive group builder" tone="sky" />
           <MetricCard to="/admin/services" icon={Inbox} label="Total leads" value={data?.totalLeads ?? 0} hint="All customer interactions" tone="violet" />
         </div>
       </section>
@@ -435,7 +395,7 @@ function MetricCard({
   );
 }
 
-function Badge({ variant, className, children }: { variant: string; className: string; children: React.ReactNode }) {
+function Badge({ variant, className, children }: { variant?: string; className: string; children: React.ReactNode }) {
   return (
     <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide", className)}>
       {children}

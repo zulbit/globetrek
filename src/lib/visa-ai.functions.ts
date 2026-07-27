@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { generateText, Output, NoObjectGeneratedError } from "ai";
+import { generateText } from "ai";
 import { z } from "zod";
 
 export type EmbassyFeeLookupInput = {
@@ -58,7 +58,11 @@ Never invent a specific URL. Always caveat that the vendor must verify with the 
         responseFormat: "json",
       });
 
-      const parsed = JSON.parse(text);
+      let cleaned = text.trim();
+      if (cleaned.startsWith("```")) {
+        cleaned = cleaned.replace(/^```[a-zA-Z]*\n/, "").replace(/\n```$/, "");
+      }
+      const parsed = JSON.parse(cleaned.trim());
       const output = FeeSchema.parse(parsed);
 
       // Log usage against the "description" bucket

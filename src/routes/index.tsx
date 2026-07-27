@@ -4,6 +4,7 @@ import { Hero } from "@/components/hero";
 import { FeaturedTours } from "@/components/featured-tours";
 import { ServicesStrip } from "@/components/services-strip";
 import { Testimonials } from "@/components/testimonials";
+import { ExclusiveSection } from "@/components/exclusive-section";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -32,6 +33,7 @@ function Home() {
     <SiteShell>
       <Hero />
       <FeaturedTours />
+      <ExclusiveSection />
       <ServicesStrip />
       <Testimonials />
     </SiteShell>

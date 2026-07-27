@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CompareRouteImport } from './routes/compare'
+import { Route as CustomTourRouteImport } from './routes/custom-tour'
 import { Route as DestinationsRouteImport } from './routes/destinations'
 import { Route as InsuranceRouteImport } from './routes/insurance'
 import { Route as PricingRouteImport } from './routes/pricing'
@@ -34,8 +35,10 @@ import { Route as ToursIdRouteImport } from './routes/tours.$id'
 import { Route as VisaIndexRouteImport } from './routes/visa.index'
 import { Route as VisaIdRouteImport } from './routes/visa.$id'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedAdminCustomLeadsRouteImport } from './routes/_authenticated/admin.custom-leads'
 import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin.payments'
 import { Route as AuthenticatedAdminServicesRouteImport } from './routes/_authenticated/admin.services'
+import { Route as AuthenticatedAdminSubscriptionsRouteImport } from './routes/_authenticated/admin.subscriptions'
 import { Route as AuthenticatedAdminToursRouteImport } from './routes/_authenticated/admin.tours'
 import { Route as AuthenticatedAdminVendorsRouteImport } from './routes/_authenticated/admin.vendors'
 import { Route as AuthenticatedVendorIndexRouteImport } from './routes/_authenticated/vendor.index'
@@ -70,6 +73,11 @@ const AuthRoute = AuthRouteImport.update({
 const CompareRoute = CompareRouteImport.update({
   id: '/compare',
   path: '/compare',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CustomTourRoute = CustomTourRouteImport.update({
+  id: '/custom-tour',
+  path: '/custom-tour',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DestinationsRoute = DestinationsRouteImport.update({
@@ -172,6 +180,12 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminCustomLeadsRoute =
+  AuthenticatedAdminCustomLeadsRouteImport.update({
+    id: '/custom-leads',
+    path: '/custom-leads',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminPaymentsRoute =
   AuthenticatedAdminPaymentsRouteImport.update({
     id: '/payments',
@@ -182,6 +196,12 @@ const AuthenticatedAdminServicesRoute =
   AuthenticatedAdminServicesRouteImport.update({
     id: '/services',
     path: '/services',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminSubscriptionsRoute =
+  AuthenticatedAdminSubscriptionsRouteImport.update({
+    id: '/subscriptions',
+    path: '/subscriptions',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminToursRoute = AuthenticatedAdminToursRouteImport.update({
@@ -253,6 +273,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/compare': typeof CompareRoute
+  '/custom-tour': typeof CustomTourRoute
   '/destinations': typeof DestinationsRoute
   '/insurance': typeof InsuranceRouteWithChildren
   '/pricing': typeof PricingRoute
@@ -272,8 +293,10 @@ export interface FileRoutesByFullPath {
   '/tickets/': typeof TicketsIndexRoute
   '/tours/': typeof ToursIndexRoute
   '/visa/': typeof VisaIndexRoute
+  '/admin/custom-leads': typeof AuthenticatedAdminCustomLeadsRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/services': typeof AuthenticatedAdminServicesRoute
+  '/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
   '/admin/tours': typeof AuthenticatedAdminToursRoute
   '/admin/vendors': typeof AuthenticatedAdminVendorsRoute
   '/vendor/billing': typeof AuthenticatedVendorBillingRoute
@@ -292,6 +315,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/compare': typeof CompareRoute
+  '/custom-tour': typeof CustomTourRoute
   '/destinations': typeof DestinationsRoute
   '/pricing': typeof PricingRoute
   '/wishlist': typeof WishlistRoute
@@ -305,8 +329,10 @@ export interface FileRoutesByTo {
   '/tickets': typeof TicketsIndexRoute
   '/tours': typeof ToursIndexRoute
   '/visa': typeof VisaIndexRoute
+  '/admin/custom-leads': typeof AuthenticatedAdminCustomLeadsRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/services': typeof AuthenticatedAdminServicesRoute
+  '/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
   '/admin/tours': typeof AuthenticatedAdminToursRoute
   '/admin/vendors': typeof AuthenticatedAdminVendorsRoute
   '/vendor/billing': typeof AuthenticatedVendorBillingRoute
@@ -327,6 +353,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/compare': typeof CompareRoute
+  '/custom-tour': typeof CustomTourRoute
   '/destinations': typeof DestinationsRoute
   '/insurance': typeof InsuranceRouteWithChildren
   '/pricing': typeof PricingRoute
@@ -346,8 +373,10 @@ export interface FileRoutesById {
   '/tickets/': typeof TicketsIndexRoute
   '/tours/': typeof ToursIndexRoute
   '/visa/': typeof VisaIndexRoute
+  '/_authenticated/admin/custom-leads': typeof AuthenticatedAdminCustomLeadsRoute
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/_authenticated/admin/services': typeof AuthenticatedAdminServicesRoute
+  '/_authenticated/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
   '/_authenticated/admin/tours': typeof AuthenticatedAdminToursRoute
   '/_authenticated/admin/vendors': typeof AuthenticatedAdminVendorsRoute
   '/_authenticated/vendor/billing': typeof AuthenticatedVendorBillingRoute
@@ -368,6 +397,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/compare'
+    | '/custom-tour'
     | '/destinations'
     | '/insurance'
     | '/pricing'
@@ -387,8 +417,10 @@ export interface FileRouteTypes {
     | '/tickets/'
     | '/tours/'
     | '/visa/'
+    | '/admin/custom-leads'
     | '/admin/payments'
     | '/admin/services'
+    | '/admin/subscriptions'
     | '/admin/tours'
     | '/admin/vendors'
     | '/vendor/billing'
@@ -407,6 +439,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/compare'
+    | '/custom-tour'
     | '/destinations'
     | '/pricing'
     | '/wishlist'
@@ -420,8 +453,10 @@ export interface FileRouteTypes {
     | '/tickets'
     | '/tours'
     | '/visa'
+    | '/admin/custom-leads'
     | '/admin/payments'
     | '/admin/services'
+    | '/admin/subscriptions'
     | '/admin/tours'
     | '/admin/vendors'
     | '/vendor/billing'
@@ -441,6 +476,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/compare'
+    | '/custom-tour'
     | '/destinations'
     | '/insurance'
     | '/pricing'
@@ -460,8 +496,10 @@ export interface FileRouteTypes {
     | '/tickets/'
     | '/tours/'
     | '/visa/'
+    | '/_authenticated/admin/custom-leads'
     | '/_authenticated/admin/payments'
     | '/_authenticated/admin/services'
+    | '/_authenticated/admin/subscriptions'
     | '/_authenticated/admin/tours'
     | '/_authenticated/admin/vendors'
     | '/_authenticated/vendor/billing'
@@ -482,6 +520,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
   CompareRoute: typeof CompareRoute
+  CustomTourRoute: typeof CustomTourRoute
   DestinationsRoute: typeof DestinationsRoute
   InsuranceRoute: typeof InsuranceRouteWithChildren
   PricingRoute: typeof PricingRoute
@@ -528,6 +567,13 @@ declare module '@tanstack/react-router' {
       path: '/compare'
       fullPath: '/compare'
       preLoaderRoute: typeof CompareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/custom-tour': {
+      id: '/custom-tour'
+      path: '/custom-tour'
+      fullPath: '/custom-tour'
+      preLoaderRoute: typeof CustomTourRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/destinations': {
@@ -670,6 +716,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/custom-leads': {
+      id: '/_authenticated/admin/custom-leads'
+      path: '/custom-leads'
+      fullPath: '/admin/custom-leads'
+      preLoaderRoute: typeof AuthenticatedAdminCustomLeadsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/payments': {
       id: '/_authenticated/admin/payments'
       path: '/payments'
@@ -682,6 +735,13 @@ declare module '@tanstack/react-router' {
       path: '/services'
       fullPath: '/admin/services'
       preLoaderRoute: typeof AuthenticatedAdminServicesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/subscriptions': {
+      id: '/_authenticated/admin/subscriptions'
+      path: '/subscriptions'
+      fullPath: '/admin/subscriptions'
+      preLoaderRoute: typeof AuthenticatedAdminSubscriptionsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/tours': {
@@ -765,16 +825,20 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminCustomLeadsRoute: typeof AuthenticatedAdminCustomLeadsRoute
   AuthenticatedAdminPaymentsRoute: typeof AuthenticatedAdminPaymentsRoute
   AuthenticatedAdminServicesRoute: typeof AuthenticatedAdminServicesRoute
+  AuthenticatedAdminSubscriptionsRoute: typeof AuthenticatedAdminSubscriptionsRoute
   AuthenticatedAdminToursRoute: typeof AuthenticatedAdminToursRoute
   AuthenticatedAdminVendorsRoute: typeof AuthenticatedAdminVendorsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminCustomLeadsRoute: AuthenticatedAdminCustomLeadsRoute,
   AuthenticatedAdminPaymentsRoute: AuthenticatedAdminPaymentsRoute,
   AuthenticatedAdminServicesRoute: AuthenticatedAdminServicesRoute,
+  AuthenticatedAdminSubscriptionsRoute: AuthenticatedAdminSubscriptionsRoute,
   AuthenticatedAdminToursRoute: AuthenticatedAdminToursRoute,
   AuthenticatedAdminVendorsRoute: AuthenticatedAdminVendorsRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
@@ -880,6 +944,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
   CompareRoute: CompareRoute,
+  CustomTourRoute: CustomTourRoute,
   DestinationsRoute: DestinationsRoute,
   InsuranceRoute: InsuranceRouteWithChildren,
   PricingRoute: PricingRoute,

@@ -74,6 +74,7 @@ export function Hero() {
 
           {/* Copy */}
           <div className="max-w-2xl space-y-4">
+
             <span className="inline-flex items-center gap-2 rounded-full bg-primary px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-primary-foreground">
               <ShieldCheck className="size-3.5" />
               Verified vendors · All-in PKR pricing

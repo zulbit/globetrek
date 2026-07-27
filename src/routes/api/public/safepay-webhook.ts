@@ -70,7 +70,76 @@ export const Route = createFileRoute("/api/public/safepay-webhook")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        // Match payment by reference; fallback to recent pending safepay row
+        // 1. Try matching with custom tour lead unlock payments
+        let { data: leadPayment } = await supabaseAdmin
+          .from("lead_unlock_payments")
+          .select("id, lead_id, vendor_id, status")
+          .eq("payment_intent_id", token)
+          .maybeSingle();
+
+        if (leadPayment) {
+          if (SUCCESS_STATES.has(state)) {
+            await supabaseAdmin
+              .from("lead_unlock_payments")
+              .update({ status: "completed", payment_intent_id: token })
+              .eq("id", leadPayment.id);
+
+            await supabaseAdmin
+              .from("vendor_lead_purchases")
+              .upsert(
+                { lead_id: leadPayment.lead_id, vendor_id: leadPayment.vendor_id },
+                { onConflict: "lead_id,vendor_id" }
+              );
+
+            // Send WhatsApp notifications asynchronously
+            try {
+              const { sendWhatsAppMessage } = await import("@/lib/whatsapp.functions");
+
+              // Fetch traveler and vendor details
+              const [leadRes, vendorRes] = await Promise.all([
+                supabaseAdmin
+                  .from("custom_tour_leads")
+                  .select("contact_name, contact_phone, destination")
+                  .eq("id", leadPayment.lead_id)
+                  .single(),
+                supabaseAdmin
+                  .from("profiles")
+                  .select("full_name, email")
+                  .eq("id", leadPayment.vendor_id)
+                  .single()
+              ]);
+
+              if (leadRes.data) {
+                const lead = leadRes.data;
+                const vendorName = vendorRes.data?.full_name || "a verified travel agent";
+
+                // Notify traveler
+                const travelerMsg = `*GlobeTrek PK — Travel Partner Found!* 🎉\n\nDear *${lead.contact_name}*,\n\nGreat news! A verified travel partner (*${vendorName}*) has unlocked your custom tour request to *${lead.destination}*.\n\nThey will reach out to you on this number shortly with options and quotes!`;
+                await sendWhatsAppMessage({
+                  data: {
+                    phone: lead.contact_phone,
+                    message: travelerMsg,
+                    skipDeduplication: true
+                  }
+                });
+              }
+            } catch (waErr) {
+              console.error("Webhook notification error:", waErr);
+            }
+
+            return Response.json({ ok: true, fulfilled_lead: leadPayment.id });
+          }
+          if (FAILED_STATES.has(state)) {
+            await supabaseAdmin
+              .from("lead_unlock_payments")
+              .update({ status: "failed", payment_intent_id: token })
+              .eq("id", leadPayment.id);
+            return Response.json({ ok: true, failed_lead: leadPayment.id });
+          }
+          return Response.json({ ok: true, lead_state: state });
+        }
+
+        // 2. Try matching with regular booking payments
         let { data: payment } = await supabaseAdmin
           .from("payments")
           .select("id, booking_id, status")
@@ -78,7 +147,43 @@ export const Route = createFileRoute("/api/public/safepay-webhook")({
           .maybeSingle();
 
         if (!payment) {
+          // Check if there is a recent pending lead payment that might have missed the reference mapping
           const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+          const { data: recentLead } = await supabaseAdmin
+            .from("lead_unlock_payments")
+            .select("id, lead_id, vendor_id, status")
+            .eq("status", "pending")
+            .gte("created_at", thirtyMinAgo)
+            .order("created_at", { ascending: false })
+            .limit(1);
+
+          if (recentLead?.[0]) {
+            leadPayment = recentLead[0];
+            if (SUCCESS_STATES.has(state)) {
+              await supabaseAdmin
+                .from("lead_unlock_payments")
+                .update({ status: "completed", payment_intent_id: token })
+                .eq("id", leadPayment.id);
+
+              await supabaseAdmin
+                .from("vendor_lead_purchases")
+                .upsert(
+                  { lead_id: leadPayment.lead_id, vendor_id: leadPayment.vendor_id },
+                  { onConflict: "lead_id,vendor_id" }
+                );
+
+              return Response.json({ ok: true, fulfilled_lead: leadPayment.id });
+            }
+            if (FAILED_STATES.has(state)) {
+              await supabaseAdmin
+                .from("lead_unlock_payments")
+                .update({ status: "failed", payment_intent_id: token })
+                .eq("id", leadPayment.id);
+              return Response.json({ ok: true, failed_lead: leadPayment.id });
+            }
+          }
+
+          // Fallback to recent pending standard payment
           const { data: recent } = await supabaseAdmin
             .from("payments")
             .select("id, booking_id, status")
