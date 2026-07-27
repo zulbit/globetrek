@@ -147,25 +147,46 @@ function AuthPage() {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
-        data: {
+
+    try {
+      // Call server endpoint that uses Supabase Admin API with email_confirm: true
+      // This bypasses email sending completely and eliminates Supabase rate limits!
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          password,
           full_name: fullName,
           role,
           company_name: role === "vendor" ? companyName : null,
-        },
-      },
-    });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+        }),
+      });
+
+      const resData = await res.json();
+
+      if (!res.ok || resData.error) {
+        setLoading(false);
+        toast.error(resData.error || "Sign up failed");
+        return;
+      }
+
+      // Automatically sign in the user now that the account is created and auto-confirmed
+      const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password });
+      setLoading(false);
+
+      if (loginErr) {
+        toast.error(`Account created! Please sign in: ${loginErr.message}`);
+        setTab("signin");
+        return;
+      }
+
+      toast.success("Account created successfully — Welcome!");
+      navigate({ to: (redirect as never) ?? "/dashboard" });
+    } catch (err: any) {
+      setLoading(false);
+      toast.error(`Registration error: ${err.message || "Unknown error"}`);
     }
-    toast.success("Account created — signing you in");
-    navigate({ to: "/dashboard" });
   }
 
   const active = SLIDES[slide];
