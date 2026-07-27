@@ -208,7 +208,6 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
     const checkoutUrl = url.toString();
 
     // Create a pending lead unlock payment record using admin client (bypasses RLS limits)
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error: payErr } = await supabaseAdmin.from("lead_unlock_payments").insert({
       lead_id: data.leadId,
       vendor_id: vendorId,
