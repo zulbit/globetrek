@@ -1,12 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { generateEnterpriseDemoAIServer } from "@/lib/guide-ai.functions";
+import { generateEnterpriseDemoAIServer, DemoItineraryStructure } from "@/lib/guide-ai.functions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import ReactMarkdown from "react-markdown";
 import {
   ShieldCheck,
   Building2,
@@ -31,7 +30,11 @@ import {
   Bot,
   Loader2,
   Wand2,
-  Cpu,
+  Calendar,
+  MapPin,
+  CheckCircle2,
+  Clock,
+  Layers,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -39,11 +42,11 @@ export const Route = createFileRoute("/enterprise")({
   component: EnterpriseShowcase,
   head: () => ({
     meta: [
-      { title: "GlobeTrek PK — Enterprise Travel Engine & Software Architecture Whitepaper" },
+      { title: "GlobeTrek PK — Enterprise B2B Travel Marketplace Engine Whitepaper" },
       {
         name: "description",
         content:
-          "Enterprise B2B travel marketplace architecture. Full SSR stack with TanStack Start, React 19, Supabase RLS, SafePay PKR payments, WhatsApp API, and OpenRouter AI Concierge.",
+          "Enterprise B2B travel marketplace architecture. Full SSR stack with TanStack Start, React 19, Supabase RLS, SafePay PKR payments, WhatsApp API, and GlobeTrek AI Engine.",
       },
     ],
   }),
@@ -148,7 +151,7 @@ const FAQS = [
   },
   {
     q: "How does the Bilingual AI Concierge work?",
-    a: "The AI Concierge leverages OpenRouter (`openai/gpt-4o-mini`) via `@ai-sdk/openai-compatible`. It seamlessly handles travel inquiries in both English and Roman Urdu, querying live database tables for tours, visa services, insurance plans, and flight tickets.",
+    a: "The AI Concierge leverages GlobeTrek's neural language model via `@ai-sdk/openai-compatible`. It seamlessly handles travel inquiries in both English and Roman Urdu, querying live database tables for tours, visa services, insurance plans, and flight tickets.",
   },
   {
     q: "How does the Custom Lead Bidding & SafePay Integration operate?",
@@ -163,7 +166,7 @@ function EnterpriseShowcase() {
   // AI Demo Generator State
   const [demoDestination, setDemoDestination] = useState("Hunza & Skardu Valley");
   const [demoDuration, setDemoDuration] = useState<number>(5);
-  const [demoItinerary, setDemoItinerary] = useState<string | null>(null);
+  const [demoItinerary, setDemoItinerary] = useState<DemoItineraryStructure | null>(null);
   const [isGeneratingDemo, setIsGeneratingDemo] = useState(false);
 
   const handleGenerateAIDemo = async () => {
@@ -174,7 +177,7 @@ function EnterpriseShowcase() {
         data: { destination: demoDestination, duration_days: demoDuration },
       });
       setDemoItinerary(res.itinerary);
-      toast.success("Generated AI Itinerary Demo!");
+      toast.success("Generated AI Itinerary!");
     } catch (err: any) {
       toast.error(`AI Demo error: ${err.message}`);
     } finally {
@@ -220,7 +223,7 @@ function EnterpriseShowcase() {
           </h1>
 
           <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
-            A high-performance Server-Side Rendered platform built with TanStack Start, React 19, Supabase RLS, SafePay Gateway, WhatsApp Automation, and OpenRouter AI.
+            A high-performance Server-Side Rendered platform built with TanStack Start, React 19, Supabase RLS, SafePay Gateway, WhatsApp Automation, and GlobeTrek AI Engine.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
@@ -241,17 +244,17 @@ function EnterpriseShowcase() {
 
       {/* Interactive AI Itinerary Generator Demo Widget */}
       <section className="py-16 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-3xl border border-purple-500/40 bg-gradient-to-br from-purple-500/10 via-card to-card p-6 sm:p-10 shadow-card space-y-6">
+        <div className="rounded-3xl border border-purple-500/40 bg-gradient-to-br from-purple-500/10 via-card to-card p-6 sm:p-10 shadow-card space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
             <div className="space-y-1">
               <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-xs font-bold gap-1">
-                <Wand2 className="size-3.5" /> Interactive AI Technology Demo
+                <Wand2 className="size-3.5" /> GlobeTrek AI Engine Technology Demo
               </Badge>
               <h2 className="text-2xl font-extrabold text-foreground">
-                Test the OpenRouter AI Tour Generator Live
+                GlobeTrek AI Tour Itinerary Generator
               </h2>
               <p className="text-xs text-muted-foreground">
-                Experience how GlobeTrek's embedded AI creates instant, marketing-ready itineraries for tour vendors.
+                Experience how GlobeTrek's embedded AI engine creates instant, marketing-ready itineraries for tour vendors.
               </p>
             </div>
           </div>
@@ -283,7 +286,7 @@ function EnterpriseShowcase() {
               <Button
                 onClick={handleGenerateAIDemo}
                 disabled={isGeneratingDemo || !demoDestination.trim()}
-                className="w-full h-10 gap-2 font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white rounded-xl"
+                className="w-full h-10 gap-2 font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-glow"
               >
                 {isGeneratingDemo ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
                 Generate AI Itinerary Demo
@@ -291,13 +294,101 @@ function EnterpriseShowcase() {
             </div>
           </div>
 
+          {/* Ultra-Professional Structured Itinerary Display */}
           {demoItinerary && (
-            <div className="rounded-2xl border border-purple-500/30 bg-purple-500/10 p-6 space-y-3">
-              <div className="flex items-center gap-2 font-bold text-purple-300 text-sm">
-                <Bot className="size-4" /> OpenRouter AI Generated Itinerary Preview:
+            <div className="rounded-3xl border border-purple-500/40 bg-surface/90 p-6 sm:p-8 space-y-8 shadow-2xl animate-fade-in">
+              {/* Header Badge & Title Card */}
+              <div className="border-b border-border/80 pb-6 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/40 text-xs font-extrabold uppercase tracking-wider px-3 py-1">
+                    ✨ GlobeTrek AI Generated Tour Plan
+                  </Badge>
+
+                  <div className="flex flex-wrap gap-2 text-xs font-semibold">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary border border-primary/20 px-3 py-1">
+                      <MapPin className="size-3.5" /> {demoItinerary.destination}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 px-3 py-1">
+                      <Calendar className="size-3.5" /> {demoItinerary.duration_days} Days
+                    </span>
+                  </div>
+                </div>
+
+                <h3 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
+                  {demoItinerary.title}
+                </h3>
               </div>
-              <div className="prose prose-sm dark:prose-invert max-w-none text-xs text-foreground leading-relaxed">
-                <ReactMarkdown>{demoItinerary}</ReactMarkdown>
+
+              {/* Highlights Cards Section */}
+              {demoItinerary.highlights && demoItinerary.highlights.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                    <Layers className="size-4 text-purple-400" /> Package Key Highlights
+                  </h4>
+
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {demoItinerary.highlights.map((hl, hIdx) => (
+                      <div
+                        key={hIdx}
+                        className="rounded-2xl border border-border bg-card p-4 flex items-start gap-3 shadow-sm hover:border-purple-500/40 transition-all"
+                      >
+                        <CheckCircle2 className="size-4 text-emerald-400 shrink-0 mt-0.5" />
+                        <span className="text-xs text-foreground font-medium leading-relaxed">{hl}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Day-by-Day Experience Timeline Cards */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                  <Clock className="size-4 text-purple-400" /> Day-by-Day Tour Experience
+                </h4>
+
+                <div className="space-y-4 relative before:absolute before:left-5 before:top-4 before:bottom-4 before:w-0.5 before:bg-border/60">
+                  {demoItinerary.days.map((dayItem) => (
+                    <div key={dayItem.day} className="relative pl-12 flex flex-col space-y-2">
+                      {/* Circular Day Badge on Timeline */}
+                      <div className="absolute left-0 top-0 size-10 rounded-full bg-purple-600 border-2 border-background text-white flex items-center justify-center font-black text-xs shadow-md">
+                        {dayItem.day}
+                      </div>
+
+                      {/* Day Experience Card */}
+                      <div className="rounded-2xl border border-border bg-card p-5 space-y-2 shadow-sm hover:border-border-hover transition-all">
+                        <div className="flex items-center justify-between gap-3">
+                          <h5 className="font-bold text-sm text-foreground">
+                            Day {dayItem.day}: {dayItem.title}
+                          </h5>
+                          <Badge variant="outline" className="text-[10px] text-muted-foreground border-border font-mono">
+                            Full Day
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {dayItem.detail}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Recommended Traveler Budget Callout Banner */}
+              <div className="rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-500/10 via-card to-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-amber-400 block tracking-wider">
+                    Recommended Traveler Budget
+                  </span>
+                  <span className="text-lg font-black text-foreground font-mono">
+                    {demoItinerary.budget_pkr}
+                  </span>
+                </div>
+
+                <Link to="/auth">
+                  <Button size="sm" className="h-9 gap-1.5 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-black">
+                    Create Packages with AI <ArrowRight className="size-3.5" />
+                  </Button>
+                </Link>
               </div>
             </div>
           )}
@@ -410,7 +501,7 @@ function EnterpriseShowcase() {
               <div className="size-10 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-lg">
                 🤖
               </div>
-              <h3 className="font-bold text-base text-foreground">OpenRouter AI &amp; WhatsApp API</h3>
+              <h3 className="font-bold text-base text-foreground">GlobeTrek AI &amp; WhatsApp API</h3>
               <p className="text-xs text-muted-foreground font-medium">
                 <strong>Heading: Bilingual NLP &amp; WhatsApp</strong>
               </p>

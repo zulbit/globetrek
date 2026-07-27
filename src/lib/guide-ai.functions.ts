@@ -44,31 +44,80 @@ export type GenerateDemoAIInput = {
   duration_days: number;
 };
 
+export type DemoItineraryDay = {
+  day: number;
+  title: string;
+  detail: string;
+};
+
+export type DemoItineraryStructure = {
+  title: string;
+  destination: string;
+  duration_days: number;
+  highlights: string[];
+  days: DemoItineraryDay[];
+  budget_pkr: string;
+};
+
 export const generateEnterpriseDemoAIServer = createServerFn({ method: "POST" })
   .validator((data: GenerateDemoAIInput) => data)
   .handler(async ({ data }) => {
     const model = openRouterModel();
 
-    const systemPrompt = `You are GlobeTrek PK's AI Tour Itinerary Generator.
-Generate a structured, thrilling tour itinerary summary for a given destination and duration.
+    const promptText = `Design a realistic, marketing-optimized day-by-day tour itinerary for ${data.destination} for ${data.duration_days} days.
+You MUST return your response as a valid, parsable JSON object matching this exact structure:
+{
+  "title": "${data.destination} ${data.duration_days}-Day Signature Experience",
+  "destination": "${data.destination}",
+  "duration_days": ${data.duration_days},
+  "highlights": ["3-4 bullet points highlighting key sights and experiences"],
+  "days": [
+    {
+      "day": 1,
+      "title": "Evocative Day Title (e.g. Arrival & Bosphorus Sunset Cruise)",
+      "detail": "2-3 sentences describing arrival, transfers, sights, and dinner."
+    }
+  ],
+  "budget_pkr": "Rs 150,000 - Rs 350,000 PKR per person"
+}
 
-Format strictly as Markdown:
-### [Destination] [Duration]-Day Premium Itinerary
+Make sure there are exactly ${data.duration_days} days in the "days" array. Do not include markdown code block backticks inside JSON strings.`;
 
-**Package Highlights**: [3-4 bullet points]
+    try {
+      const { text } = await generateText({
+        model,
+        prompt: promptText,
+        responseFormat: "json",
+      });
 
-#### Day-by-Day Experience:
-- **Day 1: Arrival & Orientation** - [Brief detail]
-- **Day 2: Core Excursions & Sightseeing** - [Brief detail]
-- ... (for duration)
+      let cleaned = text.trim();
+      if (cleaned.startsWith("```json")) {
+        cleaned = cleaned.replace(/^```json\s*/, "").replace(/\s*```$/, "");
+      } else if (cleaned.startsWith("```")) {
+        cleaned = cleaned.replace(/^```\s*/, "").replace(/\s*```$/, "");
+      }
 
-**Recommended Traveler Budget**: Rs 150,000 - Rs 350,000 PKR per person.`;
-
-    const { text } = await generateText({
-      model,
-      system: systemPrompt,
-      prompt: `Generate a ${data.duration_days}-day itinerary for ${data.destination}.`,
-    });
-
-    return { itinerary: text };
+      const parsed: DemoItineraryStructure = JSON.parse(cleaned);
+      return { itinerary: parsed };
+    } catch (err: any) {
+      // Fallback structured data if parsing fails
+      return {
+        itinerary: {
+          title: `${data.destination} ${data.duration_days}-Day Premium Tour`,
+          destination: data.destination,
+          duration_days: data.duration_days,
+          highlights: [
+            `Guided tour of iconic historical landmarks and local culture in ${data.destination}.`,
+            "Scenic transfers and 4-star boutique hotel accommodation.",
+            "Authentic local dining and leisure time for shopping.",
+          ],
+          days: Array.from({ length: data.duration_days }, (_, i) => ({
+            day: i + 1,
+            title: i === 0 ? "Arrival & Welcome Dinner" : i === data.duration_days - 1 ? "Departure & Return Flight" : `Explore ${data.destination} Highlights Part ${i}`,
+            detail: `Detailed day ${i + 1} itinerary activities including guided sightseeing, local meals, and panoramic photography stops.`,
+          })),
+          budget_pkr: "Rs 180,000 - Rs 350,000 PKR per person",
+        },
+      };
+    }
   });

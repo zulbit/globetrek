@@ -311,7 +311,7 @@ function VendorGuidePage() {
                 <div>
                   <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                     AI Partner Operational Assistant
-                    <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-[10px]">OpenRouter AI</Badge>
+                    <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-[10px]">GlobeTrek AI Engine</Badge>
                   </h3>
                   <p className="text-xs text-muted-foreground">
                     Ask any operational question in English or Roman Urdu to get instant structured guidance.

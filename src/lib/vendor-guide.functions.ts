@@ -175,13 +175,13 @@ To protect traveler confidence across Pakistan, all GlobeTrek PK partner agencie
     slug: "ai-tools-itinerary-generator",
     title: "AI Concierge & Automated Itinerary Generator Tools",
     category: "AI Tools & Automation",
-    description: "Leveraging GlobeTrek's OpenRouter AI engine to autogenerate multi-day itineraries, package descriptions, and bilingual customer chat.",
+    description: "Leveraging GlobeTrek's AI Engine to autogenerate multi-day itineraries, package descriptions, and bilingual customer chat.",
     icon_name: "Sparkles",
     display_order: 6,
     is_published: true,
     content: `# AI Concierge & Automated Itinerary Generator Tools
 
-GlobeTrek PK incorporates built-in **Artificial Intelligence Tools** powered by OpenRouter (\`openai/gpt-4o-mini\`) to save travel vendors hours of manual writing.
+GlobeTrek PK incorporates built-in **Artificial Intelligence Tools** powered by GlobeTrek AI Engine to save travel vendors hours of manual writing.
 
 ---
 
