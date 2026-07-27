@@ -62,7 +62,7 @@ export const sendWhatsAppMessage = createServerFn({ method: "POST" })
         payload.mediaUrl = data.imageUrl.trim();
       }
 
-      const response = await fetch("https://wa.transmaxsolutions.com/api/send-message", {
+      let response = await fetch("https://wa.transmaxsolutions.com/api/send-message", {
         method: "POST",
         headers: {
           "x-api-key": apiKey,
@@ -72,6 +72,18 @@ export const sendWhatsAppMessage = createServerFn({ method: "POST" })
         },
         body: JSON.stringify(payload),
       });
+
+      if (!response.ok) {
+        console.warn("Primary WhatsApp gateway failed, trying Railway backup...");
+        response = await fetch("https://primary-production-4ff5.up.railway.app/webhook/send-message", {
+          method: "POST",
+          headers: {
+            "x-api-key": apiKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
