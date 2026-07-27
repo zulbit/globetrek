@@ -229,6 +229,52 @@ function VendorOverview() {
         </div>
       </div>
 
+      {/* ── Custom Tour Leads Marketplace Promo ── */}
+      <Link
+        to="/vendor/leads"
+        search={{} as any}
+        className="group block"
+        onClick={() => {
+          // Store intent to open marketplace tab
+          sessionStorage.setItem("leads-tab", "marketplace");
+        }}
+      >
+        <div className="relative overflow-hidden rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-yellow-500/8 to-transparent p-5 transition-all duration-300 hover:border-amber-400/60 hover:from-amber-500/20 hover:shadow-lg hover:shadow-amber-500/10">
+          {/* Ambient glows */}
+          <div className="absolute -right-10 -top-10 size-40 rounded-full bg-amber-400/10 blur-3xl transition-all duration-500 group-hover:bg-amber-400/20" />
+          <div className="absolute -bottom-8 left-1/3 size-32 rounded-full bg-yellow-500/5 blur-2xl" />
+
+          <div className="relative flex flex-wrap items-center gap-4">
+            {/* Icon with pulse */}
+            <span className="relative grid size-12 flex-shrink-0 place-items-center rounded-xl bg-amber-500/20 text-2xl ring-1 ring-amber-400/40">
+              👑
+              <span className="absolute -right-1 -top-1 flex size-3">
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-amber-400 opacity-75" />
+                <span className="relative inline-flex size-3 rounded-full bg-amber-400" />
+              </span>
+            </span>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <h3 className="bg-gradient-to-r from-amber-300 to-yellow-200 bg-clip-text text-sm font-bold text-transparent">
+                  Custom Tour Leads Marketplace
+                </h3>
+                <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-300 ring-1 ring-amber-400/30">
+                  Premium
+                </span>
+              </div>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Pre-qualified group travelers actively requesting custom tour packages — unlock their contact for ₨ 5,000 per lead.
+              </p>
+            </div>
+
+            <span className="flex-shrink-0 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-black shadow shadow-amber-500/30 transition-all group-hover:bg-amber-400 group-hover:shadow-amber-400/40">
+              View Leads →
+            </span>
+          </div>
+        </div>
+      </Link>
+
       {/* ── Service Portfolio Grid ── */}
       <div>
         <div className="mb-3 flex items-center justify-between">

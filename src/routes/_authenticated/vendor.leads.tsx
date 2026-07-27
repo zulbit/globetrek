@@ -57,7 +57,17 @@ const SVC = {
 
 function VendorLeads() {
   const qc = useQueryClient();
-  const [mode, setMode] = useState<"direct" | "marketplace">("direct");
+  const [mode, setMode] = useState<"direct" | "marketplace">(() => {
+    // Auto-switch to marketplace if navigated from the Overview promo card
+    if (typeof window !== "undefined") {
+      const intent = sessionStorage.getItem("leads-tab");
+      if (intent === "marketplace") {
+        sessionStorage.removeItem("leads-tab");
+        return "marketplace";
+      }
+    }
+    return "direct";
+  });
   const [tab, setTab] = useState<"all" | ServiceType>("all");
 
   // -------- Direct Leads Query --------
@@ -216,8 +226,28 @@ function VendorLeads() {
             <TabsTrigger value="direct" className="px-4">
               Direct Inquiries
             </TabsTrigger>
-            <TabsTrigger value="marketplace" className="px-4">
-              👑 Custom Tour Requests
+            <TabsTrigger
+              value="marketplace"
+              className="relative px-4 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-300"
+            >
+              {/* Ambient glow when inactive */}
+              <span className="absolute inset-0 rounded-md ring-1 ring-amber-400/0 transition-all duration-300 data-[state=inactive]:ring-amber-400/30" />
+              <span className="flex items-center gap-1.5">
+                {/* Animated pulse dot */}
+                <span className="relative flex size-2">
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex size-2 rounded-full bg-amber-400" />
+                </span>
+                <span className="bg-gradient-to-r from-amber-300 to-yellow-200 bg-clip-text font-semibold text-transparent">
+                  Custom Tour Requests
+                </span>
+                {/* Live count badge */}
+                {marketplaceLeads.length > 0 && (
+                  <span className="ml-1 flex size-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-black shadow shadow-amber-500/40">
+                    {marketplaceLeads.length}
+                  </span>
+                )}
+              </span>
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -226,6 +256,33 @@ function VendorLeads() {
       {/* Mode 1: Direct Inquiries */}
       {mode === "direct" && (
         <div className="space-y-4">
+          {/* Premium marketplace teaser — shown only when there are available leads */}
+          {marketplaceLeads.length > 0 && (
+            <div
+              className="group relative flex cursor-pointer items-center gap-4 overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-transparent p-4 transition-all hover:border-amber-400/50 hover:from-amber-500/15"
+              onClick={() => setMode("marketplace")}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && setMode("marketplace")}
+            >
+              <div className="absolute -right-6 -top-6 size-24 rounded-full bg-amber-400/10 blur-2xl transition-all group-hover:bg-amber-400/20" />
+              <span className="relative flex size-3">
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-amber-400 opacity-75" />
+                <span className="relative inline-flex size-3 rounded-full bg-amber-400" />
+              </span>
+              <div className="relative min-w-0 flex-1">
+                <p className="text-sm font-semibold text-amber-300">
+                  👑 {marketplaceLeads.length} Custom Tour {marketplaceLeads.length === 1 ? "Lead" : "Leads"} Available in the Marketplace
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Pre-qualified group travelers looking for custom packages — unlock contact for ₨ 5,000
+                </p>
+              </div>
+              <span className="relative flex-shrink-0 text-xs font-semibold text-amber-400 underline-offset-2 hover:underline">
+                View Leads →
+              </span>
+            </div>
+          )}
           <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
             <TabsList className="flex flex-wrap gap-1">
               <TabsTrigger value="all">All · {directCounts.all ?? 0}</TabsTrigger>
