@@ -16,10 +16,12 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as CustomTourRouteImport } from './routes/custom-tour'
 import { Route as DestinationsRouteImport } from './routes/destinations'
+import { Route as EnterpriseRouteImport } from './routes/enterprise'
 import { Route as InsuranceRouteImport } from './routes/insurance'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as TicketsRouteImport } from './routes/tickets'
 import { Route as ToursRouteImport } from './routes/tours'
+import { Route as VendorGuideRouteImport } from './routes/vendor-guide'
 import { Route as VisaRouteImport } from './routes/visa'
 import { Route as WishlistRouteImport } from './routes/wishlist'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -41,6 +43,7 @@ import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminServicesRouteImport } from './routes/_authenticated/admin.services'
 import { Route as AuthenticatedAdminSubscriptionsRouteImport } from './routes/_authenticated/admin.subscriptions'
 import { Route as AuthenticatedAdminToursRouteImport } from './routes/_authenticated/admin.tours'
+import { Route as AuthenticatedAdminVendorGuideRouteImport } from './routes/_authenticated/admin.vendor-guide'
 import { Route as AuthenticatedAdminVendorsRouteImport } from './routes/_authenticated/admin.vendors'
 import { Route as AuthenticatedVendorIndexRouteImport } from './routes/_authenticated/vendor.index'
 import { Route as AuthenticatedVendorBillingRouteImport } from './routes/_authenticated/vendor.billing'
@@ -86,6 +89,11 @@ const DestinationsRoute = DestinationsRouteImport.update({
   path: '/destinations',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EnterpriseRoute = EnterpriseRouteImport.update({
+  id: '/enterprise',
+  path: '/enterprise',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InsuranceRoute = InsuranceRouteImport.update({
   id: '/insurance',
   path: '/insurance',
@@ -104,6 +112,11 @@ const TicketsRoute = TicketsRouteImport.update({
 const ToursRoute = ToursRouteImport.update({
   id: '/tours',
   path: '/tours',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VendorGuideRoute = VendorGuideRouteImport.update({
+  id: '/vendor-guide',
+  path: '/vendor-guide',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VisaRoute = VisaRouteImport.update({
@@ -215,6 +228,12 @@ const AuthenticatedAdminToursRoute = AuthenticatedAdminToursRouteImport.update({
   path: '/tours',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminVendorGuideRoute =
+  AuthenticatedAdminVendorGuideRouteImport.update({
+    id: '/vendor-guide',
+    path: '/vendor-guide',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminVendorsRoute =
   AuthenticatedAdminVendorsRouteImport.update({
     id: '/vendors',
@@ -281,10 +300,12 @@ export interface FileRoutesByFullPath {
   '/compare': typeof CompareRoute
   '/custom-tour': typeof CustomTourRoute
   '/destinations': typeof DestinationsRoute
+  '/enterprise': typeof EnterpriseRoute
   '/insurance': typeof InsuranceRouteWithChildren
   '/pricing': typeof PricingRoute
   '/tickets': typeof TicketsRouteWithChildren
   '/tours': typeof ToursRouteWithChildren
+  '/vendor-guide': typeof VendorGuideRoute
   '/visa': typeof VisaRouteWithChildren
   '/wishlist': typeof WishlistRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
@@ -305,6 +326,7 @@ export interface FileRoutesByFullPath {
   '/admin/services': typeof AuthenticatedAdminServicesRoute
   '/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
   '/admin/tours': typeof AuthenticatedAdminToursRoute
+  '/admin/vendor-guide': typeof AuthenticatedAdminVendorGuideRoute
   '/admin/vendors': typeof AuthenticatedAdminVendorsRoute
   '/vendor/billing': typeof AuthenticatedVendorBillingRoute
   '/vendor/insurance': typeof AuthenticatedVendorInsuranceRoute
@@ -324,7 +346,9 @@ export interface FileRoutesByTo {
   '/compare': typeof CompareRoute
   '/custom-tour': typeof CustomTourRoute
   '/destinations': typeof DestinationsRoute
+  '/enterprise': typeof EnterpriseRoute
   '/pricing': typeof PricingRoute
+  '/vendor-guide': typeof VendorGuideRoute
   '/wishlist': typeof WishlistRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/api/ai-chat': typeof ApiAiChatRoute
@@ -342,6 +366,7 @@ export interface FileRoutesByTo {
   '/admin/services': typeof AuthenticatedAdminServicesRoute
   '/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
   '/admin/tours': typeof AuthenticatedAdminToursRoute
+  '/admin/vendor-guide': typeof AuthenticatedAdminVendorGuideRoute
   '/admin/vendors': typeof AuthenticatedAdminVendorsRoute
   '/vendor/billing': typeof AuthenticatedVendorBillingRoute
   '/vendor/insurance': typeof AuthenticatedVendorInsuranceRoute
@@ -363,10 +388,12 @@ export interface FileRoutesById {
   '/compare': typeof CompareRoute
   '/custom-tour': typeof CustomTourRoute
   '/destinations': typeof DestinationsRoute
+  '/enterprise': typeof EnterpriseRoute
   '/insurance': typeof InsuranceRouteWithChildren
   '/pricing': typeof PricingRoute
   '/tickets': typeof TicketsRouteWithChildren
   '/tours': typeof ToursRouteWithChildren
+  '/vendor-guide': typeof VendorGuideRoute
   '/visa': typeof VisaRouteWithChildren
   '/wishlist': typeof WishlistRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
@@ -387,6 +414,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/services': typeof AuthenticatedAdminServicesRoute
   '/_authenticated/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
   '/_authenticated/admin/tours': typeof AuthenticatedAdminToursRoute
+  '/_authenticated/admin/vendor-guide': typeof AuthenticatedAdminVendorGuideRoute
   '/_authenticated/admin/vendors': typeof AuthenticatedAdminVendorsRoute
   '/_authenticated/vendor/billing': typeof AuthenticatedVendorBillingRoute
   '/_authenticated/vendor/insurance': typeof AuthenticatedVendorInsuranceRoute
@@ -408,10 +436,12 @@ export interface FileRouteTypes {
     | '/compare'
     | '/custom-tour'
     | '/destinations'
+    | '/enterprise'
     | '/insurance'
     | '/pricing'
     | '/tickets'
     | '/tours'
+    | '/vendor-guide'
     | '/visa'
     | '/wishlist'
     | '/admin'
@@ -432,6 +462,7 @@ export interface FileRouteTypes {
     | '/admin/services'
     | '/admin/subscriptions'
     | '/admin/tours'
+    | '/admin/vendor-guide'
     | '/admin/vendors'
     | '/vendor/billing'
     | '/vendor/insurance'
@@ -451,7 +482,9 @@ export interface FileRouteTypes {
     | '/compare'
     | '/custom-tour'
     | '/destinations'
+    | '/enterprise'
     | '/pricing'
+    | '/vendor-guide'
     | '/wishlist'
     | '/dashboard'
     | '/api/ai-chat'
@@ -469,6 +502,7 @@ export interface FileRouteTypes {
     | '/admin/services'
     | '/admin/subscriptions'
     | '/admin/tours'
+    | '/admin/vendor-guide'
     | '/admin/vendors'
     | '/vendor/billing'
     | '/vendor/insurance'
@@ -489,10 +523,12 @@ export interface FileRouteTypes {
     | '/compare'
     | '/custom-tour'
     | '/destinations'
+    | '/enterprise'
     | '/insurance'
     | '/pricing'
     | '/tickets'
     | '/tours'
+    | '/vendor-guide'
     | '/visa'
     | '/wishlist'
     | '/_authenticated/admin'
@@ -513,6 +549,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/services'
     | '/_authenticated/admin/subscriptions'
     | '/_authenticated/admin/tours'
+    | '/_authenticated/admin/vendor-guide'
     | '/_authenticated/admin/vendors'
     | '/_authenticated/vendor/billing'
     | '/_authenticated/vendor/insurance'
@@ -534,10 +571,12 @@ export interface RootRouteChildren {
   CompareRoute: typeof CompareRoute
   CustomTourRoute: typeof CustomTourRoute
   DestinationsRoute: typeof DestinationsRoute
+  EnterpriseRoute: typeof EnterpriseRoute
   InsuranceRoute: typeof InsuranceRouteWithChildren
   PricingRoute: typeof PricingRoute
   TicketsRoute: typeof TicketsRouteWithChildren
   ToursRoute: typeof ToursRouteWithChildren
+  VendorGuideRoute: typeof VendorGuideRoute
   VisaRoute: typeof VisaRouteWithChildren
   WishlistRoute: typeof WishlistRoute
   ApiAiChatRoute: typeof ApiAiChatRoute
@@ -596,6 +635,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DestinationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/enterprise': {
+      id: '/enterprise'
+      path: '/enterprise'
+      fullPath: '/enterprise'
+      preLoaderRoute: typeof EnterpriseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/insurance': {
       id: '/insurance'
       path: '/insurance'
@@ -622,6 +668,13 @@ declare module '@tanstack/react-router' {
       path: '/tours'
       fullPath: '/tours'
       preLoaderRoute: typeof ToursRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vendor-guide': {
+      id: '/vendor-guide'
+      path: '/vendor-guide'
+      fullPath: '/vendor-guide'
+      preLoaderRoute: typeof VendorGuideRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/visa': {
@@ -771,6 +824,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminToursRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/vendor-guide': {
+      id: '/_authenticated/admin/vendor-guide'
+      path: '/vendor-guide'
+      fullPath: '/admin/vendor-guide'
+      preLoaderRoute: typeof AuthenticatedAdminVendorGuideRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/vendors': {
       id: '/_authenticated/admin/vendors'
       path: '/vendors'
@@ -850,6 +910,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminServicesRoute: typeof AuthenticatedAdminServicesRoute
   AuthenticatedAdminSubscriptionsRoute: typeof AuthenticatedAdminSubscriptionsRoute
   AuthenticatedAdminToursRoute: typeof AuthenticatedAdminToursRoute
+  AuthenticatedAdminVendorGuideRoute: typeof AuthenticatedAdminVendorGuideRoute
   AuthenticatedAdminVendorsRoute: typeof AuthenticatedAdminVendorsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
@@ -860,6 +921,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminServicesRoute: AuthenticatedAdminServicesRoute,
   AuthenticatedAdminSubscriptionsRoute: AuthenticatedAdminSubscriptionsRoute,
   AuthenticatedAdminToursRoute: AuthenticatedAdminToursRoute,
+  AuthenticatedAdminVendorGuideRoute: AuthenticatedAdminVendorGuideRoute,
   AuthenticatedAdminVendorsRoute: AuthenticatedAdminVendorsRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
@@ -966,10 +1028,12 @@ const rootRouteChildren: RootRouteChildren = {
   CompareRoute: CompareRoute,
   CustomTourRoute: CustomTourRoute,
   DestinationsRoute: DestinationsRoute,
+  EnterpriseRoute: EnterpriseRoute,
   InsuranceRoute: InsuranceRouteWithChildren,
   PricingRoute: PricingRoute,
   TicketsRoute: TicketsRouteWithChildren,
   ToursRoute: ToursRouteWithChildren,
+  VendorGuideRoute: VendorGuideRoute,
   VisaRoute: VisaRouteWithChildren,
   WishlistRoute: WishlistRoute,
   ApiAiChatRoute: ApiAiChatRoute,

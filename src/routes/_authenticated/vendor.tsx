@@ -39,6 +39,7 @@ function VendorLayout() {
     ...(has("insurance") ? [{ to: "/vendor/insurance", label: "Insurance",     icon: Shield     }] : []),
     ...(has("tickets")   ? [{ to: "/vendor/tickets",   label: "Ticketing",     icon: Ticket     }] : []),
     { to: "/vendor/services", label: "Services offered", icon: Settings2 },
+    { to: "/vendor-guide", label: "Vendor Operating Guide", icon: BookOpen },
     { to: "/vendor/billing",  label: "Plan & billing",   icon: CreditCard },
   ];
 
