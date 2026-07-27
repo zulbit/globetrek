@@ -255,20 +255,22 @@ export const verifyLeadUnlockPayment = createServerFn({ method: "POST" })
       throw new Error(`SafePay tracker lookup failed: ${sfRes.status} ${txt.slice(0, 100)}`);
     }
 
-    // SafePay QuickLink GET returns a flat object (no 'data' wrapper):
-    // { id: "link_...", status: "PAID", note: "...", merchant_id: "...", ... }
-    // Some endpoints wrap it under 'data' — handle both cases.
+    // SafePay QuickLink GET response structure:
+    // { "data": { "link": { "id": "link_...", "status": "PAID", ... } } }
     const sfJson = (await sfRes.json()) as Record<string, unknown>;
-    const sfData = (sfJson.data as Record<string, unknown> | undefined) ?? sfJson;
+    const sfLink =
+      ((sfJson.data as Record<string, unknown> | undefined)?.link as Record<string, unknown> | undefined) ??
+      (sfJson.data as Record<string, unknown> | undefined) ??
+      sfJson;
 
     const rawState =
-      (sfData.status as string) ||
-      (sfData.state as string) ||
-      ((sfData.payments as Array<{ state?: string; status?: string }> | undefined)?.[0]?.state) ||
-      ((sfData.payments as Array<{ state?: string; status?: string }> | undefined)?.[0]?.status) ||
+      (sfLink.status as string) ||
+      (sfLink.state as string) ||
+      ((sfLink.payments as Array<{ state?: string; status?: string }> | undefined)?.[0]?.state) ||
+      ((sfLink.payments as Array<{ state?: string; status?: string }> | undefined)?.[0]?.status) ||
       "";
 
-    console.log("[verifyLeadUnlockPayment] SafePay raw response:", JSON.stringify(sfJson).slice(0, 500));
+    console.log("[verifyLeadUnlockPayment] sfLink:", JSON.stringify(sfLink).slice(0, 300));
     console.log("[verifyLeadUnlockPayment] Detected rawState:", rawState);
 
     const state = rawState.toUpperCase().replace(/\./g, "_");
@@ -323,6 +325,6 @@ export const verifyLeadUnlockPayment = createServerFn({ method: "POST" })
 
       return { ok: true, unlocked: true, message: "Lead unlocked successfully!" };
     } else {
-      return { ok: true, unlocked: false, message: `Payment status is: ${rawState || "unknown"} (raw: ${JSON.stringify(sfData).slice(0, 200)})` };
+      return { ok: true, unlocked: false, message: `Payment status is: ${rawState || "unknown"} (raw: ${JSON.stringify(sfLink).slice(0, 200)})` };
     }
   });
