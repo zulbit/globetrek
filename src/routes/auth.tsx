@@ -290,12 +290,13 @@ function AuthPage() {
                 {/* Quick Demo Credentials Assistant */}
                 <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3.5 space-y-2">
                   <div className="text-[11px] font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
-                    💡 Quick Fill Demo Accounts
+                    💡 Quick Fill Demo Accounts (Use Sign In Tab)
                   </div>
                   <div className="grid grid-cols-3 gap-1.5 pt-0.5">
                     <button
                       type="button"
                       onClick={() => {
+                        setTab("signin");
                         setEmail("customer.demo@globetrek.pk");
                         setPassword("customer123");
                       }}
@@ -308,6 +309,7 @@ function AuthPage() {
                     <button
                       type="button"
                       onClick={() => {
+                        setTab("signin");
                         setEmail("vendor.demo@globetrek.pk");
                         setPassword("vendor123");
                       }}
@@ -320,6 +322,7 @@ function AuthPage() {
                     <button
                       type="button"
                       onClick={() => {
+                        setTab("signin");
                         setEmail("admin.demo@globetrek.pk");
                         setPassword("admin123");
                       }}
