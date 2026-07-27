@@ -1,4 +1,5 @@
-import "@/lib/env.server";
+import { loadEnv } from "@/lib/env.server";
+loadEnv();
 import { createMiddleware } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { createClient } from '@supabase/supabase-js'

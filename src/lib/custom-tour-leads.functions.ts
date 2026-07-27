@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
+import { loadEnv } from "@/lib/env.server";
 
 export interface CustomTourLead {
   id: string;
@@ -200,6 +201,7 @@ export const verifyLeadUnlockPayment = createServerFn({ method: "POST" })
     return input;
   })
   .handler(async ({ data, context }) => {
+    loadEnv();
     const vendorId = context.userId;
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

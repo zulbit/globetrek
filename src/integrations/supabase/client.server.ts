@@ -1,4 +1,5 @@
-import "@/lib/env.server";
+import { loadEnv } from "@/lib/env.server";
+loadEnv();
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 

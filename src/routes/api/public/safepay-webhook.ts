@@ -52,10 +52,13 @@ function pickState(payload: unknown): string | null {
   return null;
 }
 
+import { loadEnv } from "@/lib/env.server";
+
 export const Route = createFileRoute("/api/public/safepay-webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        loadEnv();
         let payload: unknown;
         try {
           payload = await request.json();
