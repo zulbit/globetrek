@@ -26,6 +26,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedVendorRouteImport } from './routes/_authenticated/vendor'
 import { Route as ApiAiChatRouteImport } from './routes/api/ai-chat'
+import { Route as CustomerQuotesRouteImport } from './routes/customer.quotes'
 import { Route as InsuranceIndexRouteImport } from './routes/insurance.index'
 import { Route as InsuranceIdRouteImport } from './routes/insurance.$id'
 import { Route as TicketsIndexRouteImport } from './routes/tickets.index'
@@ -133,6 +134,11 @@ const AuthenticatedVendorRoute = AuthenticatedVendorRouteImport.update({
 const ApiAiChatRoute = ApiAiChatRouteImport.update({
   id: '/api/ai-chat',
   path: '/api/ai-chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CustomerQuotesRoute = CustomerQuotesRouteImport.update({
+  id: '/customer/quotes',
+  path: '/customer/quotes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InsuranceIndexRoute = InsuranceIndexRouteImport.update({
@@ -285,6 +291,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/vendor': typeof AuthenticatedVendorRouteWithChildren
   '/api/ai-chat': typeof ApiAiChatRoute
+  '/customer/quotes': typeof CustomerQuotesRoute
   '/insurance/$id': typeof InsuranceIdRoute
   '/tickets/$id': typeof TicketsIdRoute
   '/tours/$id': typeof ToursIdRoute
@@ -321,6 +328,7 @@ export interface FileRoutesByTo {
   '/wishlist': typeof WishlistRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/api/ai-chat': typeof ApiAiChatRoute
+  '/customer/quotes': typeof CustomerQuotesRoute
   '/insurance/$id': typeof InsuranceIdRoute
   '/tickets/$id': typeof TicketsIdRoute
   '/tours/$id': typeof ToursIdRoute
@@ -365,6 +373,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/vendor': typeof AuthenticatedVendorRouteWithChildren
   '/api/ai-chat': typeof ApiAiChatRoute
+  '/customer/quotes': typeof CustomerQuotesRoute
   '/insurance/$id': typeof InsuranceIdRoute
   '/tickets/$id': typeof TicketsIdRoute
   '/tours/$id': typeof ToursIdRoute
@@ -409,6 +418,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/vendor'
     | '/api/ai-chat'
+    | '/customer/quotes'
     | '/insurance/$id'
     | '/tickets/$id'
     | '/tours/$id'
@@ -445,6 +455,7 @@ export interface FileRouteTypes {
     | '/wishlist'
     | '/dashboard'
     | '/api/ai-chat'
+    | '/customer/quotes'
     | '/insurance/$id'
     | '/tickets/$id'
     | '/tours/$id'
@@ -488,6 +499,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/vendor'
     | '/api/ai-chat'
+    | '/customer/quotes'
     | '/insurance/$id'
     | '/tickets/$id'
     | '/tours/$id'
@@ -529,6 +541,7 @@ export interface RootRouteChildren {
   VisaRoute: typeof VisaRouteWithChildren
   WishlistRoute: typeof WishlistRoute
   ApiAiChatRoute: typeof ApiAiChatRoute
+  CustomerQuotesRoute: typeof CustomerQuotesRoute
   ApiPublicSafepayWebhookRoute: typeof ApiPublicSafepayWebhookRoute
 }
 
@@ -651,6 +664,13 @@ declare module '@tanstack/react-router' {
       path: '/api/ai-chat'
       fullPath: '/api/ai-chat'
       preLoaderRoute: typeof ApiAiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/customer/quotes': {
+      id: '/customer/quotes'
+      path: '/customer/quotes'
+      fullPath: '/customer/quotes'
+      preLoaderRoute: typeof CustomerQuotesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/insurance/': {
@@ -953,6 +973,7 @@ const rootRouteChildren: RootRouteChildren = {
   VisaRoute: VisaRouteWithChildren,
   WishlistRoute: WishlistRoute,
   ApiAiChatRoute: ApiAiChatRoute,
+  CustomerQuotesRoute: CustomerQuotesRoute,
   ApiPublicSafepayWebhookRoute: ApiPublicSafepayWebhookRoute,
 }
 export const routeTree = rootRouteImport

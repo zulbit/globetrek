@@ -31,15 +31,19 @@ export const getMarketplaceLeads = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<CustomTourLead[]> => {
     const vendorId = context.userId;
 
-    // Fetch all pending leads
+    // Fetch all verified leads that have not reached max unlocks limit
     const { data: leads, error: leadsErr } = await context.supabase
       .from("custom_tour_leads")
       .select("*")
-      .eq("status", "pending")
+      .in("status", ["verified", "pending"]) // support legacy 'pending' as verified
       .order("created_at", { ascending: false });
 
     if (leadsErr) throw new Error(leadsErr.message);
     if (!leads) return [];
+
+    // Filter leads where unlocked_count < max_unlocks (default 3)
+    const availableLeads = leads.filter((l: any) => (l.unlocked_count ?? 0) < (l.max_unlocks ?? 3));
+    if (availableLeads.length === 0) return [];
 
     // Fetch leads unlocked by this vendor
     const { data: purchased, error: purErr } = await context.supabase
@@ -60,7 +64,7 @@ export const getMarketplaceLeads = createServerFn({ method: "GET" })
     const pendingIds = new Set((pendingPayments ?? []).map((p) => p.lead_id));
 
     // Map through leads. If unlocked, include contact details. Otherwise, omit/hide.
-    return leads.map((lead: any) => {
+    return availableLeads.map((lead: any) => {
       const isUnlocked = purchasedIds.has(lead.id);
       return {
         id: lead.id,
@@ -132,14 +136,26 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
       return { ok: true, checkoutUrl: existingUrl, trackerToken: pendingRows[0].payment_intent_id };
     }
 
-    // Get lead details (to show in invoice / metadata)
+    // Get lead details (to check max unlocks and destination)
     const { data: lead } = await context.supabase
       .from("custom_tour_leads")
-      .select("destination")
+      .select("destination, status, unlocked_count, max_unlocks")
       .eq("id", data.leadId)
       .single();
 
     if (!lead) throw new Error("Lead not found");
+
+    if (lead.status === "unverified") {
+      throw new Error("This lead is pending admin verification");
+    }
+
+    if (lead.status === "accepted" || lead.status === "closed") {
+      throw new Error("This lead is no longer active");
+    }
+
+    if ((lead.unlocked_count ?? 0) >= (lead.max_unlocks ?? 3)) {
+      throw new Error("Maximum vendor unlock limit reached for this lead (3/3)");
+    }
 
     // Fetch vendor profile for invoicing info
     const { data: profile } = await context.supabase
@@ -323,6 +339,19 @@ export const verifyLeadUnlockPayment = createServerFn({ method: "POST" })
           { onConflict: "lead_id,vendor_id" }
         );
 
+      // Increment unlocked_count on the lead
+      const { data: currentLead } = await supabaseAdmin
+        .from("custom_tour_leads")
+        .select("unlocked_count")
+        .eq("id", payment.lead_id)
+        .single();
+
+      const newCount = (currentLead?.unlocked_count ?? 0) + 1;
+      await supabaseAdmin
+        .from("custom_tour_leads")
+        .update({ unlocked_count: newCount })
+        .eq("id", payment.lead_id);
+
       // Trigger WhatsApp notifications
       try {
         const { sendWhatsAppMessage } = await import("@/lib/whatsapp.functions");
@@ -357,3 +386,191 @@ export const verifyLeadUnlockPayment = createServerFn({ method: "POST" })
       return { ok: true, unlocked: false, message: `Payment status is: ${rawState || "unknown"} (raw: ${JSON.stringify(sfLink).slice(0, 200)})` };
     }
   });
+
+// -------- Vendor: Submit Quotation for an Unlocked Lead --------
+export const submitLeadQuote = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: {
+    leadId: string;
+    quoteAmount: number;
+    itinerarySummary: string;
+    inclusions?: string[];
+    pdfUrl?: string;
+    validUntil?: string;
+  }) => {
+    if (!input.leadId) throw new Error("Lead ID required");
+    if (!input.quoteAmount || input.quoteAmount <= 0) throw new Error("Valid price required");
+    if (!input.itinerarySummary?.trim()) throw new Error("Itinerary summary required");
+    return input;
+  })
+  .handler(async ({ data, context }) => {
+    const vendorId = context.userId;
+
+    // Verify vendor has unlocked this lead
+    const { data: purchase } = await context.supabase
+      .from("vendor_lead_purchases")
+      .select("id")
+      .eq("lead_id", data.leadId)
+      .eq("vendor_id", vendorId)
+      .maybeSingle();
+
+    if (!purchase) {
+      throw new Error("You must unlock this lead before submitting a quotation.");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error: quoteErr } = await supabaseAdmin.from("lead_quotes").upsert(
+      {
+        lead_id: data.leadId,
+        vendor_id: vendorId,
+        quote_amount: data.quoteAmount,
+        itinerary_summary: data.itinerarySummary,
+        inclusions: data.inclusions ?? [],
+        pdf_url: data.pdfUrl ?? null,
+        valid_until: data.validUntil ?? null,
+        status: "submitted",
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "lead_id,vendor_id" }
+    );
+
+    if (quoteErr) throw new Error(quoteErr.message);
+
+    // Send WhatsApp notification to traveler about new quote ready
+    try {
+      const { data: lead } = await supabaseAdmin
+        .from("custom_tour_leads")
+        .select("contact_phone, contact_name, destination, access_token")
+        .eq("id", data.leadId)
+        .single();
+
+      if (lead) {
+        const { sendWhatsAppMessage } = await import("@/lib/whatsapp.functions");
+        const quoteUrl = `https://tour.testbench.shop/customer/quotes?token=${lead.access_token}`;
+        const msg = `*GlobeTrek PK — New Quote Received!* ✈️\n\nDear *${lead.contact_name}*,\n\nA verified vendor has submitted a proposal of *Rs ${data.quoteAmount.toLocaleString()}* for your custom tour to *${lead.destination}*.\n\nReview & compare your quotes online here:\n${quoteUrl}`;
+        await sendWhatsAppMessage({
+          data: { phone: lead.contact_phone, message: msg, skipDeduplication: true }
+        });
+      }
+    } catch (err) {
+      console.error("Quote WhatsApp notification failed:", err);
+    }
+
+    return { ok: true, message: "Quotation submitted successfully!" };
+  });
+
+// -------- Admin: Verify & Publish Lead to Marketplace --------
+export const verifyAndPublishLead = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: { leadId: string; adminNotes?: string }) => {
+    if (!input.leadId) throw new Error("Lead ID required");
+    return input;
+  })
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { error } = await supabaseAdmin
+      .from("custom_tour_leads")
+      .update({
+        status: "verified",
+        admin_notes: data.adminNotes ?? "Verified by admin",
+        verified_at: new Date().toISOString(),
+      })
+      .eq("id", data.leadId);
+
+    if (error) throw new Error(error.message);
+
+    return { ok: true, message: "Lead verified & published to Marketplace!" };
+  });
+
+// -------- Traveler: Accept a Quote & Close Lead --------
+export const acceptLeadQuote = createServerFn({ method: "POST" })
+  .validator((input: { quoteId: string; token: string }) => {
+    if (!input.quoteId || !input.token) throw new Error("Quote ID and access token required");
+    return input;
+  })
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Fetch quote and verify access token
+    const { data: quote, error: qErr } = await supabaseAdmin
+      .from("lead_quotes")
+      .select("id, lead_id, vendor_id, quote_amount, custom_tour_leads!inner(id, access_token, destination, contact_name, contact_phone)")
+      .eq("id", data.quoteId)
+      .single();
+
+    if (qErr || !quote) throw new Error("Quote not found");
+    const lead = quote.custom_tour_leads as any;
+
+    if (lead.access_token !== data.token) {
+      throw new Error("Invalid access token");
+    }
+
+    // Mark quote as accepted
+    await supabaseAdmin
+      .from("lead_quotes")
+      .update({ status: "accepted" })
+      .eq("id", data.quoteId);
+
+    // Mark other quotes as declined
+    await supabaseAdmin
+      .from("lead_quotes")
+      .update({ status: "declined" })
+      .eq("lead_id", quote.lead_id)
+      .neq("id", data.quoteId);
+
+    // Update lead status to 'accepted' (removes it from vendor marketplace)
+    await supabaseAdmin
+      .from("custom_tour_leads")
+      .update({ status: "accepted" })
+      .eq("id", quote.lead_id);
+
+    // Notify winning vendor via WhatsApp
+    try {
+      const { data: vendorProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", quote.vendor_id)
+        .single();
+
+      const { sendWhatsAppMessage } = await import("@/lib/whatsapp.functions");
+      const winMsg = `🎉 *CONGRATULATIONS! Quote Accepted!* 🎉\n\nTraveler *${lead.contact_name}* (${lead.contact_phone}) has ACCEPTED your proposal of *Rs ${quote.quoteAmount.toLocaleString()}* for custom tour to *${lead.destination}*.\n\nLead has been reserved for you! Please reach out to complete booking.`;
+      
+      await sendWhatsAppMessage({
+        data: { phone: lead.contact_phone, message: winMsg, skipDeduplication: true }
+      });
+    } catch (err) {
+      console.error("Winning quote WhatsApp alert error:", err);
+    }
+
+    return { ok: true, message: "Quote accepted! Lead is reserved for your chosen vendor." };
+  });
+
+// -------- Public Customer: Get Quotes & Lead by Token --------
+export const getCustomerQuotesByToken = createServerFn({ method: "GET" })
+  .validator((input: { token: string }) => {
+    if (!input.token) throw new Error("Token required");
+    return input;
+  })
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Fetch lead details by access token
+    const { data: lead, error: lErr } = await supabaseAdmin
+      .from("custom_tour_leads")
+      .select("*")
+      .eq("access_token", data.token)
+      .single();
+
+    if (lErr || !lead) throw new Error("Invalid or expired quote access link");
+
+    // Fetch quotes with vendor profile info
+    const { data: quotes } = await supabaseAdmin
+      .from("lead_quotes")
+      .select("id, quote_amount, valid_until, itinerary_summary, inclusions, pdf_url, status, created_at, vendor_id, profiles(full_name, email)")
+      .eq("lead_id", lead.id)
+      .order("created_at", { ascending: false });
+
+    return { lead, quotes: quotes ?? [] };
+  });
+

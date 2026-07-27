@@ -17,16 +17,22 @@ import {
   Layers,
   Sparkles,
   RefreshCw,
+  Send,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   getMarketplaceLeads,
   createLeadUnlockCheckout,
   verifyLeadUnlockPayment,
+  submitLeadQuote,
   type CustomTourLead,
 } from "@/lib/custom-tour-leads.functions";
 
@@ -135,11 +141,44 @@ function VendorLeads() {
         toast.success(res.message || "Payment verified and lead unlocked successfully!");
         qc.invalidateQueries({ queryKey: ["vendor-leads-marketplace"] });
       } else {
-        toast.warning(res.message || "Payment status check completed but transaction is not paid.");
+        toast.warning(res.message || "Payment status not yet complete.");
       }
     },
+    onError: (err: any) => {
+      toast.error(err.message || "Could not verify payment.");
+    },
+  });
+
+  // -------- Quotation Modal State & Mutation --------
+  const [quoteModalOpen, setQuoteModalOpen] = useState(false);
+  const [selectedLeadForQuote, setSelectedLeadForQuote] = useState<CustomTourLead | null>(null);
+  const [quoteAmount, setQuoteAmount] = useState<string>("");
+  const [itinerarySummary, setItinerarySummary] = useState<string>("");
+  const [inclusionsInput, setInclusionsInput] = useState<string>("Flights, 4★ Hotel, Airport Transfers, Daily Breakfast, Guided Sightseeing");
+
+  const quoteMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedLeadForQuote) return;
+      const price = parseInt(quoteAmount.replace(/\D/g, ""), 10);
+      const inclusions = inclusionsInput.split(",").map((s) => s.trim()).filter(Boolean);
+      return submitLeadQuote({
+        data: {
+          leadId: selectedLeadForQuote.id,
+          quoteAmount: price,
+          itinerarySummary,
+          inclusions,
+        },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Quotation submitted successfully! Traveler notified via WhatsApp.");
+      setQuoteModalOpen(false);
+      setQuoteAmount("");
+      setItinerarySummary("");
+      qc.invalidateQueries({ queryKey: ["vendor-leads-marketplace"] });
+    },
     onError: (err: Error) => {
-      toast.error(err.message || "Failed to verify payment status.");
+      toast.error(err.message || "Failed to submit quotation.");
     },
   });
 
@@ -471,21 +510,34 @@ function VendorLeads() {
                           <p className="text-xs text-muted-foreground font-mono">{l.contact_email}</p>
                           <p className="text-xs text-muted-foreground font-mono font-bold mt-1">{l.contact_phone}</p>
                         </div>
-                        <div className="flex gap-2">
-                          <a
-                            href={`tel:${l.contact_phone}`}
-                            className="flex-1 inline-flex justify-center items-center gap-1.5 rounded-lg border border-border bg-surface py-2 text-xs font-semibold hover:bg-surface/70"
+                        <div className="flex flex-col gap-2">
+                          <div className="flex gap-2">
+                            <a
+                              href={`tel:${l.contact_phone}`}
+                              className="flex-1 inline-flex justify-center items-center gap-1.5 rounded-lg border border-border bg-surface py-2 text-xs font-semibold hover:bg-surface/70"
+                            >
+                              <Phone className="size-3.5" /> Call Client
+                            </a>
+                            <a
+                              href={waLink(l.contact_phone!, `Custom Tour to ${l.destination}`)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex-1 inline-flex justify-center items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 text-primary py-2 text-xs font-semibold hover:bg-primary/20"
+                            >
+                              <MessageCircle className="size-3.5" /> WhatsApp
+                            </a>
+                          </div>
+
+                          <Button
+                            size="sm"
+                            className="w-full gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold hover:from-amber-600 hover:to-yellow-600 shadow"
+                            onClick={() => {
+                              setSelectedLeadForQuote(l);
+                              setQuoteModalOpen(true);
+                            }}
                           >
-                            <Phone className="size-3.5" /> Call Client
-                          </a>
-                          <a
-                            href={waLink(l.contact_phone!, `Custom Tour to ${l.destination}`)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex-1 inline-flex justify-center items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 text-primary py-2 text-xs font-semibold hover:bg-primary/20"
-                          >
-                            <MessageCircle className="size-3.5" /> WhatsApp
-                          </a>
+                            <Send className="size-3.5" /> Submit Online Quotation
+                          </Button>
                         </div>
                       </div>
                     ) : (
@@ -555,6 +607,69 @@ function VendorLeads() {
           )}
         </div>
       )}
+
+      {/* -------- Submit Quotation Modal -------- */}
+      <Dialog open={quoteModalOpen} onOpenChange={setQuoteModalOpen}>
+        <DialogContent className="sm:max-w-lg bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg font-bold">
+              <span>✈️ Submit Online Quotation</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Submit your formal proposal for {selectedLeadForQuote?.destination} ({selectedLeadForQuote?.group_size} travelers, {selectedLeadForQuote?.duration_days} days).
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="text-xs font-semibold text-foreground mb-1 block">Total Package Price (PKR)</label>
+              <Input
+                placeholder="e.g. 350000"
+                value={quoteAmount}
+                onChange={(e) => setQuoteAmount(e.target.value)}
+                className="font-mono text-sm"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">Total lump sum for all travelers in PKR</p>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-foreground mb-1 block">Itinerary Highlights &amp; Notes</label>
+              <Textarea
+                placeholder="Describe hotel names, flight details, sightseeing highlights..."
+                rows={4}
+                value={itinerarySummary}
+                onChange={(e) => setItinerarySummary(e.target.value)}
+                className="text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-foreground mb-1 block">Inclusions (comma separated)</label>
+              <Input
+                placeholder="Flights, Hotel, Transfers, Daily Breakfast..."
+                value={inclusionsInput}
+                onChange={(e) => setInclusionsInput(e.target.value)}
+                className="text-xs"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setQuoteModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              className="bg-amber-500 hover:bg-amber-600 text-black font-bold gap-1.5"
+              disabled={quoteMutation.isPending || !quoteAmount || !itinerarySummary}
+              onClick={() => quoteMutation.mutate()}
+            >
+              {quoteMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-3.5" />}
+              Send Proposal to Traveler
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

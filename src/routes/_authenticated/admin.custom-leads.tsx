@@ -146,15 +146,21 @@ function AdminCustomLeads() {
         </div>
 
         <div className="flex gap-2">
-          {["all", "pending", "matched", "closed"].map((st) => (
+          {[
+            { id: "all", label: "All Leads" },
+            { id: "unverified", label: "⚠️ Unverified (Action Needed)" },
+            { id: "verified", label: "✅ Verified / Live" },
+            { id: "accepted", label: "🎉 Accepted" },
+            { id: "closed", label: "Closed" },
+          ].map((st) => (
             <Button
-              key={st}
+              key={st.id}
               size="sm"
-              variant={filterStatus === st ? "default" : "outline"}
-              onClick={() => setFilterStatus(st)}
-              className="capitalize text-xs rounded-xl"
+              variant={filterStatus === st.id ? "default" : "outline"}
+              onClick={() => setFilterStatus(st.id)}
+              className="text-xs rounded-xl"
             >
-              {st}
+              {st.label}
             </Button>
           ))}
         </div>
@@ -189,24 +195,27 @@ function AdminCustomLeads() {
 
                 <div className="flex items-center gap-3">
                   <div className="flex gap-1.5">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 text-xs border-amber-500/30 text-amber-500 hover:bg-amber-500/10"
-                      onClick={() => statusMutation.mutate({ leadId: l.id, status: "pending" })}
-                      disabled={l.status === "pending" || statusMutation.isPending}
-                    >
-                      <AlertCircle className="size-3.5 mr-1" /> Pending
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 text-xs border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10"
-                      onClick={() => statusMutation.mutate({ leadId: l.id, status: "matched" })}
-                      disabled={l.status === "matched" || statusMutation.isPending}
-                    >
-                      <CheckCircle2 className="size-3.5 mr-1" /> Match
-                    </Button>
+                    {l.status === "unverified" && (
+                      <Button
+                        size="sm"
+                        className="h-8 text-xs bg-emerald-500 hover:bg-emerald-600 text-black font-bold"
+                        onClick={() => statusMutation.mutate({ leadId: l.id, status: "verified" })}
+                        disabled={statusMutation.isPending}
+                      >
+                        <CheckCircle2 className="size-3.5 mr-1" /> Approve &amp; Publish to Marketplace
+                      </Button>
+                    )}
+                    {l.status !== "verified" && l.status !== "unverified" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10"
+                        onClick={() => statusMutation.mutate({ leadId: l.id, status: "verified" })}
+                        disabled={statusMutation.isPending}
+                      >
+                        <CheckCircle2 className="size-3.5 mr-1" /> Publish Live
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       variant="outline"
@@ -221,12 +230,13 @@ function AdminCustomLeads() {
                   <Badge
                     className={cn(
                       "capitalize text-xs font-semibold rounded-full px-3 py-1 border-0",
-                      l.status === "pending" && "bg-amber-500/10 text-amber-500",
-                      l.status === "matched" && "bg-emerald-500/10 text-emerald-500",
+                      l.status === "unverified" && "bg-amber-500/20 text-amber-400 border border-amber-500/40",
+                      (l.status === "verified" || l.status === "pending") && "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30",
+                      l.status === "accepted" && "bg-primary/20 text-primary border border-primary/40 font-bold",
                       l.status === "closed" && "bg-muted text-muted-foreground"
                     )}
                   >
-                    {l.status}
+                    {l.status === "unverified" ? "⚠️ Unverified" : l.status === "verified" ? "✅ Verified" : l.status}
                   </Badge>
                 </div>
               </div>
