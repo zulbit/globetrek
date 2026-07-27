@@ -129,6 +129,27 @@ const COMPARISON_DATA = [
     wordpress: false,
   },
   {
+    feature: "AI Tour Itinerary & Description Generator (Tier-Gated)",
+    globetrek: true,
+    cloneScript: false,
+    saasPms: false,
+    wordpress: false,
+  },
+  {
+    feature: "AI Embassy Fee Lookup for Visa Desks",
+    globetrek: true,
+    cloneScript: false,
+    saasPms: false,
+    wordpress: false,
+  },
+  {
+    feature: "Real-Time AI Lead Capture from Chat",
+    globetrek: true,
+    cloneScript: false,
+    saasPms: false,
+    wordpress: false,
+  },
+  {
     feature: "Traveler Online Quote Comparison Portal",
     globetrek: true,
     cloneScript: false,
@@ -151,7 +172,15 @@ const FAQS = [
   },
   {
     q: "How does the Bilingual AI Concierge work?",
-    a: "The AI Concierge leverages GlobeTrek's neural language model via `@ai-sdk/openai-compatible`. It seamlessly handles travel inquiries in both English and Roman Urdu, querying live database tables for tours, visa services, insurance plans, and flight tickets.",
+    a: "The AI Concierge (powered by OpenRouter GPT-4o-mini via @ai-sdk/openai-compatible) detects the traveler's language automatically — English replies for English queries, warm Roman Urdu replies for Roman Urdu queries. For example, a traveler typing 'Dubai ka 4 din ka package Karachi se chahiye' receives a complete Roman Urdu reply with the relevant listing, pricing in ₨, and a lead-capture prompt. When a traveler shares their phone number, the AI automatically calls the capture_lead server function — writing a lead record to the database and triggering an instant WhatsApp notification to the vendor.",
+  },
+  {
+    q: "What AI tools are available inside the Vendor Dashboard?",
+    a: "The Vendor Dashboard includes 3 AI tools: (1) AI Description Generator — creates 55–75 word marketing-optimized package summaries (Starter: 10/month, Pro+: unlimited). (2) Premium AI Trip Planner — generates complete day-by-day itineraries with timed activity slots, including multi-country routing for Europe (Pro: 50/month, Agency: unlimited). (3) AI Embassy Fee Lookup — provides current visa embassy fee estimates in PKR with source notes and confidence levels (Pro & Agency only). All tools run server-side via TanStack Start createServerFn with usage tracked in the ai_usage_events table.",
+  },
+  {
+    q: "How does Roman Urdu support work across the AI tools?",
+    a: "Roman Urdu (Urdu written in Latin/English script — the dominant messaging style of Pakistani travelers) is natively supported in two AI tools: the customer-facing Bilingual Concierge and the vendor-facing AI Partner Operational Assistant in the Vendor Guide. Both tools detect the input language at inference time and respond in matching style — no language selection required. The system prompt instructs the model: 'English request → English reply. Roman Urdu request → warm Roman Urdu reply.' The Tour Itinerary Generator and Visa Fee Lookup are English-only since they output structured data (JSON itineraries and PKR fee estimates).",
   },
   {
     q: "How does the Custom Lead Bidding & SafePay Integration operate?",
@@ -392,6 +421,143 @@ function EnterpriseShowcase() {
               </div>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* GlobeTrek AI Engine — Dedicated Feature Section */}
+      <section className="py-16 border-t bg-gradient-to-b from-purple-500/5 via-background to-background">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12">
+          <div className="text-center space-y-3 max-w-2xl mx-auto">
+            <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 font-bold px-3 py-1 text-xs">
+              <Bot className="size-3.5 mr-1.5" /> GlobeTrek AI Engine
+            </Badge>
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+              4 Production-Ready AI Tools
+            </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+              Powered by OpenRouter GPT-4o-mini via <code className="bg-surface px-1.5 py-0.5 rounded text-primary font-mono">@ai-sdk/openai-compatible</code> — all tools run server-side via TanStack Start, never exposing API keys to the client.
+            </p>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2">
+            {/* Tool 1: Bilingual Concierge */}
+            <Card className="p-6 space-y-4 border-purple-500/30 bg-gradient-to-br from-purple-500/10 via-card to-card shadow-sm">
+              <div className="flex items-start gap-4">
+                <div className="size-12 rounded-2xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-2xl shrink-0">
+                  🌐
+                </div>
+                <div className="space-y-1">
+                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] font-bold">All Visitors — No Login</Badge>
+                  <h3 className="font-bold text-base text-foreground">Bilingual AI Travel Concierge</h3>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Floating chat widget on every public page. Auto-detects language — answers in <strong>English</strong> or <strong>Roman Urdu</strong> based on the traveler's input. Grounds every response in live Supabase catalog data across all 4 service verticals.
+              </p>
+              <div className="rounded-xl border border-purple-500/20 bg-purple-500/10 p-3 space-y-1">
+                <p className="text-[10px] font-bold text-purple-300 uppercase tracking-wider">Roman Urdu Example</p>
+                <p className="text-xs text-foreground italic">
+                  Traveler: <em>"Dubai ka 4 din ka package Karachi se chahiye"</em>
+                </p>
+                <p className="text-xs text-muted-foreground italic">
+                  AI replies in Roman Urdu with 🇦🇪 flag, bold ₨ pricing, and a lead-capture prompt.
+                </p>
+              </div>
+              <ul className="space-y-1.5 text-xs text-muted-foreground">
+                <li className="flex items-start gap-2"><CheckCircle2 className="size-3.5 text-emerald-400 shrink-0 mt-0.5" /> Live catalog grounding — never fabricates packages</li>
+                <li className="flex items-start gap-2"><CheckCircle2 className="size-3.5 text-emerald-400 shrink-0 mt-0.5" /> Auto-calls <code className="font-mono">capture_lead</code> when phone number shared → WhatsApp alert</li>
+                <li className="flex items-start gap-2"><CheckCircle2 className="size-3.5 text-emerald-400 shrink-0 mt-0.5" /> Context-aware quick-reply chips guide the booking funnel</li>
+              </ul>
+            </Card>
+
+            {/* Tool 2: Premium AI Trip Planner */}
+            <Card className="p-6 space-y-4 border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-card to-card shadow-sm">
+              <div className="flex items-start gap-4">
+                <div className="size-12 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-2xl shrink-0">
+                  ✈️
+                </div>
+                <div className="space-y-1">
+                  <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-[10px] font-bold">Starter / Pro / Agency — Tier-Gated</Badge>
+                  <h3 className="font-bold text-base text-foreground">Premium AI Trip Planner</h3>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Built into the Vendor Dashboard tour editor. Generates marketing-ready package descriptions and complete day-by-day itineraries with timed activity slots — tailored to Pakistani travelers.
+              </p>
+              <div className="rounded-xl border border-border bg-surface/60 overflow-hidden">
+                <table className="w-full text-[10px]">
+                  <thead className="bg-surface/80 border-b border-border">
+                    <tr>
+                      <th className="p-2 text-left font-bold text-muted-foreground">Plan</th>
+                      <th className="p-2 text-center font-bold text-muted-foreground">AI Descriptions</th>
+                      <th className="p-2 text-center font-bold text-muted-foreground">Full Trip Plans</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border text-foreground">
+                    <tr><td className="p-2 font-semibold">Starter</td><td className="p-2 text-center">10 / month</td><td className="p-2 text-center text-muted-foreground">—</td></tr>
+                    <tr><td className="p-2 font-semibold">Pro</td><td className="p-2 text-center text-emerald-400 font-bold">Unlimited</td><td className="p-2 text-center">50 / month</td></tr>
+                    <tr><td className="p-2 font-semibold">Agency</td><td className="p-2 text-center text-emerald-400 font-bold">Unlimited</td><td className="p-2 text-center text-emerald-400 font-bold">Unlimited</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <ul className="space-y-1.5 text-xs text-muted-foreground">
+                <li className="flex items-start gap-2"><CheckCircle2 className="size-3.5 text-emerald-400 shrink-0 mt-0.5" /> Europe auto-designs multi-country routes with border crossings</li>
+                <li className="flex items-start gap-2"><CheckCircle2 className="size-3.5 text-emerald-400 shrink-0 mt-0.5" /> Monthly quota tracked in <code className="font-mono">ai_usage_events</code> table</li>
+              </ul>
+            </Card>
+
+            {/* Tool 3: Visa AI Embassy Fee Lookup */}
+            <Card className="p-6 space-y-4 border-sky-500/30 bg-gradient-to-br from-sky-500/10 via-card to-card shadow-sm">
+              <div className="flex items-start gap-4">
+                <div className="size-12 rounded-2xl bg-sky-500/20 border border-sky-500/30 flex items-center justify-center text-2xl shrink-0">
+                  📄
+                </div>
+                <div className="space-y-1">
+                  <Badge className="bg-sky-500/20 text-sky-400 border-sky-500/30 text-[10px] font-bold">Pro & Agency Only</Badge>
+                  <h3 className="font-bold text-base text-foreground">AI Embassy Fee Lookup</h3>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Saves visa consultants hours of research. Fetches AI-estimated embassy / VFS / TLS government visa fees in PKR for any destination country and visa type — with source attribution and confidence rating.
+              </p>
+              <div className="rounded-xl border border-sky-500/20 bg-sky-500/10 p-3 space-y-2">
+                <p className="text-[10px] font-bold text-sky-300 uppercase tracking-wider">Returns Per Query</p>
+                <ul className="space-y-1 text-xs text-foreground">
+                  <li>• Fee in ₨ PKR + original currency (e.g. USD 185)</li>
+                  <li>• Source name (e.g. VFS Global Schengen fee schedule)</li>
+                  <li>• Confidence: low / medium / high</li>
+                  <li>• Last known update period</li>
+                </ul>
+              </div>
+              <p className="text-[10px] text-muted-foreground italic">⚠️ AI estimate — vendor must verify with embassy before quoting client.</p>
+            </Card>
+
+            {/* Tool 4: AI Partner Operational Assistant */}
+            <Card className="p-6 space-y-4 border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-card to-card shadow-sm">
+              <div className="flex items-start gap-4">
+                <div className="size-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-2xl shrink-0">
+                  🤖
+                </div>
+                <div className="space-y-1">
+                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] font-bold">All Partners — No Login</Badge>
+                  <h3 className="font-bold text-base text-foreground">AI Partner Operational Assistant</h3>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Always-on Q&A agent embedded in the Vendor Guide page. Knows the complete GlobeTrek rulebook — KYC requirements, lead bidding rules, SafePay flows, AI tool quotas, and marketplace code of conduct.
+              </p>
+              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 space-y-1">
+                <p className="text-[10px] font-bold text-emerald-300 uppercase tracking-wider">Bilingual Prompts Supported</p>
+                <p className="text-xs text-foreground italic">"Pro plan mein kitne AI itinerary plans milte hain?"</p>
+                <p className="text-xs text-foreground italic">"How does the Max 3 vendor unlock cap work?"</p>
+                <p className="text-xs text-foreground italic">"SafePay payment mein kitna time lagta hai?"</p>
+              </div>
+              <ul className="space-y-1.5 text-xs text-muted-foreground">
+                <li className="flex items-start gap-2"><CheckCircle2 className="size-3.5 text-emerald-400 shrink-0 mt-0.5" /> English & Roman Urdu — auto-detected at inference time</li>
+                <li className="flex items-start gap-2"><CheckCircle2 className="size-3.5 text-emerald-400 shrink-0 mt-0.5" /> Structured bold heading + bullet detail format in every response</li>
+              </ul>
+            </Card>
+          </div>
         </div>
       </section>
 

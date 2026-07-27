@@ -62,7 +62,12 @@ const SUGGESTED_AI_PROMPTS = [
   "How does the Max 3 lead unlock cap work?",
   "SafePay payment lead unlock procedure kitna time leta hai?",
   "How can I generate AI itineraries for my tour packages?",
+  "Pro plan mein kitne AI itinerary plans milte hain per month?",
+  "AI embassy fee lookup kaise use karte hain visa services mein?",
+  "Starter aur Pro plan mein kya fark hai AI tools ke liye?",
+  "How does the bilingual Roman Urdu AI Concierge capture leads?",
 ];
+
 
 function VendorGuidePage() {
   const [searchTerm, setSearchTerm] = useState("");
