@@ -4,8 +4,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Sparkles, Zap, Wand2, Globe2, FileCheck, Shield, Ticket,
   TrendingUp, Users, CreditCard, ArrowUpRight, Plus, Inbox,
-  Clock, ChevronRight,
+  Clock, ChevronRight, BarChart2,
 } from "lucide-react";
+import {
+  ResponsiveContainer, LineChart, Line, XAxis, YAxis,
+  CartesianGrid, Tooltip, Legend,
+} from "recharts";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -94,7 +98,11 @@ function VendorOverview() {
       monthStart.setUTCDate(1);
       monthStart.setUTCHours(0, 0, 0, 0);
 
-      const [tours, visas, insurance, tickets, leads, profile, usage] = await Promise.all([
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+      thirtyDaysAgo.setHours(0, 0, 0, 0);
+
+      const [tours, visas, insurance, tickets, leads, profile, usage, chartLeadsRes] = await Promise.all([
         supabase.from("tours").select("id,is_active").eq("vendor_id", uid),
         supabase.from("visa_services").select("id,is_active").eq("vendor_id", uid),
         supabase.from("insurance_plans").select("id,is_active").eq("vendor_id", uid),
@@ -102,11 +110,29 @@ function VendorOverview() {
         supabase.from("leads").select("id,is_unlocked,service_type,customer_name,created_at").eq("vendor_id", uid).order("created_at", { ascending: false }).limit(50),
         supabase.from("profiles").select("lead_credits_balance,subscription_tier").eq("id", uid).maybeSingle(),
         supabase.from("ai_usage_events").select("kind").eq("user_id", uid).gte("created_at", monthStart.toISOString()),
+        supabase.from("leads").select("service_type,created_at").eq("vendor_id", uid).gte("created_at", thirtyDaysAgo.toISOString()),
       ]);
 
       const allLeads = leads.data ?? [];
       const leadsByType: Record<string, number> = { tours: 0, visa: 0, insurance: 0, tickets: 0 };
       allLeads.forEach((l) => { leadsByType[l.service_type ?? "tours"] = (leadsByType[l.service_type ?? "tours"] ?? 0) + 1; });
+
+      // Build 30-day chart data
+      const chartRaw = chartLeadsRes.data ?? [];
+      const dayMap: Record<string, Record<string, number>> = {};
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const key = d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+        dayMap[key] = { tours: 0, visa: 0, insurance: 0, tickets: 0 };
+      }
+      chartRaw.forEach((l: any) => {
+        const key = new Date(l.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+        if (dayMap[key] && l.service_type) {
+          dayMap[key][l.service_type] = (dayMap[key][l.service_type] ?? 0) + 1;
+        }
+      });
+      const chartData = Object.entries(dayMap).map(([date, counts]) => ({ date, ...counts }));
 
       const events = (usage.data ?? []) as { kind: "description" | "plan" }[];
 
@@ -125,6 +151,7 @@ function VendorOverview() {
         tier: (profile.data?.subscription_tier ?? "free") as Tier,
         aiDescriptions: events.filter((e) => e.kind === "description").length,
         aiPlans: events.filter((e) => e.kind === "plan").length,
+        chartData,
       };
     },
     refetchInterval: 3000,
@@ -332,6 +359,86 @@ function VendorOverview() {
           })}
         </div>
       </div>
+
+      {/* ── Lead Activity Chart ── */}
+      {(() => {
+        const SERVICE_LINES = [
+          { key: "tours",     label: "Tour Packages", color: "#10b981" },
+          { key: "visa",      label: "Visa Services",  color: "#0ea5e9" },
+          { key: "insurance", label: "Insurance",      color: "#8b5cf6" },
+          { key: "tickets",   label: "Ticketing",      color: "#f59e0b" },
+        ] as const;
+        // Only show lines for services the vendor actually has configured
+        const activeLines = SERVICE_LINES.filter(
+          (s) => (data?.services[s.key]?.total ?? 0) > 0
+        );
+        if (!data?.chartData || activeLines.length === 0) return null;
+        return (
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="grid size-8 place-items-center rounded-lg bg-primary/15 text-primary ring-1 ring-primary/30">
+                  <BarChart2 className="size-4" />
+                </span>
+                <div>
+                  <h3 className="text-sm font-semibold">Lead Activity</h3>
+                  <p className="text-[11px] text-muted-foreground">Last 30 days · by service</p>
+                </div>
+              </div>
+              {/* Legend */}
+              <div className="hidden items-center gap-4 sm:flex">
+                {activeLines.map((l) => (
+                  <span key={l.key} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <span className="inline-block size-2.5 rounded-full" style={{ backgroundColor: l.color }} />
+                    {l.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={data.chartData} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 10, fill: "rgba(255,255,255,0.35)" }}
+                  tickLine={false}
+                  axisLine={false}
+                  interval={Math.floor(data.chartData.length / 6)}
+                />
+                <YAxis
+                  tick={{ fontSize: 10, fill: "rgba(255,255,255,0.35)" }}
+                  tickLine={false}
+                  axisLine={false}
+                  allowDecimals={false}
+                  width={28}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "0.75rem",
+                    fontSize: 12,
+                  }}
+                  labelStyle={{ color: "rgba(255,255,255,0.7)", marginBottom: 4 }}
+                  cursor={{ stroke: "rgba(255,255,255,0.1)", strokeWidth: 1 }}
+                />
+                {activeLines.map((l) => (
+                  <Line
+                    key={l.key}
+                    type="monotone"
+                    dataKey={l.key}
+                    name={l.label}
+                    stroke={l.color}
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 4, strokeWidth: 0 }}
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        );
+      })()}
 
       {/* ── Two-Column: Recent Activity + AI Usage ── */}
       <div className="grid gap-6 lg:grid-cols-2">
