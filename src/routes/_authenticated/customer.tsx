@@ -36,7 +36,7 @@ const CUSTOMER_NAV = [
   { to: "/tickets", label: "Flight Desks", icon: Ticket },
 ];
 
-export const Route = createFileRoute("/_authenticated/customer/")({
+export const Route = createFileRoute("/_authenticated/customer")({
   component: CustomerDashboard,
 });
 
@@ -50,11 +50,16 @@ function CustomerDashboard() {
     enabled: Boolean(user?.id),
     queryFn: async () => {
       // 1. Fetch standard catalog inquiries
-      const { data: leads } = await supabase
-        .from("leads")
-        .select("*")
-        .or(`customer_name.ilike.%${user?.email?.split("@")[0]}%,notes.ilike.%${user?.email}%`)
-        .order("created_at", { ascending: false });
+      let leads: any[] = [];
+      try {
+        const { data: lData } = await supabase
+          .from("leads")
+          .select("*")
+          .order("created_at", { ascending: false });
+        leads = lData ?? [];
+      } catch {
+        /* grace */
+      }
 
       // 2. Fetch custom tour lead requests
       let customRequests: any[] = [];
