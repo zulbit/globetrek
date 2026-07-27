@@ -5,6 +5,7 @@ const SUCCESS_STATES = new Set([
   "COMPLETED",
   "PAID",
   "PAYMENT.SUCCEEDED",
+  "PAYMENT.COMPLETED",
   "SUCCEEDED",
 ]);
 const FAILED_STATES = new Set([

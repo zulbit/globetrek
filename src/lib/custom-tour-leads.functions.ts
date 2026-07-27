@@ -192,3 +192,116 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
 
     return { ok: true, checkoutUrl, trackerToken: trackerId };
   });
+
+export const verifyLeadUnlockPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: { leadId: string }) => {
+    if (!input.leadId) throw new Error("leadId required");
+    return input;
+  })
+  .handler(async ({ data, context }) => {
+    const vendorId = context.userId;
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // 1. Fetch pending payment record
+    const { data: payment, error: payErr } = await supabaseAdmin
+      .from("lead_unlock_payments")
+      .select("id, lead_id, vendor_id, payment_intent_id, status")
+      .eq("lead_id", data.leadId)
+      .eq("vendor_id", vendorId)
+      .eq("status", "pending")
+      .maybeSingle();
+
+    if (payErr) throw new Error(payErr.message);
+    if (!payment) {
+      // Check if already unlocked
+      const { data: purchase } = await supabaseAdmin
+        .from("vendor_lead_purchases")
+        .select("purchased_at")
+        .eq("lead_id", data.leadId)
+        .eq("vendor_id", vendorId)
+        .maybeSingle();
+      if (purchase) {
+        return { ok: true, unlocked: true, message: "Lead is already unlocked!" };
+      }
+      throw new Error("No pending payment found for this lead.");
+    }
+
+    // 2. Fetch status from Safepay API
+    const env = (process.env.SAFEPAY_ENV || "sandbox").toLowerCase();
+    const baseUrl = env === "production" || env === "live"
+      ? "https://api.getsafepay.com"
+      : "https://sandbox.api.getsafepay.com";
+    const secretKey = process.env.SAFEPAY_SECRET_KEY;
+    if (!secretKey) throw new Error("SafePay secret key not configured");
+
+    const url = `${baseUrl}/v1/payments/track_${payment.payment_intent_id}`;
+    const sfRes = await fetch(url, {
+      method: "GET",
+      headers: {
+        "X-SFPY-MERCHANT-SECRET": secretKey,
+      }
+    });
+
+    if (!sfRes.ok) {
+      const txt = await sfRes.text();
+      throw new Error(`SafePay tracker lookup failed: ${sfRes.status} ${txt.slice(0, 100)}`);
+    }
+
+    const sfJson = (await sfRes.json()) as {
+      ok?: boolean;
+      data?: { state?: string };
+    };
+
+    const state = sfJson.data?.state?.toUpperCase();
+    const successStates = new Set(["PAYMENT.COMPLETED", "TRACKER_COMPLETED", "COMPLETED", "PAID", "SUCCEEDED"]);
+
+    if (state && successStates.has(state)) {
+      // 3. Mark as completed and unlock
+      await supabaseAdmin
+        .from("lead_unlock_payments")
+        .update({ status: "completed" })
+        .eq("id", payment.id);
+
+      await supabaseAdmin
+        .from("vendor_lead_purchases")
+        .upsert(
+          { lead_id: payment.lead_id, vendor_id: payment.vendor_id },
+          { onConflict: "lead_id,vendor_id" }
+        );
+
+      // Trigger WhatsApp notifications
+      try {
+        const { sendWhatsAppMessage } = await import("@/lib/whatsapp.functions");
+        const [leadRes] = await Promise.all([
+          supabaseAdmin
+            .from("custom_tour_leads")
+            .select("contact_name, contact_phone, destination")
+            .eq("id", payment.lead_id)
+            .single()
+        ]);
+
+        if (leadRes.data) {
+          const lead = leadRes.data;
+          const vendorName = "a verified travel agent";
+
+          // Notify traveler
+          const travelerMsg = `*GlobeTrek PK — Travel Partner Found!* 🎉\n\nDear *${lead.contact_name}*,\n\nGreat news! A verified travel partner (*${vendorName}*) has unlocked your custom tour request to *${lead.destination}*.\n\nThey will reach out to you on this number shortly with options and quotes!`;
+          await sendWhatsAppMessage({
+            data: {
+              phone: lead.contact_phone,
+              message: travelerMsg,
+              skipDeduplication: true
+            }
+          });
+        }
+      } catch (waErr) {
+        console.error("Manual verification notification error:", waErr);
+      }
+
+      return { ok: true, unlocked: true, message: "Lead unlocked successfully!" };
+    } else {
+      return { ok: true, unlocked: false, message: `Payment status is: ${state || "unknown"}` };
+    }
+  });

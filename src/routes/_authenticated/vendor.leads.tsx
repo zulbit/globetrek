@@ -16,6 +16,7 @@ import {
   Briefcase,
   Layers,
   Sparkles,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +26,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   getMarketplaceLeads,
   createLeadUnlockCheckout,
+  verifyLeadUnlockPayment,
   type CustomTourLead,
 } from "@/lib/custom-tour-leads.functions";
 
@@ -112,6 +114,22 @@ function VendorLeads() {
     },
     onError: (err: any) => {
       toast.error(err.message || "Could not unlock lead.");
+    },
+  });
+
+  // -------- Verify Custom Lead Payment Mutation --------
+  const verifyPaymentMutation = useMutation({
+    mutationFn: (leadId: string) => verifyLeadUnlockPayment({ data: { leadId } }),
+    onSuccess: (res) => {
+      if (res.unlocked) {
+        toast.success(res.message || "Payment verified and lead unlocked successfully!");
+        qc.invalidateQueries({ queryKey: ["vendor-leads-marketplace"] });
+      } else {
+        toast.warning(res.message || "Payment status check completed but transaction is not paid.");
+      }
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Failed to verify payment status.");
     },
   });
 
@@ -415,18 +433,34 @@ function VendorLeads() {
                           <p className="text-xs font-mono">+92 300 0000000</p>
                         </div>
 
-                        <Button
-                          className="w-full gap-2 bg-gradient-to-r from-amber-500 to-primary text-white shadow-glow hover:from-amber-600 hover:to-primary/90"
-                          disabled={unlockMutation.isPending}
-                          onClick={() => unlockMutation.mutate(l.id)}
-                        >
-                          {unlockMutation.isPending ? (
-                            <Loader2 className="size-4 animate-spin" />
-                          ) : (
-                            <Lock className="size-4" />
-                          )}
-                          Unlock Lead Info — ₨ 5,000
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            className="flex-1 gap-2 bg-gradient-to-r from-amber-500 to-primary text-white shadow-glow hover:from-amber-600 hover:to-primary/90"
+                            disabled={unlockMutation.isPending}
+                            onClick={() => unlockMutation.mutate(l.id)}
+                          >
+                            {unlockMutation.isPending ? (
+                              <Loader2 className="size-4 animate-spin" />
+                            ) : (
+                              <Lock className="size-4" />
+                            )}
+                            Unlock Lead Info — ₨ 5,000
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="border-primary/20 hover:bg-primary/5 hover:text-primary gap-1.5"
+                            disabled={verifyPaymentMutation.isPending}
+                            onClick={() => verifyPaymentMutation.mutate(l.id)}
+                            title="Verify if you have already completed payment"
+                          >
+                            {verifyPaymentMutation.isPending ? (
+                              <Loader2 className="size-4 animate-spin" />
+                            ) : (
+                              <RefreshCw className="size-4" />
+                            )}
+                            Verify Payment
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
