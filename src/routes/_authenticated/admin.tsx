@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { LayoutDashboard, Users, Globe2, Boxes, CreditCard } from "lucide-react";
+import { LayoutDashboard, Users, Globe2, Boxes, CreditCard, Sparkles } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { RoleGuard } from "@/components/role-guard";
 
