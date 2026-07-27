@@ -17,6 +17,7 @@ import {
   User,
   ShoppingBag,
   ExternalLink,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useWishlist } from "@/hooks/use-tour-collections";
