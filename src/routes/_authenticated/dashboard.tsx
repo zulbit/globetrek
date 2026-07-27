@@ -17,5 +17,5 @@ function DashboardRedirect() {
   }
   if (role === "admin") return <Navigate to="/admin" />;
   if (role === "vendor") return <Navigate to="/vendor" />;
-  return <Navigate to="/" />;
+  return <Navigate to="/customer" />;
 }
