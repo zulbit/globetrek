@@ -117,7 +117,7 @@ export const Route = createFileRoute("/api/public/safepay-webhook")({
                 const lead = leadRes.data;
                 const vendorName = vendorRes.data?.full_name || "a verified travel agent";
 
-                // Notify traveler
+                // 1. Notify traveler
                 const travelerMsg = `*GlobeTrek PK — Travel Partner Found!* 🎉\n\nDear *${lead.contact_name}*,\n\nGreat news! A verified travel partner (*${vendorName}*) has unlocked your custom tour request to *${lead.destination}*.\n\nThey will reach out to you on this number shortly with options and quotes!`;
                 await sendWhatsAppMessage({
                   data: {
@@ -126,6 +126,19 @@ export const Route = createFileRoute("/api/public/safepay-webhook")({
                     skipDeduplication: true
                   }
                 });
+
+                // 2. Notify vendor with payment receipt & unlocked traveler details
+                if (vendorRes.data && (vendorRes.data as any).phone) {
+                  const vendorPhone = (vendorRes.data as any).phone;
+                  const vendorMsg = `💳 *GlobeTrek PK — Lead Unlock Receipt* ✅\n\nDear *${vendorName}*,\n\nYour payment of *Rs 5,000 PKR* was successful!\n\nUnlocked Traveler Details:\n📍 Destination: *${lead.destination}*\n👤 Traveler: *${lead.contact_name}* (${lead.contact_phone})\n\nSubmit your online quotation directly in your dashboard:\nhttps://tour.testbench.shop/vendor/leads`;
+                  await sendWhatsAppMessage({
+                    data: {
+                      phone: vendorPhone,
+                      message: vendorMsg,
+                      skipDeduplication: true
+                    }
+                  });
+                }
               }
             } catch (waErr) {
               console.error("Webhook notification error:", waErr);
@@ -138,6 +151,26 @@ export const Route = createFileRoute("/api/public/safepay-webhook")({
               .from("lead_unlock_payments")
               .update({ status: "failed", payment_intent_id: token })
               .eq("id", leadPayment.id);
+
+            // Send payment failure WhatsApp alert to vendor
+            try {
+              const { data: vProfile } = await supabaseAdmin
+                .from("profiles")
+                .select("full_name, phone")
+                .eq("id", leadPayment.vendor_id)
+                .single();
+
+              if (vProfile?.phone) {
+                const { sendWhatsAppMessage } = await import("@/lib/whatsapp.functions");
+                const failMsg = `⚠️ *GlobeTrek PK — Payment Unsuccessful*\n\nDear *${vProfile.full_name || "Vendor"}*,\n\nYour payment attempt of *Rs 5,000 PKR* to unlock a custom tour lead was not completed (Status: *${state}*).\n\nNo amount was charged. You can retry unlocking the lead anytime from your dashboard:\nhttps://tour.testbench.shop/vendor/leads`;
+                await sendWhatsAppMessage({
+                  data: { phone: vProfile.phone, message: failMsg, skipDeduplication: true }
+                });
+              }
+            } catch (fErr) {
+              console.error("Failure alert error:", fErr);
+            }
+
             return Response.json({ ok: true, failed_lead: leadPayment.id });
           }
           return Response.json({ ok: true, lead_state: state });
