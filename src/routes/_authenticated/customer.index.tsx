@@ -267,11 +267,11 @@ function CustomerDashboard() {
                         <div className="space-y-0.5">
                           <h4 className="text-xs font-bold text-foreground line-clamp-1">{item.title}</h4>
                           <p className="text-[11px] text-muted-foreground">
-                            {item.destination} · <span className="text-primary font-bold">{formatPKR(item.pricePkr)}</span>
+                            {item.destination} · <span className="text-primary font-bold">{formatPKR(item.pricePKR)}</span>
                           </p>
                         </div>
                         <Button asChild size="xs" variant="outline" className="text-[11px] font-semibold h-7 rounded-lg shrink-0">
-                          <Link to={`/tours/${item.id}`}>
+                          <Link to={`/tours/${item.id}` as never}>
                             View Details
                           </Link>
                         </Button>
