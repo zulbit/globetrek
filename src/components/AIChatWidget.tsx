@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { MessageCircle, X, Send, Sparkles } from "lucide-react";
+import { Bot, X, Send, Sparkles } from "lucide-react";
+import { useLocation } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -59,41 +60,40 @@ function getChipStyle(chipText: string): { label: string; className: string } {
   }
   if (lower.includes("tour") || lower.includes("package")) {
     return {
-      label: chipText.startsWith("🌴") ? chipText : `🌴 ${chipText}`,
+      label: chipText.includes("🌴") ? chipText : "Tour Packages 🌴",
       className:
-        "border-emerald-500/50 bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/35 hover:border-emerald-400 shadow-xs shadow-emerald-950/40",
+        "border-amber-500/40 bg-amber-500/15 text-amber-300 hover:bg-amber-500/30 hover:border-amber-400 shadow-xs shadow-amber-950/40",
     };
   }
   if (lower.includes("visa")) {
     return {
-      label: chipText.startsWith("📄") ? chipText : `📄 ${chipText}`,
+      label: chipText.includes("📄") ? chipText : "Visa Services 📄",
       className:
-        "border-sky-500/50 bg-sky-500/20 text-sky-200 hover:bg-sky-500/35 hover:border-sky-400 shadow-xs shadow-sky-950/40",
+        "border-teal-500/40 bg-teal-500/15 text-teal-300 hover:bg-teal-500/30 hover:border-teal-400 shadow-xs shadow-teal-950/40",
     };
   }
-  if (lower.includes("insurance") || lower.includes("insure")) {
+  if (lower.includes("insurance")) {
     return {
-      label: chipText.startsWith("🛡️") ? chipText : `🛡️ ${chipText}`,
+      label: chipText.includes("🛡️") ? chipText : "Travel Insurance 🛡️",
       className:
-        "border-teal-500/50 bg-teal-500/20 text-teal-200 hover:bg-teal-500/35 hover:border-teal-400 shadow-xs shadow-teal-950/40",
+        "border-purple-500/40 bg-purple-500/15 text-purple-300 hover:bg-purple-500/30 hover:border-purple-400 shadow-xs shadow-purple-950/40",
     };
   }
   if (lower.includes("ticket") || lower.includes("flight")) {
     return {
-      label: chipText.startsWith("✈️") ? chipText : `✈️ ${chipText}`,
+      label: chipText.includes("✈️") ? chipText : "Flight Tickets ✈️",
       className:
-        "border-amber-500/50 bg-amber-500/20 text-amber-200 hover:bg-amber-500/35 hover:border-amber-400 shadow-xs shadow-amber-950/40",
+        "border-blue-500/40 bg-blue-500/15 text-blue-300 hover:bg-blue-500/30 hover:border-blue-400 shadow-xs shadow-blue-950/40",
     };
   }
 
-  // Check country flags
   for (const [key, flag] of Object.entries(COUNTRY_FLAGS)) {
     if (lower.includes(key)) {
-      const hasFlag = chipText.includes(flag);
+      const cleanLabel = chipText.replace(/^[^\w\s\u0600-\u06FF]+/, "").trim();
       return {
-        label: hasFlag ? chipText : `${flag} ${chipText}`,
+        label: `${flag} ${cleanLabel}`,
         className:
-          "border-primary/50 bg-primary/20 text-primary-foreground hover:bg-primary/35 hover:border-primary shadow-xs shadow-primary/20 font-medium",
+          "border-primary/40 bg-primary/15 text-primary hover:bg-primary/30 hover:border-primary shadow-xs",
       };
     }
   }
@@ -101,83 +101,85 @@ function getChipStyle(chipText: string): { label: string; className: string } {
   return {
     label: chipText,
     className:
-      "border-primary/40 bg-primary/10 text-primary hover:bg-primary/25 hover:border-primary/60",
+      "border-border/60 bg-surface-2/80 text-foreground/90 hover:bg-surface-2 hover:border-border",
   };
 }
 
 export function AIChatWidget() {
-  const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
-  const [input, setInput] = useState("");
-  const [sending, setSending] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
+  const pathname = location.pathname;
 
-  // Hydrate from localStorage after mount
-  useEffect(() => {
+  // Do not render the customer AI chat widget in vendor or admin dashboard routes
+  if (pathname.startsWith("/vendor") || pathname.startsWith("/admin")) {
+    return null;
+  }
+
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw) as ChatMessage[];
-        if (Array.isArray(parsed) && parsed.length > 0) setMessages(parsed);
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
     } catch {
       /* ignore */
     }
-  }, []);
+    return [GREETING];
+  });
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
     } catch {
-      /* ignore quota */
+      /* ignore */
     }
   }, [messages]);
 
   useEffect(() => {
-    if (open && scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (open) {
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({
+          top: scrollRef.current.scrollHeight,
+          behavior: "smooth",
+        });
+      }, 50);
     }
-  }, [messages, open, sending]);
+  }, [open, messages, sending]);
 
-  async function sendMessage(text: string) {
-    const trimmed = text.trim();
-    if (!trimmed || sending) return;
-    const next: ChatMessage[] = [...messages, { role: "user", content: trimmed }];
-    setMessages([...next, { role: "assistant", content: "" }]);
-    setInput("");
+  async function sendMessage(textToSend?: string) {
+    const text = (textToSend ?? input).trim();
+    if (!text || sending) return;
+
+    const userMsg: ChatMessage = { role: "user", content: text };
+    const nextMsgs = [...messages, userMsg];
+    setMessages(nextMsgs);
+    if (!textToSend) setInput("");
     setSending(true);
+
     try {
       const res = await fetch("/api/ai-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: next }),
+        body: JSON.stringify({
+          messages: nextMsgs.map((m) => ({ role: m.role, content: m.content })),
+        }),
       });
-      if (!res.ok || !res.body) {
-        const errText = await res.text().catch(() => res.statusText);
+
+      if (res.ok) {
+        const replyText = await res.text();
+        setMessages((m) => [...m, { role: "assistant", content: replyText }]);
+      } else {
+        const errText = await res.text().catch(() => "");
         setMessages((m) => {
           const copy = [...m];
-          copy[copy.length - 1] = { role: "assistant", content: `Sorry — I hit an error: ${errText || "unknown"}` };
-          return copy;
-        });
-        return;
-      }
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let acc = "";
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        acc += decoder.decode(value, { stream: true });
-        setMessages((m) => {
-          const copy = [...m];
-          copy[copy.length - 1] = { role: "assistant", content: acc };
-          return copy;
-        });
-      }
-      if (!acc.trim()) {
-        setMessages((m) => {
-          const copy = [...m];
-          copy[copy.length - 1] = { role: "assistant", content: "…I didn't get a reply. Try rephrasing?" };
+          copy[copy.length - 1] = {
+            role: "assistant",
+            content: `Maafi chahta hoon, error aaya (${res.status}): ${errText || "Please try again"}`,
+          };
           return copy;
         });
       }
@@ -206,22 +208,20 @@ export function AIChatWidget() {
 
   return (
     <>
-      {/* Floating trigger */}
       {!open && (
         <button
           onClick={() => setOpen(true)}
           aria-label="Open travel concierge"
-          className="fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-2xl shadow-emerald-900/40 ring-2 ring-emerald-400/50 transition duration-300 hover:scale-110 hover:shadow-emerald-500/40 md:bottom-6"
+          className="fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-tr from-purple-600 via-indigo-600 to-violet-500 text-white shadow-2xl shadow-purple-950/60 ring-2 ring-purple-400/50 transition duration-300 hover:scale-110 hover:shadow-purple-500/50 md:bottom-6"
         >
-          <MessageCircle className="h-6 w-6" />
+          <Bot className="h-7 w-7 text-purple-100" />
           <span className="absolute -top-1 -right-1 flex h-4 w-4">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex h-4 w-4 rounded-full bg-emerald-500 ring-2 ring-background" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-purple-400 opacity-75" />
+            <span className="relative inline-flex h-4 w-4 rounded-full bg-purple-500 ring-2 ring-background" />
           </span>
         </button>
       )}
 
-      {/* Chat window */}
       {open && (
         <div
           className={cn(
