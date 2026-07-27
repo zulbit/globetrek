@@ -286,6 +286,50 @@ function AuthPage() {
                 <Button disabled={loading} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
                   {loading && <Loader2 className="mr-2 size-4 animate-spin" />} Sign in
                 </Button>
+
+                {/* Quick Demo Credentials Assistant */}
+                <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3.5 space-y-2">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
+                    💡 Quick Fill Demo Accounts
+                  </div>
+                  <div className="grid grid-cols-3 gap-1.5 pt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEmail("customer.demo@globetrek.pk");
+                        setPassword("customer123");
+                      }}
+                      className="flex flex-col items-center justify-center rounded-lg border border-white/10 bg-black/40 p-2 text-center transition hover:border-sky-500/50 hover:bg-sky-500/10"
+                    >
+                      <span className="text-[11px] font-bold text-sky-400">Customer</span>
+                      <span className="text-[9px] text-white/50 truncate w-full">customer.demo</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEmail("vendor.demo@globetrek.pk");
+                        setPassword("vendor123");
+                      }}
+                      className="flex flex-col items-center justify-center rounded-lg border border-white/10 bg-black/40 p-2 text-center transition hover:border-emerald-500/50 hover:bg-emerald-500/10"
+                    >
+                      <span className="text-[11px] font-bold text-emerald-400">Vendor</span>
+                      <span className="text-[9px] text-white/50 truncate w-full">vendor.demo</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEmail("admin.demo@globetrek.pk");
+                        setPassword("admin123");
+                      }}
+                      className="flex flex-col items-center justify-center rounded-lg border border-white/10 bg-black/40 p-2 text-center transition hover:border-purple-500/50 hover:bg-purple-500/10"
+                    >
+                      <span className="text-[11px] font-bold text-purple-400">Admin</span>
+                      <span className="text-[9px] text-white/50 truncate w-full">admin.demo</span>
+                    </button>
+                  </div>
+                </div>
               </form>
             ) : (
               <form onSubmit={handleSignUp} className="space-y-4">
