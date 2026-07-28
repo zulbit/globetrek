@@ -288,21 +288,8 @@ function VendorGuidePage() {
             </Badge>
           </div>
 
-          <div className="flex items-center gap-3">
-            <a
-              href="/vendor-guide.pdf"
-              download="GlobeTrek-Vendor-Operating-Guide.pdf"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5"
-            >
-              <Button size="sm" variant="outline" className="h-9 gap-1.5 text-xs font-semibold">
-                <Download className="size-3.5 text-primary" /> Download PDF
-              </Button>
-            </a>
-
             <Button size="sm" variant="outline" onClick={handlePrintPDF} className="h-9 gap-1.5 text-xs font-semibold">
-              <Printer className="size-3.5" /> Print
+              <Download className="size-3.5 text-primary" /> Download / Print PDF
             </Button>
 
             {isAdmin && (
