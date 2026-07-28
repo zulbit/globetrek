@@ -470,12 +470,12 @@ function VendorGuidePage() {
 
           {/* Main Active Chapter Content */}
           {isLoading ? (
-            <div className="flex items-center justify-center py-20 text-sm text-muted-foreground">
+            <div className="flex items-center justify-center py-20 text-sm text-muted-foreground print:hidden">
               <div className="animate-spin mr-2 size-5 border-2 border-primary border-t-transparent rounded-full" />
               Loading chapter documentation...
             </div>
           ) : activeSection ? (
-            <div className="rounded-3xl border border-border bg-card p-6 sm:p-10 shadow-sm space-y-6">
+            <div className="rounded-3xl border border-border bg-card p-6 sm:p-10 shadow-sm space-y-6 print:hidden">
               {/* Chapter Header */}
               <div className="border-b border-border pb-6 space-y-3">
                 <div className="flex items-center gap-2">
@@ -499,10 +499,26 @@ function VendorGuidePage() {
               </div>
             </div>
           ) : (
-            <div className="rounded-2xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
+            <div className="rounded-2xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground print:hidden">
               No matching guide chapter found. Please adjust your search query.
             </div>
           )}
+
+          {/* Print-Only: All Chapters Rendered Sequentially for Complete PDF Document */}
+          <div className="hidden print:block space-y-10">
+            {sections.map((sec) => (
+              <div key={sec.id} className="border-b pb-8 space-y-4 page-break-after-always">
+                <div className="border-b pb-3">
+                  <span className="text-xs font-bold uppercase text-gray-500">{sec.category} · Chapter #{sec.display_order}</span>
+                  <h2 className="text-xl font-bold text-black mt-1">{sec.title}</h2>
+                  <p className="text-xs text-gray-600 font-medium">{sec.description}</p>
+                </div>
+                <div className="prose prose-sm text-black max-w-none">
+                  <ReactMarkdown components={mdComponents}>{sec.content}</ReactMarkdown>
+                </div>
+              </div>
+            ))}
+          </div>
 
           {/* Interactive Lead ROI & Revenue Simulator */}
           <div className="rounded-3xl border border-amber-500/40 bg-card p-6 sm:p-8 shadow-card space-y-6 print:hidden">
