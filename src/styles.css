@@ -131,3 +131,11 @@
 @utility text-balance {
   text-wrap: balance;
 }
+
+@media print {
+  html, body, #root, main {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+}
+

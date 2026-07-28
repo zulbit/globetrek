@@ -39,12 +39,14 @@ import { Route as VisaIndexRouteImport } from './routes/visa.index'
 import { Route as VisaIdRouteImport } from './routes/visa.$id'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminCustomLeadsRouteImport } from './routes/_authenticated/admin.custom-leads'
+import { Route as AuthenticatedAdminFinancialsRouteImport } from './routes/_authenticated/admin.financials'
 import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin.payments'
 import { Route as AuthenticatedAdminServicesRouteImport } from './routes/_authenticated/admin.services'
 import { Route as AuthenticatedAdminSubscriptionsRouteImport } from './routes/_authenticated/admin.subscriptions'
 import { Route as AuthenticatedAdminToursRouteImport } from './routes/_authenticated/admin.tours'
 import { Route as AuthenticatedAdminVendorGuideRouteImport } from './routes/_authenticated/admin.vendor-guide'
 import { Route as AuthenticatedAdminVendorsRouteImport } from './routes/_authenticated/admin.vendors'
+import { Route as AuthenticatedCustomerIndexRouteImport } from './routes/_authenticated/customer.index'
 import { Route as AuthenticatedVendorIndexRouteImport } from './routes/_authenticated/vendor.index'
 import { Route as AuthenticatedVendorBillingRouteImport } from './routes/_authenticated/vendor.billing'
 import { Route as AuthenticatedVendorInsuranceRouteImport } from './routes/_authenticated/vendor.insurance'
@@ -53,6 +55,7 @@ import { Route as AuthenticatedVendorServicesRouteImport } from './routes/_authe
 import { Route as AuthenticatedVendorTicketsRouteImport } from './routes/_authenticated/vendor.tickets'
 import { Route as AuthenticatedVendorToursRouteImport } from './routes/_authenticated/vendor.tours'
 import { Route as AuthenticatedVendorVisaRouteImport } from './routes/_authenticated/vendor.visa'
+import { Route as ApiAuthRegisterRouteImport } from './routes/api/auth.register'
 import { Route as ApiPublicSafepayWebhookRouteImport } from './routes/api/public/safepay-webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -205,6 +208,12 @@ const AuthenticatedAdminCustomLeadsRoute =
     path: '/custom-leads',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminFinancialsRoute =
+  AuthenticatedAdminFinancialsRouteImport.update({
+    id: '/financials',
+    path: '/financials',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminPaymentsRoute =
   AuthenticatedAdminPaymentsRouteImport.update({
     id: '/payments',
@@ -239,6 +248,12 @@ const AuthenticatedAdminVendorsRoute =
     id: '/vendors',
     path: '/vendors',
     getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedCustomerIndexRoute =
+  AuthenticatedCustomerIndexRouteImport.update({
+    id: '/customer/',
+    path: '/customer/',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedVendorIndexRoute =
   AuthenticatedVendorIndexRouteImport.update({
@@ -287,6 +302,11 @@ const AuthenticatedVendorVisaRoute = AuthenticatedVendorVisaRouteImport.update({
   path: '/visa',
   getParentRoute: () => AuthenticatedVendorRoute,
 } as any)
+const ApiAuthRegisterRoute = ApiAuthRegisterRouteImport.update({
+  id: '/api/auth/register',
+  path: '/api/auth/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicSafepayWebhookRoute = ApiPublicSafepayWebhookRouteImport.update({
   id: '/api/public/safepay-webhook',
   path: '/api/public/safepay-webhook',
@@ -322,6 +342,7 @@ export interface FileRoutesByFullPath {
   '/tours/': typeof ToursIndexRoute
   '/visa/': typeof VisaIndexRoute
   '/admin/custom-leads': typeof AuthenticatedAdminCustomLeadsRoute
+  '/admin/financials': typeof AuthenticatedAdminFinancialsRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/services': typeof AuthenticatedAdminServicesRoute
   '/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
@@ -335,8 +356,10 @@ export interface FileRoutesByFullPath {
   '/vendor/tickets': typeof AuthenticatedVendorTicketsRoute
   '/vendor/tours': typeof AuthenticatedVendorToursRoute
   '/vendor/visa': typeof AuthenticatedVendorVisaRoute
+  '/api/auth/register': typeof ApiAuthRegisterRoute
   '/api/public/safepay-webhook': typeof ApiPublicSafepayWebhookRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/customer/': typeof AuthenticatedCustomerIndexRoute
   '/vendor/': typeof AuthenticatedVendorIndexRoute
 }
 export interface FileRoutesByTo {
@@ -362,6 +385,7 @@ export interface FileRoutesByTo {
   '/tours': typeof ToursIndexRoute
   '/visa': typeof VisaIndexRoute
   '/admin/custom-leads': typeof AuthenticatedAdminCustomLeadsRoute
+  '/admin/financials': typeof AuthenticatedAdminFinancialsRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/services': typeof AuthenticatedAdminServicesRoute
   '/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
@@ -375,8 +399,10 @@ export interface FileRoutesByTo {
   '/vendor/tickets': typeof AuthenticatedVendorTicketsRoute
   '/vendor/tours': typeof AuthenticatedVendorToursRoute
   '/vendor/visa': typeof AuthenticatedVendorVisaRoute
+  '/api/auth/register': typeof ApiAuthRegisterRoute
   '/api/public/safepay-webhook': typeof ApiPublicSafepayWebhookRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/customer': typeof AuthenticatedCustomerIndexRoute
   '/vendor': typeof AuthenticatedVendorIndexRoute
 }
 export interface FileRoutesById {
@@ -410,6 +436,7 @@ export interface FileRoutesById {
   '/tours/': typeof ToursIndexRoute
   '/visa/': typeof VisaIndexRoute
   '/_authenticated/admin/custom-leads': typeof AuthenticatedAdminCustomLeadsRoute
+  '/_authenticated/admin/financials': typeof AuthenticatedAdminFinancialsRoute
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/_authenticated/admin/services': typeof AuthenticatedAdminServicesRoute
   '/_authenticated/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
@@ -423,8 +450,10 @@ export interface FileRoutesById {
   '/_authenticated/vendor/tickets': typeof AuthenticatedVendorTicketsRoute
   '/_authenticated/vendor/tours': typeof AuthenticatedVendorToursRoute
   '/_authenticated/vendor/visa': typeof AuthenticatedVendorVisaRoute
+  '/api/auth/register': typeof ApiAuthRegisterRoute
   '/api/public/safepay-webhook': typeof ApiPublicSafepayWebhookRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/customer/': typeof AuthenticatedCustomerIndexRoute
   '/_authenticated/vendor/': typeof AuthenticatedVendorIndexRoute
 }
 export interface FileRouteTypes {
@@ -458,6 +487,7 @@ export interface FileRouteTypes {
     | '/tours/'
     | '/visa/'
     | '/admin/custom-leads'
+    | '/admin/financials'
     | '/admin/payments'
     | '/admin/services'
     | '/admin/subscriptions'
@@ -471,8 +501,10 @@ export interface FileRouteTypes {
     | '/vendor/tickets'
     | '/vendor/tours'
     | '/vendor/visa'
+    | '/api/auth/register'
     | '/api/public/safepay-webhook'
     | '/admin/'
+    | '/customer/'
     | '/vendor/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -498,6 +530,7 @@ export interface FileRouteTypes {
     | '/tours'
     | '/visa'
     | '/admin/custom-leads'
+    | '/admin/financials'
     | '/admin/payments'
     | '/admin/services'
     | '/admin/subscriptions'
@@ -511,8 +544,10 @@ export interface FileRouteTypes {
     | '/vendor/tickets'
     | '/vendor/tours'
     | '/vendor/visa'
+    | '/api/auth/register'
     | '/api/public/safepay-webhook'
     | '/admin'
+    | '/customer'
     | '/vendor'
   id:
     | '__root__'
@@ -545,6 +580,7 @@ export interface FileRouteTypes {
     | '/tours/'
     | '/visa/'
     | '/_authenticated/admin/custom-leads'
+    | '/_authenticated/admin/financials'
     | '/_authenticated/admin/payments'
     | '/_authenticated/admin/services'
     | '/_authenticated/admin/subscriptions'
@@ -558,8 +594,10 @@ export interface FileRouteTypes {
     | '/_authenticated/vendor/tickets'
     | '/_authenticated/vendor/tours'
     | '/_authenticated/vendor/visa'
+    | '/api/auth/register'
     | '/api/public/safepay-webhook'
     | '/_authenticated/admin/'
+    | '/_authenticated/customer/'
     | '/_authenticated/vendor/'
   fileRoutesById: FileRoutesById
 }
@@ -581,6 +619,7 @@ export interface RootRouteChildren {
   WishlistRoute: typeof WishlistRoute
   ApiAiChatRoute: typeof ApiAiChatRoute
   CustomerQuotesRoute: typeof CustomerQuotesRoute
+  ApiAuthRegisterRoute: typeof ApiAuthRegisterRoute
   ApiPublicSafepayWebhookRoute: typeof ApiPublicSafepayWebhookRoute
 }
 
@@ -796,6 +835,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCustomLeadsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/financials': {
+      id: '/_authenticated/admin/financials'
+      path: '/financials'
+      fullPath: '/admin/financials'
+      preLoaderRoute: typeof AuthenticatedAdminFinancialsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/payments': {
       id: '/_authenticated/admin/payments'
       path: '/payments'
@@ -837,6 +883,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/vendors'
       preLoaderRoute: typeof AuthenticatedAdminVendorsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/customer/': {
+      id: '/_authenticated/customer/'
+      path: '/customer'
+      fullPath: '/customer/'
+      preLoaderRoute: typeof AuthenticatedCustomerIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/vendor/': {
       id: '/_authenticated/vendor/'
@@ -894,6 +947,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedVendorVisaRouteImport
       parentRoute: typeof AuthenticatedVendorRoute
     }
+    '/api/auth/register': {
+      id: '/api/auth/register'
+      path: '/api/auth/register'
+      fullPath: '/api/auth/register'
+      preLoaderRoute: typeof ApiAuthRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/safepay-webhook': {
       id: '/api/public/safepay-webhook'
       path: '/api/public/safepay-webhook'
@@ -906,6 +966,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminCustomLeadsRoute: typeof AuthenticatedAdminCustomLeadsRoute
+  AuthenticatedAdminFinancialsRoute: typeof AuthenticatedAdminFinancialsRoute
   AuthenticatedAdminPaymentsRoute: typeof AuthenticatedAdminPaymentsRoute
   AuthenticatedAdminServicesRoute: typeof AuthenticatedAdminServicesRoute
   AuthenticatedAdminSubscriptionsRoute: typeof AuthenticatedAdminSubscriptionsRoute
@@ -917,6 +978,7 @@ interface AuthenticatedAdminRouteChildren {
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminCustomLeadsRoute: AuthenticatedAdminCustomLeadsRoute,
+  AuthenticatedAdminFinancialsRoute: AuthenticatedAdminFinancialsRoute,
   AuthenticatedAdminPaymentsRoute: AuthenticatedAdminPaymentsRoute,
   AuthenticatedAdminServicesRoute: AuthenticatedAdminServicesRoute,
   AuthenticatedAdminSubscriptionsRoute: AuthenticatedAdminSubscriptionsRoute,
@@ -958,12 +1020,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedVendorRoute: typeof AuthenticatedVendorRouteWithChildren
+  AuthenticatedCustomerIndexRoute: typeof AuthenticatedCustomerIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedVendorRoute: AuthenticatedVendorRouteWithChildren,
+  AuthenticatedCustomerIndexRoute: AuthenticatedCustomerIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -1038,6 +1102,7 @@ const rootRouteChildren: RootRouteChildren = {
   WishlistRoute: WishlistRoute,
   ApiAiChatRoute: ApiAiChatRoute,
   CustomerQuotesRoute: CustomerQuotesRoute,
+  ApiAuthRegisterRoute: ApiAuthRegisterRoute,
   ApiPublicSafepayWebhookRoute: ApiPublicSafepayWebhookRoute,
 }
 export const routeTree = rootRouteImport
