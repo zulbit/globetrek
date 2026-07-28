@@ -19,8 +19,8 @@ def build_vendor_guide_pdf():
         page = context.new_page()
 
         # Navigate to Vendor Guide
-        page.goto(url, wait_until="networkidle", timeout=15000)
-        page.wait_for_selector("text=GlobeTrek PK", timeout=15000)
+        page.goto(url, wait_until="networkidle", timeout=20000)
+        page.wait_for_timeout(2000)
 
         # Emulate print media for full document layout
         page.emulate_media(media="print")

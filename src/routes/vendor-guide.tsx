@@ -253,102 +253,29 @@ function VendorGuidePage() {
     }
   };
 
-  // Dynamic Client-side PDF Generator & Download Handler
+  // Direct Static PDF Download & Fallback Handler
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
 
-  const handleDownloadPDF = async () => {
+  const handleDownloadPDF = () => {
     setIsDownloadingPDF(true);
-    const toastId = toast.loading("Generating GlobeTrek Vendor Guide PDF...");
+    const toastId = toast.loading("Downloading GlobeTrek Vendor Guide PDF...");
 
     try {
-      // 1. Check if static vendor-guide.pdf exists in public folder
-      const checkRes = await fetch("/vendor-guide.pdf", { method: "HEAD" });
-      if (checkRes.ok) {
-        const link = document.createElement("a");
-        link.href = "/vendor-guide.pdf";
-        link.download = "GlobeTrek-Vendor-Guide.pdf";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success("Vendor Guide PDF downloaded successfully!", { id: toastId });
-        setIsDownloadingPDF(false);
-        return;
-      }
-    } catch {
-      // Fall through to client-side generation
-    }
+      const link = document.createElement("a");
+      link.href = "/vendor-guide.pdf";
+      link.download = "GlobeTrek-Vendor-Guide.pdf";
+      link.target = "_blank";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-    try {
-      // 2. Load html2pdf.js dynamically if not already in window
-      if (!(window as any).html2pdf) {
-        await new Promise<void>((resolve, reject) => {
-          const script = document.createElement("script");
-          script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
-          script.onload = () => resolve();
-          script.onerror = () => reject(new Error("Failed to load PDF library"));
-          document.body.appendChild(script);
-        });
-      }
-
-      // 3. Construct clean temporary container for html2pdf
-      const pdfWrapper = document.createElement("div");
-      pdfWrapper.style.position = "absolute";
-      pdfWrapper.style.left = "-9999px";
-      pdfWrapper.style.top = "0";
-      pdfWrapper.style.width = "750px";
-      pdfWrapper.style.padding = "30px";
-      pdfWrapper.style.backgroundColor = "#ffffff";
-      pdfWrapper.style.color = "#111827";
-      pdfWrapper.style.fontFamily = "system-ui, -apple-system, sans-serif";
-
-      const pdfHeader = `
-        <div style="text-align: center; border-bottom: 2px solid #10B981; padding-bottom: 16px; margin-bottom: 24px;">
-          <h1 style="font-size: 22px; font-weight: 800; color: #047857; margin: 0 0 4px 0;">GlobeTrek PK — Partner Operating Guide</h1>
-          <p style="font-size: 12px; color: #4B5563; margin: 0 0 4px 0;">Official Master Documentation for Tour Operators, Visa Desks & Travel Agencies</p>
-          <p style="font-size: 10px; color: #6B7280; margin: 0;">Exported on ${new Date().toLocaleDateString()} — https://tour.testbench.shop/vendor-guide</p>
-        </div>
-      `;
-
-      let chaptersHtml = "";
-      sections.forEach((sec) => {
-        chaptersHtml += `
-          <div style="margin-bottom: 28px; page-break-inside: avoid;">
-            <div style="border-bottom: 1px solid #E5E7EB; padding-bottom: 6px; margin-bottom: 10px;">
-              <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #059669;">${sec.category} · Chapter #${sec.display_order}</span>
-              <h2 style="font-size: 16px; font-weight: 700; color: #111827; margin: 4px 0 2px 0;">${sec.title}</h2>
-              <p style="font-size: 11px; color: #4B5563; margin: 0;">${sec.description}</p>
-            </div>
-            <div style="font-size: 11px; line-height: 1.6; color: #374151;">
-              ${sec.content
-                .replace(/^# (.*$)/gim, '<h3 style="font-size:14px;color:#047857;margin-top:10px;">$1</h3>')
-                .replace(/^## (.*$)/gim, '<h4 style="font-size:12px;color:#111827;margin-top:8px;">$1</h4>')
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\n/g, '<br/>')}
-            </div>
-          </div>
-        `;
-      });
-
-      pdfWrapper.innerHTML = pdfHeader + chaptersHtml;
-      document.body.appendChild(pdfWrapper);
-
-      const opt = {
-        margin: [12, 12, 12, 12],
-        filename: "GlobeTrek-Vendor-Operating-Guide.pdf",
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
-      };
-
-      await (window as any).html2pdf().set(opt).from(pdfWrapper).save();
-      document.body.removeChild(pdfWrapper);
-      toast.success("GlobeTrek Vendor Guide PDF downloaded!", { id: toastId });
-    } catch (err: any) {
-      console.error("PDF export fallback:", err);
-      toast.error("Generating via browser print...", { id: toastId });
+      toast.success("Vendor Guide PDF download started!", { id: toastId });
+    } catch (err) {
+      console.error("PDF direct download failed:", err);
+      toast.error("Opening print dialog...", { id: toastId });
       window.print();
     } finally {
-      setIsDownloadingPDF(false);
+      setTimeout(() => setIsDownloadingPDF(false), 1000);
     }
   };
 
