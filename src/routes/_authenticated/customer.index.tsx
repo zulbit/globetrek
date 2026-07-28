@@ -180,73 +180,138 @@ function CustomerDashboard() {
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Left: Custom Tour Requests & Vendor Proposals */}
             <div className="lg:col-span-2 space-y-6">
-              <Card className="p-6 space-y-4 border-border bg-card shadow-sm">
-                <div className="flex items-center justify-between border-b border-border pb-4">
-                  <div>
-                    <h2 className="text-lg font-extrabold text-foreground flex items-center gap-2">
-                      <Compass className="size-5 text-primary" /> My Custom Tour Requests &amp; Bids
-                    </h2>
-                    <p className="text-xs text-muted-foreground">
-                      Quotations and proposals submitted by verified Pakistani vendors for your custom group requests.
-                    </p>
-                  </div>
-                  <Button asChild size="sm" variant="outline" className="gap-1.5 text-xs font-semibold rounded-xl border-primary/30 text-primary">
-                    <Link to="/custom-tour">
-                      + New Request
-                    </Link>
-                  </Button>
-                </div>
-
-                {loadingInquiries ? (
-                  <div className="py-12 text-center text-xs text-muted-foreground">
-                    Loading your custom proposals...
-                  </div>
-                ) : myInquiries?.customRequests && myInquiries.customRequests.length > 0 ? (
-                  <div className="space-y-4">
-                    {myInquiries.customRequests.map((req: any) => (
-                      <div key={req.id} className="rounded-2xl border border-border bg-surface/50 p-4 space-y-3">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-bold text-foreground text-sm">{req.destination_country} Tour</h3>
-                              <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] uppercase font-bold">
-                                {req.status || "Bidding Open"}
-                              </Badge>
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {req.duration_days} Days · Budget: {formatPKR(req.budget_pkr || 250000)} · Departure: {req.departure_city || "Karachi"}
-                            </p>
-                          </div>
-                          {req.share_token && (
-                            <Button asChild size="sm" className="gap-1.5 font-bold text-xs bg-primary text-primary-foreground rounded-xl">
-                              <Link to={`/customer/quotes?token=${req.share_token}`}>
-                                View Proposals <ExternalLink className="size-3.5" />
-                              </Link>
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="py-12 text-center space-y-3 rounded-2xl border border-dashed border-border/80 p-6">
-                    <div className="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
-                      <Sparkles className="size-6" />
-                    </div>
-                    <div className="space-y-1">
-                      <h3 className="text-sm font-bold text-foreground">No Custom Tour Requests Yet</h3>
-                      <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                        Planning a group trip? Submit your budget and dates, and top Pakistani agencies will bid with customized proposals.
+              <div className="space-y-6">
+                {/* 1. Standard Catalog Tour Inquiries & Bookings */}
+                <Card className="p-6 space-y-4 border-border bg-card shadow-sm">
+                  <div className="flex items-center justify-between border-b border-border pb-4">
+                    <div>
+                      <h2 className="text-lg font-extrabold text-foreground flex items-center gap-2">
+                        <ShoppingBag className="size-5 text-amber-400" /> Regular Catalog Package Inquiries
+                      </h2>
+                      <p className="text-xs text-muted-foreground">
+                        Fixed marketplace packages (e.g. Baku, Dubai, Hunza) you inquired about or booked.
                       </p>
                     </div>
-                    <Button asChild size="sm" className="gap-1.5 font-bold text-xs bg-primary text-primary-foreground rounded-xl mt-2">
-                      <Link to="/custom-tour">
-                        Create Custom Trip Request
+                    <Button asChild size="sm" variant="outline" className="gap-1.5 text-xs font-semibold rounded-xl border-amber-500/30 text-amber-400">
+                      <Link to="/tours">
+                        Browse Catalog
                       </Link>
                     </Button>
                   </div>
-                )}
-              </Card>
+
+                  {loadingInquiries ? (
+                    <div className="py-8 text-center text-xs text-muted-foreground">
+                      Loading catalog package inquiries...
+                    </div>
+                  ) : myInquiries?.leads && myInquiries.leads.length > 0 ? (
+                    <div className="space-y-3">
+                      {myInquiries.leads.map((inq: any) => (
+                        <div key={inq.id} className="rounded-2xl border border-border/80 bg-surface/50 p-4 space-y-2">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-bold text-foreground text-sm">
+                                  {inq.tours?.title || "Tour Package Inquiry"}
+                                </h3>
+                                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-[10px] uppercase font-bold">
+                                  Inquiry Sent
+                                </Badge>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                Submitted on {new Date(inq.created_at).toLocaleDateString()} {inq.message ? `· "${inq.message}"` : ""}
+                              </p>
+                            </div>
+                            {inq.tour_id && (
+                              <Button asChild size="sm" variant="outline" className="gap-1.5 font-semibold text-xs rounded-xl border-border">
+                                <Link to={`/tours/${inq.tour_id}` as never}>
+                                  View Tour <ExternalLink className="size-3.5" />
+                                </Link>
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-8 text-center space-y-2 rounded-2xl border border-dashed border-border/80 p-6">
+                      <ShoppingBag className="size-8 mx-auto text-muted-foreground/40" />
+                      <p className="text-xs text-muted-foreground">You haven't submitted any direct catalog package inquiries yet.</p>
+                      <Button asChild size="sm" variant="ghost" className="text-xs font-bold text-primary">
+                        <Link to="/tours">Explore Marketplace Packages</Link>
+                      </Button>
+                    </div>
+                  )}
+                </Card>
+
+                {/* 2. Custom Group Tour Requests & Bids */}
+                <Card className="p-6 space-y-4 border-border bg-card shadow-sm">
+                  <div className="flex items-center justify-between border-b border-border pb-4">
+                    <div>
+                      <h2 className="text-lg font-extrabold text-foreground flex items-center gap-2">
+                        <Compass className="size-5 text-primary" /> My Custom Tour Requests &amp; Bids
+                      </h2>
+                      <p className="text-xs text-muted-foreground">
+                        Quotations and proposals submitted by verified Pakistani vendors for your custom group requests.
+                      </p>
+                    </div>
+                    <Button asChild size="sm" variant="outline" className="gap-1.5 text-xs font-semibold rounded-xl border-primary/30 text-primary">
+                      <Link to="/custom-tour">
+                        + New Request
+                      </Link>
+                    </Button>
+                  </div>
+
+                  {loadingInquiries ? (
+                    <div className="py-12 text-center text-xs text-muted-foreground">
+                      Loading your custom proposals...
+                    </div>
+                  ) : myInquiries?.customRequests && myInquiries.customRequests.length > 0 ? (
+                    <div className="space-y-4">
+                      {myInquiries.customRequests.map((req: any) => (
+                        <div key={req.id} className="rounded-2xl border border-border bg-surface/50 p-4 space-y-3">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-bold text-foreground text-sm">{req.destination_country} Tour</h3>
+                                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] uppercase font-bold">
+                                  {req.status || "Bidding Open"}
+                                </Badge>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {req.duration_days} Days · Budget: {formatPKR(req.budget_pkr || 250000)} · Departure: {req.departure_city || "Karachi"}
+                              </p>
+                            </div>
+                            {req.share_token && (
+                              <Button asChild size="sm" className="gap-1.5 font-bold text-xs bg-primary text-primary-foreground rounded-xl">
+                                <Link to={`/customer/quotes?token=${req.share_token}`}>
+                                  View Proposals <ExternalLink className="size-3.5" />
+                                </Link>
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-12 text-center space-y-3 rounded-2xl border border-dashed border-border/80 p-6">
+                      <div className="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
+                        <Sparkles className="size-6" />
+                      </div>
+                      <div className="space-y-1">
+                        <h3 className="text-sm font-bold text-foreground">No Custom Tour Requests Yet</h3>
+                        <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                          Planning a group trip? Submit your budget and dates, and top Pakistani agencies will bid with customized proposals.
+                        </p>
+                      </div>
+                      <Button asChild size="sm" className="gap-1.5 font-bold text-xs bg-primary text-primary-foreground rounded-xl mt-2">
+                        <Link to="/custom-tour">
+                          Create Custom Trip Request
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
+                </Card>
+              </div>
             </div>
 
             {/* Right: Saved Wishlist Packages */}
