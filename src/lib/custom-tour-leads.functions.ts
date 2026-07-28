@@ -387,14 +387,20 @@ export const verifyLeadUnlockPayment = createServerFn({ method: "POST" })
     }
   });
 
-// -------- Vendor: Submit Quotation for an Unlocked Lead --------
+// -------- Vendor: Submit Detailed Quotation for an Unlocked Lead --------
 export const submitLeadQuote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: {
     leadId: string;
     quoteAmount: number;
     itinerarySummary: string;
+    hotelDetails?: string;
+    flightDetails?: string;
     inclusions?: string[];
+    exclusions?: string[];
+    termsAndConditions?: string;
+    perks?: string[];
+    advanceDepositPercent?: number;
     pdfUrl?: string;
     validUntil?: string;
   }) => {
@@ -425,7 +431,13 @@ export const submitLeadQuote = createServerFn({ method: "POST" })
         vendor_id: vendorId,
         quote_amount: data.quoteAmount,
         itinerary_summary: data.itinerarySummary,
+        hotel_details: data.hotelDetails ?? null,
+        flight_details: data.flightDetails ?? null,
         inclusions: data.inclusions ?? [],
+        exclusions: data.exclusions ?? [],
+        terms_and_conditions: data.termsAndConditions ?? null,
+        perks: data.perks ?? [],
+        advance_deposit_percent: data.advanceDepositPercent ?? 30,
         pdf_url: data.pdfUrl ?? null,
         valid_until: data.validUntil ?? null,
         status: "submitted",
@@ -564,10 +576,10 @@ export const getCustomerQuotesByToken = createServerFn({ method: "GET" })
 
     if (lErr || !lead) throw new Error("Invalid or expired quote access link");
 
-    // Fetch quotes with vendor profile info
+    // Fetch quotes with vendor profile info and detailed breakdown
     const { data: quotes } = await supabaseAdmin
       .from("lead_quotes")
-      .select("id, quote_amount, valid_until, itinerary_summary, inclusions, pdf_url, status, created_at, vendor_id, profiles(full_name, email)")
+      .select("id, quote_amount, valid_until, itinerary_summary, hotel_details, flight_details, inclusions, exclusions, terms_and_conditions, perks, advance_deposit_percent, pdf_url, status, created_at, vendor_id, profiles(full_name, email)")
       .eq("lead_id", lead.id)
       .order("created_at", { ascending: false });
 

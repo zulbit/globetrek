@@ -172,7 +172,7 @@ function CustomerQuotesPortal() {
                     }`}
                   >
                     <div className="space-y-4">
-                      {/* Vendor Badge */}
+                      {/* Vendor Badge & Price Header */}
                       <div className="flex items-start justify-between gap-3 border-b border-border pb-4">
                         <div>
                           <div className="flex items-center gap-1.5">
@@ -189,13 +189,39 @@ function CustomerQuotesPortal() {
                           <span className="text-xl font-extrabold text-amber-400 font-mono">
                             Rs {q.quote_amount?.toLocaleString()}
                           </span>
+                          {q.valid_until && (
+                            <span className="text-[10px] text-amber-400/80 block mt-0.5 font-semibold">
+                              ⏳ Valid until {new Date(q.valid_until).toLocaleDateString()}
+                            </span>
+                          )}
                         </div>
+                      </div>
+
+                      {/* Hotel & Flight Breakdown */}
+                      <div className="grid gap-2 sm:grid-cols-2 text-xs">
+                        {q.hotel_details && (
+                          <div className="rounded-xl border border-border/60 bg-surface/40 p-2.5 space-y-1">
+                            <span className="font-bold text-foreground flex items-center gap-1 text-[11px]">
+                              🏨 Hotel &amp; Stay
+                            </span>
+                            <p className="text-[11px] text-muted-foreground leading-relaxed">{q.hotel_details}</p>
+                          </div>
+                        )}
+
+                        {q.flight_details && (
+                          <div className="rounded-xl border border-border/60 bg-surface/40 p-2.5 space-y-1">
+                            <span className="font-bold text-foreground flex items-center gap-1 text-[11px]">
+                              ✈️ Flight &amp; Transit
+                            </span>
+                            <p className="text-[11px] text-muted-foreground leading-relaxed">{q.flight_details}</p>
+                          </div>
+                        )}
                       </div>
 
                       {/* Itinerary Summary */}
                       <div>
                         <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
-                          Itinerary &amp; Package Summary
+                          📅 Itinerary &amp; Sightseeing Plan
                         </h4>
                         <p className="text-xs text-foreground/90 whitespace-pre-line bg-surface/50 p-3 rounded-xl border border-border/50">
                           {q.itinerary_summary}
@@ -205,8 +231,8 @@ function CustomerQuotesPortal() {
                       {/* Inclusions */}
                       {q.inclusions && q.inclusions.length > 0 && (
                         <div>
-                          <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
-                            What's Included
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+                            ✅ Included Services
                           </h4>
                           <div className="flex flex-wrap gap-1.5">
                             {q.inclusions.map((inc: string, idx: number) => (
@@ -220,17 +246,58 @@ function CustomerQuotesPortal() {
                           </div>
                         </div>
                       )}
+
+                      {/* Exclusions */}
+                      {q.exclusions && q.exclusions.length > 0 && (
+                        <div>
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+                            ❌ Excluded Services
+                          </h4>
+                          <div className="flex flex-wrap gap-1.5">
+                            {q.exclusions.map((exc: string, idx: number) => (
+                              <span
+                                key={idx}
+                                className="inline-flex items-center gap-1 rounded-lg bg-destructive/10 border border-destructive/20 px-2 py-0.5 text-[10px] font-medium text-destructive"
+                              >
+                                • {exc}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Perks */}
+                      {q.perks && q.perks.length > 0 && (
+                        <div className="rounded-xl border border-purple-500/30 bg-purple-500/10 p-2.5 space-y-1">
+                          <span className="font-bold text-purple-300 flex items-center gap-1 text-[11px]">
+                            🎁 Complimentary Extra Perks
+                          </span>
+                          <p className="text-[11px] text-purple-200">{q.perks.join(" · ")}</p>
+                        </div>
+                      )}
+
+                      {/* Terms & Conditions */}
+                      {q.terms_and_conditions && (
+                        <div>
+                          <h4 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                            📝 Terms &amp; Cancellation Policy
+                          </h4>
+                          <p className="text-[11px] text-muted-foreground whitespace-pre-line bg-surface/30 p-2.5 rounded-xl border border-border/40 font-mono">
+                            {q.terms_and_conditions}
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Action Button */}
                     <div className="pt-6 border-t border-border mt-4">
                       {isSelected ? (
-                        <Button className="w-full bg-emerald-500 text-black font-bold cursor-default">
+                        <Button className="w-full bg-emerald-500 text-black font-bold cursor-default rounded-xl">
                           <CheckCircle2 className="size-4 mr-1.5" /> Selected Proposal
                         </Button>
                       ) : (
                         <Button
-                          className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold hover:from-amber-600 hover:to-yellow-600 shadow"
+                          className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold hover:from-amber-600 hover:to-yellow-600 shadow rounded-xl"
                           disabled={isAccepted || acceptMutation.isPending}
                           onClick={() => acceptMutation.mutate(q.id)}
                         >

@@ -149,29 +149,55 @@ function VendorLeads() {
     },
   });
 
-  // -------- Quotation Modal State & Mutation --------
+  // -------- Detailed Quotation Modal State & Mutation --------
   const [quoteModalOpen, setQuoteModalOpen] = useState(false);
   const [selectedLeadForQuote, setSelectedLeadForQuote] = useState<CustomTourLead | null>(null);
   const [quoteAmount, setQuoteAmount] = useState<string>("");
+  const [validityDays, setValidityDays] = useState<string>("7");
+  const [advanceDepositPercent, setAdvanceDepositPercent] = useState<string>("30");
+  const [hotelDetails, setHotelDetails] = useState<string>("4★ City Center Hotel (Double Sharing with Daily Breakfast)");
+  const [flightDetails, setFlightDetails] = useState<string>("FlyDubai / Air Arabia (20kg Check-in + 7kg Hand luggage, Direct transfer)");
   const [itinerarySummary, setItinerarySummary] = useState<string>("");
-  const [inclusionsInput, setInclusionsInput] = useState<string>("Flights, 4★ Hotel, Airport Transfers, Daily Breakfast, Guided Sightseeing");
+  const [inclusionsInput, setInclusionsInput] = useState<string>("Return Flights, 4★ Hotel Stay, Airport Transfers, Visa Assistance, Daily Breakfast, Guided Sightseeing");
+  const [exclusionsInput, setExclusionsInput] = useState<string>("Personal Expenses, Driver Gratuities / Tips, Extra Unspecified Meals");
+  const [perksInput, setPerksInput] = useState<string>("Free Tourist eSIM Card, Complimentary Airport Lounge Access");
+  const [termsAndConditions, setTermsAndConditions] = useState<string>(
+    `1. 30% advance deposit required to confirm flight & hotel bookings.
+2. Remaining balance due 7 days prior to departure.
+3. E-Visa approval is subject to official embassy processing.
+4. Cancellation made 14+ days prior to travel receives 90% refund. Non-refundable within 72 hours.
+5. Rates are subject to exchange rate & airline tax fluctuations until booking confirmation.`
+  );
 
   const quoteMutation = useMutation({
     mutationFn: async () => {
       if (!selectedLeadForQuote) return;
       const price = parseInt(quoteAmount.replace(/\D/g, ""), 10);
+      const days = parseInt(validityDays.replace(/\D/g, "") || "7", 10);
+      const validUntilDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+
       const inclusions = inclusionsInput.split(",").map((s) => s.trim()).filter(Boolean);
+      const exclusions = exclusionsInput.split(",").map((s) => s.trim()).filter(Boolean);
+      const perks = perksInput.split(",").map((s) => s.trim()).filter(Boolean);
+
       return submitLeadQuote({
         data: {
           leadId: selectedLeadForQuote.id,
           quoteAmount: price,
+          validUntil: validUntilDate,
+          hotelDetails,
+          flightDetails,
           itinerarySummary,
           inclusions,
+          exclusions,
+          termsAndConditions,
+          perks,
+          advanceDepositPercent: parseInt(advanceDepositPercent || "30", 10),
         },
       });
     },
     onSuccess: () => {
-      toast.success("Quotation submitted successfully! Traveler notified via WhatsApp.");
+      toast.success("Detailed quotation submitted successfully! Traveler notified via WhatsApp.");
       setQuoteModalOpen(false);
       setQuoteAmount("");
       setItinerarySummary("");
@@ -181,6 +207,92 @@ function VendorLeads() {
       toast.error(err.message || "Failed to submit quotation.");
     },
   });
+
+  // -------- Quotation Template Functions --------
+  const applyQuoteTemplate = (type: "deluxe" | "vip" | "budget" | "umrah") => {
+    if (type === "deluxe") {
+      setValidityDays("7");
+      setAdvanceDepositPercent("30");
+      setHotelDetails("4★ City Center Hotel (Double Sharing with Daily Breakfast)");
+      setFlightDetails("FlyDubai / Air Arabia (20kg Check-in + 7kg Hand carry, Direct transfers)");
+      setItinerarySummary("Day 1: Arrival & Private Airport Transfer to Hotel\nDay 2: Full Day City Tour & Historic Landmark Exploration\nDay 3: Excursion & Cultural Sightseeing\nDay 4: Free Shopping Day & Evening Transfer to Airport");
+      setInclusionsInput("Return Flights, 4★ Hotel Stay, Airport Transfers, Visa Assistance, Daily Breakfast, Guided Sightseeing");
+      setExclusionsInput("Personal Expenses, Driver Gratuities / Tips, Extra Unspecified Meals");
+      setPerksInput("Free Tourist eSIM Card, Complimentary Airport Lounge Access");
+      setTermsAndConditions("1. 30% advance deposit required to confirm booking.\n2. Balance payment due 7 days prior to departure.\n3. E-Visa approval is subject to official embassy clearance.\n4. 90% refund if cancelled 14+ days prior to travel.");
+      toast.success("Loaded Deluxe 4★ Family Tour Template!");
+    } else if (type === "vip") {
+      setValidityDays("5");
+      setAdvanceDepositPercent("40");
+      setHotelDetails("5★ Grand Luxury Hotel (Executive Suite with Breakfast & Dinner)");
+      setFlightDetails("Emirates / Qatar Airways (30kg Check-in + 7kg Hand luggage, Private Luxury SUV)");
+      setItinerarySummary("Day 1: VIP Airport SUV Reception & Hotel Check-in\nDay 2: Private Guided Cultural Tour & Fine Dining\nDay 3: Yacht Excursion & Shopping Experience\nDay 4: Luxury Spa & Evening Airport SUV Transfer");
+      setInclusionsInput("VIP Flights, 5★ Luxury Suite, Private Luxury SUV Transfers, Fast-track E-Visa, Half-Board Meals, Dedicated Guide");
+      setExclusionsInput("Personal Shopping, Alcoholic Beverages");
+      setPerksInput("VIP Airport Lounge, Dinner Cruise Ticket, Free Tourist eSIM");
+      setTermsAndConditions("1. 40% advance deposit required.\n2. Remaining balance due 5 days prior to departure.\n3. Non-refundable within 48 hours of travel.");
+      toast.success("Loaded VIP 5★ Luxury Package Template!");
+    } else if (type === "umrah") {
+      setValidityDays("7");
+      setAdvanceDepositPercent("35");
+      setHotelDetails("4★ Makkah Hotel (400m Clock Tower) & 4★ Madinah Hotel (Markaziah)");
+      setFlightDetails("PIA / Saudi Arabian Airlines (30kg Baggage Allowance, AC Bus Transfers)");
+      setItinerarySummary("Day 1: Jeddah Arrival & Transfer to Makkah Hotel for Umrah\nDay 2: Perform Umrah & Ibadaah\nDay 3: Makkah Ziyarat Tour\nDay 4: Transfer to Madinah Hotel\nDay 5: Madinah Ziyarat & Departure");
+      setInclusionsInput("Return Flights, Umrah Visa, Makkah & Madinah Hotel Stay, Ziyarat Tours, AC Transport");
+      setExclusionsInput("Personal Laundry, Extra Food outside Buffet");
+      setPerksInput("Free Zamzam Water 5L, Complimentary Ihram / Prayer Mat");
+      setTermsAndConditions("1. 35% advance deposit required.\n2. Passport valid for at least 6 months required.\n3. Umrah visa clearance subject to Saudi Ministry rules.");
+      toast.success("Loaded Umrah Package Template!");
+    } else {
+      setValidityDays("10");
+      setAdvanceDepositPercent("25");
+      setHotelDetails("3★ Standard Hotel (Triple / Quad Sharing with Breakfast)");
+      setFlightDetails("Economy Flights (20kg Check-in + 7kg Hand carry)");
+      setItinerarySummary("Day 1: Arrival & Group Hotel Check-in\nDay 2: Group Sightseeing Tour\nDay 3: Free Exploration Day\nDay 4: Departure Transfer");
+      setInclusionsInput("Economy Flights, 3★ Hotel, Group Bus Transfers, Tourist Visa, Daily Breakfast");
+      setExclusionsInput("Personal Shopping, Lunch & Dinner, Driver Tips");
+      setPerksInput("Free Group SIM Card");
+      setTermsAndConditions("1. 25% advance deposit required.\n2. Balance due 10 days prior to departure.\n3. 80% refund if cancelled 14+ days prior.");
+      toast.success("Loaded Budget Group Package Template!");
+    }
+  };
+
+  const saveCustomAgencyTemplate = () => {
+    const template = {
+      validityDays,
+      advanceDepositPercent,
+      hotelDetails,
+      flightDetails,
+      inclusionsInput,
+      exclusionsInput,
+      perksInput,
+      termsAndConditions,
+    };
+    localStorage.setItem("vendor-agency-quote-template", JSON.stringify(template));
+    toast.success("Current layout saved as your Agency Default Template! 💾");
+  };
+
+  const loadCustomAgencyTemplate = () => {
+    try {
+      const raw = localStorage.getItem("vendor-agency-quote-template");
+      if (!raw) {
+        toast.info("No saved custom template found. Click 'Save Form as Template' first!");
+        return;
+      }
+      const t = JSON.parse(raw);
+      if (t.validityDays) setValidityDays(t.validityDays);
+      if (t.advanceDepositPercent) setAdvanceDepositPercent(t.advanceDepositPercent);
+      if (t.hotelDetails) setHotelDetails(t.hotelDetails);
+      if (t.flightDetails) setFlightDetails(t.flightDetails);
+      if (t.inclusionsInput) setInclusionsInput(t.inclusionsInput);
+      if (t.exclusionsInput) setExclusionsInput(t.exclusionsInput);
+      if (t.perksInput) setPerksInput(t.perksInput);
+      if (t.termsAndConditions) setTermsAndConditions(t.termsAndConditions);
+      toast.success("Loaded your Agency Default Template! ⚡");
+    } catch {
+      toast.error("Could not load custom template.");
+    }
+  };
 
   // Realtime subscription for direct leads
   useEffect(() => {
@@ -608,64 +720,205 @@ function VendorLeads() {
         </div>
       )}
 
-      {/* -------- Submit Quotation Modal -------- */}
+      {/* -------- Detailed Submit Quotation Modal -------- */}
       <Dialog open={quoteModalOpen} onOpenChange={setQuoteModalOpen}>
-        <DialogContent className="sm:max-w-lg bg-card border-border">
+        <DialogContent className="sm:max-w-2xl bg-card border-border max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-lg font-bold">
-              <span>✈️ Submit Online Quotation</span>
+              <span>✈️ Submit Detailed Online Quotation</span>
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Submit your formal proposal for {selectedLeadForQuote?.destination} ({selectedLeadForQuote?.group_size} travelers, {selectedLeadForQuote?.duration_days} days).
+              Submit your detailed, competitive proposal for {selectedLeadForQuote?.destination} ({selectedLeadForQuote?.group_size} travelers, {selectedLeadForQuote?.duration_days} days).
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
-            <div>
-              <label className="text-xs font-semibold text-foreground mb-1 block">Total Package Price (PKR)</label>
-              <Input
-                placeholder="e.g. 350000"
-                value={quoteAmount}
-                onChange={(e) => setQuoteAmount(e.target.value)}
-                className="font-mono text-sm"
-              />
-              <p className="text-[10px] text-muted-foreground mt-1">Total lump sum for all travelers in PKR</p>
+          <div className="space-y-4 py-2 text-xs">
+            {/* Quick Quotation Preset Templates Bar */}
+            <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-surface to-surface p-3.5 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-amber-400 text-[11px] flex items-center gap-1.5">
+                  <Sparkles className="size-3.5" /> One-Click Quotation Templates:
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={loadCustomAgencyTemplate}
+                    className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1"
+                  >
+                    ⚡ Load Agency Default
+                  </button>
+                  <span className="text-muted-foreground text-[10px]">•</span>
+                  <button
+                    type="button"
+                    onClick={saveCustomAgencyTemplate}
+                    className="text-[10px] font-semibold text-muted-foreground hover:text-foreground hover:underline"
+                  >
+                    💾 Save Form as Default
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => applyQuoteTemplate("deluxe")}
+                  className="rounded-xl border border-border/80 bg-card hover:bg-amber-500/20 hover:border-amber-500/40 px-2.5 py-1 text-[10px] font-semibold text-foreground transition-all"
+                >
+                  🌟 Deluxe 4★ Family Tour
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyQuoteTemplate("vip")}
+                  className="rounded-xl border border-border/80 bg-card hover:bg-purple-500/20 hover:border-purple-500/40 px-2.5 py-1 text-[10px] font-semibold text-foreground transition-all"
+                >
+                  🏆 VIP 5★ Luxury Package
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyQuoteTemplate("umrah")}
+                  className="rounded-xl border border-border/80 bg-card hover:bg-emerald-500/20 hover:border-emerald-500/40 px-2.5 py-1 text-[10px] font-semibold text-foreground transition-all"
+                >
+                  🕋 Umrah / Group Package
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyQuoteTemplate("budget")}
+                  className="rounded-xl border border-border/80 bg-card hover:bg-sky-500/20 hover:border-sky-500/40 px-2.5 py-1 text-[10px] font-semibold text-foreground transition-all"
+                >
+                  🎒 Budget Friends Group
+                </button>
+              </div>
             </div>
 
+            {/* 1. Price, Validity & Advance Deposit */}
+            <div className="grid gap-3 sm:grid-cols-3 bg-surface/50 p-3.5 rounded-2xl border border-border/80">
+              <div>
+                <label className="text-xs font-semibold text-foreground mb-1 block">Total Package Price (PKR)*</label>
+                <Input
+                  placeholder="e.g. 350000"
+                  value={quoteAmount}
+                  onChange={(e) => setQuoteAmount(e.target.value)}
+                  className="font-mono text-xs rounded-xl bg-card"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-foreground mb-1 block">Quote Validity (Days)*</label>
+                <Input
+                  placeholder="e.g. 7"
+                  value={validityDays}
+                  onChange={(e) => setValidityDays(e.target.value)}
+                  className="font-mono text-xs rounded-xl bg-card"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-foreground mb-1 block">Advance Deposit %</label>
+                <Input
+                  placeholder="e.g. 30"
+                  value={advanceDepositPercent}
+                  onChange={(e) => setAdvanceDepositPercent(e.target.value)}
+                  className="font-mono text-xs rounded-xl bg-card"
+                />
+              </div>
+            </div>
+
+            {/* 2. Hotel & Flight Details */}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="text-xs font-semibold text-foreground mb-1 block">🏨 Hotel &amp; Accommodation Details</label>
+                <Textarea
+                  placeholder="Specific hotel names, star tier, room sharing &amp; meal plan..."
+                  rows={2}
+                  value={hotelDetails}
+                  onChange={(e) => setHotelDetails(e.target.value)}
+                  className="text-xs rounded-xl bg-card"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-foreground mb-1 block">✈️ Flight &amp; Transit Details</label>
+                <Textarea
+                  placeholder="Airline name, flight route, baggage allowance &amp; transfers..."
+                  rows={2}
+                  value={flightDetails}
+                  onChange={(e) => setFlightDetails(e.target.value)}
+                  className="text-xs rounded-xl bg-card"
+                />
+              </div>
+            </div>
+
+            {/* 3. Day-by-Day Itinerary Highlights */}
             <div>
-              <label className="text-xs font-semibold text-foreground mb-1 block">Itinerary Highlights &amp; Notes</label>
+              <label className="text-xs font-semibold text-foreground mb-1 block">📅 Day-by-Day Itinerary &amp; Sightseeing Highlights*</label>
               <Textarea
-                placeholder="Describe hotel names, flight details, sightseeing highlights..."
+                placeholder="Day 1: Arrival &amp; Transfer to Hotel&#10;Day 2: City Tour &amp; Key Landmarks&#10;Day 3: Excursion &amp; Shopping..."
                 rows={4}
                 value={itinerarySummary}
                 onChange={(e) => setItinerarySummary(e.target.value)}
-                className="text-xs"
+                className="text-xs rounded-xl bg-card"
               />
             </div>
 
+            {/* 4. Inclusions & Exclusions */}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="text-xs font-semibold text-foreground mb-1 block">✅ Included Services (comma separated)</label>
+                <Input
+                  placeholder="Flights, Hotel, Transfers, Visa, Breakfast..."
+                  value={inclusionsInput}
+                  onChange={(e) => setInclusionsInput(e.target.value)}
+                  className="text-xs rounded-xl bg-card"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-foreground mb-1 block">❌ Excluded Services (comma separated)</label>
+                <Input
+                  placeholder="Personal Expenses, Driver Tips, Extra Meals..."
+                  value={exclusionsInput}
+                  onChange={(e) => setExclusionsInput(e.target.value)}
+                  className="text-xs rounded-xl bg-card"
+                />
+              </div>
+            </div>
+
+            {/* 5. Free Perks */}
             <div>
-              <label className="text-xs font-semibold text-foreground mb-1 block">Inclusions (comma separated)</label>
+              <label className="text-xs font-semibold text-foreground mb-1 block">🎁 Complimentary Perks / Extras (comma separated)</label>
               <Input
-                placeholder="Flights, Hotel, Transfers, Daily Breakfast..."
-                value={inclusionsInput}
-                onChange={(e) => setInclusionsInput(e.target.value)}
-                className="text-xs"
+                placeholder="Free Tourist SIM, Free Dinner Cruise, Airport Lounge Access..."
+                value={perksInput}
+                onChange={(e) => setPerksInput(e.target.value)}
+                className="text-xs rounded-xl bg-card"
               />
+            </div>
+
+            {/* 6. Editable Sample Terms & Conditions */}
+            <div>
+              <label className="text-xs font-semibold text-foreground mb-1 block">📝 Quotation Terms &amp; Conditions (Editable)</label>
+              <Textarea
+                rows={4}
+                value={termsAndConditions}
+                onChange={(e) => setTermsAndConditions(e.target.value)}
+                className="text-[11px] font-mono rounded-xl bg-card border-border"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">Pre-filled with standard agency terms. Edit any clause as needed.</p>
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="pt-2">
             <Button variant="outline" size="sm" onClick={() => setQuoteModalOpen(false)}>
               Cancel
             </Button>
             <Button
               size="sm"
-              className="bg-amber-500 hover:bg-amber-600 text-black font-bold gap-1.5"
+              className="bg-amber-500 hover:bg-amber-600 text-black font-bold gap-1.5 rounded-xl"
               disabled={quoteMutation.isPending || !quoteAmount || !itinerarySummary}
               onClick={() => quoteMutation.mutate()}
             >
               {quoteMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-3.5" />}
-              Send Proposal to Traveler
+              Send Detailed Proposal to Traveler
             </Button>
           </DialogFooter>
         </DialogContent>
