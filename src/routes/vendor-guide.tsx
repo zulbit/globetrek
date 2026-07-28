@@ -288,6 +288,7 @@ function VendorGuidePage() {
             </Badge>
           </div>
 
+          <div className="flex items-center gap-3">
             <Button size="sm" variant="outline" onClick={handlePrintPDF} className="h-9 gap-1.5 text-xs font-semibold">
               <Download className="size-3.5 text-primary" /> Download / Print PDF
             </Button>
