@@ -625,6 +625,13 @@ function PricingFAQSection() {
       a: "Yes! You can instantly upgrade or switch your plan anytime directly from your Vendor Billing panel. Changes take effect immediately without lock-in contracts.",
     },
     {
+      id: "faq-expiration",
+      category: "plans",
+      categoryLabel: "Plans & Billing",
+      q: "How will I know when my plan is ending, and what happens if I don't renew?",
+      a: "You will receive early warning alerts on your Vendor Portal header, WhatsApp, and email 7 days, 3 days, and 24 hours prior to expiration with a 1-click SafePay renewal link. If a plan expires, your account safely reverts to the Starter Free tier. Excess active tour listings above the Free tier limit (1 active listing) automatically pause (`is_active: false`). Zero Data Loss: All your tour drafts, itineraries, leads, and analytics are saved 100% securely and reactivate instantly upon renewal.",
+    },
+    {
       id: "faq-4",
       category: "ai",
       categoryLabel: "AI & Features",

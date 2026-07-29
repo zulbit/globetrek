@@ -58,14 +58,14 @@ const ICON_MAP: Record<string, any> = {
 };
 
 const SUGGESTED_AI_PROMPTS = [
+  "Plan expiry notice kaise milta hai aur non-renewal par kya hoga?",
+  "What happens to my tour listings if my subscription plan expires?",
   "What documents are required for vendor KYC verification?",
   "How does the Max 3 lead unlock cap work?",
   "SafePay payment lead unlock procedure kitna time leta hai?",
   "How can I generate AI itineraries for my tour packages?",
   "Pro plan mein kitne AI itinerary plans milte hain per month?",
-  "AI embassy fee lookup kaise use karte hain visa services mein?",
   "Starter aur Pro plan mein kya fark hai AI tools ke liye?",
-  "How does the bilingual Roman Urdu AI Concierge capture leads?",
 ];
 
 // ---- Rich Markdown Renderer Components ----

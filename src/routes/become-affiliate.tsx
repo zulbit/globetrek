@@ -82,7 +82,7 @@ const FAQ = [
   { q: "How do social media creators get verified?", a: "After posting a video or Reel on YouTube/Instagram/Facebook, submit your link in your affiliate dashboard. Our team verifies the post within 24 hours." },
   { q: "When do I get paid?", a: "Every Friday. As soon as the vendor's payment is confirmed, your commission appears in your dashboard. We transfer via JazzCash or EasyPaisa every Friday." },
   { q: "Is there any target or quota?", a: "Zero. No monthly targets. You earn every time a vendor you brought in pays their subscription — whether that's 1 agency or 100." },
-  { q: "What if a vendor upgrades their plan later?", a: "You earn a commission on the upgrade too! If your referred agency upgrades to a higher tier, you get your commission on the upgrade price." },
+  { q: "What if a vendor upgrades or renews their plan?", a: "You earn commission whenever a vendor pays or upgrades! Vendors get 7-day, 3-day, and 24-hour expiration alerts via WhatsApp and email so they never miss a renewal." },
   { q: "How does the vendor enter my code?", a: "When the vendor signs up, they enter your referral code (e.g. REF-AHMED1234) or click your trackable bio link which pre-fills the code automatically." },
   { q: "What is the minimum payout?", a: "PKR 1,000. Once your earned balance hits PKR 1,000, you can request a payout from your affiliate dashboard." },
 ];
