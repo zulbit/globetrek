@@ -24,12 +24,17 @@ function VendorInvoicesPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("full_name, subscription_tier, lead_credits_balance, city")
+        .select("full_name, company_name, email, subscription_tier, lead_credits_balance, city")
         .eq("id", user!.id)
         .maybeSingle();
       return data;
     },
   });
+
+  const agencyDisplayName =
+    (profile as any)?.company_name ||
+    (profile?.full_name && profile?.full_name !== "GlobeTrek Admin" ? profile.full_name : null) ||
+    "Registered Vendor Agency";
 
   // Simulated / Sample Vendor Invoices (to be backed by DB billing table when payments live)
   const sampleInvoices = [
@@ -95,7 +100,7 @@ function VendorInvoicesPage() {
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; font-size: 12px;">
           <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 8px;">
             <p style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #64748b; margin: 0 0 6px 0;">Billed To (Vendor Agency)</p>
-            <p style="font-size: 13px; font-weight: 700; color: #0f172a; margin: 0 0 2px 0;">${profile?.full_name || "GlobeTrek Verified Agency"}</p>
+            <p style="font-size: 13px; font-weight: 700; color: #0f172a; margin: 0 0 2px 0;">${agencyDisplayName}</p>
             <p style="color: #475569; margin: 0;">City: ${profile?.city || "Pakistan"}</p>
             <p style="color: #475569; margin: 2px 0 0 0;">Account Tier: ${profile?.subscription_tier || "Agency"} Plan</p>
           </div>
@@ -228,7 +233,7 @@ function VendorInvoicesPage() {
           <div class="grid">
             <div class="card">
               <p style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #64748b; margin: 0 0 6px 0;">Billed To</p>
-              <p style="font-size: 13px; font-weight: 700; margin: 0 0 2px 0;">${profile?.full_name || "GlobeTrek Verified Agency"}</p>
+              <p style="font-size: 13px; font-weight: 700; margin: 0 0 2px 0;">${agencyDisplayName}</p>
               <p style="color: #475569; margin: 0;">City: ${profile?.city || "Pakistan"}</p>
             </div>
             <div class="card">
@@ -294,7 +299,7 @@ function VendorInvoicesPage() {
         <div className="rounded-2xl border border-border bg-card p-4 space-y-1">
           <span className="text-[11px] font-semibold uppercase text-muted-foreground block">Agency Account</span>
           <div className="font-bold text-sm text-foreground flex items-center gap-1.5">
-            {profile?.full_name || "Verified Travel Partner"}
+            {agencyDisplayName}
             <ShieldCheck className="size-4 text-emerald-400" />
           </div>
           <span className="text-[11px] text-muted-foreground block">City: {profile?.city || "Pakistan"}</span>
