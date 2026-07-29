@@ -33,6 +33,20 @@ export type PricingTier = {
  * The underlying DB enum stays free / starter / pro / agency; the UI relabels
  * each tier around the real business type it targets.
  */
+/**
+ * PLANNED MONETIZATION & ADVERTISING EXTENSIONS (FUTURE ROADMAP):
+ * ---------------------------------------------------------------
+ * Do not create active plan records for these in the database yet.
+ * 
+ * 1. Placement Subscription Plans:
+ *    - Search Placement Plan: Top placement boost in /tours, /visa, /insurance, /tickets search results.
+ *    - AI Placement Plan: Priority recommendations by bilingual Roman Urdu AI Concierge (/api/ai-chat).
+ *    - Landing Page Placement Plan: Featured Agency Spotlight badge & top slider on the main landing page.
+ * 
+ * 2. Flash Banner Advertisement Plan (1-Week Campaign):
+ *    - 7-Day Flash Banner on landing page hero section for seasonal campaigns (e.g. Baku Winter Sale, Umrah Specials, Summer Deals).
+ */
+
 export const TIERS: PricingTier[] = [
   {
     id: "free",

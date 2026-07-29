@@ -17,6 +17,12 @@ const AI_LIMITS: Record<Tier, { description: number | null; plan: number | null 
   agency: { description: null, plan: null },
 };
 
+// PLANNED MONETIZATION EXTENSIONS (Do not create active plan records for now):
+// 1. Search Placement Plan: Priority ranking in /tours, /visa, /insurance, /tickets search results.
+// 2. AI Placement Plan: Featured vendor recommendations by AI Concierge (/api/ai-chat).
+// 3. Landing Page Placement Plan: Featured Agency Spotlight badge on landing page.
+// 4. 1-Week Flash Banner Advertisement Plan: 7-Day promotional hero banner on landing page.
+
 export const Route = createFileRoute("/_authenticated/vendor/billing")({
   component: BillingPage,
 });

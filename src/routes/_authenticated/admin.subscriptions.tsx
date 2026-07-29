@@ -13,6 +13,12 @@ export const Route = createFileRoute("/_authenticated/admin/subscriptions")({
   component: AdminSubscriptions,
 });
 
+// PLANNED MONETIZATION & ADVERTISING EXTENSIONS (Do not create active plans for now):
+// - Search Placement Plan: Priority search position boost.
+// - AI Placement Plan: Preferred recommendations by AI Concierge.
+// - Landing Page Placement Plan: Featured Agency Spotlight badge.
+// - 1-Week Flash Banner Advertisement Plan: 7-Day promotional banner on landing page hero.
+
 // Fallback matching TIERS structure but serializable
 const DEFAULT_PLANS = [
   {

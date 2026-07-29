@@ -38,6 +38,12 @@ export const Route = createFileRoute("/pricing")({
   component: PricingPage,
 });
 
+// FUTURE MONETIZATION ROADMAP (Note: Do not create active plans for now):
+// - Search Placement Plan: Top ranking placement in search results.
+// - AI Placement Plan: Featured recommendations by AI Concierge.
+// - Landing Page Placement Plan: Featured Agency Spotlight on landing page.
+// - 1-Week Flash Banner Advertisement Plan: 7-Day promotional banner on landing page hero section.
+
 type CompareRow = { label: string; key: keyof (typeof TIERS)[number]["limits"]; hint?: string };
 type CompareGroup = { title: string; rows: CompareRow[] };
 
