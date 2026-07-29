@@ -1,17 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getAdminAffiliateReferrals, getAffiliateSettings } from "@/lib/affiliate.functions";
 import {
   Users,
-  Link2,
   DollarSign,
   TrendingUp,
   Copy,
   CheckCircle2,
-  Star,
-  Globe2,
-  Sparkles,
-  Zap,
-  ArrowUpRight,
   Share2,
   Gift,
   BarChart3,
@@ -22,11 +19,18 @@ import {
   ExternalLink,
   Award,
   Target,
+  Sparkles,
+  Zap,
+  ArrowUpRight,
+  BadgeCheck,
+  HandCoins,
+  MapPin,
   MessageSquare,
+  Clock,
+  Shield,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -34,94 +38,57 @@ export const Route = createFileRoute("/_authenticated/admin/affiliates")({
   component: AdminAffiliates,
 });
 
-/* ─── Affiliate Tiers ─── */
-const TIERS = [
+/* ─── Program Highlights ─── */
+const MODEL_TIERS = [
   {
-    id: "starter",
-    name: "Starter Affiliate",
-    commission: "5%",
-    minReferrals: 0,
-    maxReferrals: 4,
-    color: "text-muted-foreground",
-    bg: "bg-surface",
-    border: "border-border",
-    perks: ["Unique referral link", "Monthly payouts via JazzCash/EasyPaisa", "Real-time dashboard"],
-  },
-  {
-    id: "silver",
-    name: "Silver Partner",
-    commission: "8%",
-    minReferrals: 5,
-    maxReferrals: 19,
-    color: "text-slate-300",
-    bg: "bg-slate-500/5",
-    border: "border-slate-500/30",
-    perks: ["8% lifetime commission", "Priority support", "Co-branded materials", "Starter perks included"],
-  },
-  {
-    id: "gold",
-    name: "Gold Partner",
-    commission: "12%",
-    minReferrals: 20,
-    maxReferrals: 49,
-    color: "text-amber-400",
-    bg: "bg-amber-500/5",
-    border: "border-amber-500/30",
-    perks: [
-      "12% lifetime commission",
-      "Dedicated account manager",
-      "Featured affiliate listing",
-      "Silver perks included",
-    ],
-  },
-  {
-    id: "platinum",
-    name: "Platinum Partner",
-    commission: "15%",
-    minReferrals: 50,
-    maxReferrals: Infinity,
-    color: "text-violet-400",
-    bg: "bg-violet-500/5",
-    border: "border-violet-500/30",
-    popular: true,
-    perks: [
-      "15% lifetime commission",
-      "Revenue share on upsells",
-      "White-label options",
-      "Speaking opportunities",
-      "Gold perks included",
-    ],
-  },
-];
-
-/* ─── Affiliate Channels ─── */
-const CHANNELS = [
-  {
-    id: "blog",
-    icon: FileText,
-    title: "Travel Bloggers & Influencers",
-    desc: "Pakistan travel bloggers, YouTube vloggers, and Instagram travel accounts promote GlobeTrek in their content for a commission on every signup.",
-    cta: "Draft Outreach Email",
+    name: "Starter Subscription",
+    vendorPays: "PKR 3,000 / month",
+    commissionRate: "20% One-time",
+    affiliateEarns: "PKR 600",
     color: "text-primary",
     bg: "bg-primary/5",
     border: "border-primary/20",
   },
   {
-    id: "agency",
-    icon: Globe2,
-    title: "Offline Travel Agencies",
-    desc: "Traditional travel agencies who don't have digital presence can refer vendors and customers to GlobeTrek PK for recurring commission.",
-    cta: "Download Partnership Deck",
+    name: "Pro Subscription",
+    vendorPays: "PKR 10,000 / month",
+    commissionRate: "20% One-time",
+    affiliateEarns: "PKR 2,000",
+    color: "text-violet-400",
+    bg: "bg-violet-500/5",
+    border: "border-violet-500/20",
+    popular: true,
+  },
+];
+
+/* ─── Sales Channels ─── */
+const CHANNELS = [
+  {
+    id: "field",
+    icon: MapPin,
+    title: "Field Sales & Travel Agencies",
+    desc: "Sales partners walk into travel agency offices in major markets (Shah Alam Lahore, Saddar Karachi, Blue Area Islamabad) and pitch GlobeTrek PK.",
+    cta: "View Sales Pitch Script",
+    color: "text-primary",
+    bg: "bg-primary/5",
+    border: "border-primary/20",
+  },
+  {
+    id: "whatsapp",
+    icon: MessageSquare,
+    title: "WhatsApp Travel Operator Groups",
+    desc: "Partners pitch GlobeTrek directly to travel agent WhatsApp groups and Umrah/Hajj operator networks across Pakistan.",
+    cta: "Copy WhatsApp Pitch Template",
     color: "text-emerald-400",
     bg: "bg-emerald-500/5",
     border: "border-emerald-500/20",
   },
   {
-    id: "corporate",
-    icon: Users,
-    title: "Corporate HR Affiliates",
-    desc: "HR managers at companies refer GlobeTrek for corporate travel, team trips, and Hajj/Umrah employee programs.",
-    cta: "View Corporate Program",
+    id: "influencer",
+    icon: Share2,
+    title: "Travel Vloggers & Bloggers",
+    desc: "Pakistan travel content creators promote GlobeTrek on YouTube and Instagram, encouraging new travel agents to register using their code.",
+    cta: "Affiliate Landing Page",
     color: "text-violet-400",
     bg: "bg-violet-500/5",
     border: "border-violet-500/20",
@@ -129,89 +96,67 @@ const CHANNELS = [
   {
     id: "edu",
     icon: Award,
-    title: "University & Student Networks",
-    desc: "Student travel clubs and university societies promote GlobeTrek student packages (Hunza, Northern areas) for campus commissions.",
-    cta: "Student Program Details",
+    title: "University & Student Ambassadors",
+    desc: "Student leaders refer local tour operators and campus trip organizers to list their tour packages on GlobeTrek.",
+    cta: "Student Program",
     color: "text-amber-400",
     bg: "bg-amber-500/5",
     border: "border-amber-500/20",
   },
 ];
 
-/* ─── Promo Materials ─── */
-const PROMO_ASSETS = [
-  { label: "Affiliate Homepage Banner (1200×628)", format: "PNG", link: "#" },
-  { label: "WhatsApp Promotional Message Template", format: "TXT", link: "#" },
-  { label: "Facebook Post Copy (5 variants)", format: "DOCX", link: "#" },
-  { label: "Email Newsletter Insert (HTML)", format: "HTML", link: "#" },
-  { label: "Co-branded PDF Brochure", format: "PDF", link: "#" },
-  { label: "YouTube Thumbnail Template", format: "PSD", link: "#" },
-];
+/* ─── Pitch materials ─── */
+const OUTREACH_PITCH = `Assalam-o-Alaikum! 🌍 Main GlobeTrek PK ka Sales Partner hun.
 
-/* ─── Sample Affiliates ─── */
-const SAMPLE_AFFILIATES = [
-  { name: "TravelWithAli PK", channel: "YouTube", referrals: 67, earned: "PKR 84,000", tier: "platinum" },
-  { name: "Explore Pakistan Blog", channel: "Blog", referrals: 31, earned: "PKR 38,400", tier: "gold" },
-  { name: "Lahore Wanderers", channel: "Instagram", referrals: 14, earned: "PKR 11,200", tier: "silver" },
-  { name: "HajjPlanning.pk", channel: "Website", referrals: 8, earned: "PKR 6,400", tier: "silver" },
-  { name: "Campus Tours LUMS", channel: "Student Club", referrals: 3, earned: "PKR 1,800", tier: "starter" },
-];
+Aapki travel agency ke liye ek zabardast digital platform available hai:
+✅ Verified customer leads (Tours, Visa, Insurance, Tickets)
+✅ Online booking & Safepay payment (PKR)
+✅ AI tour description tools & itinerary builder
+✅ Storefront page for your agency
 
-/* ─── Email Template ─── */
-const OUTREACH_EMAIL = `Subject: Earn up to 15% Commission — Join GlobeTrek PK Affiliate Program
+Register on GlobeTrek PK: https://tour.testbench.shop/auth?mode=signup
+Use my referral code: [YOUR_REFERRAL_CODE]
 
-Dear [Name],
+Pehla month demo testing free hai! Aaj hi sign up karein.`;
 
-I came across your [blog/channel] and love how you showcase Pakistan travel. We'd love to partner with you!
-
-GlobeTrek PK is Pakistan's fastest-growing travel marketplace and we're inviting select creators to join our Affiliate Program:
-
-✅ Earn 5–15% commission on every referred subscription
-✅ Monthly payouts via JazzCash / EasyPaisa
-✅ Dedicated partner dashboard with real-time tracking
-✅ Co-branded materials & social media support
-
-Your unique affiliate link: https://tour.testbench.shop/ref/[YOUR_CODE]
-
-To join or learn more, simply reply to this email or visit:
-https://tour.testbench.shop/affiliates
-
-Looking forward to building something great together!
-
-Warm regards,
-GlobeTrek PK Team
-https://tour.testbench.shop`;
-
-/* ─── Component ─── */
 function AdminAffiliates() {
-  const [activeTab, setActiveTab] = useState<"overview" | "tiers" | "channels" | "materials" | "leaderboard">("overview");
-  const [copiedLink, setCopiedLink] = useState(false);
-  const [copiedEmail, setCopiedEmail] = useState(false);
+  const [activeTab, setActiveTab] = useState<"overview" | "tiers" | "channels" | "materials">("overview");
+  const [copiedPitch, setCopiedPitch] = useState(false);
   const [expandedChannel, setExpandedChannel] = useState<string | null>(null);
 
-  const AFFILIATE_BASE = "https://tour.testbench.shop/ref/";
-  const DEMO_CODE = "ADMIN001";
+  const getReferralsFn = useServerFn(getAdminAffiliateReferrals);
+  const getSettingsFn = useServerFn(getAffiliateSettings);
 
-  function copyLink() {
-    navigator.clipboard.writeText(AFFILIATE_BASE + DEMO_CODE);
-    setCopiedLink(true);
-    toast.success("Affiliate link copied!");
-    setTimeout(() => setCopiedLink(false), 2000);
-  }
+  const { data: referrals = [] } = useQuery({
+    queryKey: ["admin-affiliate-referrals"],
+    queryFn: () => getReferralsFn(),
+  });
 
-  function copyEmail() {
-    navigator.clipboard.writeText(OUTREACH_EMAIL);
-    setCopiedEmail(true);
-    toast.success("Email template copied!");
-    setTimeout(() => setCopiedEmail(false), 2000);
+  const { data: settings } = useQuery({
+    queryKey: ["affiliate-settings"],
+    queryFn: () => getSettingsFn(),
+  });
+
+  const commissionPct = settings?.commission_pct ?? 20;
+
+  const totalReferrals = referrals.length;
+  const totalEarned = referrals.reduce((sum: number, r: any) => sum + (r.commission_pkr ?? 0), 0);
+  const pendingPayouts = referrals.filter((r: any) => r.status === "pending");
+  const pendingAmount = pendingPayouts.reduce((sum: number, r: any) => sum + (r.commission_pkr ?? 0), 0);
+  const uniqueAffiliatesCount = new Set(referrals.map((r: any) => r.affiliate_id)).size;
+
+  function copyPitch() {
+    navigator.clipboard.writeText(OUTREACH_PITCH);
+    setCopiedPitch(true);
+    toast.success("Sales pitch script copied!");
+    setTimeout(() => setCopiedPitch(false), 2000);
   }
 
   const TABS = [
     { id: "overview", label: "Overview", icon: BarChart3 },
-    { id: "tiers", label: "Tiers & Rewards", icon: Award },
-    { id: "channels", label: "Channels", icon: Share2 },
-    { id: "materials", label: "Promo Materials", icon: Gift },
-    { id: "leaderboard", label: "Leaderboard", icon: TrendingUp },
+    { id: "tiers", label: "Commission Model", icon: Award },
+    { id: "channels", label: "Sales Channels", icon: Share2 },
+    { id: "materials", label: "Pitch Materials", icon: Gift },
   ] as const;
 
   return (
@@ -221,24 +166,33 @@ function AdminAffiliates() {
         <div>
           <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
             <Share2 className="size-5 text-primary" />
-            Affiliate & Partner Program
+            Field Sales & Affiliate Program
           </h2>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Grow GlobeTrek PK through influencers, bloggers, agencies, and student networks
+            Empower sales partners across Pakistan to introduce travel agencies to GlobeTrek PK
           </p>
         </div>
-        <Button size="sm" className="gap-1.5 text-xs bg-primary text-primary-foreground font-bold rounded-xl">
-          <Mail className="size-3.5" /> Invite Affiliate
-        </Button>
+        <div className="flex gap-2">
+          <Link to="/admin/affiliate-payouts">
+            <Button size="sm" className="gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl">
+              <HandCoins className="size-3.5" /> Payouts Manager ({pendingPayouts.length})
+            </Button>
+          </Link>
+          <Link to="/become-affiliate" target="_blank">
+            <Button size="sm" variant="outline" className="gap-1.5 text-xs rounded-xl">
+              <ExternalLink className="size-3.5" /> Public Registration Page
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: "Active Affiliates", value: "23", icon: Users, color: "text-primary" },
-          { label: "Total Referrals", value: "123", icon: Link2, color: "text-violet-400" },
-          { label: "Commissions Paid", value: "PKR 1.41L", icon: DollarSign, color: "text-emerald-400" },
-          { label: "Avg Commission", value: "9.2%", icon: TrendingUp, color: "text-amber-400" },
+          { label: "Active Partners", value: uniqueAffiliatesCount || "—", icon: Users, color: "text-primary" },
+          { label: "Total Conversions", value: totalReferrals, icon: BadgeCheck, color: "text-violet-400" },
+          { label: "Pending Friday Payout", value: `PKR ${pendingAmount.toLocaleString()}`, icon: Clock, color: "text-amber-400" },
+          { label: "Total Commission Earned", value: `PKR ${totalEarned.toLocaleString()}`, icon: DollarSign, color: "text-emerald-400" },
         ].map((s) => (
           <div key={s.label} className="rounded-2xl border border-border bg-card p-5">
             <s.icon className={cn("size-5 mb-3", s.color)} />
@@ -273,56 +227,54 @@ function AdminAffiliates() {
       {/* ── OVERVIEW ── */}
       {activeTab === "overview" && (
         <div className="space-y-5">
-          {/* Affiliate Link Generator */}
-          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
-            <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-              <Link2 className="size-4 text-primary" /> Your Affiliate Link
-            </h3>
-            <div className="flex gap-2">
-              <Input
-                readOnly
-                value={AFFILIATE_BASE + DEMO_CODE}
-                className="font-mono text-xs rounded-xl bg-surface flex-1"
-              />
-              <Button
-                onClick={copyLink}
-                size="sm"
-                variant="outline"
-                className="gap-1.5 text-xs rounded-xl shrink-0"
-              >
-                {copiedLink ? <CheckCircle2 className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5" />}
-                {copiedLink ? "Copied!" : "Copy"}
-              </Button>
+          {/* Action Callout */}
+          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                <HandCoins className="size-4 text-emerald-400" /> Weekly Friday Payout Schedule
+              </h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                Currently <strong>{pendingPayouts.length} pending referral commissions</strong> totaling <strong>PKR {pendingAmount.toLocaleString()}</strong> waiting for Friday payout.
+              </p>
             </div>
-            <p className="text-[11px] text-muted-foreground mt-2">
-              Share this link — every vendor who subscribes through it earns you a commission.
-            </p>
+            <Link to="/admin/affiliate-payouts">
+              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl gap-1.5">
+                Manage Payouts & Settings <ArrowUpRight className="size-3.5" />
+              </Button>
+            </Link>
           </div>
 
-          {/* How It Works */}
+          {/* How Sales Partner Model Works */}
           <div>
-            <h3 className="text-sm font-bold text-foreground mb-3">How the Affiliate Program Works</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <h3 className="text-sm font-bold text-foreground mb-3">How the Sales Partner Program Works</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               {[
                 {
                   step: "1",
-                  icon: Link2,
-                  title: "Share Your Link",
-                  desc: "Distribute your unique affiliate link across social media, WhatsApp groups, blog posts, or via email.",
+                  icon: BadgeCheck,
+                  title: "Partner Registers",
+                  desc: "Anyone registers at /become-affiliate with CNIC, phone, and city to receive a unique code (e.g. REF-AHMED1234).",
                   color: "bg-primary/10 text-primary",
                 },
                 {
                   step: "2",
-                  icon: Users,
-                  title: "Vendor Signs Up",
-                  desc: "A travel agency or vendor registers on GlobeTrek PK through your link and subscribes to a paid plan.",
+                  icon: MapPin,
+                  title: "Pitches Travel Agencies",
+                  desc: "Partner approaches travel agencies in person or via WhatsApp and presents GlobeTrek PK.",
                   color: "bg-violet-500/10 text-violet-400",
                 },
                 {
                   step: "3",
+                  icon: Target,
+                  title: "Vendor Enters Code",
+                  desc: "Agency enters the referral code during signup or checkout on GlobeTrek PK.",
+                  color: "bg-amber-500/10 text-amber-400",
+                },
+                {
+                  step: "4",
                   icon: DollarSign,
-                  title: "You Earn Commission",
-                  desc: "Receive 5–15% of the subscription value monthly for the lifetime of the referred vendor's account.",
+                  title: "20% Commission Credited",
+                  desc: "When vendor pays subscription, partner gets credited PKR 600 or PKR 2,000, paid every Friday.",
                   color: "bg-emerald-500/10 text-emerald-400",
                 },
               ].map((s) => (
@@ -340,43 +292,43 @@ function AdminAffiliates() {
             </div>
           </div>
 
-          {/* Strategy Highlights */}
+          {/* Priorities */}
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5">
             <h4 className="text-sm font-bold text-amber-400 flex items-center gap-2 mb-3">
-              <Sparkles className="size-4" /> Promotion Strategy — Top Priorities
+              <Sparkles className="size-4" /> Program Rules & Settings Summary
             </h4>
             <ul className="space-y-2 text-xs text-foreground">
               <li className="flex items-start gap-2">
                 <ArrowUpRight className="size-3.5 mt-0.5 text-amber-400 shrink-0" />
-                Target <strong>Pakistan travel YouTubers</strong> with 10K+ subscribers — highest conversion channel for vendor signups.
+                <strong>Current Commission Rate:</strong> {commissionPct}% one-time commission on initial vendor subscription.
               </li>
               <li className="flex items-start gap-2">
                 <ArrowUpRight className="size-3.5 mt-0.5 text-amber-400 shrink-0" />
-                Partner with <strong>Umrah & Hajj group admins</strong> on WhatsApp — they have direct access to pilgrimage vendors.
+                <strong>Plan Upgrades:</strong> Partners also earn commission when referred vendors upgrade from Starter to Pro.
               </li>
               <li className="flex items-start gap-2">
                 <ArrowUpRight className="size-3.5 mt-0.5 text-amber-400 shrink-0" />
-                Run a <strong>Eid campaign</strong> offering 2-month free trial for vendors referred by affiliates — seasonal spike opportunity.
+                <strong>Friday Payouts:</strong> Admin transfers balances &ge; PKR 1,000 via JazzCash/EasyPaisa/Bank on Fridays.
               </li>
               <li className="flex items-start gap-2">
                 <ArrowUpRight className="size-3.5 mt-0.5 text-amber-400 shrink-0" />
-                List GlobeTrek on <strong>Pakistani affiliate networks</strong> (Rozee, iMarketing.pk) to attract performance marketers.
+                <strong>Admin Control:</strong> You can adjust commission rates anytime from the <Link to="/admin/affiliate-payouts" className="underline font-bold">Payouts Manager</Link>.
               </li>
             </ul>
           </div>
         </div>
       )}
 
-      {/* ── TIERS ── */}
+      {/* ── TIERS / MODEL ── */}
       {activeTab === "tiers" && (
         <div className="space-y-4">
           <p className="text-xs text-muted-foreground">
-            Commission tiers auto-upgrade based on cumulative referrals. Lifetime commissions keep paying every month.
+            Current default commission model ({commissionPct}% one-time per vendor payout).
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {TIERS.map((tier) => (
+            {MODEL_TIERS.map((tier) => (
               <div
-                key={tier.id}
+                key={tier.name}
                 className={cn(
                   "rounded-2xl border p-5 relative",
                   tier.bg,
@@ -385,31 +337,34 @@ function AdminAffiliates() {
               >
                 {tier.popular && (
                   <span className="absolute top-3 right-3 text-[10px] font-bold rounded-full bg-violet-500 text-white px-2 py-0.5">
-                    TOP TIER
+                    HIGHEST COMMISSION
                   </span>
                 )}
-                <div className={cn("text-2xl font-black mb-0.5", tier.color)}>{tier.commission}</div>
+                <div className={cn("text-3xl font-black mb-0.5", tier.color)}>{tier.affiliateEarns}</div>
                 <div className="text-sm font-bold text-foreground">{tier.name}</div>
                 <div className="text-xs text-muted-foreground mt-0.5 mb-3">
-                  {tier.maxReferrals === Infinity
-                    ? `${tier.minReferrals}+ referrals`
-                    : `${tier.minReferrals}–${tier.maxReferrals} referrals`}
+                  Vendor pays {tier.vendorPays} ({tier.commissionRate})
                 </div>
-                <ul className="space-y-1.5">
-                  {tier.perks.map((p) => (
-                    <li key={p} className="flex items-start gap-2 text-xs text-foreground">
-                      <CheckCircle2 className={cn("size-3.5 mt-0.5 shrink-0", tier.color)} />
-                      {p}
-                    </li>
-                  ))}
+                <ul className="space-y-1.5 text-xs text-foreground">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className={cn("size-3.5 shrink-0", tier.color)} />
+                    Credited automatically when payment completes
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className={cn("size-3.5 shrink-0", tier.color)} />
+                    Paid out every Friday via JazzCash/EasyPaisa
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className={cn("size-3.5 shrink-0", tier.color)} />
+                    Unlimited signups per sales partner
+                  </li>
                 </ul>
               </div>
             ))}
           </div>
           <div className="rounded-xl border border-border bg-card p-4 text-xs text-muted-foreground">
-            <span className="font-semibold text-foreground">Commission basis: </span>
-            Calculated on monthly subscription value (Starter PKR 3,000/mo · Pro PKR 10,000/mo). Paid monthly via{" "}
-            <strong>JazzCash, EasyPaisa, or bank transfer</strong> on the 1st of each month. Minimum payout: PKR 1,000.
+            <span className="font-semibold text-foreground">Custom Commission Rates: </span>
+            You can change the percentage rate dynamically in <Link to="/admin/affiliate-payouts" className="text-primary font-bold underline">Admin Payout Settings</Link>.
           </div>
         </div>
       )}
@@ -446,40 +401,31 @@ function AdminAffiliates() {
                   <div className="px-4 pb-4 pt-0 space-y-3">
                     <p className="text-xs text-foreground">{ch.desc}</p>
                     <div className="rounded-xl border border-border bg-card/50 p-3 text-xs text-muted-foreground space-y-1">
-                      <p className="font-semibold text-foreground">Best Practices:</p>
-                      {ch.id === "blog" && (
+                      <p className="font-semibold text-foreground">Channel Guidance:</p>
+                      {ch.id === "field" && (
                         <>
-                          <p>• Search for Pakistan travel bloggers on YouTube with 5K–100K subscribers.</p>
-                          <p>• Offer a free Pro trial for 2 months in exchange for a sponsored video.</p>
-                          <p>• Provide ready-made content: comparison tables, key features, pricing FAQ.</p>
+                          <p>• Partners visit travel markets in Lahore, Karachi, Rawalpindi, Peshawar.</p>
+                          <p>• Show live demo of GlobeTrek tour listings and AI description generator.</p>
+                          <p>• Provide sales partner code for vendor to enter at signup.</p>
                         </>
                       )}
-                      {ch.id === "agency" && (
+                      {ch.id === "whatsapp" && (
                         <>
-                          <p>• Visit PTDC-registered agents in Lahore, Karachi, and Islamabad.</p>
-                          <p>• Offer printed brochures and a simple WhatsApp onboarding guide.</p>
-                          <p>• Emphasize lead credits and digital visibility benefits for offline agents.</p>
+                          <p>• Target Umrah & travel agency WhatsApp groups in Pakistan.</p>
+                          <p>• Share pre-formatted pitch message with referral code.</p>
                         </>
                       )}
-                      {ch.id === "corporate" && (
+                      {ch.id === "influencer" && (
                         <>
-                          <p>• Target HR contacts via LinkedIn Sales Navigator for companies 200+ employees.</p>
-                          <p>• Position GlobeTrek as the all-in-one platform for annual retreats & Umrah packages.</p>
-                          <p>• Offer a volume-discount package for 10+ employees per booking.</p>
+                          <p>• Travel vloggers recommend GlobeTrek to Pakistani travel operators.</p>
                         </>
                       )}
                       {ch.id === "edu" && (
                         <>
-                          <p>• Partner with LUMS, IBA, NUST, and FAST student societies.</p>
-                          <p>• Create a "Student Affiliate Kit" with ready-made WhatsApp group messages.</p>
-                          <p>• Offer group discount codes for 5+ students booking together.</p>
+                          <p>• Campus travel clubs refer local tour vendors for group packages.</p>
                         </>
                       )}
                     </div>
-                    <Button size="sm" variant="outline" className="text-xs gap-1.5 rounded-xl">
-                      <ExternalLink className="size-3.5" />
-                      {ch.cta}
-                    </Button>
                   </div>
                 )}
               </div>
@@ -492,107 +438,22 @@ function AdminAffiliates() {
       {activeTab === "materials" && (
         <div className="space-y-4">
           <p className="text-xs text-muted-foreground">
-            Ready-to-use promotional assets for affiliates. Share these with partners to maintain brand consistency.
+            Official pitch materials for sales partners to share with travel agencies.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {PROMO_ASSETS.map((a) => (
-              <div
-                key={a.label}
-                className="flex items-center gap-3 rounded-xl border border-border bg-card p-4"
-              >
-                <div className="size-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <FileText className="size-4 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-semibold text-foreground truncate">{a.label}</div>
-                  <div className="text-[10px] text-muted-foreground">{a.format}</div>
-                </div>
-                <Button size="sm" variant="outline" className="text-xs gap-1 rounded-xl shrink-0">
-                  <ArrowUpRight className="size-3" /> Get
-                </Button>
-              </div>
-            ))}
-          </div>
 
-          {/* Email Template */}
           <div className="rounded-2xl border border-border bg-card p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                <Mail className="size-4 text-primary" /> Affiliate Outreach Email Template
+                <MessageSquare className="size-4 text-primary" /> WhatsApp / Direct Sales Pitch Script
               </h3>
-              <Button size="sm" variant="outline" className="text-xs gap-1.5 rounded-xl" onClick={copyEmail}>
-                {copiedEmail ? <CheckCircle2 className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5" />}
-                {copiedEmail ? "Copied!" : "Copy"}
+              <Button size="sm" variant="outline" className="text-xs gap-1.5 rounded-xl" onClick={copyPitch}>
+                {copiedPitch ? <CheckCircle2 className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5" />}
+                {copiedPitch ? "Copied!" : "Copy Pitch Script"}
               </Button>
             </div>
             <pre className="whitespace-pre-wrap text-xs text-muted-foreground font-mono bg-surface rounded-xl p-4 border border-border leading-relaxed overflow-x-auto">
-              {OUTREACH_EMAIL}
+              {OUTREACH_PITCH}
             </pre>
-          </div>
-        </div>
-      )}
-
-      {/* ── LEADERBOARD ── */}
-      {activeTab === "leaderboard" && (
-        <div className="space-y-4">
-          <p className="text-xs text-muted-foreground">
-            Top performing affiliates by referrals. Recognize and reward top affiliates to retain them.
-          </p>
-          <div className="overflow-x-auto rounded-xl border border-border">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-border bg-surface/50 text-muted-foreground">
-                  <th className="px-4 py-3 text-left font-semibold">Rank</th>
-                  <th className="px-4 py-3 text-left font-semibold">Affiliate</th>
-                  <th className="px-4 py-3 text-center font-semibold">Channel</th>
-                  <th className="px-4 py-3 text-center font-semibold">Referrals</th>
-                  <th className="px-4 py-3 text-center font-semibold">Earned</th>
-                  <th className="px-4 py-3 text-center font-semibold">Tier</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {SAMPLE_AFFILIATES.map((a, i) => {
-                  const tier = TIERS.find((t) => t.id === a.tier)!;
-                  return (
-                    <tr key={a.name} className="hover:bg-surface/40 transition">
-                      <td className="px-4 py-3">
-                        <span
-                          className={cn(
-                            "font-black text-lg tabular-nums",
-                            i === 0
-                              ? "text-amber-400"
-                              : i === 1
-                              ? "text-slate-300"
-                              : i === 2
-                              ? "text-orange-400"
-                              : "text-muted-foreground"
-                          )}
-                        >
-                          #{i + 1}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 font-semibold text-foreground">{a.name}</td>
-                      <td className="px-4 py-3 text-center text-muted-foreground">{a.channel}</td>
-                      <td className="px-4 py-3 text-center font-bold text-foreground">{a.referrals}</td>
-                      <td className="px-4 py-3 text-center font-mono text-emerald-400 font-bold">{a.earned}</td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={cn("text-[10px] font-bold uppercase rounded-full px-2 py-0.5 border", tier.bg, tier.border, tier.color)}>
-                          {tier.name.split(" ")[0]}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-xs text-foreground space-y-1">
-            <p className="font-semibold text-primary flex items-center gap-1.5"><Target className="size-3.5" /> Retention Strategy</p>
-            <p>• Send a <strong>monthly performance digest</strong> email to all affiliates with their earnings and ranking.</p>
-            <p>• Celebrate <strong>top 3 affiliates</strong> publicly (with consent) on GlobeTrek's social media.</p>
-            <p>• Run a <strong>quarterly contest</strong> — top affiliate wins a 1-week northern Pakistan tour package.</p>
-            <p>• Offer <strong>bonus PKR 5,000</strong> for the 10th vendor referral milestone.</p>
           </div>
         </div>
       )}

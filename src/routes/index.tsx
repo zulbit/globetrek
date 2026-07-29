@@ -5,6 +5,7 @@ import { FeaturedTours } from "@/components/featured-tours";
 import { ServicesStrip } from "@/components/services-strip";
 import { Testimonials } from "@/components/testimonials";
 import { ExclusiveSection } from "@/components/exclusive-section";
+import { AffiliateCTASection } from "@/components/affiliate-cta";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -35,6 +36,7 @@ function Home() {
       <FeaturedTours />
       <ExclusiveSection />
       <ServicesStrip />
+      <AffiliateCTASection />
       <Testimonials />
     </SiteShell>
   );
