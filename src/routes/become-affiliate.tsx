@@ -17,6 +17,7 @@ import {
   MessageSquare, MapPin, Award, ShieldCheck, BadgeCheck, Video,
   Instagram, Youtube, Facebook, Camera, Send, Link2, X,
   HelpCircle, FileText, Info, Sparkles, Building2, Check, Tag,
+  Code2, Layers, CheckSquare, Sparkle, Subtitles, Wrench
 } from "lucide-react";
 
 export const Route = createFileRoute("/become-affiliate")({
@@ -97,6 +98,7 @@ function BecomeAffiliatePage() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState<{ code: string } | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedTemplate, setCopiedTemplate] = useState<string | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [blueprintModal, setBlueprintModal] = useState<"field" | "social" | null>(null);
 
@@ -159,6 +161,13 @@ function BecomeAffiliatePage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function copyText(text: string, id: string) {
+    navigator.clipboard.writeText(text);
+    setCopiedTemplate(id);
+    toast.success("Template copied to clipboard!");
+    setTimeout(() => setCopiedTemplate(null), 2500);
   }
 
   function copyCode(code: string) {
@@ -241,7 +250,7 @@ function BecomeAffiliatePage() {
               <DollarSign className="size-3.5" /> 2 Ways to Earn Money
             </div>
             <h2 className="text-2xl font-bold text-foreground">Choose How You Want to Promote</h2>
-            <p className="text-sm text-muted-foreground mt-1">Click on any program below to view its complete step-by-step blueprint &amp; guide before signing up!</p>
+            <p className="text-sm text-muted-foreground mt-1">Click on any program below to view its complete step-by-step blueprint, scripts &amp; copy-paste templates!</p>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-5">
@@ -273,7 +282,7 @@ function BecomeAffiliatePage() {
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
-                    Includes ready-made Roman Urdu pitch scripts
+                    Includes ready-made Roman Urdu pitch scripts &amp; objection handling
                   </li>
                 </ul>
               </div>
@@ -282,7 +291,7 @@ function BecomeAffiliatePage() {
                   onClick={() => setBlueprintModal("field")}
                   className="w-full bg-primary text-primary-foreground font-bold rounded-xl text-xs gap-1.5"
                 >
-                  <BookOpen className="size-3.5" /> How Field Sales Works (View Guide)
+                  <BookOpen className="size-3.5" /> How Field Sales Works (View Execution Guide)
                 </Button>
                 <a href="#register" className="block text-center text-[11px] text-muted-foreground hover:text-foreground underline">
                   Skip to Sign Up →
@@ -318,7 +327,7 @@ function BecomeAffiliatePage() {
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
-                    Includes proof submission &amp; verification portal
+                    Includes copy-paste post templates &amp; verification portal
                   </li>
                 </ul>
               </div>
@@ -327,7 +336,7 @@ function BecomeAffiliatePage() {
                   onClick={() => setBlueprintModal("social")}
                   className="w-full bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl text-xs gap-1.5"
                 >
-                  <Video className="size-3.5" /> How Social Creation Works (View Guide)
+                  <Video className="size-3.5" /> How Social Creation Works (View Execution Guide)
                 </Button>
                 <a href="#register" className="block text-center text-[11px] text-muted-foreground hover:text-foreground underline">
                   Skip to Sign Up →
@@ -662,7 +671,7 @@ function BecomeAffiliatePage() {
       {/* ── INTERACTIVE BLUEPRINT MODALS ── */}
       {blueprintModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-2xl space-y-6 text-left">
+          <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-2xl space-y-6 text-left">
             <button
               onClick={() => setBlueprintModal(null)}
               className="absolute top-5 right-5 grid size-8 place-items-center rounded-full bg-surface border border-border text-muted-foreground hover:text-foreground transition"
@@ -672,58 +681,93 @@ function BecomeAffiliatePage() {
 
             {/* Field Sales Blueprint */}
             {blueprintModal === "field" && (
-              <div className="space-y-5">
-                <div className="flex items-center gap-3">
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 border-b border-border/40 pb-4">
                   <div className="size-12 rounded-2xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
                     <MapPin className="size-6" />
                   </div>
                   <div>
                     <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px]">IN-PERSON FIELD SALES BLUEPRINT</Badge>
-                    <h2 className="text-xl font-bold text-foreground mt-0.5">Field Sales Partner — Execution Guide</h2>
+                    <h2 className="text-xl font-bold text-foreground mt-0.5">Field Sales Partner — Step-by-Step Action Guide</h2>
                   </div>
                 </div>
 
-                <div className="space-y-4 text-xs text-muted-foreground leading-relaxed">
+                <div className="space-y-5 text-xs text-muted-foreground leading-relaxed">
+                  {/* Step 1: Target Markets */}
                   <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 space-y-2">
                     <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
-                      <Target className="size-4 text-primary" /> Step 1: Target Locations &amp; Prospects
+                      <Target className="size-4 text-primary" /> Step 1: Target Locations &amp; Agency Profiles
                     </h4>
-                    <p>Visit active travel agent hubs in major cities across Pakistan:</p>
-                    <ul className="grid sm:grid-cols-2 gap-1.5 text-foreground font-medium pt-1">
-                      <li>• <strong>Lahore:</strong> Shah Alam Market, McLeod Rd</li>
-                      <li>• <strong>Karachi:</strong> Saddar, I.I. Chundrigar Rd</li>
-                      <li>• <strong>Islamabad:</strong> Blue Area, F-7 Markaz</li>
-                      <li>• <strong>Rawalpindi:</strong> Saddar, Murree Rd</li>
-                      <li>• <strong>Peshawar:</strong> Saddar Bazaar</li>
-                      <li>• <strong>Multan:</strong> Cantt Market</li>
+                    <p className="text-foreground font-medium">Walk into active travel agent hubs across Pakistan:</p>
+                    <ul className="grid sm:grid-cols-2 gap-2 text-foreground font-medium pt-1">
+                      <li className="bg-card p-2 rounded-xl border border-border">• <strong>Lahore:</strong> Shah Alam Market, McLeod Rd</li>
+                      <li className="bg-card p-2 rounded-xl border border-border">• <strong>Karachi:</strong> Saddar, I.I. Chundrigar Rd</li>
+                      <li className="bg-card p-2 rounded-xl border border-border">• <strong>Islamabad:</strong> Blue Area, F-7 Markaz</li>
+                      <li className="bg-card p-2 rounded-xl border border-border">• <strong>Rawalpindi:</strong> Saddar, Murree Rd</li>
                     </ul>
-                  </div>
-
-                  <div className="rounded-2xl border border-border bg-surface/50 p-4 space-y-2">
-                    <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
-                      <MessageSquare className="size-4 text-emerald-400" /> Step 2: What to Say (The Sales Pitch)
-                    </h4>
-                    <div className="font-mono text-[11px] text-foreground bg-background rounded-xl p-3 border border-border space-y-2">
-                      <p><span className="text-primary font-bold">YOU:</span> "Assalam-o-Alaikum Sir! Main GlobeTrek PK se aya hun — Pakistan ka pehla digital marketplace travel agencies ke liye."</p>
-                      <p><span className="text-primary font-bold">YOU:</span> "Humari website par agencies tour packages list karti hain aur verified customer leads direct WhatsApp par leti hain. Pehla month testing free hai, aur meray discount code se aapko 10% Off milega."</p>
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-border bg-surface/50 p-4 space-y-2">
-                    <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
-                      <Tag className="size-4 text-amber-400" /> Step 3: Giving Vendor Your Discount Code
-                    </h4>
-                    <p>
-                      When the travel agency registers at <strong>tour.testbench.shop/auth</strong>, give them your unique code (e.g. <strong className="text-primary">REF-AHMED1234</strong>). Entering this code gives the agency <strong>10% OFF</strong> their first month subscription.
+                    <p className="text-[11px] text-muted-foreground pt-1">
+                      <strong>Best prospects:</strong> Mid-size agencies (5–15 staff) offering tours, visa filing, ticketing, or Umrah.
                     </p>
                   </div>
 
+                  {/* Step 2: Walk-In Pitch Script & Live Demo */}
+                  <div className="rounded-2xl border border-border bg-surface/50 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
+                        <MessageSquare className="size-4 text-emerald-400" /> Step 2: The Walk-In Pitch &amp; Live Mobile Demo
+                      </h4>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => copyText(`Assalam-o-Alaikum Sir! Main GlobeTrek PK se aya hun — Pakistan ka pehla digital marketplace travel agencies ke liye. Humari website par agencies tour packages list karti hain aur verified customer leads direct WhatsApp par leti hain. Pehla month testing free hai, aur meray discount code se aapko 10% Off milega.`, "pitch-script")}
+                        className="text-[10px] h-7 gap-1 rounded-xl"
+                      >
+                        {copiedTemplate === "pitch-script" ? <CheckCircle2 className="size-3 text-emerald-400" /> : <Copy className="size-3" />}
+                        {copiedTemplate === "pitch-script" ? "Copied Script!" : "Copy Script"}
+                      </Button>
+                    </div>
+                    <div className="font-mono text-[11px] text-foreground bg-background rounded-xl p-3 border border-border space-y-2">
+                      <p><span className="text-primary font-bold">YOU:</span> "Assalam-o-Alaikum Sir! Main GlobeTrek PK se aya hun — Pakistan ka pehla B2B travel marketplace."</p>
+                      <p><span className="text-primary font-bold">YOU:</span> "Aap ki agency listings aur tours yahan publish hongay. Customers verified leads WhatsApp par bhejain gay, aur AI tool se 1 minute mein tour itineraries ban jati hain."</p>
+                      <p><span className="text-primary font-bold">YOU:</span> "Main aapko apnay phone par 2 minute ki live demo dikhata hun?"</p>
+                    </div>
+                    <div className="bg-primary/10 rounded-xl p-3 border border-primary/20 space-y-1 text-foreground">
+                      <div className="font-bold text-[11px] text-primary flex items-center gap-1.5">
+                        <Wrench className="size-3.5" /> Mobile Phone Demo Checklist (What to show on your phone):
+                      </div>
+                      <ol className="list-decimal list-inside space-y-1 text-[11px]">
+                        <li>Open <strong className="text-primary">tour.testbench.shop</strong> on your browser.</li>
+                        <li>Show tour packages catalog &amp; visa services portal.</li>
+                        <li>Show the "Get Quotes / Unlock Customer Lead" button.</li>
+                        <li>Show how the vendor gets 10% OFF by entering your referral code at signup.</li>
+                      </ol>
+                    </div>
+                  </div>
+
+                  {/* Step 3: Objection Handling */}
+                  <div className="rounded-2xl border border-border bg-surface/50 p-4 space-y-2">
+                    <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
+                      <HelpCircle className="size-4 text-amber-400" /> Step 3: Agency Objection Handling
+                    </h4>
+                    <div className="space-y-2 text-[11px]">
+                      <div className="rounded-xl bg-card p-2.5 border border-border space-y-1">
+                        <span className="font-bold text-foreground block">Q: "Hum to Facebook pages se leads latay hain?"</span>
+                        <span className="text-muted-foreground block">A: "Facebook ads PKR 30,000/mo letay hain aur boht sari fake inquiries hoti hain. GlobeTrek verified travel leads deta hai aur 100% PKR native system hai."</span>
+                      </div>
+                      <div className="rounded-xl bg-card p-2.5 border border-border space-y-1">
+                        <span className="font-bold text-foreground block">Q: "Is payment processed in PKR?"</span>
+                        <span className="text-muted-foreground block">A: "Yes! Fully integrated with Safepay (Pakistani debit/credit cards &amp; online banking)."</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step 4: Live Earnings */}
                   <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-2">
                     <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
                       <DollarSign className="size-4 text-emerald-400" /> Step 4: Live Earnings ({commissionPct}% Commission) &amp; Friday Payouts
                     </h4>
                     <p>
-                      When the vendor completes their payment via Safepay (PKR), your account is automatically credited based on the plan they select:
+                      When the vendor completes payment with your code (<strong className="text-primary">REF-CODE</strong>), your commission is credited instantly:
                     </p>
                     <div className="grid grid-cols-3 gap-2 text-center pt-1 font-bold">
                       {dynamicPlans.map((p) => (
@@ -735,7 +779,7 @@ function BecomeAffiliatePage() {
                       ))}
                     </div>
                     <p className="text-[11px] text-muted-foreground pt-1">
-                      Payouts are transferred directly to your JazzCash / EasyPaisa every Friday!
+                      Transferred automatically every Friday via JazzCash, EasyPaisa, or Bank Transfer.
                     </p>
                   </div>
                 </div>
@@ -751,54 +795,125 @@ function BecomeAffiliatePage() {
 
             {/* Social Media Blueprint */}
             {blueprintModal === "social" && (
-              <div className="space-y-5">
-                <div className="flex items-center gap-3">
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 border-b border-border/40 pb-4">
                   <div className="size-12 rounded-2xl bg-violet-500/15 text-violet-400 flex items-center justify-center shrink-0">
                     <Video className="size-6" />
                   </div>
                   <div>
                     <Badge className="bg-violet-500/20 text-violet-400 border-violet-500/30 text-[10px]">SOCIAL CREATOR BLUEPRINT</Badge>
-                    <h2 className="text-xl font-bold text-foreground mt-0.5">Social Media Ambassador — Execution Guide</h2>
+                    <h2 className="text-xl font-bold text-foreground mt-0.5">Social Media Ambassador — Copy-Paste Templates &amp; Verification Guide</h2>
                   </div>
                 </div>
 
-                <div className="space-y-4 text-xs text-muted-foreground leading-relaxed">
+                <div className="space-y-5 text-xs text-muted-foreground leading-relaxed">
+                  {/* Step 1: Trackable Bio Link */}
                   <div className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-4 space-y-2">
                     <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
-                      <Link2 className="size-4 text-violet-400" /> Step 1: Your Trackable Bio Link
+                      <Link2 className="size-4 text-violet-400" /> Step 1: Bio Link &amp; 30-Day Tracking Cookie
                     </h4>
                     <p>
-                      Every affiliate gets a trackable bio link (e.g. <strong className="text-foreground">https://tour.testbench.shop/auth?mode=signup&amp;ref=REF-AHMED1234</strong>). When a vendor clicks your link, your code is saved in their browser for 30 days automatically!
+                      Your trackable bio link: <strong className="text-foreground">https://tour.testbench.shop/auth?mode=signup&amp;ref=YOUR_CODE</strong>.
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      When a travel agency clicks your link, your referral code is stored in their browser cookie for 30 days. Even if they sign up weeks later, you get full credit!
                     </p>
                   </div>
 
-                  <div className="rounded-2xl border border-border bg-surface/50 p-4 space-y-2">
+                  {/* Step 2: Copy-Paste Templates */}
+                  <div className="rounded-2xl border border-border bg-surface/50 p-4 space-y-4">
                     <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
-                      <Video className="size-4 text-red-500" /> Step 2: Content Creation Guidelines
+                      <Code2 className="size-4 text-red-500" /> Step 2: Copy-Paste Content Templates per Platform
                     </h4>
-                    <ul className="space-y-2 text-foreground">
-                      <li>• <strong>YouTube:</strong> Create a video/Short reviewing GlobeTrek B2B features for Pakistani travel agents. Place your link in line 1 of the description &amp; pinned comment.</li>
-                      <li>• <strong>Instagram &amp; TikTok:</strong> Create a Reel/Short demonstrating how local agencies get leads. Add your bio link to your Instagram bio / linktree and include on-screen text: <em>"Travel Agents use code YOUR_CODE for 10% Off"</em>.</li>
-                      <li>• <strong>Facebook Groups:</strong> Share informative posts in Pakistan travel operator &amp; Umrah agent groups with your referral link.</li>
-                    </ul>
+
+                    {/* YouTube Template */}
+                    <div className="rounded-xl border border-border bg-card p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-foreground text-xs flex items-center gap-1.5">
+                          <Youtube className="size-4 text-red-500" /> YouTube Title &amp; Description Template
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => copyText(`Title: How Pakistani Travel Agencies Get More Customers in 2026 — GlobeTrek PK Review\n\n👉 Travel Agencies Sign Up Here (10% Off First Month):\nhttps://tour.testbench.shop/auth?mode=signup&ref=YOUR_CODE\n\nUse Promo Code: YOUR_CODE for 10% Discount at checkout!`, "yt-template")}
+                          className="text-[10px] h-7 gap-1 rounded-xl"
+                        >
+                          {copiedTemplate === "yt-template" ? <CheckCircle2 className="size-3 text-emerald-400" /> : <Copy className="size-3" />}
+                          {copiedTemplate === "yt-template" ? "Copied!" : "Copy Description"}
+                        </Button>
+                      </div>
+                      <div className="font-mono text-[10px] bg-background p-2.5 rounded-lg border border-border text-foreground space-y-1">
+                        <p><strong className="text-primary">Recommended Title:</strong> How Pakistani Travel Agencies Get More Customers in 2026 — GlobeTrek PK Review</p>
+                        <p><strong className="text-primary">Description Line 1:</strong> 👉 Travel Agencies Sign Up Here (10% Off): https://tour.testbench.shop/auth?mode=signup&amp;ref=YOUR_CODE</p>
+                        <p><strong className="text-primary">Pinned Comment:</strong> Use promo code <span className="text-amber-400 font-bold">YOUR_CODE</span> to save 10% on your agency subscription!</p>
+                      </div>
+                    </div>
+
+                    {/* Instagram/TikTok Reel Template */}
+                    <div className="rounded-xl border border-border bg-card p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-foreground text-xs flex items-center gap-1.5">
+                          <Instagram className="size-4 text-pink-500" /> Instagram / TikTok Reel &amp; Bio Template
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => copyText(`Travel Agents in Pakistan: List your tour packages & get verified customer leads on GlobeTrek PK!\n\n🔥 Use Code: YOUR_CODE for 10% Off\n👉 Click link in bio to register!\n\n#GlobeTrekPK #PakistanTravelAgencies #TourOperatorsPakistan #TravelPakistan #UmrahAgents`, "ig-template")}
+                          className="text-[10px] h-7 gap-1 rounded-xl"
+                        >
+                          {copiedTemplate === "ig-template" ? <CheckCircle2 className="size-3 text-emerald-400" /> : <Copy className="size-3" />}
+                          {copiedTemplate === "ig-template" ? "Copied!" : "Copy Reel Text"}
+                        </Button>
+                      </div>
+                      <div className="font-mono text-[10px] bg-background p-2.5 rounded-lg border border-border text-foreground space-y-1">
+                        <p><strong className="text-violet-400">On-Screen Video Text:</strong> "Pakistani Travel Agents: Use code YOUR_CODE for 10% Off on GlobeTrek PK"</p>
+                        <p><strong className="text-violet-400">Hashtags:</strong> #GlobeTrekPK #PakistanTravelAgencies #TourOperatorsPakistan #UmrahAgents</p>
+                      </div>
+                    </div>
+
+                    {/* Facebook Group Post */}
+                    <div className="rounded-xl border border-border bg-card p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-foreground text-xs flex items-center gap-1.5">
+                          <Facebook className="size-4 text-blue-500" /> Facebook Group B2B Post Template
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => copyText(`Assalam-o-Alaikum travel agency owners! If you want verified customer leads for tours, visa filing, and Umrah packages, check out GlobeTrek PK.\n\nRegister your agency here (Use code YOUR_CODE for 10% Off):\nhttps://tour.testbench.shop/auth?mode=signup&ref=YOUR_CODE`, "fb-template")}
+                          className="text-[10px] h-7 gap-1 rounded-xl"
+                        >
+                          {copiedTemplate === "fb-template" ? <CheckCircle2 className="size-3 text-emerald-400" /> : <Copy className="size-3" />}
+                          {copiedTemplate === "fb-template" ? "Copied!" : "Copy FB Post"}
+                        </Button>
+                      </div>
+                      <div className="font-mono text-[10px] bg-background p-2.5 rounded-lg border border-border text-foreground">
+                        "Assalam-o-Alaikum travel agency owners! Register your agency on GlobeTrek PK for verified traveler leads. Use code YOUR_CODE for 10% Off: https://tour.testbench.shop/auth?mode=signup&amp;ref=YOUR_CODE"
+                      </div>
+                    </div>
                   </div>
 
+                  {/* Step 3: Proof Submission Engine */}
                   <div className="rounded-2xl border border-border bg-surface/50 p-4 space-y-2">
                     <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
-                      <Camera className="size-4 text-amber-400" /> Step 3: Proof Submission &amp; Admin Verification
+                      <Camera className="size-4 text-amber-400" /> Step 3: Proof Submission &amp; 24-Hr Verification Engine
                     </h4>
                     <p>
-                      After publishing your social post or video, log into your <strong>/affiliate</strong> dashboard → open the <strong>Social Media Kit</strong> tab → paste your post URL. Admin verifies creator posts within 24 hours.
+                      After publishing your video or social post:
                     </p>
+                    <ol className="list-decimal list-inside space-y-1 text-[11px] text-foreground font-medium">
+                      <li>Copy your published video/post URL.</li>
+                      <li>Go to your <strong className="text-primary">/affiliate</strong> dashboard → open <strong className="text-violet-400">Social Media Kit</strong>.</li>
+                      <li>Paste the post URL and click "Submit for Verification".</li>
+                      <li>Admin verifies your creator post within 24 hours. Verified posts unlock top payout priority!</li>
+                    </ol>
                   </div>
 
+                  {/* Step 4: Live Earnings */}
                   <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-2">
                     <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
                       <DollarSign className="size-4 text-emerald-400" /> Step 4: Live Earnings ({commissionPct}% Commission) &amp; Friday Payouts
                     </h4>
-                    <p>
-                      Earn 20% commission on every subscriber based on live pricing plans:
-                    </p>
                     <div className="grid grid-cols-3 gap-2 text-center pt-1 font-bold">
                       {dynamicPlans.map((p) => (
                         <div key={p.id} className="rounded-xl border border-border bg-card p-2">
