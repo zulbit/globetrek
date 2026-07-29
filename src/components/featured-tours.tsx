@@ -1,8 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { TOURS, type Tour, type Destination, type DepartureCity } from "@/lib/tours";
 import { TourCard } from "@/components/tour-card";
+import { getLandingCMSSettings } from "@/lib/cms.functions";
 import europeImg from "@/assets/tour-europe.jpg";
 
 type DbTour = {
@@ -17,7 +19,6 @@ type DbTour = {
 };
 
 function toTour(row: DbTour): Tour {
-  // Enrich with matching mock (images/inclusions/etc.) when available
   const match = TOURS.find(
     (t) => t.title.toLowerCase() === row.title.toLowerCase() || t.destination === row.destination_country
   );
@@ -44,8 +45,22 @@ function toTour(row: DbTour): Tour {
 }
 
 export function FeaturedTours() {
+  const getCmsFn = useServerFn(getLandingCMSSettings);
+
+  const { data: cmsSettings } = useQuery({
+    queryKey: ["landing-cms-settings"],
+    queryFn: () => getCmsFn(),
+  });
+
+  const limit = cmsSettings?.featured_tours_limit ?? 8;
+  const layoutMode = cmsSettings?.featured_tours_layout ?? "grid_4";
+  const heading = cmsSettings?.featured_tours_heading || "Trending international departures";
+  const subheading =
+    cmsSettings?.featured_tours_subheading ||
+    "Hand-picked experiences from verified Pakistani travel vendors — priced in PKR.";
+
   const { data: tours = [] } = useQuery({
-    queryKey: ["featured-tours"],
+    queryKey: ["featured-tours", limit],
     queryFn: async () => {
       try {
         const controller = new AbortController();
@@ -55,17 +70,17 @@ export function FeaturedTours() {
           .select("id, title, destination_country, departure_city, duration_days, price_pkr, total_seats, image_url")
           .eq("is_active", true)
           .order("created_at", { ascending: false })
-          .limit(8)
+          .limit(limit)
           .abortSignal(controller.signal);
         clearTimeout(timer);
-        if (error || !data || data.length === 0) return TOURS.slice(0, 8);
+        if (error || !data || data.length === 0) return TOURS.slice(0, limit);
         return (data as DbTour[]).map(toTour);
       } catch {
-        return TOURS.slice(0, 8);
+        return TOURS.slice(0, limit);
       }
     },
     retry: false,
-    placeholderData: TOURS.slice(0, 8),
+    placeholderData: TOURS.slice(0, limit),
   });
 
   return (
@@ -76,10 +91,10 @@ export function FeaturedTours() {
             Featured tours
           </p>
           <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-            Trending international departures
+            {heading}
           </h2>
           <p className="text-sm text-muted-foreground">
-            Hand-picked experiences from verified Pakistani travel vendors — priced in PKR.
+            {subheading}
           </p>
         </div>
         <Link
@@ -90,11 +105,34 @@ export function FeaturedTours() {
         </Link>
       </div>
 
-      <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {tours.length === 0
-          ? <p className="text-sm text-muted-foreground">No tours available yet.</p>
-          : tours.map((t) => <TourCard key={t.id} tour={t} />)}
-      </div>
+      {/* Render Grid vs Carousel based on CMS setting */}
+      {layoutMode === "carousel" ? (
+        <div className="mt-8 flex gap-5 overflow-x-auto snap-x snap-mandatory pb-4 pt-1 scrollbar-none">
+          {tours.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No tours available yet.</p>
+          ) : (
+            tours.map((t) => (
+              <div key={t.id} className="min-w-[280px] sm:min-w-[320px] shrink-0 snap-start">
+                <TourCard tour={t} />
+              </div>
+            ))
+          )}
+        </div>
+      ) : (
+        <div
+          className={`mt-8 grid gap-5 ${
+            layoutMode === "grid_3"
+              ? "sm:grid-cols-2 lg:grid-cols-3"
+              : "sm:grid-cols-2 lg:grid-cols-4"
+          }`}
+        >
+          {tours.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No tours available yet.</p>
+          ) : (
+            tours.map((t) => <TourCard key={t.id} tour={t} />)
+          )}
+        </div>
+      )}
     </section>
   );
 }

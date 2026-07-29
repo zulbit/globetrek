@@ -40,6 +40,7 @@ import { Route as VisaIdRouteImport } from './routes/visa.$id'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminCustomLeadsRouteImport } from './routes/_authenticated/admin.custom-leads'
 import { Route as AuthenticatedAdminFinancialsRouteImport } from './routes/_authenticated/admin.financials'
+import { Route as AuthenticatedAdminLandingCmsRouteImport } from './routes/_authenticated/admin.landing-cms'
 import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin.payments'
 import { Route as AuthenticatedAdminServicesRouteImport } from './routes/_authenticated/admin.services'
 import { Route as AuthenticatedAdminSubscriptionsRouteImport } from './routes/_authenticated/admin.subscriptions'
@@ -215,6 +216,12 @@ const AuthenticatedAdminFinancialsRoute =
     path: '/financials',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminLandingCmsRoute =
+  AuthenticatedAdminLandingCmsRouteImport.update({
+    id: '/landing-cms',
+    path: '/landing-cms',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminPaymentsRoute =
   AuthenticatedAdminPaymentsRouteImport.update({
     id: '/payments',
@@ -350,6 +357,7 @@ export interface FileRoutesByFullPath {
   '/visa/': typeof VisaIndexRoute
   '/admin/custom-leads': typeof AuthenticatedAdminCustomLeadsRoute
   '/admin/financials': typeof AuthenticatedAdminFinancialsRoute
+  '/admin/landing-cms': typeof AuthenticatedAdminLandingCmsRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/services': typeof AuthenticatedAdminServicesRoute
   '/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
@@ -394,6 +402,7 @@ export interface FileRoutesByTo {
   '/visa': typeof VisaIndexRoute
   '/admin/custom-leads': typeof AuthenticatedAdminCustomLeadsRoute
   '/admin/financials': typeof AuthenticatedAdminFinancialsRoute
+  '/admin/landing-cms': typeof AuthenticatedAdminLandingCmsRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/services': typeof AuthenticatedAdminServicesRoute
   '/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
@@ -446,6 +455,7 @@ export interface FileRoutesById {
   '/visa/': typeof VisaIndexRoute
   '/_authenticated/admin/custom-leads': typeof AuthenticatedAdminCustomLeadsRoute
   '/_authenticated/admin/financials': typeof AuthenticatedAdminFinancialsRoute
+  '/_authenticated/admin/landing-cms': typeof AuthenticatedAdminLandingCmsRoute
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/_authenticated/admin/services': typeof AuthenticatedAdminServicesRoute
   '/_authenticated/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
@@ -498,6 +508,7 @@ export interface FileRouteTypes {
     | '/visa/'
     | '/admin/custom-leads'
     | '/admin/financials'
+    | '/admin/landing-cms'
     | '/admin/payments'
     | '/admin/services'
     | '/admin/subscriptions'
@@ -542,6 +553,7 @@ export interface FileRouteTypes {
     | '/visa'
     | '/admin/custom-leads'
     | '/admin/financials'
+    | '/admin/landing-cms'
     | '/admin/payments'
     | '/admin/services'
     | '/admin/subscriptions'
@@ -593,6 +605,7 @@ export interface FileRouteTypes {
     | '/visa/'
     | '/_authenticated/admin/custom-leads'
     | '/_authenticated/admin/financials'
+    | '/_authenticated/admin/landing-cms'
     | '/_authenticated/admin/payments'
     | '/_authenticated/admin/services'
     | '/_authenticated/admin/subscriptions'
@@ -855,6 +868,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminFinancialsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/landing-cms': {
+      id: '/_authenticated/admin/landing-cms'
+      path: '/landing-cms'
+      fullPath: '/admin/landing-cms'
+      preLoaderRoute: typeof AuthenticatedAdminLandingCmsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/payments': {
       id: '/_authenticated/admin/payments'
       path: '/payments'
@@ -987,6 +1007,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminCustomLeadsRoute: typeof AuthenticatedAdminCustomLeadsRoute
   AuthenticatedAdminFinancialsRoute: typeof AuthenticatedAdminFinancialsRoute
+  AuthenticatedAdminLandingCmsRoute: typeof AuthenticatedAdminLandingCmsRoute
   AuthenticatedAdminPaymentsRoute: typeof AuthenticatedAdminPaymentsRoute
   AuthenticatedAdminServicesRoute: typeof AuthenticatedAdminServicesRoute
   AuthenticatedAdminSubscriptionsRoute: typeof AuthenticatedAdminSubscriptionsRoute
@@ -999,6 +1020,7 @@ interface AuthenticatedAdminRouteChildren {
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminCustomLeadsRoute: AuthenticatedAdminCustomLeadsRoute,
   AuthenticatedAdminFinancialsRoute: AuthenticatedAdminFinancialsRoute,
+  AuthenticatedAdminLandingCmsRoute: AuthenticatedAdminLandingCmsRoute,
   AuthenticatedAdminPaymentsRoute: AuthenticatedAdminPaymentsRoute,
   AuthenticatedAdminServicesRoute: AuthenticatedAdminServicesRoute,
   AuthenticatedAdminSubscriptionsRoute: AuthenticatedAdminSubscriptionsRoute,
