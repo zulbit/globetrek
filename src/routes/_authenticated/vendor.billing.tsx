@@ -585,6 +585,57 @@ function BillingPage() {
           </div>
         </div>
       )}
+
+      {/* Plan Expiration & Non-Renewal Policy Safeguard Card */}
+      <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6 space-y-4 shadow-xs">
+        <div className="border-b border-amber-500/20 pb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-amber-300 font-bold text-sm">
+            <Zap className="size-4" /> Plan Expiration &amp; Non-Renewal Policy
+          </div>
+          <Badge variant="outline" className="border-amber-500/40 text-amber-300 text-[10px] font-mono">
+            Vendor Protection Safeguard
+          </Badge>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 text-xs">
+          <div className="space-y-2 rounded-xl border border-amber-500/20 bg-background/50 p-4">
+            <h4 className="font-bold text-amber-300 flex items-center gap-1.5">
+              🔔 1. How You Are Notified Before Expiration
+            </h4>
+            <ul className="space-y-1.5 text-muted-foreground leading-relaxed list-disc pl-4">
+              <li>
+                <strong>7-Day Early Warning:</strong> A prominent alert banner appears on your vendor portal header and dashboard.
+              </li>
+              <li>
+                <strong>Automated WhatsApp &amp; Email Alerts:</strong> Automated reminders sent 7 days, 3 days, and 24 hours prior to expiration.
+              </li>
+              <li>
+                <strong>1-Click SafePay PKR Renewal:</strong> Fast renewal button in billing overview to maintain seamless continuity.
+              </li>
+            </ul>
+          </div>
+
+          <div className="space-y-2 rounded-xl border border-amber-500/20 bg-background/50 p-4">
+            <h4 className="font-bold text-amber-300 flex items-center gap-1.5">
+              ⚠️ 2. What Happens If a Plan Fails to Renew?
+            </h4>
+            <ul className="space-y-1.5 text-muted-foreground leading-relaxed list-disc pl-4">
+              <li>
+                <strong>Automatic Downgrade to Free Tier:</strong> Your account safely reverts to the standard Starter Free tier.
+              </li>
+              <li>
+                <strong>Tour Listings Paused:</strong> Active listings above the Free tier limit (1 active listing) automatically unpublish (`is_active: false`) until renewed.
+              </li>
+              <li>
+                <strong>Placement Boosts Paused:</strong> Top search placement &amp; AI Concierge recommendations pause until reactivated.
+              </li>
+              <li>
+                <strong>Zero Data Loss:</strong> All your tour drafts, itineraries, leads, and analytics are 100% preserved safely.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
