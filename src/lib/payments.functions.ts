@@ -176,22 +176,32 @@ export const getSubscriptionPlans = createServerFn({ method: "GET" })
       },
     });
 
-    let query = supabase.from("subscription_plans").select("*").order("display_order", { ascending: true });
-    if (!data?.includeDisabled) {
-      query = query.eq("is_enabled", true);
-    }
-    const { data: plans, error } = await query;
+    // 1. Try payment_gateway_settings table first (guaranteed to exist on remote DB)
+    const { data: gatewayData } = await supabase
+      .from("payment_gateway_settings")
+      .select("config")
+      .eq("provider", "subscription_plans")
+      .maybeSingle();
 
-    if (error || !plans || plans.length === 0) {
-      // Fallback to payment_gateway_settings if table query fails
-      const { data: gatewayData } = await supabase
-        .from("payment_gateway_settings")
-        .select("config")
-        .eq("provider", "subscription_plans")
-        .maybeSingle();
-      return gatewayData?.config ? (gatewayData.config as any[]) : null;
+    if (gatewayData?.config && Array.isArray(gatewayData.config) && gatewayData.config.length > 0) {
+      const allPlans = gatewayData.config as any[];
+      if (data?.includeDisabled) return allPlans;
+      return allPlans.filter((p) => p.is_enabled !== false);
     }
-    return plans;
+
+    // 2. Fallback to public.subscription_plans table if present
+    try {
+      let query = supabase.from("subscription_plans").select("*").order("display_order", { ascending: true });
+      if (!data?.includeDisabled) {
+        query = query.eq("is_enabled", true);
+      }
+      const { data: plans } = await query;
+      if (plans && plans.length > 0) return plans;
+    } catch {
+      // Table doesn't exist
+    }
+
+    return null;
   });
 
 // -------- Admin: toggle subscription or placement plan enabled/disabled --------
@@ -209,16 +219,43 @@ export const togglePlanEnabled = createServerFn({ method: "POST" })
     if (!isAdmin) throw new Error("Forbidden");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin
-      .from("subscription_plans")
-      .update({ is_enabled: data.isEnabled, updated_at: new Date().toISOString() })
-      .eq("id", data.planId);
 
-    if (error) throw new Error(error.message);
+    // Fetch existing config from payment_gateway_settings
+    const { data: existing } = await supabaseAdmin
+      .from("payment_gateway_settings")
+      .select("config")
+      .eq("provider", "subscription_plans")
+      .maybeSingle();
+
+    let plansList: any[] = (existing?.config as any[]) || [];
+
+    if (plansList.length > 0) {
+      plansList = plansList.map((p) => (p.id === data.planId ? { ...p, is_enabled: data.isEnabled } : p));
+    }
+
+    const { error: gwErr } = await supabaseAdmin
+      .from("payment_gateway_settings")
+      .upsert(
+        { provider: "subscription_plans", config: plansList, enabled: true, updated_at: new Date().toISOString() },
+        { onConflict: "provider" }
+      );
+
+    if (gwErr) throw new Error(gwErr.message);
+
+    // Also attempt update on subscription_plans table silently
+    try {
+      await supabaseAdmin
+        .from("subscription_plans")
+        .update({ is_enabled: data.isEnabled, updated_at: new Date().toISOString() })
+        .eq("id", data.planId);
+    } catch {
+      // Ignore if table missing
+    }
+
     return { ok: true };
   });
 
-// -------- Admin: save / update dynamic subscription plan --------
+// -------- Admin: save / update dynamic subscription plans --------
 export const saveSubscriptionPlans = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: any) => input)
@@ -231,38 +268,62 @@ export const saveSubscriptionPlans = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    let plansToSave: any[] = [];
+
     if (Array.isArray(data)) {
-      // Upsert multiple
-      const { error } = await supabaseAdmin
-        .from("subscription_plans")
-        .upsert(data, { onConflict: "id" });
-      if (error) throw new Error(error.message);
+      plansToSave = data;
     } else {
-      // Upsert single plan record
-      const { error } = await supabaseAdmin
-        .from("subscription_plans")
-        .upsert(
-          {
-            id: data.id || `custom_${Date.now()}`,
-            name: data.name,
-            plan_type: data.plan_type || "base",
-            price_pkr: Number(data.price_pkr || 0),
-            billing_period: data.billing_period || "monthly",
-            tagline: data.tagline || "",
-            archetype: data.archetype || "",
-            icon_name: data.icon_name || "Sparkles",
-            accent: data.accent || "primary",
-            covers: data.covers || ["tours"],
-            features: data.features || [],
-            limits: data.limits || {},
-            is_enabled: data.is_enabled !== undefined ? Boolean(data.is_enabled) : true,
-            display_order: Number(data.display_order || 99),
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "id" }
-        );
-      if (error) throw new Error(error.message);
+      // Single plan creation
+      const { data: existing } = await supabaseAdmin
+        .from("payment_gateway_settings")
+        .select("config")
+        .eq("provider", "subscription_plans")
+        .maybeSingle();
+
+      const existingPlans: any[] = (existing?.config as any[]) || [];
+      const newPlan = {
+        id: data.id || `custom_${Date.now()}`,
+        name: data.name,
+        plan_type: data.plan_type || "base",
+        price_pkr: Number(data.price_pkr || 0),
+        billing_period: data.billing_period || "monthly",
+        tagline: data.tagline || "",
+        archetype: data.archetype || "",
+        icon_name: data.icon_name || "Sparkles",
+        accent: data.accent || "primary",
+        covers: data.covers || ["tours"],
+        features: data.features || [],
+        limits: data.limits || {},
+        is_enabled: data.is_enabled !== undefined ? Boolean(data.is_enabled) : true,
+        display_order: Number(data.display_order || existingPlans.length + 1),
+        updated_at: new Date().toISOString(),
+      };
+
+      const existingIndex = existingPlans.findIndex((p) => p.id === newPlan.id);
+      if (existingIndex >= 0) {
+        existingPlans[existingIndex] = newPlan;
+      } else {
+        existingPlans.push(newPlan);
+      }
+      plansToSave = existingPlans;
     }
 
-    return { ok: true };
+    // Always save to payment_gateway_settings (guaranteed working)
+    const { error: gwErr } = await supabaseAdmin
+      .from("payment_gateway_settings")
+      .upsert(
+        { provider: "subscription_plans", config: plansToSave, enabled: true, updated_at: new Date().toISOString() },
+        { onConflict: "provider" }
+      );
+
+    if (gwErr) throw new Error(gwErr.message);
+
+    // Try subscription_plans table silently
+    try {
+      await supabaseAdmin.from("subscription_plans").upsert(plansToSave, { onConflict: "id" });
+    } catch {
+      // Ignore if table missing
+    }
+
+    return { ok: true, plans: plansToSave };
   });

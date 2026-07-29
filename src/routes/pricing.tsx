@@ -115,16 +115,87 @@ function PricingPage() {
     queryFn: () => getPlansFn(),
   });
 
-  const activePlans = useMemo(() => {
+  const activeBasePlans = useMemo(() => {
     if (!dbPlans || dbPlans.length === 0) return TIERS;
-    return dbPlans.map((p) => ({
+    const baseOnly = dbPlans.filter((p: any) => (p.plan_type || "base") === "base" && p.is_enabled !== false);
+    if (baseOnly.length === 0) return TIERS;
+    return baseOnly.map((p: any) => ({
       ...p,
-      icon: ICON_MAP[p.iconName] || Crown,
+      icon: ICON_MAP[p.icon_name || p.iconName] || Crown,
     }));
   }, [dbPlans]);
 
+  const activeAddons = useMemo(() => {
+    if (!dbPlans || dbPlans.length === 0) {
+      // Default fallback addons if db table empty
+      return [
+        {
+          id: "placement_search",
+          name: "Search Placement Boost",
+          plan_type: "placement",
+          price_pkr: 8000,
+          billing_period: "monthly",
+          tagline: "Top #1-#3 search position boost in category queries",
+          icon_name: "Search",
+          features: [
+            "Top 3 position ranking in search queries",
+            "Featured badge on search result cards",
+            "4x average traveler click-through rate",
+            "Priority lead routing",
+          ],
+        },
+        {
+          id: "placement_ai",
+          name: "AI Concierge Recommendation",
+          plan_type: "placement",
+          price_pkr: 12000,
+          billing_period: "monthly",
+          tagline: "Recommended by AI Concierge in Roman Urdu & English",
+          icon_name: "Bot",
+          features: [
+            "Direct AI recommendation priority in chat queries",
+            "AI Concierge booking link placement",
+            "High-trust traveler lead conversions",
+            "Weekly performance analytics report",
+          ],
+        },
+        {
+          id: "placement_landing",
+          name: "Landing Page Spotlight",
+          plan_type: "placement",
+          price_pkr: 15000,
+          billing_period: "monthly",
+          tagline: "Featured Agency Spotlight card on main landing page",
+          icon_name: "Globe2",
+          features: [
+            "Featured Agency Spotlight showcase on homepage",
+            "Top hero slider package placement",
+            "Maximum brand authority & trust",
+            "Dedicated agency store link",
+          ],
+        },
+        {
+          id: "ad_flash_banner_1w",
+          name: "1-Week Hero Flash Banner Ad",
+          plan_type: "advertisement",
+          price_pkr: 15000,
+          billing_period: "weekly",
+          tagline: "7-Day exclusive promotional banner on homepage hero",
+          icon_name: "Sparkles",
+          features: [
+            "7-Day Hero Banner Ad on GlobeTrek PK homepage",
+            "Custom CTA link to your specific package or store",
+            "Ideal for seasonal sales (Umrah, Baku Winter, Eid Specials)",
+            "Dedicated campaign analytics report",
+          ],
+        },
+      ];
+    }
+    return dbPlans.filter((p: any) => (p.plan_type === "placement" || p.plan_type === "advertisement") && p.is_enabled !== false);
+  }, [dbPlans]);
+
   return (
-    <div className="min-h-screen bg-background pb-24 md:pb-0">
+    <div className="min-h-screen bg-background pb-32">
       <SiteHeader />
 
       {/* Hero */}
@@ -132,7 +203,7 @@ function PricingPage() {
         <div className="absolute inset-0 bg-linear-to-b from-primary/10 via-background to-background" />
         <div className="relative mx-auto max-w-5xl px-4 py-16 text-center sm:px-6 lg:px-8">
           <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-            <Sparkles className="size-3.5" /> Vendor plans
+            <Sparkles className="size-3.5" /> Vendor plans &amp; Marketplace Add-ons
           </span>
           <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">
             Pick the plan that matches how you sell travel.
@@ -146,22 +217,22 @@ function PricingPage() {
       </section>
 
       {/* Archetype picker */}
-      <section className="mx-auto -mt-4 max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-3 sm:grid-cols-3">
-          {activePlans.filter((t) => t.id !== "free").map((t) => {
+      <section className="mx-auto max-w-6xl px-4 pt-8 pb-4 sm:px-6 lg:px-8">
+        <div className="grid gap-4 sm:grid-cols-3">
+          {activeBasePlans.filter((t) => t.id !== "free").map((t) => {
             const Icon = t.icon;
             return (
               <a
                 key={t.id}
                 href={`#plan-${t.id}`}
-                className={`group flex items-start gap-3 rounded-xl border p-4 transition hover:-translate-y-0.5 ${
+                className={`group flex items-start gap-3 rounded-2xl border p-4 transition hover:-translate-y-0.5 shadow-sm ${
                   t.highlight
                     ? "border-primary/40 bg-primary/5 hover:border-primary/60"
                     : "border-border bg-card hover:border-primary/30"
                 }`}
               >
                 <span
-                  className={`grid size-9 shrink-0 place-items-center rounded-lg ring-1 ${
+                  className={`grid size-9 shrink-0 place-items-center rounded-xl ring-1 ${
                     t.highlight
                       ? "bg-primary/20 text-primary ring-primary/40"
                       : "bg-surface text-muted-foreground ring-border"
@@ -170,11 +241,11 @@ function PricingPage() {
                   <Icon className="size-4" />
                 </span>
                 <div className="min-w-0">
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                     For {t.name.toLowerCase()}s
                   </div>
-                  <div className="text-sm font-semibold text-foreground">{t.archetype}</div>
-                  <div className="mt-0.5 text-[11px] text-muted-foreground">
+                  <div className="text-xs font-semibold text-foreground leading-snug">{t.archetype}</div>
+                  <div className="mt-1 text-[11px] font-mono text-primary">
                     From {formatTierPrice(t.price_pkr)} / month
                   </div>
                 </div>
@@ -184,102 +255,181 @@ function PricingPage() {
         </div>
       </section>
 
-
       {/* Tier cards */}
-      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {activePlans.map((tier) => {
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <h2 className="text-xl font-bold mb-6 text-foreground">Base Vendor Subscriptions</h2>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 items-stretch">
+          {activeBasePlans.map((tier) => {
             const Icon = tier.icon;
             return (
               <div
                 key={tier.id}
                 id={`plan-${tier.id}`}
-                className={`relative flex flex-col scroll-mt-24 rounded-2xl border p-5 shadow-card transition-transform hover:-translate-y-0.5 ${
+                className={`relative flex flex-col justify-between scroll-mt-24 rounded-2xl border p-6 shadow-card transition-transform hover:-translate-y-0.5 ${
                   tier.highlight
                     ? "border-primary/50 bg-linear-to-b from-primary/10 to-card ring-1 ring-primary/30"
                     : "border-border bg-card"
                 }`}
               >
-                {tier.highlight && (
-                  <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary-foreground shadow">
-                    Most popular
-                  </span>
-                )}
-                <div className="mb-3 flex items-center gap-2">
-                  <span
-                    className={`grid size-9 place-items-center rounded-xl ring-1 ${
-                      tier.highlight
-                        ? "bg-primary/20 text-primary ring-primary/40"
-                        : "bg-surface text-muted-foreground ring-border"
-                    }`}
-                  >
-                    <Icon className="size-4" />
-                  </span>
-                  <div>
-                    <h3 className="text-sm font-semibold">{tier.name}</h3>
-                    <p className="text-[11px] text-muted-foreground">{tier.tagline}</p>
-                  </div>
-                </div>
-
-                <div className="mb-4 flex items-baseline gap-1.5">
-                  <span className="text-3xl font-bold tabular-nums">
-                    {formatTierPrice(tier.price_pkr)}
-                  </span>
-                  {tier.price_pkr > 0 && (
-                    <span className="text-xs text-muted-foreground">/ month</span>
+                <div>
+                  {tier.highlight && (
+                    <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary-foreground shadow">
+                      Most popular
+                    </span>
                   )}
+                  <div className="mb-3 flex items-center gap-2">
+                    <span
+                      className={`grid size-9 place-items-center rounded-xl ring-1 ${
+                        tier.highlight
+                          ? "bg-primary/20 text-primary ring-primary/40"
+                          : "bg-surface text-muted-foreground ring-border"
+                      }`}
+                    >
+                      <Icon className="size-4" />
+                    </span>
+                    <div>
+                      <h3 className="text-sm font-semibold">{tier.name}</h3>
+                      <p className="text-[11px] text-muted-foreground">{tier.tagline}</p>
+                    </div>
+                  </div>
+
+                  <div className="mb-4 flex items-baseline gap-1.5">
+                    <span className="text-2xl font-extrabold tabular-nums font-mono">
+                      {formatTierPrice(tier.price_pkr)}
+                    </span>
+                    {tier.price_pkr > 0 && (
+                      <span className="text-xs text-muted-foreground">/ month</span>
+                    )}
+                  </div>
+
+                  <div className="mb-4 flex flex-wrap gap-1.5">
+                    {(tier.covers || []).map((c: any) => {
+                      const CI = CATEGORY_ICON[c as ServiceCategory];
+                      if (!CI) return null;
+                      return (
+                        <span
+                          key={c}
+                          className="inline-flex items-center gap-1 rounded-full border border-border bg-surface/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
+                          title={SERVICE_LABELS[c as ServiceCategory]?.label}
+                        >
+                          <CI className="size-3" /> {SERVICE_LABELS[c as ServiceCategory]?.short}
+                        </span>
+                      );
+                    })}
+                  </div>
+
+                  <ul className="mb-6 space-y-2 text-xs">
+                    {(tier.features || []).map((f: string, i: number) => (
+                      <li key={i} className="flex items-start gap-2 text-muted-foreground">
+                        <Check className="size-3.5 shrink-0 text-emerald-400 mt-0.5" />
+                        <span className="text-foreground/90">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
 
-                <div className="mb-4 flex flex-wrap gap-1.5">
-                  {tier.covers.map((c) => {
-                    const CI = CATEGORY_ICON[c];
-                    return (
-                      <span
-                        key={c}
-                        className="inline-flex items-center gap-1 rounded-full border border-border bg-surface/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
-                        title={SERVICE_LABELS[c].label}
-                      >
-                        <CI className="size-3" /> {SERVICE_LABELS[c].short}
-                      </span>
-                    );
-                  })}
-                </div>
-
-
-
-                <ul className="mb-5 space-y-2 text-xs">
-                  {tier.features.map((f) => (
-                    <li key={f} className="flex gap-2">
-                      <Check className="mt-0.5 size-3.5 shrink-0 text-primary" />
-                      <span className="text-muted-foreground">{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                {tier.id === "free" ? (
-                  <Button asChild size="sm" variant="secondary" className="mt-auto w-full">
-                    <Link to="/auth" search={{ mode: "signup" } as never}>Start free</Link>
-                  </Button>
-                ) : (
-                  <Button
-                    asChild
-                    size="sm"
-                    className={`mt-auto w-full ${
-                      tier.highlight
-                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                        : "bg-surface-2 text-foreground hover:bg-surface"
-                    }`}
-                  >
-                    <Link to="/vendor/billing">Choose {tier.name}</Link>
-                  </Button>
-                )}
+                <Button
+                  asChild
+                  className={`w-full font-bold rounded-xl ${
+                    tier.highlight
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                      : "bg-surface text-foreground border border-border hover:border-primary/40"
+                  }`}
+                >
+                  <Link to="/auth" search={{ redirect: "/vendor/billing", mode: "signin" }}>
+                    Select {tier.name} <ArrowRight className="size-3.5 ml-1" />
+                  </Link>
+                </Button>
               </div>
             );
           })}
         </div>
       </section>
 
-      {/* Compare plans — redesigned */}
+      {/* Marketplace Placement & Banner Ad Addons Section */}
+      {activeAddons.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 border-t border-border mt-6">
+          <div className="mb-8">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-1 text-xs font-semibold text-purple-400 mb-2">
+              <Zap className="size-3.5" /> Boost Your Agency Reach
+            </span>
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">
+              Marketplace Placement &amp; Flash Campaign Add-ons
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+              Attach optional high-impact visibility boosts to your existing vendor plan. Stand out in AI Concierge recommendations, search rankings, or hero banners.
+            </p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 items-stretch">
+            {activeAddons.map((addon: any) => {
+              const isAd = addon.plan_type === "advertisement";
+              return (
+                <div
+                  key={addon.id}
+                  className={`relative flex flex-col justify-between rounded-2xl border p-6 shadow-sm transition-all hover:-translate-y-0.5 ${
+                    isAd
+                      ? "border-rose-500/40 bg-gradient-to-b from-rose-500/10 to-card"
+                      : "border-purple-500/40 bg-gradient-to-b from-purple-500/10 to-card"
+                  }`}
+                >
+                  <div>
+                    <span
+                      className={`inline-block text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full mb-3 border ${
+                        isAd
+                          ? "bg-rose-500/20 text-rose-300 border-rose-500/30"
+                          : "bg-purple-500/20 text-purple-300 border-purple-500/30"
+                      }`}
+                    >
+                      {isAd ? "⚡ 1-Week Flash Ad" : "🌟 Placement Add-on"}
+                    </span>
+
+                    <h3 className="text-base font-bold text-foreground mb-1">{addon.name}</h3>
+                    <p className="text-xs text-muted-foreground mb-4 min-h-[32px]">{addon.tagline}</p>
+
+                    <div className="mb-4 flex items-baseline gap-1.5">
+                      <span className="text-2xl font-extrabold font-mono text-foreground">
+                        {formatTierPrice(addon.price_pkr)}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        / {addon.billing_period === "weekly" ? "7 days" : "month"}
+                      </span>
+                    </div>
+
+                    <ul className="mb-6 space-y-2 text-xs">
+                      {(addon.features || []).map((f: string, i: number) => (
+                        <li key={i} className="flex items-start gap-2 text-muted-foreground">
+                          <Check
+                            className={`size-3.5 shrink-0 mt-0.5 ${
+                              isAd ? "text-rose-400" : "text-purple-400"
+                            }`}
+                          />
+                          <span className="text-foreground/90">{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <Button
+                    asChild
+                    className={`w-full font-bold rounded-xl border ${
+                      isAd
+                        ? "bg-rose-500 hover:bg-rose-600 text-white border-rose-400/40"
+                        : "bg-purple-600 hover:bg-purple-700 text-white border-purple-400/40"
+                    }`}
+                  >
+                    <Link to="/auth" search={{ redirect: "/vendor/billing", mode: "signin" }}>
+                      Attach {isAd ? "Ad Banner" : "Add-on"} <ArrowRight className="size-3.5 ml-1" />
+                    </Link>
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Compare plans — side by side */}
       <section id="compare" className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>

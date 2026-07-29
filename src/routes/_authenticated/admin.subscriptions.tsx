@@ -402,7 +402,7 @@ function AdminSubscriptions() {
           onClick={() => setFilterType("all")}
           className="text-xs font-semibold rounded-xl"
         >
-          All Plans ({plans.length})
+          All ({plans.length})
         </Button>
         <Button
           size="sm"
@@ -410,7 +410,7 @@ function AdminSubscriptions() {
           onClick={() => setFilterType("base")}
           className="text-xs font-semibold rounded-xl"
         >
-          Base Vendor Plans ({plans.filter((p) => p.plan_type === "base").length})
+          Base Plans ({plans.filter((p) => (p.plan_type || "base") === "base").length})
         </Button>
         <Button
           size="sm"
@@ -426,7 +426,7 @@ function AdminSubscriptions() {
           onClick={() => setFilterType("advertisement")}
           className="text-xs font-semibold rounded-xl text-rose-400 border-rose-500/30"
         >
-          Flash Banner Ads ({plans.filter((p) => p.plan_type === "advertisement").length})
+          Flash Banner Ad Addons ({plans.filter((p) => p.plan_type === "advertisement").length})
         </Button>
       </div>
 
