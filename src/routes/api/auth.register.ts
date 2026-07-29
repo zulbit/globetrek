@@ -7,6 +7,7 @@ type SignupBody = {
   full_name?: string;
   role?: "customer" | "vendor";
   company_name?: string;
+  phone?: string;
 };
 
 export const Route = createFileRoute("/api/auth/register")({
@@ -23,7 +24,7 @@ export const Route = createFileRoute("/api/auth/register")({
           });
         }
 
-        const { email, password, full_name, role = "customer", company_name } = body;
+        const { email, password, full_name, role = "customer", company_name, phone } = body;
 
         if (!email || !password) {
           return new Response(JSON.stringify({ error: "Email and password are required." }), {
@@ -39,9 +40,15 @@ export const Route = createFileRoute("/api/auth/register")({
           });
         }
 
+        if (role === "vendor" && !phone) {
+          return new Response(JSON.stringify({ error: "Mobile / WhatsApp number is required for vendor registration." }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
         try {
           // 1. Create user via Supabase Admin API with email_confirm: true
-          // This bypasses email verification and completely avoids Supabase SMTP rate limits!
           const { data: adminData, error: adminErr } = await supabaseAdmin.auth.admin.createUser({
             email,
             password,
@@ -50,6 +57,7 @@ export const Route = createFileRoute("/api/auth/register")({
               full_name,
               role,
               company_name: role === "vendor" ? company_name : null,
+              phone: phone || null,
             },
           });
 
@@ -62,12 +70,13 @@ export const Route = createFileRoute("/api/auth/register")({
 
           const userId = adminData.user.id;
 
-          // 2. Ensure profile record exists/is updated
+          // 2. Ensure profile record exists/is updated with phone & vendor_status
           await supabaseAdmin.from("profiles").upsert({
             id: userId,
             email,
             full_name: full_name || null,
             company_name: role === "vendor" ? company_name || null : null,
+            phone: phone || null,
             vendor_status: role === "vendor" ? "pending" : "approved",
             subscription_tier: "free",
           });

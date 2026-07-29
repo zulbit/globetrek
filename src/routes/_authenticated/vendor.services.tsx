@@ -30,13 +30,19 @@ function VendorServicesOffered() {
     queryKey: ["vendor-services", user?.id],
     queryFn: async () => {
       const { data } = await supabase.from("profiles")
-        .select("vendor_services, company_name, subscription_tier").eq("id", user!.id).maybeSingle();
+        .select("vendor_services, company_name, subscription_tier, phone, city, vendor_status").eq("id", user!.id).maybeSingle();
+      if (data && !isKycLoaded) {
+        setCompanyName(data.company_name || "");
+        setPhone(data.phone || "");
+        setCity(data.city || "");
+        setIsKycLoaded(true);
+      }
       return data;
     },
   });
 
   const [selected, setSelected] = useState<string[]>([]);
-  const current = (profile?.vendor_services as string[] | null) ?? ["tours"];
+  const current = (fullProfile?.vendor_services as string[] | null) ?? ["tours"];
   const value = selected.length ? selected : current;
 
   const mutation = useMutation({
@@ -50,6 +56,29 @@ function VendorServicesOffered() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Update failed"),
   });
 
+  const kycMutation = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) throw new Error("Not authenticated");
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          company_name: companyName,
+          phone,
+          city,
+        })
+        .eq("id", user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("KYC Details Submitted to Admin!", {
+        description: "Your agency verification request is being reviewed by GlobeTrek PK Admins.",
+      });
+      qc.invalidateQueries({ queryKey: ["vendor-services-kyc"] });
+      qc.invalidateQueries({ queryKey: ["vendor-services-nav"] });
+    },
+    onError: (e: any) => toast.error(`KYC save failed: ${e.message}`),
+  });
+
   function toggle(id: string) {
     const set = new Set(value);
     if (set.has(id)) set.delete(id); else set.add(id);
@@ -61,57 +90,170 @@ function VendorServicesOffered() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold tracking-tight">Services you offer</h2>
-        <p className="text-sm text-muted-foreground">
-          Enable the categories your business handles. Each enabled category unlocks a dedicated
-          management screen and adds you to the relevant public marketplace.
-        </p>
-      </div>
+    <div className="space-y-8 pb-16">
+      {/* Service Categories Section */}
+      <div className="rounded-2xl border border-border bg-card p-6 space-y-4 shadow-xs">
+        <div className="border-b border-border pb-3">
+          <h2 className="text-lg font-bold text-foreground">Services Offered by Agency</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Select category desks offered by your travel desk to activate corresponding navigation menus.
+          </p>
+        </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        {OPTIONS.map((o) => {
-          const on = value.includes(o.id);
-          const Icon = o.icon;
-          return (
-            <button
-              key={o.id}
-              onClick={() => toggle(o.id)}
-              className={`relative flex items-start gap-3 rounded-2xl border p-4 text-left transition ${
-                on ? "border-primary/60 bg-primary/10 shadow-glow" : "border-border bg-card hover:border-primary/30"
-              }`}
-            >
-              <div className={`grid size-10 place-items-center rounded-xl bg-surface ring-1 ring-border ${o.tone}`}>
-                <Icon className="size-5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <div className="text-sm font-semibold">{o.label}</div>
-                  {on && <CheckCircle2 className="size-4 text-primary" />}
+        <div className="grid gap-3 sm:grid-cols-2">
+          {OPTIONS.map((opt) => {
+            const Icon = opt.icon;
+            const checked = value.includes(opt.id);
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => toggle(opt.id)}
+                className={`flex items-start gap-3 rounded-xl border p-4 text-left transition ${
+                  checked
+                    ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary/30"
+                    : "border-border bg-surface/40 text-muted-foreground hover:bg-surface"
+                }`}
+              >
+                <Icon className={`size-5 shrink-0 mt-0.5 ${opt.tone}`} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sm text-foreground">{opt.label}</span>
+                    {checked && <CheckCircle2 className="size-4 text-primary" />}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1 leading-snug">{opt.desc}</p>
                 </div>
-                <p className="mt-0.5 text-xs text-muted-foreground">{o.desc}</p>
-              </div>
-            </button>
-          );
-        })}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="pt-2 flex justify-end">
+          <Button
+            disabled={mutation.isPending || !selected.length}
+            onClick={() => mutation.mutate(value)}
+            className="font-bold text-xs bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl px-5"
+          >
+            {mutation.isPending ? <><Loader2 className="mr-1.5 size-3.5 animate-spin" /> Saving…</> : "Save Service Categories"}
+          </Button>
+        </div>
       </div>
 
-      <div className="flex items-center justify-between rounded-xl border border-border bg-surface/50 p-4">
-        <div className="text-xs text-muted-foreground">
-          Currently enabled:{" "}
-          <span className="font-medium text-foreground">
-            {value.map((v) => OPTIONS.find((o) => o.id === v)?.label ?? v).join(" · ")}
+      {/* Vendor KYC Verification Form */}
+      <div className="rounded-2xl border border-border bg-card p-6 space-y-4 shadow-xs">
+        <div className="border-b border-border pb-3 flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-400 mb-1">
+              <FileCheck className="size-4" /> Agency Verification &amp; License (KYC)
+            </div>
+            <h2 className="text-lg font-bold text-foreground">Vendor Business Verification Details</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Submit your official travel agency credentials for Admin verification &amp; verified badge issuance.
+            </p>
+          </div>
+          <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase border ${
+            fullProfile?.vendor_status === "approved"
+              ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+              : "bg-amber-500/20 text-amber-300 border-amber-500/40"
+          }`}>
+            {fullProfile?.vendor_status === "approved" ? "✅ Verified Agency" : "⏳ KYC Review Pending"}
           </span>
         </div>
-        <Button
-          disabled={mutation.isPending || selected.length === 0}
-          onClick={() => mutation.mutate(value)}
-          className="bg-primary text-primary-foreground hover:bg-primary/90"
-        >
-          {mutation.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-          Save changes
-        </Button>
+
+        <form onSubmit={(e) => { e.preventDefault(); kycMutation.mutate(); }} className="space-y-4 text-xs">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="font-semibold text-muted-foreground block mb-1">Agency Legal Name*</label>
+              <input
+                type="text"
+                required
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                placeholder="e.g. Skylark Travels & Tours (Pvt) Ltd"
+                className="w-full h-9 px-3 rounded-xl bg-surface border border-border text-foreground text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="font-semibold text-muted-foreground block mb-1">Mobile / WhatsApp Support Number*</label>
+              <input
+                type="tel"
+                required
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="e.g. +92 300 1234567"
+                className="w-full h-9 px-3 rounded-xl bg-surface border border-border text-foreground text-xs font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="font-semibold text-muted-foreground block mb-1">DTS License No. / Registration</label>
+              <input
+                type="text"
+                value={dtsLicense}
+                onChange={(e) => setDtsLicense(e.target.value)}
+                placeholder="e.g. DTS-LHR-9410"
+                className="w-full h-9 px-3 rounded-xl bg-surface border border-border text-foreground text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="font-semibold text-muted-foreground block mb-1">FBR Tax ID / NTN Number</label>
+              <input
+                type="text"
+                value={ntnNumber}
+                onChange={(e) => setNtnNumber(e.target.value)}
+                placeholder="e.g. NTN-8941029-7"
+                className="w-full h-9 px-3 rounded-xl bg-surface border border-border text-foreground text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="font-semibold text-muted-foreground block mb-1">Primary Office City*</label>
+              <input
+                type="text"
+                required
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder="e.g. Lahore, Karachi, Islamabad"
+                className="w-full h-9 px-3 rounded-xl bg-surface border border-border text-foreground text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="font-semibold text-muted-foreground block mb-1">Owner CNIC Number</label>
+              <input
+                type="text"
+                value={cnicNumber}
+                onChange={(e) => setCnicNumber(e.target.value)}
+                placeholder="e.g. 35202-1234567-1"
+                className="w-full h-9 px-3 rounded-xl bg-surface border border-border text-foreground text-xs font-mono"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="font-semibold text-muted-foreground block mb-1">Physical Office Address</label>
+            <input
+              type="text"
+              value={officeAddress}
+              onChange={(e) => setOfficeAddress(e.target.value)}
+              placeholder="e.g. Suite 402, Main Boulevard, Gulberg III, Lahore"
+              className="w-full h-9 px-3 rounded-xl bg-surface border border-border text-foreground text-xs"
+            />
+          </div>
+
+          <div className="pt-2 flex justify-end">
+            <Button
+              type="submit"
+              disabled={kycMutation.isPending}
+              className="font-bold text-xs bg-amber-500 text-black hover:bg-amber-400 rounded-xl px-5 gap-1.5"
+            >
+              {kycMutation.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <FileCheck className="size-3.5" />}
+              Submit KYC Verification Details
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );

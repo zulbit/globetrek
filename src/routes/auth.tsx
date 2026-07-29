@@ -113,6 +113,7 @@ function AuthPage() {
   const [fullName, setFullName] = React.useState("");
   const [role, setRole] = React.useState<"customer" | "vendor">("customer");
   const [companyName, setCompanyName] = React.useState("");
+  const [phone, setPhone] = React.useState("");
 
   React.useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -142,9 +143,15 @@ function AuthPage() {
 
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
-    if (role === "vendor" && !companyName.trim()) {
-      toast.error("Company name is required for vendors");
-      return;
+    if (role === "vendor") {
+      if (!companyName.trim()) {
+        toast.error("Company name is required for vendors");
+        return;
+      }
+      if (!phone.trim()) {
+        toast.error("Mobile / WhatsApp number is required for vendors");
+        return;
+      }
     }
     setLoading(true);
 
@@ -160,6 +167,7 @@ function AuthPage() {
           full_name: fullName,
           role,
           company_name: role === "vendor" ? companyName : null,
+          phone: role === "vendor" ? phone : null,
         }),
       });
 
@@ -384,10 +392,17 @@ function AuthPage() {
                 </div>
 
                 {role === "vendor" && (
-                  <div className="space-y-2">
-                    <Label htmlFor="company" className="text-white/80">Company name</Label>
-                    <Input id="company" required value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="bg-white/5 text-white placeholder:text-white/40" placeholder="e.g. Skylark Travels" />
-                  </div>
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="company" className="text-white/80">Agency / Company name*</Label>
+                      <Input id="company" required value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="bg-white/5 text-white placeholder:text-white/40" placeholder="e.g. Skylark Travels & Tours" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="phone" className="text-white/80">Mobile / WhatsApp Number*</Label>
+                      <Input id="phone" type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} className="bg-white/5 text-white placeholder:text-white/40" placeholder="e.g. +92 300 1234567" />
+                    </div>
+                  </>
                 )}
 
                 <div className="space-y-2">
