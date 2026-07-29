@@ -40,6 +40,7 @@ import { Route as VisaIdRouteImport } from './routes/visa.$id'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminCustomLeadsRouteImport } from './routes/_authenticated/admin.custom-leads'
 import { Route as AuthenticatedAdminFinancialsRouteImport } from './routes/_authenticated/admin.financials'
+import { Route as AuthenticatedAdminKycCmsRouteImport } from './routes/_authenticated/admin.kyc-cms'
 import { Route as AuthenticatedAdminLandingCmsRouteImport } from './routes/_authenticated/admin.landing-cms'
 import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin.payments'
 import { Route as AuthenticatedAdminServicesRouteImport } from './routes/_authenticated/admin.services'
@@ -52,6 +53,7 @@ import { Route as AuthenticatedVendorIndexRouteImport } from './routes/_authenti
 import { Route as AuthenticatedVendorBillingRouteImport } from './routes/_authenticated/vendor.billing'
 import { Route as AuthenticatedVendorInsuranceRouteImport } from './routes/_authenticated/vendor.insurance'
 import { Route as AuthenticatedVendorInvoicesRouteImport } from './routes/_authenticated/vendor.invoices'
+import { Route as AuthenticatedVendorKycRouteImport } from './routes/_authenticated/vendor.kyc'
 import { Route as AuthenticatedVendorLeadsRouteImport } from './routes/_authenticated/vendor.leads'
 import { Route as AuthenticatedVendorServicesRouteImport } from './routes/_authenticated/vendor.services'
 import { Route as AuthenticatedVendorTicketsRouteImport } from './routes/_authenticated/vendor.tickets'
@@ -216,6 +218,12 @@ const AuthenticatedAdminFinancialsRoute =
     path: '/financials',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminKycCmsRoute =
+  AuthenticatedAdminKycCmsRouteImport.update({
+    id: '/kyc-cms',
+    path: '/kyc-cms',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminLandingCmsRoute =
   AuthenticatedAdminLandingCmsRouteImport.update({
     id: '/landing-cms',
@@ -287,6 +295,11 @@ const AuthenticatedVendorInvoicesRoute =
     path: '/invoices',
     getParentRoute: () => AuthenticatedVendorRoute,
   } as any)
+const AuthenticatedVendorKycRoute = AuthenticatedVendorKycRouteImport.update({
+  id: '/kyc',
+  path: '/kyc',
+  getParentRoute: () => AuthenticatedVendorRoute,
+} as any)
 const AuthenticatedVendorLeadsRoute =
   AuthenticatedVendorLeadsRouteImport.update({
     id: '/leads',
@@ -357,6 +370,7 @@ export interface FileRoutesByFullPath {
   '/visa/': typeof VisaIndexRoute
   '/admin/custom-leads': typeof AuthenticatedAdminCustomLeadsRoute
   '/admin/financials': typeof AuthenticatedAdminFinancialsRoute
+  '/admin/kyc-cms': typeof AuthenticatedAdminKycCmsRoute
   '/admin/landing-cms': typeof AuthenticatedAdminLandingCmsRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/services': typeof AuthenticatedAdminServicesRoute
@@ -367,6 +381,7 @@ export interface FileRoutesByFullPath {
   '/vendor/billing': typeof AuthenticatedVendorBillingRoute
   '/vendor/insurance': typeof AuthenticatedVendorInsuranceRoute
   '/vendor/invoices': typeof AuthenticatedVendorInvoicesRoute
+  '/vendor/kyc': typeof AuthenticatedVendorKycRoute
   '/vendor/leads': typeof AuthenticatedVendorLeadsRoute
   '/vendor/services': typeof AuthenticatedVendorServicesRoute
   '/vendor/tickets': typeof AuthenticatedVendorTicketsRoute
@@ -402,6 +417,7 @@ export interface FileRoutesByTo {
   '/visa': typeof VisaIndexRoute
   '/admin/custom-leads': typeof AuthenticatedAdminCustomLeadsRoute
   '/admin/financials': typeof AuthenticatedAdminFinancialsRoute
+  '/admin/kyc-cms': typeof AuthenticatedAdminKycCmsRoute
   '/admin/landing-cms': typeof AuthenticatedAdminLandingCmsRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/services': typeof AuthenticatedAdminServicesRoute
@@ -412,6 +428,7 @@ export interface FileRoutesByTo {
   '/vendor/billing': typeof AuthenticatedVendorBillingRoute
   '/vendor/insurance': typeof AuthenticatedVendorInsuranceRoute
   '/vendor/invoices': typeof AuthenticatedVendorInvoicesRoute
+  '/vendor/kyc': typeof AuthenticatedVendorKycRoute
   '/vendor/leads': typeof AuthenticatedVendorLeadsRoute
   '/vendor/services': typeof AuthenticatedVendorServicesRoute
   '/vendor/tickets': typeof AuthenticatedVendorTicketsRoute
@@ -455,6 +472,7 @@ export interface FileRoutesById {
   '/visa/': typeof VisaIndexRoute
   '/_authenticated/admin/custom-leads': typeof AuthenticatedAdminCustomLeadsRoute
   '/_authenticated/admin/financials': typeof AuthenticatedAdminFinancialsRoute
+  '/_authenticated/admin/kyc-cms': typeof AuthenticatedAdminKycCmsRoute
   '/_authenticated/admin/landing-cms': typeof AuthenticatedAdminLandingCmsRoute
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/_authenticated/admin/services': typeof AuthenticatedAdminServicesRoute
@@ -465,6 +483,7 @@ export interface FileRoutesById {
   '/_authenticated/vendor/billing': typeof AuthenticatedVendorBillingRoute
   '/_authenticated/vendor/insurance': typeof AuthenticatedVendorInsuranceRoute
   '/_authenticated/vendor/invoices': typeof AuthenticatedVendorInvoicesRoute
+  '/_authenticated/vendor/kyc': typeof AuthenticatedVendorKycRoute
   '/_authenticated/vendor/leads': typeof AuthenticatedVendorLeadsRoute
   '/_authenticated/vendor/services': typeof AuthenticatedVendorServicesRoute
   '/_authenticated/vendor/tickets': typeof AuthenticatedVendorTicketsRoute
@@ -508,6 +527,7 @@ export interface FileRouteTypes {
     | '/visa/'
     | '/admin/custom-leads'
     | '/admin/financials'
+    | '/admin/kyc-cms'
     | '/admin/landing-cms'
     | '/admin/payments'
     | '/admin/services'
@@ -518,6 +538,7 @@ export interface FileRouteTypes {
     | '/vendor/billing'
     | '/vendor/insurance'
     | '/vendor/invoices'
+    | '/vendor/kyc'
     | '/vendor/leads'
     | '/vendor/services'
     | '/vendor/tickets'
@@ -553,6 +574,7 @@ export interface FileRouteTypes {
     | '/visa'
     | '/admin/custom-leads'
     | '/admin/financials'
+    | '/admin/kyc-cms'
     | '/admin/landing-cms'
     | '/admin/payments'
     | '/admin/services'
@@ -563,6 +585,7 @@ export interface FileRouteTypes {
     | '/vendor/billing'
     | '/vendor/insurance'
     | '/vendor/invoices'
+    | '/vendor/kyc'
     | '/vendor/leads'
     | '/vendor/services'
     | '/vendor/tickets'
@@ -605,6 +628,7 @@ export interface FileRouteTypes {
     | '/visa/'
     | '/_authenticated/admin/custom-leads'
     | '/_authenticated/admin/financials'
+    | '/_authenticated/admin/kyc-cms'
     | '/_authenticated/admin/landing-cms'
     | '/_authenticated/admin/payments'
     | '/_authenticated/admin/services'
@@ -615,6 +639,7 @@ export interface FileRouteTypes {
     | '/_authenticated/vendor/billing'
     | '/_authenticated/vendor/insurance'
     | '/_authenticated/vendor/invoices'
+    | '/_authenticated/vendor/kyc'
     | '/_authenticated/vendor/leads'
     | '/_authenticated/vendor/services'
     | '/_authenticated/vendor/tickets'
@@ -868,6 +893,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminFinancialsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/kyc-cms': {
+      id: '/_authenticated/admin/kyc-cms'
+      path: '/kyc-cms'
+      fullPath: '/admin/kyc-cms'
+      preLoaderRoute: typeof AuthenticatedAdminKycCmsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/landing-cms': {
       id: '/_authenticated/admin/landing-cms'
       path: '/landing-cms'
@@ -952,6 +984,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedVendorInvoicesRouteImport
       parentRoute: typeof AuthenticatedVendorRoute
     }
+    '/_authenticated/vendor/kyc': {
+      id: '/_authenticated/vendor/kyc'
+      path: '/kyc'
+      fullPath: '/vendor/kyc'
+      preLoaderRoute: typeof AuthenticatedVendorKycRouteImport
+      parentRoute: typeof AuthenticatedVendorRoute
+    }
     '/_authenticated/vendor/leads': {
       id: '/_authenticated/vendor/leads'
       path: '/leads'
@@ -1007,6 +1046,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminCustomLeadsRoute: typeof AuthenticatedAdminCustomLeadsRoute
   AuthenticatedAdminFinancialsRoute: typeof AuthenticatedAdminFinancialsRoute
+  AuthenticatedAdminKycCmsRoute: typeof AuthenticatedAdminKycCmsRoute
   AuthenticatedAdminLandingCmsRoute: typeof AuthenticatedAdminLandingCmsRoute
   AuthenticatedAdminPaymentsRoute: typeof AuthenticatedAdminPaymentsRoute
   AuthenticatedAdminServicesRoute: typeof AuthenticatedAdminServicesRoute
@@ -1020,6 +1060,7 @@ interface AuthenticatedAdminRouteChildren {
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminCustomLeadsRoute: AuthenticatedAdminCustomLeadsRoute,
   AuthenticatedAdminFinancialsRoute: AuthenticatedAdminFinancialsRoute,
+  AuthenticatedAdminKycCmsRoute: AuthenticatedAdminKycCmsRoute,
   AuthenticatedAdminLandingCmsRoute: AuthenticatedAdminLandingCmsRoute,
   AuthenticatedAdminPaymentsRoute: AuthenticatedAdminPaymentsRoute,
   AuthenticatedAdminServicesRoute: AuthenticatedAdminServicesRoute,
@@ -1037,6 +1078,7 @@ interface AuthenticatedVendorRouteChildren {
   AuthenticatedVendorBillingRoute: typeof AuthenticatedVendorBillingRoute
   AuthenticatedVendorInsuranceRoute: typeof AuthenticatedVendorInsuranceRoute
   AuthenticatedVendorInvoicesRoute: typeof AuthenticatedVendorInvoicesRoute
+  AuthenticatedVendorKycRoute: typeof AuthenticatedVendorKycRoute
   AuthenticatedVendorLeadsRoute: typeof AuthenticatedVendorLeadsRoute
   AuthenticatedVendorServicesRoute: typeof AuthenticatedVendorServicesRoute
   AuthenticatedVendorTicketsRoute: typeof AuthenticatedVendorTicketsRoute
@@ -1049,6 +1091,7 @@ const AuthenticatedVendorRouteChildren: AuthenticatedVendorRouteChildren = {
   AuthenticatedVendorBillingRoute: AuthenticatedVendorBillingRoute,
   AuthenticatedVendorInsuranceRoute: AuthenticatedVendorInsuranceRoute,
   AuthenticatedVendorInvoicesRoute: AuthenticatedVendorInvoicesRoute,
+  AuthenticatedVendorKycRoute: AuthenticatedVendorKycRoute,
   AuthenticatedVendorLeadsRoute: AuthenticatedVendorLeadsRoute,
   AuthenticatedVendorServicesRoute: AuthenticatedVendorServicesRoute,
   AuthenticatedVendorTicketsRoute: AuthenticatedVendorTicketsRoute,
