@@ -12,7 +12,8 @@ import {
   Star, Zap, BookOpen, ChevronDown, ChevronRight, Phone,
   Copy, ExternalLink, Loader2, Gift, TrendingUp, Target,
   MessageSquare, MapPin, Award, ShieldCheck, BadgeCheck, Video,
-  Instagram, Youtube, Facebook, Camera, Send, Link2,
+  Instagram, Youtube, Facebook, Camera, Send, Link2, X,
+  HelpCircle, FileText, Info, Sparkles, Building2, Check, Tag,
 } from "lucide-react";
 
 export const Route = createFileRoute("/become-affiliate")({
@@ -107,6 +108,7 @@ function BecomeAffiliatePage() {
   const [done, setDone] = useState<{ code: string } | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [blueprintModal, setBlueprintModal] = useState<"field" | "social" | null>(null);
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
@@ -149,6 +151,12 @@ function BecomeAffiliatePage() {
     navigator.clipboard.writeText(code);
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 2000);
+  }
+
+  function scrollToRegister() {
+    setBlueprintModal(null);
+    const elem = document.getElementById("register");
+    if (elem) elem.scrollIntoView({ behavior: "smooth" });
   }
 
   return (
@@ -219,84 +227,126 @@ function BecomeAffiliatePage() {
               <DollarSign className="size-3.5" /> 2 Ways to Earn Money
             </div>
             <h2 className="text-2xl font-bold text-foreground">Choose How You Want to Promote</h2>
-            <p className="text-sm text-muted-foreground mt-1">Whether you prefer field sales walk-ins or social media creation — you get paid the same 20% commission!</p>
+            <p className="text-sm text-muted-foreground mt-1">Click on any program below to view its complete step-by-step blueprint &amp; guide before signing up!</p>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-5">
             {/* Field Sales Card */}
-            <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-card to-card p-6 space-y-4 shadow-card">
-              <div className="flex items-center justify-between">
-                <div className="size-11 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
-                  <MapPin className="size-6" />
+            <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-card to-card p-6 space-y-4 shadow-card flex flex-col justify-between">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="size-11 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
+                    <MapPin className="size-6" />
+                  </div>
+                  <span className="rounded-full bg-primary/15 px-3 py-1 text-[10px] font-bold text-primary border border-primary/30">
+                    IN-PERSON FIELD SALES
+                  </span>
                 </div>
-                <span className="rounded-full bg-primary/15 px-3 py-1 text-[10px] font-bold text-primary border border-primary/30">
-                  IN-PERSON FIELD SALES
-                </span>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Field Sales Partner</h3>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                    Walk into travel agencies in your city (Shah Alam Market Lahore, Saddar Karachi, Blue Area Islamabad). Pitch GlobeTrek PK directly to agency directors and show them a live demo.
+                  </p>
+                </div>
+                <ul className="space-y-1.5 text-xs text-foreground font-medium pt-1">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+                    Give vendor your unique code (e.g. REF-AHMED1234) for 10% Off
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+                    Earn PKR 600 (Starter) or PKR 2,000 (Pro) per agency closed
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+                    Includes ready-made Roman Urdu pitch scripts
+                  </li>
+                </ul>
               </div>
-              <div>
-                <h3 className="text-lg font-bold text-foreground">Field Sales Partner</h3>
-                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                  Walk into travel agencies in your city (Shah Alam Market Lahore, Saddar Karachi, Blue Area Islamabad). Pitch GlobeTrek PK directly to travel agency directors and show them a live demo.
-                </p>
-              </div>
-              <ul className="space-y-1.5 text-xs text-foreground font-medium pt-1">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
-                  Give vendor your unique code (e.g. REF-AHMED1234) for 10% Off
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
-                  Earn PKR 600 (Starter) or PKR 2,000 (Pro) per agency closed
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
-                  Includes ready-made Roman Urdu pitch scripts
-                </li>
-              </ul>
-              <a href="#register">
-                <Button size="sm" className="w-full bg-primary text-primary-foreground font-bold rounded-xl text-xs gap-1.5 mt-2">
-                  Join as Field Sales Partner <ArrowRight className="size-3.5" />
+              <div className="space-y-2 pt-2">
+                <Button
+                  onClick={() => setBlueprintModal("field")}
+                  className="w-full bg-primary text-primary-foreground font-bold rounded-xl text-xs gap-1.5"
+                >
+                  <BookOpen className="size-3.5" /> How Field Sales Works (View Guide)
                 </Button>
-              </a>
+                <a href="#register" className="block text-center text-[11px] text-muted-foreground hover:text-foreground underline">
+                  Skip to Sign Up →
+                </a>
+              </div>
             </div>
 
             {/* Social Media Creator Card */}
-            <div className="rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-500/10 via-card to-card p-6 space-y-4 shadow-card">
-              <div className="flex items-center justify-between">
-                <div className="size-11 rounded-xl bg-violet-500/20 flex items-center justify-center text-violet-400">
-                  <Video className="size-6" />
+            <div className="rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-500/10 via-card to-card p-6 space-y-4 shadow-card flex flex-col justify-between">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="size-11 rounded-xl bg-violet-500/20 flex items-center justify-center text-violet-400">
+                    <Video className="size-6" />
+                  </div>
+                  <span className="rounded-full bg-violet-500/15 px-3 py-1 text-[10px] font-bold text-violet-400 border border-violet-500/30">
+                    ONLINE SOCIAL CREATOR
+                  </span>
                 </div>
-                <span className="rounded-full bg-violet-500/15 px-3 py-1 text-[10px] font-bold text-violet-400 border border-violet-500/30">
-                  ONLINE SOCIAL CREATOR
-                </span>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Social Media Ambassador</h3>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                    Promote GlobeTrek PK on YouTube, Instagram, TikTok, Facebook, or LinkedIn. Place your trackable bio link in your profile/description and submit video links for verification.
+                  </p>
+                </div>
+                <ul className="space-y-1.5 text-xs text-foreground font-medium pt-1">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+                    Trackable bio links (auto-saves referral for 30 days)
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+                    Earn PKR 600–2,000 for every online agency signup
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+                    Includes proof submission &amp; verification portal
+                  </li>
+                </ul>
               </div>
-              <div>
-                <h3 className="text-lg font-bold text-foreground">Social Media Ambassador</h3>
-                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                  Promote GlobeTrek PK on YouTube, Instagram, TikTok, Facebook, or LinkedIn. Place your trackable bio link in your profile/description and submit video links for verification.
-                </p>
-              </div>
-              <ul className="space-y-1.5 text-xs text-foreground font-medium pt-1">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
-                  Trackable bio links (auto-saves referral for 30 days)
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
-                  Earn PKR 600–2,000 for every online agency signup
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
-                  Includes proof submission & verification portal
-                </li>
-              </ul>
-              <a href="#register">
-                <Button size="sm" className="w-full bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl text-xs gap-1.5 mt-2">
-                  Join as Social Creator <ArrowRight className="size-3.5" />
+              <div className="space-y-2 pt-2">
+                <Button
+                  onClick={() => setBlueprintModal("social")}
+                  className="w-full bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl text-xs gap-1.5"
+                >
+                  <Video className="size-3.5" /> How Social Creation Works (View Guide)
                 </Button>
-              </a>
+                <a href="#register" className="block text-center text-[11px] text-muted-foreground hover:text-foreground underline">
+                  Skip to Sign Up →
+                </a>
+              </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ── COMMISSION CARDS ── */}
+      <section className="py-12 px-4">
+        <div className="mx-auto max-w-4xl">
+          <h2 className="text-center text-2xl font-bold mb-2">How much will you earn?</h2>
+          <p className="text-center text-sm text-muted-foreground mb-8">20% one-time commission on every subscription you close.</p>
+          <div className="grid sm:grid-cols-2 gap-4 max-w-xl mx-auto">
+            {PLANS.map((p) => (
+              <div key={p.name} className={cn("relative rounded-2xl border p-6 text-center", p.bg, p.border)}>
+                {p.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-violet-500 px-3 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+                    Highest earning
+                  </div>
+                )}
+                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">{p.name}</div>
+                <div className="text-xs text-muted-foreground mb-3">PKR {p.price.toLocaleString()}/month</div>
+                <div className={cn("text-4xl font-black", p.color)}>PKR {p.commission.toLocaleString()}</div>
+                <div className="text-xs text-muted-foreground mt-1">per successful signup</div>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-xs text-muted-foreground mt-4">
+            Plus: earn again on <strong className="text-foreground">plan upgrades</strong>. If your Starter agency upgrades to Pro, you earn PKR 2,000 more.
+          </p>
         </div>
       </section>
 
@@ -342,30 +392,6 @@ function BecomeAffiliatePage() {
                 Dashboard
               </Button>
             </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── HOW IT WORKS ── */}
-      <section id="how-it-works" className="py-12 px-4">
-        <div className="mx-auto max-w-4xl">
-          <h2 className="text-center text-2xl font-bold mb-8">How it works — 4 simple steps</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { step: "1", icon: BadgeCheck, title: "Register below", body: "Fill the form, get your unique referral code & trackable bio link instantly. e.g. REF-AHMED1234", color: "bg-primary/10 text-primary" },
-              { step: "2", icon: Users, title: "Pitch or Post Online", body: "Visit travel agencies or post on YouTube/Instagram with your code and bio link.", color: "bg-violet-500/10 text-violet-400" },
-              { step: "3", icon: Share2, title: "Vendor uses your code", body: "Agency signs up and enters your referral code (or clicks your bio link) for 10% off.", color: "bg-amber-500/10 text-amber-400" },
-              { step: "4", icon: DollarSign, title: "You earn commission", body: "PKR 600 or PKR 2,000 credited instantly. Paid every Friday via JazzCash/EasyPaisa.", color: "bg-emerald-500/10 text-emerald-400" },
-            ].map((s) => (
-              <div key={s.step} className="rounded-2xl border border-border bg-card p-5">
-                <div className={cn("size-10 rounded-xl flex items-center justify-center mb-3", s.color)}>
-                  <s.icon className="size-5" />
-                </div>
-                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Step {s.step}</div>
-                <div className="font-bold text-sm text-foreground mb-1.5">{s.title}</div>
-                <div className="text-xs text-muted-foreground leading-relaxed">{s.body}</div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
@@ -449,6 +475,30 @@ function BecomeAffiliatePage() {
         </div>
       </section>
 
+      {/* ── HOW IT WORKS ── */}
+      <section id="how-it-works" className="py-12 px-4">
+        <div className="mx-auto max-w-4xl">
+          <h2 className="text-center text-2xl font-bold mb-8">How it works — 4 simple steps</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { step: "1", icon: BadgeCheck, title: "Register below", body: "Fill the form, get your unique referral code & trackable bio link instantly. e.g. REF-AHMED1234", color: "bg-primary/10 text-primary" },
+              { step: "2", icon: Users, title: "Pitch or Post Online", body: "Visit travel agencies or post on YouTube/Instagram with your code and bio link.", color: "bg-violet-500/10 text-violet-400" },
+              { step: "3", icon: Share2, title: "Vendor uses your code", body: "Agency signs up and enters your referral code (or clicks your bio link) for 10% off.", color: "bg-amber-500/10 text-amber-400" },
+              { step: "4", icon: DollarSign, title: "You earn commission", body: "PKR 600 or PKR 2,000 credited instantly. Paid every Friday via JazzCash/EasyPaisa.", color: "bg-emerald-500/10 text-emerald-400" },
+            ].map((s) => (
+              <div key={s.step} className="rounded-2xl border border-border bg-card p-5">
+                <div className={cn("size-10 rounded-xl flex items-center justify-center mb-3", s.color)}>
+                  <s.icon className="size-5" />
+                </div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Step {s.step}</div>
+                <div className="font-bold text-sm text-foreground mb-1.5">{s.title}</div>
+                <div className="text-xs text-muted-foreground leading-relaxed">{s.body}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── HOW TO EARN MORE ── */}
       <section className="py-12 px-4">
         <div className="mx-auto max-w-4xl">
@@ -519,7 +569,7 @@ function BecomeAffiliatePage() {
             <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-8 text-center">
               <CheckCircle2 className="size-12 text-emerald-400 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-foreground mb-2">You're in! 🎉</h2>
-              <p className="text-sm text-muted-foreground mb-6">Your unique referral code & trackable bio link are ready. Share them with travel agencies or on social media.</p>
+              <p className="text-sm text-muted-foreground mb-6">Your unique referral code &amp; trackable bio link are ready. Share them with travel agencies or on social media.</p>
               <div className="rounded-xl border border-emerald-500/30 bg-background p-4 mb-4">
                 <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Your Referral Code</div>
                 <div className="text-3xl font-black text-emerald-400 tracking-wider">{done.code}</div>
@@ -547,7 +597,7 @@ function BecomeAffiliatePage() {
                   <BadgeCheck className="size-6 text-primary" />
                 </div>
                 <h2 className="text-2xl font-bold">Register as Partner</h2>
-                <p className="text-xs text-muted-foreground mt-1">Free. Instant code & bio link. Start earning today.</p>
+                <p className="text-xs text-muted-foreground mt-1">Free. Instant code &amp; bio link. Start earning today.</p>
               </div>
               {!user && (
                 <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-400 font-medium text-center mb-4">
@@ -587,6 +637,162 @@ function BecomeAffiliatePage() {
           )}
         </div>
       </section>
+
+      {/* ── INTERACTIVE BLUEPRINT MODALS ── */}
+      {blueprintModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-2xl space-y-6 text-left">
+            <button
+              onClick={() => setBlueprintModal(null)}
+              className="absolute top-5 right-5 grid size-8 place-items-center rounded-full bg-surface border border-border text-muted-foreground hover:text-foreground transition"
+            >
+              <X className="size-4" />
+            </button>
+
+            {/* Field Sales Blueprint */}
+            {blueprintModal === "field" && (
+              <div className="space-y-5">
+                <div className="flex items-center gap-3">
+                  <div className="size-12 rounded-2xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
+                    <MapPin className="size-6" />
+                  </div>
+                  <div>
+                    <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px]">IN-PERSON FIELD SALES BLUEPRINT</Badge>
+                    <h2 className="text-xl font-bold text-foreground mt-0.5">Field Sales Partner — Execution Guide</h2>
+                  </div>
+                </div>
+
+                <div className="space-y-4 text-xs text-muted-foreground leading-relaxed">
+                  <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 space-y-2">
+                    <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
+                      <Target className="size-4 text-primary" /> Step 1: Target Locations &amp; Prospects
+                    </h4>
+                    <p>Visit active travel agent hubs in major cities across Pakistan:</p>
+                    <ul className="grid sm:grid-cols-2 gap-1.5 text-foreground font-medium pt-1">
+                      <li>• <strong>Lahore:</strong> Shah Alam Market, McLeod Rd</li>
+                      <li>• <strong>Karachi:</strong> Saddar, I.I. Chundrigar Rd</li>
+                      <li>• <strong>Islamabad:</strong> Blue Area, F-7 Markaz</li>
+                      <li>• <strong>Rawalpindi:</strong> Saddar, Murree Rd</li>
+                      <li>• <strong>Peshawar:</strong> Saddar Bazaar</li>
+                      <li>• <strong>Multan:</strong> Cantt Market</li>
+                    </ul>
+                  </div>
+
+                  <div className="rounded-2xl border border-border bg-surface/50 p-4 space-y-2">
+                    <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
+                      <MessageSquare className="size-4 text-emerald-400" /> Step 2: What to Say (The Sales Pitch)
+                    </h4>
+                    <div className="font-mono text-[11px] text-foreground bg-background rounded-xl p-3 border border-border space-y-2">
+                      <p><span className="text-primary font-bold">YOU:</span> "Assalam-o-Alaikum Sir! Main GlobeTrek PK se aya hun — Pakistan ka pehla digital marketplace travel agencies ke liye."</p>
+                      <p><span className="text-primary font-bold">YOU:</span> "Humari website par agencies tour packages list karti hain aur verified customer leads direct WhatsApp par leti hain. Pehla month testing free hai, aur meray discount code se aapko 10% Off milega."</p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-border bg-surface/50 p-4 space-y-2">
+                    <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
+                      <Tag className="size-4 text-amber-400" /> Step 3: Giving Vendor Your Discount Code
+                    </h4>
+                    <p>
+                      When the travel agency registers at <strong>tour.testbench.shop/auth</strong>, give them your unique code (e.g. <strong className="text-primary">REF-AHMED1234</strong>). Entering this code gives the agency <strong>10% OFF</strong> their first month subscription.
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-2">
+                    <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
+                      <DollarSign className="size-4 text-emerald-400" /> Step 4: Earnings &amp; Friday Payouts
+                    </h4>
+                    <p>
+                      When the vendor completes their payment via Safepay (PKR), your account is automatically credited:
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 text-center pt-1 font-bold">
+                      <div className="rounded-xl border border-primary/20 bg-card p-2.5">
+                        <span className="text-xs text-muted-foreground block">Starter (PKR 3,000/mo)</span>
+                        <span className="text-lg text-primary">PKR 600</span>
+                      </div>
+                      <div className="rounded-xl border border-violet-500/20 bg-card p-2.5">
+                        <span className="text-xs text-muted-foreground block">Pro (PKR 10,000/mo)</span>
+                        <span className="text-lg text-violet-400">PKR 2,000</span>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground pt-1">
+                      Payouts are transferred directly to your JazzCash / EasyPaisa every Friday!
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={scrollToRegister}
+                  className="w-full bg-primary text-primary-foreground font-bold rounded-2xl py-3 text-sm gap-2"
+                >
+                  Understood! Proceed to Free Registration <ArrowRight className="size-4" />
+                </Button>
+              </div>
+            )}
+
+            {/* Social Media Blueprint */}
+            {blueprintModal === "social" && (
+              <div className="space-y-5">
+                <div className="flex items-center gap-3">
+                  <div className="size-12 rounded-2xl bg-violet-500/15 text-violet-400 flex items-center justify-center shrink-0">
+                    <Video className="size-6" />
+                  </div>
+                  <div>
+                    <Badge className="bg-violet-500/20 text-violet-400 border-violet-500/30 text-[10px]">SOCIAL CREATOR BLUEPRINT</Badge>
+                    <h2 className="text-xl font-bold text-foreground mt-0.5">Social Media Ambassador — Execution Guide</h2>
+                  </div>
+                </div>
+
+                <div className="space-y-4 text-xs text-muted-foreground leading-relaxed">
+                  <div className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-4 space-y-2">
+                    <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
+                      <Link2 className="size-4 text-violet-400" /> Step 1: Your Trackable Bio Link
+                    </h4>
+                    <p>
+                      Every affiliate gets a trackable bio link (e.g. <strong className="text-foreground">https://tour.testbench.shop/auth?mode=signup&amp;ref=REF-AHMED1234</strong>). When a vendor clicks your link, your code is saved in their browser for 30 days automatically!
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-border bg-surface/50 p-4 space-y-2">
+                    <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
+                      <Video className="size-4 text-red-500" /> Step 2: Content Creation Guidelines
+                    </h4>
+                    <ul className="space-y-2 text-foreground">
+                      <li>• <strong>YouTube:</strong> Create a video/Short reviewing GlobeTrek B2B features for Pakistani travel agents. Place your link in line 1 of the description &amp; pinned comment.</li>
+                      <li>• <strong>Instagram &amp; TikTok:</strong> Create a Reel/Short demonstrating how local agencies get leads. Add your bio link to your Instagram bio / linktree and include on-screen text: <em>"Travel Agents use code YOUR_CODE for 10% Off"</em>.</li>
+                      <li>• <strong>Facebook Groups:</strong> Share informative posts in Pakistan travel operator &amp; Umrah agent groups with your referral link.</li>
+                    </ul>
+                  </div>
+
+                  <div className="rounded-2xl border border-border bg-surface/50 p-4 space-y-2">
+                    <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
+                      <Camera className="size-4 text-amber-400" /> Step 3: Proof Submission &amp; Admin Verification
+                    </h4>
+                    <p>
+                      After publishing your social post or video, log into your <strong>/affiliate</strong> dashboard → open the <strong>Social Media Kit</strong> tab → paste your post URL. Admin verifies creator posts within 24 hours.
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-2">
+                    <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
+                      <DollarSign className="size-4 text-emerald-400" /> Step 4: 20% Commission &amp; Friday Payouts
+                    </h4>
+                    <p>
+                      Earn <strong>PKR 600 (Starter)</strong> or <strong>PKR 2,000 (Pro)</strong> per subscriber. All earnings are paid out every Friday via JazzCash, EasyPaisa, or Bank Transfer.
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={scrollToRegister}
+                  className="w-full bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-2xl py-3 text-sm gap-2"
+                >
+                  Understood! Proceed to Free Registration <ArrowRight className="size-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="border-t border-border py-6 px-4 text-center text-xs text-muted-foreground">
