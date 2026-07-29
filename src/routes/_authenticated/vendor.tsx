@@ -2,7 +2,7 @@ import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard, Package, Inbox, CreditCard, Settings2,
-  FileCheck, Shield, Ticket, BookOpen,
+  FileCheck, Shield, Ticket, BookOpen, Receipt,
 } from "lucide-react";
 import { DashboardShell, type NavItem } from "@/components/dashboard-shell";
 import { RoleGuard } from "@/components/role-guard";
@@ -41,6 +41,7 @@ function VendorLayout() {
     { to: "/vendor/services", label: "Services offered", icon: Settings2 },
     { to: "/vendor-guide", label: "Vendor Operating Guide", icon: BookOpen },
     { to: "/vendor/billing",  label: "Plan & billing",   icon: CreditCard },
+    { to: "/vendor/invoices", label: "Invoices & Receipts", icon: Receipt },
   ];
 
   return (
