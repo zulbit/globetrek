@@ -173,240 +173,291 @@ function BillingPage() {
         </p>
       </div>
 
-      {/* Current plan hero */}
-      <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-linear-to-br from-primary/10 via-card to-card p-6 shadow-card">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-primary">
-              <CreditCard className="size-3.5" /> Current plan
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="grid size-10 place-items-center rounded-xl bg-primary/20 text-primary ring-1 ring-primary/40">
-                <currentTierMeta.icon className="size-5" />
-              </span>
-              <div>
-                <h2 className="text-2xl font-bold tracking-tight">{currentTierMeta.name}</h2>
-                <p className="text-xs text-muted-foreground">{currentTierMeta.tagline}</p>
-              </div>
-            </div>
-            <div className="mt-4 flex items-baseline gap-1.5">
-              <span className="text-3xl font-bold tabular-nums">
-                {formatTierPrice(currentTierMeta.price_pkr)}
-              </span>
-              {currentTierMeta.price_pkr > 0 && (
-                <span className="text-xs text-muted-foreground">/ month</span>
-              )}
-            </div>
-          </div>
-          <div className="grid gap-2 text-right text-xs text-muted-foreground">
-            <div>
-              Lead credits: <span className="font-semibold text-foreground">
-                {currentTier === "pro" || currentTier === "agency" ? "Unlimited" : data?.credits ?? 0}
-              </span>
-            </div>
-            <div>
-              Active tours: <span className="font-semibold text-foreground">{data?.activeTours ?? 0}</span>
-              {" "}/ {data?.totalTours ?? 0}
-            </div>
-            <div>
-              Leads unlocked: <span className="font-semibold text-foreground">{data?.unlockedLeads ?? 0}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Usage bars */}
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <UsageBar label="AI short descriptions" used={data?.aiDescriptions ?? 0} limit={limits.description} />
-          <UsageBar label="AI full-trip plans" used={data?.aiPlans ?? 0} limit={limits.plan} />
-        </div>
-      </div>
-
-      {/* Plan switcher */}
-      <div>
-        <div className="mb-4 flex items-end justify-between gap-3">
-          <div>
-            <h3 className="text-base font-semibold">Change plan</h3>
-            <p className="text-xs text-muted-foreground">
-              Upgrade, downgrade, or switch at any time. Changes take effect immediately.
-            </p>
-          </div>
-          <a
-            href="/pricing"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-          >
-            Compare all features <ArrowRight className="size-3" />
-          </a>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {TIERS.map((tier) => {
-            const isCurrent = tier.id === currentTier;
-            const Icon = tier.icon;
-            const pending = mutation.isPending && mutation.variables === tier.id;
-            const disabled = isCurrent || isLoading || mutation.isPending;
-            return (
-              <div
-                key={tier.id}
-                className={`relative flex flex-col rounded-2xl border p-5 transition ${
-                  isCurrent
-                    ? "border-primary/60 bg-primary/5 ring-1 ring-primary/40"
-                    : tier.highlight
-                      ? "border-primary/30 bg-card hover:border-primary/50"
-                      : "border-border bg-card hover:border-primary/30"
-                }`}
-              >
-                {isCurrent && (
-                  <span className="absolute -top-2.5 left-4 inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary-foreground">
-                    <Crown className="size-3" /> Current
-                  </span>
-                )}
-                <div className="mb-3 flex items-center gap-2">
-                  <span className="grid size-8 place-items-center rounded-lg bg-surface text-muted-foreground ring-1 ring-border">
-                    <Icon className="size-4" />
+      {/* 2-Column Grid: Main Content (Left) vs Invoices Sidepanel (Right) */}
+      <div className="grid gap-6 lg:grid-cols-12 items-start">
+        {/* Left Main Content Column (8 cols on large screens) */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Current plan hero */}
+          <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-linear-to-br from-primary/10 via-card to-card p-6 shadow-card">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-primary">
+                  <CreditCard className="size-3.5" /> Current plan
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="grid size-10 place-items-center rounded-xl bg-primary/20 text-primary ring-1 ring-primary/40">
+                    <currentTierMeta.icon className="size-5" />
                   </span>
                   <div>
-                    <h4 className="text-sm font-semibold">{tier.name}</h4>
-                    <p className="text-[11px] text-muted-foreground">{tier.tagline}</p>
+                    <h2 className="text-2xl font-bold tracking-tight">{currentTierMeta.name}</h2>
+                    <p className="text-xs text-muted-foreground">{currentTierMeta.tagline}</p>
                   </div>
                 </div>
-                <div className="mb-3 flex items-baseline gap-1">
-                  <span className="text-2xl font-bold tabular-nums">
-                    {formatTierPrice(tier.price_pkr)}
+                <div className="mt-4 flex items-baseline gap-1.5">
+                  <span className="text-3xl font-bold tabular-nums">
+                    {formatTierPrice(currentTierMeta.price_pkr)}
                   </span>
-                  {tier.price_pkr > 0 && (
-                    <span className="text-[11px] text-muted-foreground">/ mo</span>
+                  {currentTierMeta.price_pkr > 0 && (
+                    <span className="text-xs text-muted-foreground">/ month</span>
                   )}
                 </div>
-                <ul className="mb-4 space-y-1.5 text-xs">
-                  {tier.features.slice(0, 4).map((f) => (
-                    <li key={f} className="flex gap-2">
-                      <Check className="mt-0.5 size-3.5 shrink-0 text-primary" />
-                      <span className="text-muted-foreground">{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  size="sm"
-                  disabled={disabled}
-                  onClick={() => mutation.mutate(tier.id)}
-                  className={`mt-auto w-full ${
-                    isCurrent
-                      ? "bg-surface text-muted-foreground"
-                      : tier.highlight
-                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                        : "bg-surface-2 text-foreground hover:bg-surface"
-                  }`}
-                >
-                  {pending ? (
-                    <><Loader2 className="mr-2 size-3.5 animate-spin" /> Switching…</>
-                  ) : isCurrent ? (
-                    "Current plan"
-                  ) : tier.price_pkr === 0 ? (
-                    "Downgrade to Free"
-                  ) : tier.price_pkr > (currentTierMeta.price_pkr) ? (
-                    `Upgrade to ${tier.name}`
-                  ) : (
-                    `Switch to ${tier.name}`
-                  )}
-                </Button>
               </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Marketplace Placement & Campaign Addons Section */}
-      <div>
-        <div className="mb-4">
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-purple-400 mb-1">
-            <Sparkles className="size-3.5" /> Boost Reach &amp; Lead Conversion
-          </div>
-          <h3 className="text-base font-bold text-foreground">Marketplace Placement &amp; Flash Campaign Add-ons</h3>
-          <p className="text-xs text-muted-foreground">
-            Optional visibility boosts you can attach to your agency profile anytime.
-          </p>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {activeAddons.map((addon: any) => {
-            const isAd = addon.plan_type === "advertisement";
-            return (
-              <div
-                key={addon.id}
-                className={`relative flex flex-col justify-between rounded-2xl border p-5 shadow-sm transition hover:-translate-y-0.5 ${
-                  isAd
-                    ? "border-rose-500/40 bg-gradient-to-b from-rose-500/10 to-card"
-                    : "border-purple-500/40 bg-gradient-to-b from-purple-500/10 to-card"
-                }`}
-              >
+              <div className="grid gap-2 text-right text-xs text-muted-foreground">
                 <div>
-                  <span
-                    className={`inline-block text-[9px] uppercase font-bold px-2 py-0.5 rounded-full mb-2 border ${
-                      isAd
-                        ? "bg-rose-500/20 text-rose-300 border-rose-500/30"
-                        : "bg-purple-500/20 text-purple-300 border-purple-500/30"
+                  Lead credits: <span className="font-semibold text-foreground">
+                    {currentTier === "pro" || currentTier === "agency" ? "Unlimited" : data?.credits ?? 0}
+                  </span>
+                </div>
+                <div>
+                  Active tours: <span className="font-semibold text-foreground">{data?.activeTours ?? 0}</span>
+                  {" "}/ {data?.totalTours ?? 0}
+                </div>
+                <div>
+                  Leads unlocked: <span className="font-semibold text-foreground">{data?.unlockedLeads ?? 0}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Usage bars */}
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <UsageBar label="AI short descriptions" used={data?.aiDescriptions ?? 0} limit={limits.description} />
+              <UsageBar label="AI full-trip plans" used={data?.aiPlans ?? 0} limit={limits.plan} />
+            </div>
+          </div>
+
+          {/* Plan switcher */}
+          <div>
+            <div className="mb-4 flex items-end justify-between gap-3">
+              <div>
+                <h3 className="text-base font-semibold">Change Base Plan</h3>
+                <p className="text-xs text-muted-foreground">
+                  Upgrade, downgrade, or switch at any time. Changes take effect immediately.
+                </p>
+              </div>
+              <a
+                href="/pricing"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              >
+                Compare features <ArrowRight className="size-3" />
+              </a>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {TIERS.map((tier) => {
+                const isCurrent = tier.id === currentTier;
+                const Icon = tier.icon;
+                const pending = mutation.isPending && mutation.variables === tier.id;
+                const disabled = isCurrent || isLoading || mutation.isPending;
+                return (
+                  <div
+                    key={tier.id}
+                    className={`relative flex flex-col justify-between rounded-2xl border p-5 transition ${
+                      isCurrent
+                        ? "border-primary/60 bg-primary/5 ring-1 ring-primary/40"
+                        : tier.highlight
+                          ? "border-primary/30 bg-card hover:border-primary/50"
+                          : "border-border bg-card hover:border-primary/30"
                     }`}
                   >
-                    {isAd ? "⚡ 1-Week Flash Banner" : "🌟 Placement Add-on"}
-                  </span>
+                    <div>
+                      {isCurrent && (
+                        <span className="absolute -top-2.5 left-4 inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary-foreground shadow">
+                          <Crown className="size-3" /> Current
+                        </span>
+                      )}
+                      <div className="mb-3 flex items-center gap-2">
+                        <span className="grid size-8 place-items-center rounded-lg bg-surface text-muted-foreground ring-1 ring-border">
+                          <Icon className="size-4" />
+                        </span>
+                        <div>
+                          <h4 className="text-sm font-semibold">{tier.name}</h4>
+                          <p className="text-[11px] text-muted-foreground">{tier.tagline}</p>
+                        </div>
+                      </div>
+                      <div className="mb-3 flex items-baseline gap-1">
+                        <span className="text-2xl font-bold tabular-nums">
+                          {formatTierPrice(tier.price_pkr)}
+                        </span>
+                        {tier.price_pkr > 0 && (
+                          <span className="text-[11px] text-muted-foreground">/ mo</span>
+                        )}
+                      </div>
+                      <ul className="mb-4 space-y-1.5 text-xs">
+                        {tier.features.slice(0, 4).map((f) => (
+                          <li key={f} className="flex gap-2">
+                            <Check className="mt-0.5 size-3.5 shrink-0 text-primary" />
+                            <span className="text-muted-foreground">{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
 
-                  <h4 className="text-sm font-bold text-foreground mb-1">{addon.name}</h4>
-                  <p className="text-[11px] text-muted-foreground mb-3 leading-snug">{addon.tagline}</p>
-
-                  <div className="mb-3 flex items-baseline gap-1">
-                    <span className="text-xl font-extrabold font-mono text-foreground">
-                      {formatTierPrice(addon.price_pkr)}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">
-                      / {addon.billing_period === "weekly" ? "7 days" : "mo"}
-                    </span>
+                    <Button
+                      size="sm"
+                      disabled={disabled}
+                      onClick={() => mutation.mutate(tier.id)}
+                      className={`mt-auto w-full font-bold rounded-xl ${
+                        isCurrent
+                          ? "bg-surface text-muted-foreground"
+                          : tier.highlight
+                            ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                            : "bg-surface-2 text-foreground hover:bg-surface"
+                      }`}
+                    >
+                      {pending ? (
+                        <><Loader2 className="mr-2 size-3.5 animate-spin" /> Switching…</>
+                      ) : isCurrent ? (
+                        "Current plan"
+                      ) : tier.price_pkr === 0 ? (
+                        "Downgrade to Free"
+                      ) : tier.price_pkr > (currentTierMeta.price_pkr) ? (
+                        `Upgrade to ${tier.name}`
+                      ) : (
+                        `Switch to ${tier.name}`
+                      )}
+                    </Button>
                   </div>
+                );
+              })}
+            </div>
+          </div>
 
-                  <ul className="mb-4 space-y-1.5 text-[11px]">
-                    {(addon.features || []).slice(0, 3).map((f: string, i: number) => (
-                      <li key={i} className="flex items-start gap-1.5 text-muted-foreground">
-                        <Check
-                          className={`size-3 shrink-0 mt-0.5 ${
-                            isAd ? "text-rose-400" : "text-purple-400"
-                          }`}
-                        />
-                        <span className="text-foreground/90">{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <Button
-                  size="sm"
-                  onClick={() =>
-                    toast.success(`Request sent for ${addon.name}!`, {
-                      description: "GlobeTrek Partner Desk will reach out on WhatsApp to activate this addon.",
-                    })
-                  }
-                  className={`w-full font-bold text-xs rounded-xl border ${
-                    isAd
-                      ? "bg-rose-500 hover:bg-rose-600 text-white border-rose-400/40"
-                      : "bg-purple-600 hover:bg-purple-700 text-white border-purple-400/40"
-                  }`}
-                >
-                  {isAd ? "Book Flash Banner" : "Activate Add-on"}
-                </Button>
+          {/* Marketplace Placement & Campaign Addons Section */}
+          <div className="pt-4 border-t border-border">
+            <div className="mb-4">
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-purple-400 mb-1">
+                <Sparkles className="size-3.5" /> Boost Reach &amp; Lead Conversion
               </div>
-            );
-          })}
-        </div>
-      </div>
+              <h3 className="text-base font-bold text-foreground">Marketplace Placement &amp; Flash Campaign Add-ons</h3>
+              <p className="text-xs text-muted-foreground">
+                Optional visibility boosts you can attach to your agency profile anytime.
+              </p>
+            </div>
 
-      {/* Billing history placeholder */}
-      <div className="rounded-2xl border border-border bg-card p-5">
-        <h3 className="text-sm font-semibold">Billing history</h3>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Invoices and receipts will appear here once live payments are enabled.
-        </p>
-        <div className="mt-4 rounded-lg border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
-          No invoices yet.
+            <div className="grid gap-4 sm:grid-cols-2">
+              {activeAddons.map((addon: any) => {
+                const isAd = addon.plan_type === "advertisement";
+                return (
+                  <div
+                    key={addon.id}
+                    className={`relative flex flex-col justify-between rounded-2xl border p-5 shadow-sm transition hover:-translate-y-0.5 ${
+                      isAd
+                        ? "border-rose-500/40 bg-gradient-to-b from-rose-500/10 to-card"
+                        : "border-purple-500/40 bg-gradient-to-b from-purple-500/10 to-card"
+                    }`}
+                  >
+                    <div>
+                      <span
+                        className={`inline-block text-[9px] uppercase font-bold px-2 py-0.5 rounded-full mb-2 border ${
+                          isAd
+                            ? "bg-rose-500/20 text-rose-300 border-rose-500/30"
+                            : "bg-purple-500/20 text-purple-300 border-purple-500/30"
+                        }`}
+                      >
+                        {isAd ? "⚡ 1-Week Flash Banner" : "🌟 Placement Add-on"}
+                      </span>
+
+                      <h4 className="text-sm font-bold text-foreground mb-1">{addon.name}</h4>
+                      <p className="text-[11px] text-muted-foreground mb-3 leading-snug">{addon.tagline}</p>
+
+                      <div className="mb-3 flex items-baseline gap-1">
+                        <span className="text-xl font-extrabold font-mono text-foreground">
+                          {formatTierPrice(addon.price_pkr)}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">
+                          / {addon.billing_period === "weekly" ? "7 days" : "mo"}
+                        </span>
+                      </div>
+
+                      <ul className="mb-4 space-y-1.5 text-[11px]">
+                        {(addon.features || []).slice(0, 3).map((f: string, i: number) => (
+                          <li key={i} className="flex items-start gap-1.5 text-muted-foreground">
+                            <Check
+                              className={`size-3 shrink-0 mt-0.5 ${
+                                isAd ? "text-rose-400" : "text-purple-400"
+                              }`}
+                            />
+                            <span className="text-foreground/90">{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        toast.success(`Request sent for ${addon.name}!`, {
+                          description: "GlobeTrek Partner Desk will reach out on WhatsApp to activate this addon.",
+                        })
+                      }
+                      className={`w-full font-bold text-xs rounded-xl border ${
+                        isAd
+                          ? "bg-rose-500 hover:bg-rose-600 text-white border-rose-400/40"
+                          : "bg-purple-600 hover:bg-purple-700 text-white border-purple-400/40"
+                      }`}
+                    >
+                      {isAd ? "Book Flash Banner" : "Activate Add-on"}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side Panel: Invoices, Billing History & Tax Details (4 cols on large screens) */}
+        <div className="lg:col-span-4 space-y-6">
+          {/* Billing History & Invoices Card */}
+          <div className="rounded-2xl border border-border bg-card p-5 space-y-4 shadow-sm sticky top-6">
+            <div className="border-b border-border pb-3">
+              <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-primary mb-1">
+                <CreditCard className="size-3.5" /> Statement &amp; Receipts
+              </div>
+              <h3 className="text-base font-bold text-foreground">Billing History &amp; Invoices</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Official statements and download records for your agency subscription.
+              </p>
+            </div>
+
+            {/* Billing Profile Summary */}
+            <div className="rounded-xl border border-border/80 bg-surface/50 p-3 space-y-1.5 text-xs">
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span>Billing Currency</span>
+                <span className="font-mono font-bold text-foreground">PKR (Rs)</span>
+              </div>
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span>Tax ID / NTN Status</span>
+                <span className="font-mono text-emerald-400 font-semibold">Verified Partner</span>
+              </div>
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span>Payment Method</span>
+                <span className="font-semibold text-foreground">SafePay PKR Gateway</span>
+              </div>
+            </div>
+
+            {/* Empty Invoices State */}
+            <div className="rounded-xl border border-dashed border-border p-6 text-center text-xs space-y-2 bg-surface/20">
+              <div className="grid size-10 place-items-center rounded-full bg-surface/80 text-muted-foreground mx-auto">
+                <CreditCard className="size-4" />
+              </div>
+              <p className="font-semibold text-foreground">No Paid Invoices Yet</p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Invoices and downloadable PDF receipts will automatically render here when subscription charges complete.
+              </p>
+            </div>
+
+            {/* Direct Support Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => toast.info("Partner Support Desk: Contact support@globetrek.pk for invoice queries.")}
+              className="w-full text-xs font-semibold rounded-xl border-border hover:bg-surface"
+            >
+              Request Custom Tax Invoice
+            </Button>
+          </div>
         </div>
       </div>
     </div>
