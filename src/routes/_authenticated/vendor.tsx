@@ -1,13 +1,14 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Outlet, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard, Package, Inbox, CreditCard, Settings2,
-  FileCheck, Shield, Ticket, BookOpen, Receipt, Clock, CheckCircle2, AlertCircle,
+  FileCheck, Shield, Ticket, BookOpen, Receipt, Clock, CheckCircle2, AlertCircle, ArrowRight, ShieldCheck,
 } from "lucide-react";
 import { DashboardShell, type NavItem } from "@/components/dashboard-shell";
 import { RoleGuard } from "@/components/role-guard";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/vendor")({
   component: VendorLayout,
@@ -30,9 +31,11 @@ function VendorLayout() {
 
   const services: string[] = (profile?.vendor_services as string[] | null) ?? ["tours"];
   const has = (s: string) => services.includes(s);
+  const isPending = profile?.vendor_status === "pending";
 
   const nav: NavItem[] = [
     { to: "/vendor", label: "Overview", icon: LayoutDashboard },
+    { to: "/vendor/kyc", label: "Agency Verification (KYC)", icon: ShieldCheck, badge: isPending ? "Action Required" : undefined },
     { to: "/vendor/leads", label: "Leads inbox", icon: Inbox },
     ...(has("tours")     ? [{ to: "/vendor/tours",     label: "Tour packages", icon: Package    }] : []),
     ...(has("visa")      ? [{ to: "/vendor/visa",      label: "Visa services", icon: FileCheck  }] : []),
@@ -43,8 +46,6 @@ function VendorLayout() {
     { to: "/vendor/billing",  label: "Plan & billing",   icon: CreditCard },
     { to: "/vendor/invoices", label: "Invoices & Receipts", icon: Receipt },
   ];
-
-  const isPending = profile?.vendor_status === "pending";
 
   return (
     <RoleGuard allow={["vendor", "admin"]}>
@@ -63,10 +64,16 @@ function VendorLayout() {
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5 max-w-2xl leading-relaxed">
-                  Your agency registration details ({profile?.company_name ? `"${profile.company_name}"` : "Agency"} · Mobile: {profile?.phone || "WhatsApp registered"}) are currently under review by GlobeTrek PK Admins. You have full access to explore the portal and configure your services. Active listing visibility and lead details will unlock as soon as Admin approves your account (usually within 24 hours).
+                  Your agency registration details ({profile?.company_name ? `"${profile.company_name}"` : "Agency"} · Mobile: {profile?.phone || "WhatsApp registered"}) are currently under review by GlobeTrek PK Admins. Active listing visibility and lead details will unlock as soon as Admin approves your account (usually within 24 hours).
                 </p>
               </div>
             </div>
+
+            <Button asChild size="sm" className="bg-amber-500 text-black hover:bg-amber-400 font-bold text-xs rounded-xl px-4 shrink-0 gap-1.5 shadow-md">
+              <Link to="/vendor/kyc">
+                Submit Required KYC Documents <ArrowRight className="size-3.5" />
+              </Link>
+            </Button>
           </div>
         )}
         <Outlet />
