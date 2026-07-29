@@ -15,6 +15,8 @@ import {
   type VendorProfile,
 } from "@/lib/vendors.functions";
 
+import { supabase } from "@/integrations/supabase/client";
+
 export const Route = createFileRoute("/_authenticated/admin/vendors")({
   component: AdminVendors,
 });
@@ -30,7 +32,30 @@ function AdminVendors() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-vendors"],
-    queryFn: () => fetchVendorsFn(),
+    queryFn: async () => {
+      try {
+        const serverData = await fetchVendorsFn();
+        if (serverData && serverData.length > 0) {
+          return serverData;
+        }
+      } catch (e) {
+        console.warn("[admin.vendors] Server function fetch error:", e);
+      }
+
+      // Fallback query directly from profiles
+      const { data: profilesData } = await supabase
+        .from("profiles")
+        .select("id, email, full_name, company_name, phone, vendor_status, subscription_tier, lead_credits_balance, created_at")
+        .order("created_at", { ascending: false });
+
+      return (profilesData ?? []).filter((p) => {
+        if (p.company_name) return true;
+        if (p.vendor_status === "pending") return true;
+        if (p.email && p.email.toLowerCase().includes("vendor")) return true;
+        if (p.email && !p.email.includes("customer.demo") && !p.email.includes("admin.demo")) return true;
+        return false;
+      }) as VendorProfile[];
+    },
   });
 
   const setStatus = useMutation({

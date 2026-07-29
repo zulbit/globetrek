@@ -25,7 +25,7 @@ function VendorServicesOffered() {
   const qc = useQueryClient();
   const save = useServerFn(updateVendorServices);
 
-  const { data: profile, isLoading } = useQuery({
+  const { data: fullProfile, isLoading } = useQuery({
     enabled: !!user?.id,
     queryKey: ["vendor-services", user?.id],
     queryFn: async () => {
