@@ -50,6 +50,7 @@ import { Route as AuthenticatedCustomerIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedVendorIndexRouteImport } from './routes/_authenticated/vendor.index'
 import { Route as AuthenticatedVendorBillingRouteImport } from './routes/_authenticated/vendor.billing'
 import { Route as AuthenticatedVendorInsuranceRouteImport } from './routes/_authenticated/vendor.insurance'
+import { Route as AuthenticatedVendorInvoicesRouteImport } from './routes/_authenticated/vendor.invoices'
 import { Route as AuthenticatedVendorLeadsRouteImport } from './routes/_authenticated/vendor.leads'
 import { Route as AuthenticatedVendorServicesRouteImport } from './routes/_authenticated/vendor.services'
 import { Route as AuthenticatedVendorTicketsRouteImport } from './routes/_authenticated/vendor.tickets'
@@ -273,6 +274,12 @@ const AuthenticatedVendorInsuranceRoute =
     path: '/insurance',
     getParentRoute: () => AuthenticatedVendorRoute,
   } as any)
+const AuthenticatedVendorInvoicesRoute =
+  AuthenticatedVendorInvoicesRouteImport.update({
+    id: '/invoices',
+    path: '/invoices',
+    getParentRoute: () => AuthenticatedVendorRoute,
+  } as any)
 const AuthenticatedVendorLeadsRoute =
   AuthenticatedVendorLeadsRouteImport.update({
     id: '/leads',
@@ -351,6 +358,7 @@ export interface FileRoutesByFullPath {
   '/admin/vendors': typeof AuthenticatedAdminVendorsRoute
   '/vendor/billing': typeof AuthenticatedVendorBillingRoute
   '/vendor/insurance': typeof AuthenticatedVendorInsuranceRoute
+  '/vendor/invoices': typeof AuthenticatedVendorInvoicesRoute
   '/vendor/leads': typeof AuthenticatedVendorLeadsRoute
   '/vendor/services': typeof AuthenticatedVendorServicesRoute
   '/vendor/tickets': typeof AuthenticatedVendorTicketsRoute
@@ -394,6 +402,7 @@ export interface FileRoutesByTo {
   '/admin/vendors': typeof AuthenticatedAdminVendorsRoute
   '/vendor/billing': typeof AuthenticatedVendorBillingRoute
   '/vendor/insurance': typeof AuthenticatedVendorInsuranceRoute
+  '/vendor/invoices': typeof AuthenticatedVendorInvoicesRoute
   '/vendor/leads': typeof AuthenticatedVendorLeadsRoute
   '/vendor/services': typeof AuthenticatedVendorServicesRoute
   '/vendor/tickets': typeof AuthenticatedVendorTicketsRoute
@@ -445,6 +454,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/vendors': typeof AuthenticatedAdminVendorsRoute
   '/_authenticated/vendor/billing': typeof AuthenticatedVendorBillingRoute
   '/_authenticated/vendor/insurance': typeof AuthenticatedVendorInsuranceRoute
+  '/_authenticated/vendor/invoices': typeof AuthenticatedVendorInvoicesRoute
   '/_authenticated/vendor/leads': typeof AuthenticatedVendorLeadsRoute
   '/_authenticated/vendor/services': typeof AuthenticatedVendorServicesRoute
   '/_authenticated/vendor/tickets': typeof AuthenticatedVendorTicketsRoute
@@ -496,6 +506,7 @@ export interface FileRouteTypes {
     | '/admin/vendors'
     | '/vendor/billing'
     | '/vendor/insurance'
+    | '/vendor/invoices'
     | '/vendor/leads'
     | '/vendor/services'
     | '/vendor/tickets'
@@ -539,6 +550,7 @@ export interface FileRouteTypes {
     | '/admin/vendors'
     | '/vendor/billing'
     | '/vendor/insurance'
+    | '/vendor/invoices'
     | '/vendor/leads'
     | '/vendor/services'
     | '/vendor/tickets'
@@ -589,6 +601,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/vendors'
     | '/_authenticated/vendor/billing'
     | '/_authenticated/vendor/insurance'
+    | '/_authenticated/vendor/invoices'
     | '/_authenticated/vendor/leads'
     | '/_authenticated/vendor/services'
     | '/_authenticated/vendor/tickets'
@@ -912,6 +925,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedVendorInsuranceRouteImport
       parentRoute: typeof AuthenticatedVendorRoute
     }
+    '/_authenticated/vendor/invoices': {
+      id: '/_authenticated/vendor/invoices'
+      path: '/invoices'
+      fullPath: '/vendor/invoices'
+      preLoaderRoute: typeof AuthenticatedVendorInvoicesRouteImport
+      parentRoute: typeof AuthenticatedVendorRoute
+    }
     '/_authenticated/vendor/leads': {
       id: '/_authenticated/vendor/leads'
       path: '/leads'
@@ -994,6 +1014,7 @@ const AuthenticatedAdminRouteWithChildren =
 interface AuthenticatedVendorRouteChildren {
   AuthenticatedVendorBillingRoute: typeof AuthenticatedVendorBillingRoute
   AuthenticatedVendorInsuranceRoute: typeof AuthenticatedVendorInsuranceRoute
+  AuthenticatedVendorInvoicesRoute: typeof AuthenticatedVendorInvoicesRoute
   AuthenticatedVendorLeadsRoute: typeof AuthenticatedVendorLeadsRoute
   AuthenticatedVendorServicesRoute: typeof AuthenticatedVendorServicesRoute
   AuthenticatedVendorTicketsRoute: typeof AuthenticatedVendorTicketsRoute
@@ -1005,6 +1026,7 @@ interface AuthenticatedVendorRouteChildren {
 const AuthenticatedVendorRouteChildren: AuthenticatedVendorRouteChildren = {
   AuthenticatedVendorBillingRoute: AuthenticatedVendorBillingRoute,
   AuthenticatedVendorInsuranceRoute: AuthenticatedVendorInsuranceRoute,
+  AuthenticatedVendorInvoicesRoute: AuthenticatedVendorInvoicesRoute,
   AuthenticatedVendorLeadsRoute: AuthenticatedVendorLeadsRoute,
   AuthenticatedVendorServicesRoute: AuthenticatedVendorServicesRoute,
   AuthenticatedVendorTicketsRoute: AuthenticatedVendorTicketsRoute,

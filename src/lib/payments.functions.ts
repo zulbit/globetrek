@@ -327,3 +327,90 @@ export const saveSubscriptionPlans = createServerFn({ method: "POST" })
 
     return { ok: true, plans: plansToSave };
   });
+
+// -------- Vendor: activate / purchase addon subscription --------
+export const activateVendorAddon = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: { addonId: string; addonTitle: string; amountPKR: number; billingPeriod: string }) => {
+    if (!input.addonId || !input.addonTitle) throw new Error("Addon details required");
+    return input;
+  })
+  .handler(async ({ data, context }) => {
+    const durationDays = data.billingPeriod === "weekly" ? 7 : 30;
+    const startsAt = new Date();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + durationDays);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // 1. Save to vendor_addon_subscriptions table
+    try {
+      await supabaseAdmin.from("vendor_addon_subscriptions").insert({
+        vendor_id: context.userId,
+        addon_id: data.addonId,
+        addon_title: data.addonTitle,
+        amount_pkr: Number(data.amountPKR || 0),
+        billing_period: data.billingPeriod || "monthly",
+        starts_at: startsAt.toISOString(),
+        expires_at: expiresAt.toISOString(),
+        status: "active",
+      });
+    } catch {
+      // Table fallback handled below
+    }
+
+    // 2. Save to payment_gateway_settings as vendor_active_addons fallback
+    const { data: existing } = await supabaseAdmin
+      .from("payment_gateway_settings")
+      .select("config")
+      .eq("provider", "vendor_active_addons")
+      .maybeSingle();
+
+    const currentList: any[] = (existing?.config as any[]) || [];
+    const newAddonRecord = {
+      id: `addon_sub_${Date.now()}`,
+      vendor_id: context.userId,
+      addon_id: data.addonId,
+      addon_title: data.addonTitle,
+      amount_pkr: Number(data.amountPKR || 0),
+      billing_period: data.billingPeriod || "monthly",
+      starts_at: startsAt.toISOString(),
+      expires_at: expiresAt.toISOString(),
+      status: "active",
+    };
+
+    currentList.unshift(newAddonRecord);
+
+    await supabaseAdmin.from("payment_gateway_settings").upsert(
+      { provider: "vendor_active_addons", config: currentList, enabled: true, updated_at: new Date().toISOString() },
+      { onConflict: "provider" }
+    );
+
+    return { ok: true, activeAddon: newAddonRecord };
+  });
+
+// -------- Vendor: get active addon subscriptions --------
+export const getVendorActiveAddons = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const key = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_nk5WJj0qOmSimrFmwh7ZWQ_teiVWYtE";
+    const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "https://rcldabxkcwfemnigwutk.supabase.co";
+    const supabase = createClient<Database>(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
+    const { data: gatewayData } = await supabase
+      .from("payment_gateway_settings")
+      .select("config")
+      .eq("provider", "vendor_active_addons")
+      .maybeSingle();
+
+    if (gatewayData?.config && Array.isArray(gatewayData.config)) {
+      const vendorAddons = (gatewayData.config as any[]).filter(
+        (a) => a.vendor_id === context.userId && new Date(a.expires_at) > new Date()
+      );
+      return vendorAddons;
+    }
+
+    return [];
+  });

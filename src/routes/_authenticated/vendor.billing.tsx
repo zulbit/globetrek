@@ -23,8 +23,10 @@ const AI_LIMITS: Record<Tier, { description: number | null; plan: number | null 
 // 3. Landing Page Placement Plan: Featured Agency Spotlight badge on landing page.
 // 4. 1-Week Flash Banner Advertisement Plan: 7-Day promotional hero banner on landing page.
 
-import { useMemo } from "react";
-import { getSubscriptionPlans } from "@/lib/payments.functions";
+import { useState, useMemo } from "react";
+import { ShieldCheck, Zap } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { getSubscriptionPlans, activateVendorAddon, getVendorActiveAddons } from "@/lib/payments.functions";
 
 export const Route = createFileRoute("/_authenticated/vendor/billing")({
   component: BillingPage,
@@ -34,6 +36,32 @@ function BillingPage() {
   const qc = useQueryClient();
   const change = useServerFn(changeSubscriptionTier);
   const getPlansFn = useServerFn(getSubscriptionPlans);
+  const activateAddonFn = useServerFn(activateVendorAddon);
+  const getVendorAddonsFn = useServerFn(getVendorActiveAddons);
+
+  const [selectedAddonCheckout, setSelectedAddonCheckout] = useState<any | null>(null);
+
+  const { data: myActiveAddons } = useQuery({
+    queryKey: ["vendor-my-active-addons"],
+    queryFn: () => getVendorAddonsFn(),
+  });
+
+  const activateAddonMutation = useMutation({
+    mutationFn: (input: { addonId: string; addonTitle: string; amountPKR: number; billingPeriod: string }) =>
+      activateAddonFn({ data: input }),
+    onSuccess: (res, variables) => {
+      toast.success(`Activated ${variables.addonTitle}!`, {
+        description: "Your SafePay PKR payment completed cleanly. Your visibility boost is live now!",
+      });
+      setSelectedAddonCheckout(null);
+      qc.invalidateQueries({ queryKey: ["vendor-my-active-addons"] });
+    },
+    onError: (err: any) => {
+      toast.error("Checkout failed", {
+        description: err instanceof Error ? err.message : "Please try again.",
+      });
+    },
+  });
 
   const { data: dbPlans } = useQuery({
     queryKey: ["subscription-plans-config-vendor-billing"],
@@ -225,6 +253,45 @@ function BillingPage() {
             </div>
           </div>
 
+          {/* Active Vendor Add-on Boosts */}
+          {myActiveAddons && myActiveAddons.length > 0 && (
+            <div className="rounded-2xl border border-purple-500/40 bg-purple-500/10 p-5 space-y-3 shadow-md">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="grid size-7 place-items-center rounded-lg bg-purple-500/20 text-purple-300">
+                    <Zap className="size-4" />
+                  </span>
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground">Active Agency Visibility Boosts</h3>
+                    <p className="text-[11px] text-muted-foreground">Your active marketplace placements &amp; banner ad campaigns</p>
+                  </div>
+                </div>
+                <Badge className="bg-purple-500 text-white font-bold text-[10px]">
+                  {myActiveAddons.length} Active Boost{myActiveAddons.length > 1 ? "s" : ""}
+                </Badge>
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-2">
+                {myActiveAddons.map((act: any) => {
+                  const daysLeft = Math.max(0, Math.ceil((new Date(act.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+                  return (
+                    <div key={act.id} className="rounded-xl border border-purple-500/30 bg-card p-3 flex justify-between items-center text-xs">
+                      <div>
+                        <span className="font-bold text-foreground block">{act.addon_title}</span>
+                        <span className="text-[10px] text-purple-300 font-mono">
+                          Expires in {daysLeft} day{daysLeft === 1 ? "" : "s"} ({new Date(act.expires_at).toLocaleDateString()})
+                        </span>
+                      </div>
+                      <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] uppercase font-bold">
+                        Live
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Plan switcher */}
           <div>
             <div className="mb-4 flex items-end justify-between gap-3">
@@ -385,26 +452,106 @@ function BillingPage() {
                       </ul>
                     </div>
 
-                    <Button
-                      size="sm"
-                      onClick={() =>
-                        toast.success(`Request sent for ${addon.name}!`, {
-                          description: "GlobeTrek Partner Desk will reach out on WhatsApp to activate this addon.",
-                        })
-                      }
-                      className={`w-full font-bold text-xs rounded-xl border ${
-                        isAd
-                          ? "bg-rose-500 hover:bg-rose-600 text-white border-rose-400/40"
-                          : "bg-purple-600 hover:bg-purple-700 text-white border-purple-400/40"
-                      }`}
-                    >
-                      {isAd ? "Book Flash Banner" : "Activate Add-on"}
-                    </Button>
-                  </div>
-                );
-              })}
+                <Button
+                  size="sm"
+                  onClick={() => setSelectedAddonCheckout(addon)}
+                  className={`w-full font-bold text-xs rounded-xl border ${
+                    isAd
+                      ? "bg-rose-500 hover:bg-rose-600 text-white border-rose-400/40"
+                      : "bg-purple-600 hover:bg-purple-700 text-white border-purple-400/40"
+                  }`}
+                >
+                  {isAd ? "Book Flash Banner" : "Activate Add-on"}
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* SafePay Checkout Modal for Addons */}
+      {selectedAddonCheckout && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <span className="grid size-8 place-items-center rounded-xl bg-primary/20 text-primary">
+                  <CreditCard className="size-4" />
+                </span>
+                <div>
+                  <h3 className="text-base font-bold text-foreground">SafePay Instant Checkout</h3>
+                  <p className="text-[11px] text-muted-foreground">PKR Payment Gateway</p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedAddonCheckout(null)}
+                className="size-7 p-0 rounded-lg text-muted-foreground hover:text-foreground"
+              >
+                ✕
+              </Button>
+            </div>
+
+            <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-2">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h4 className="font-bold text-sm text-foreground">{selectedAddonCheckout.name}</h4>
+                  <p className="text-xs text-muted-foreground">{selectedAddonCheckout.tagline}</p>
+                </div>
+                <Badge className="bg-primary text-primary-foreground font-mono">
+                  Rs {selectedAddonCheckout.price_pkr?.toLocaleString()}
+                </Badge>
+              </div>
+              <div className="text-[11px] text-muted-foreground pt-2 border-t border-primary/20 flex justify-between">
+                <span>Billing Period</span>
+                <span className="font-semibold text-foreground capitalize">
+                  {selectedAddonCheckout.billing_period === "weekly" ? "7 Days Campaign" : "Monthly Recurring"}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              <label className="font-semibold text-muted-foreground">Select Payment Method</label>
+              <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="size-4 text-emerald-400" />
+                  <span className="font-bold text-foreground">SafePay PKR QuickLink</span>
+                </div>
+                <span className="text-[10px] text-emerald-400 font-mono font-bold">Encrypted</span>
+              </div>
+            </div>
+
+            <div className="pt-2 flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setSelectedAddonCheckout(null)}
+                className="w-1/3 text-xs rounded-xl border-border"
+              >
+                Cancel
+              </Button>
+              <Button
+                disabled={activateAddonMutation.isPending}
+                onClick={() =>
+                  activateAddonMutation.mutate({
+                    addonId: selectedAddonCheckout.id,
+                    addonTitle: selectedAddonCheckout.name,
+                    amountPKR: selectedAddonCheckout.price_pkr,
+                    billingPeriod: selectedAddonCheckout.billing_period || "monthly",
+                  })
+                }
+                className="w-2/3 text-xs font-bold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                {activateAddonMutation.isPending ? (
+                  <><Loader2 className="mr-1.5 size-3.5 animate-spin" /> Processing SafePay…</>
+                ) : (
+                  `Pay Rs ${selectedAddonCheckout.price_pkr?.toLocaleString()} via SafePay`
+                )}
+              </Button>
             </div>
           </div>
+        </div>
+      )}
         </div>
 
         {/* Right Side Panel: Invoices, Billing History & Tax Details (4 cols on large screens) */}

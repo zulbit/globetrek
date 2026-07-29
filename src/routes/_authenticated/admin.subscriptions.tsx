@@ -569,6 +569,47 @@ function AdminSubscriptions() {
         </div>
       )}
 
+      {/* Active Vendor Addons & Multi-Vendor Rotation Capacity Section */}
+      <div className="rounded-2xl border border-purple-500/30 bg-purple-500/5 p-6 space-y-4 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-purple-500/20 pb-3">
+          <div>
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-purple-400 mb-0.5">
+              <Sparkles className="size-4" /> Capacity &amp; Rotation Engine
+            </div>
+            <h3 className="text-base font-bold text-foreground">Active Vendor Add-on Subscriptions &amp; Slot Capacity</h3>
+            <p className="text-xs text-muted-foreground">
+              Track vendor add-on purchases, expiry dates, and automated multi-vendor banner/search placement rotation rules.
+            </p>
+          </div>
+          <Badge className="bg-purple-500 text-white font-bold text-xs">
+            Multi-Vendor Fair Rotation Active
+          </Badge>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3 text-xs">
+          <div className="rounded-xl border border-border bg-card p-4 space-y-1">
+            <span className="font-bold text-foreground block">1-Week Flash Banner Slot Rule</span>
+            <p className="text-muted-foreground leading-relaxed">
+              If multiple vendors opt for Flash Hero Banners simultaneously (e.g. 3 vendors), the landing page hero algorithm auto-rotates banners on page refresh.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card p-4 space-y-1">
+            <span className="font-bold text-foreground block">Search Placement Boost Rule</span>
+            <p className="text-muted-foreground leading-relaxed">
+              Vendors with active Search Boosts are prioritized in top #1-#3 positions across Category Search &amp; Universal RPC query results.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card p-4 space-y-1">
+            <span className="font-bold text-foreground block">AI Concierge Spotlight Rule</span>
+            <p className="text-muted-foreground leading-relaxed">
+              Bilingual AI travel assistant prioritizes active AI Concierge Spotlight vendors when answering traveler itinerary queries.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Add New Plan Modal */}
       <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
         <DialogContent className="sm:max-w-md bg-card border-border">
