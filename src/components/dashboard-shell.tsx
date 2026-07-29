@@ -11,10 +11,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
-export interface NavItem {
+import { ChevronDown, ChevronRight } from "lucide-react";
+
+export interface NavSubItem {
   to: string;
   label: string;
   icon: LucideIcon;
+  badge?: string;
+}
+
+export interface NavItem {
+  to?: string;
+  label: string;
+  icon: LucideIcon;
+  badge?: string;
+  subItems?: NavSubItem[];
 }
 
 export function DashboardShell({
@@ -91,7 +102,7 @@ export function DashboardShell({
     <div className="min-h-screen bg-background text-foreground">
       <div className={cn("mx-auto flex", wide ? "max-w-none w-full px-4 md:px-8" : "max-w-7xl")}>
         {/* Sidebar */}
-        <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-surface/40 px-4 py-6 md:flex">
+        <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-surface/40 px-4 py-6 md:flex overflow-y-auto">
           <Link to="/" className="mb-6 flex items-center gap-2 px-2">
             <span className="grid size-9 place-items-center rounded-xl bg-primary/15 text-primary ring-1 ring-primary/30">
               <Mountain className="size-5" />
@@ -106,13 +117,17 @@ export function DashboardShell({
           </div>
 
           <nav className="flex flex-col gap-1">
-            {nav.map((n) => {
+            {nav.map((n, idx) => {
+              if (n.subItems && n.subItems.length > 0) {
+                return <CollapsibleNavGroup key={idx} item={n} currentPath={path} />;
+              }
+
               const active = path === n.to;
               const Icon = n.icon;
               return (
                 <Link
-                  key={n.to}
-                  to={n.to}
+                  key={n.to || idx}
+                  to={n.to!}
                   className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition ${
                     active
                       ? "bg-primary/15 text-primary ring-1 ring-primary/30"
@@ -120,7 +135,12 @@ export function DashboardShell({
                   }`}
                 >
                   <Icon className="size-4" />
-                  {n.label}
+                  <span className="flex-1 truncate">{n.label}</span>
+                  {n.badge && (
+                    <span className="rounded-full bg-amber-500/20 text-amber-400 px-2 py-0.5 text-[10px] font-bold">
+                      {n.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -187,17 +207,17 @@ export function DashboardShell({
           </header>
 
           {/* Mobile nav */}
-          <nav className="mb-6 flex gap-2 overflow-x-auto md:hidden">
-            {nav.map((n) => {
+          <nav className="mb-6 flex gap-2 overflow-x-auto md:hidden pb-1">
+            {nav.flatMap((n) => (n.subItems ? n.subItems : [n])).map((n, idx) => {
               const active = path === n.to;
               return (
                 <Link
-                  key={n.to}
-                  to={n.to}
-                  className={`shrink-0 rounded-full border px-3 py-1.5 text-xs ${
+                  key={n.to || idx}
+                  to={n.to!}
+                  className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                     active
                       ? "border-primary/40 bg-primary/15 text-primary"
-                      : "border-border bg-surface text-muted-foreground"
+                      : "border-border bg-surface text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {n.label}
@@ -286,6 +306,62 @@ export function StatCard({ label, value, accent }: { label: string; value: strin
       <div className={`mt-2 text-2xl font-bold tabular-nums ${accent ? "text-highlight" : ""}`}>
         {value}
       </div>
+    </div>
+  );
+}
+
+function CollapsibleNavGroup({ item, currentPath }: { item: NavItem; currentPath: string }) {
+  const isChildActive = (item.subItems || []).some((sub) => currentPath === sub.to);
+  const [isOpen, setIsOpen] = useState(isChildActive);
+  const Icon = item.icon;
+
+  return (
+    <div className="space-y-1">
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className={`w-full flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition cursor-pointer select-none ${
+          isChildActive
+            ? "bg-primary/10 text-primary"
+            : "text-muted-foreground hover:bg-surface hover:text-foreground"
+        }`}
+      >
+        <Icon className="size-4 shrink-0" />
+        <span className="flex-1 text-left truncate">{item.label}</span>
+        {item.badge && (
+          <span className="rounded-full bg-amber-500/20 text-amber-400 px-2 py-0.5 text-[10px] font-bold">
+            {item.badge}
+          </span>
+        )}
+        {isOpen ? (
+          <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
+        ) : (
+          <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />
+        )}
+      </button>
+
+      {isOpen && (
+        <div className="ml-4 pl-2.5 border-l border-border/60 space-y-1 my-1">
+          {item.subItems?.map((sub) => {
+            const active = currentPath === sub.to;
+            const SubIcon = sub.icon;
+            return (
+              <Link
+                key={sub.to}
+                to={sub.to}
+                className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition ${
+                  active
+                    ? "bg-primary/15 text-primary font-bold"
+                    : "text-muted-foreground hover:bg-surface hover:text-foreground"
+                }`}
+              >
+                <SubIcon className="size-3.5 shrink-0" />
+                <span className="truncate">{sub.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
