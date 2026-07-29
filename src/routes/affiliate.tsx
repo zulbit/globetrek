@@ -12,6 +12,7 @@ import {
   Clock, TrendingUp, MessageSquare, ExternalLink, AlertCircle,
   BadgeCheck, Wallet, Calendar, ArrowUpRight, Video, Camera,
   Link2, Send, Loader2, Play, Instagram, Youtube, Facebook,
+  BookOpen, Award,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -209,6 +210,16 @@ function AffiliateDashboard() {
             <Link to="/become-affiliate">
               <Button variant="outline" size="sm" className="gap-1.5 text-xs rounded-xl">
                 <ExternalLink className="size-3.5" /> Affiliate Guide
+              </Button>
+            </Link>
+            <Link to="/vendor-guide" target="_blank">
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs rounded-xl">
+                <BookOpen className="size-3.5" /> Vendor Guide
+              </Button>
+            </Link>
+            <Link to="/enterprise" target="_blank">
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs rounded-xl">
+                <Award className="size-3.5" /> Enterprise Guide
               </Button>
             </Link>
           </div>

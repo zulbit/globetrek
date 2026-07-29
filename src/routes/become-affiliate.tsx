@@ -370,23 +370,81 @@ function BecomeAffiliatePage() {
         </div>
       </section>
 
-      {/* ── ABOUT THE PLATFORM ── */}
-      <section className="py-12 px-4 bg-surface/30">
-        <div className="mx-auto max-w-4xl">
-          <h2 className="text-center text-2xl font-bold mb-2">Understand what you're selling</h2>
-          <p className="text-center text-sm text-muted-foreground mb-8">The more you know the platform, the easier the sale.</p>
-          <div className="grid sm:grid-cols-2 gap-4">
-            {PLATFORM_FEATURES.map((f) => (
-              <div key={f.title} className="rounded-2xl border border-border bg-card p-5 flex gap-3">
-                <div className="size-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <f.icon className="size-4 text-primary" />
+      {/* ── PLATFORM & ENTERPRISE KNOWLEDGE CARDS ── */}
+      <section className="py-12 px-4 bg-gradient-to-br from-primary/10 via-card to-card border-y border-primary/20">
+        <div className="mx-auto max-w-4xl space-y-6">
+          <div className="text-center">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-bold text-primary mb-2">
+              <BookOpen className="size-3.5" /> Sales Partner Knowledge Hub
+            </div>
+            <h2 className="text-2xl font-bold text-foreground">Master the Platform Before You Pitch</h2>
+            <p className="text-sm text-muted-foreground mt-1">Study our vendor guide and enterprise solutions so you can answer any travel agency's questions with confidence.</p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-5">
+            {/* Vendor Guide Card */}
+            <div className="rounded-2xl border border-primary/30 bg-card p-6 space-y-4 flex flex-col justify-between shadow-card hover:border-primary/60 transition">
+              <div className="space-y-3">
+                <div className="size-11 rounded-xl bg-primary/15 flex items-center justify-center text-primary">
+                  <BookOpen className="size-6" />
                 </div>
-                <div>
-                  <div className="font-bold text-sm text-foreground mb-1">{f.title}</div>
-                  <div className="text-xs text-muted-foreground leading-relaxed">{f.body}</div>
-                </div>
+                <h3 className="text-lg font-bold text-foreground">Vendor Onboarding &amp; Feature Guide</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Understand how travel agencies list tours, receive customer leads, unlock traveler contact info, and use our AI itinerary generator. Essential reading for your sales pitch!
+                </p>
+                <ul className="space-y-1.5 text-xs text-foreground font-medium pt-1">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+                    How traveler lead credits &amp; unlocking work
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+                    Safepay PKR payment gateway integration
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+                    Storefront setup &amp; catalog management
+                  </li>
+                </ul>
               </div>
-            ))}
+              <Link to="/vendor-guide" target="_blank">
+                <Button size="sm" variant="outline" className="w-full font-bold rounded-xl text-xs gap-1.5 mt-2 border-primary/30 text-primary hover:bg-primary/10">
+                  Read Vendor Guide <ExternalLink className="size-3.5" />
+                </Button>
+              </Link>
+            </div>
+
+            {/* Enterprise Solutions Card */}
+            <div className="rounded-2xl border border-violet-500/30 bg-card p-6 space-y-4 flex flex-col justify-between shadow-card hover:border-violet-500/60 transition">
+              <div className="space-y-3">
+                <div className="size-11 rounded-xl bg-violet-500/15 flex items-center justify-center text-violet-400">
+                  <Award className="size-6" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground">Enterprise &amp; Large Agency Solutions</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Pitching a large travel chain, Umrah group operator, or multi-branch franchise network? Learn about custom SLA guarantees, multi-agent accounts, and white-label options.
+                </p>
+                <ul className="space-y-1.5 text-xs text-foreground font-medium pt-1">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+                    Multi-branch team accounts &amp; role permissions
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+                    Custom lead routing &amp; priority placement
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+                    Dedicated Account Manager &amp; 99.9% uptime SLA
+                  </li>
+                </ul>
+              </div>
+              <Link to="/enterprise" target="_blank">
+                <Button size="sm" variant="outline" className="w-full font-bold rounded-xl text-xs gap-1.5 mt-2 border-violet-500/30 text-violet-400 hover:bg-violet-500/10">
+                  Explore Enterprise Solutions <ExternalLink className="size-3.5" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
