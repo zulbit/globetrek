@@ -45,7 +45,7 @@ function AdminVendors() {
       // Fallback query directly from profiles
       const { data: profilesData } = await supabase
         .from("profiles")
-        .select("id, email, full_name, company_name, phone, vendor_status, subscription_tier, lead_credits_balance, created_at")
+        .select("id, email, full_name, company_name, vendor_status, subscription_tier, lead_credits_balance, created_at, city")
         .order("created_at", { ascending: false });
 
       return (profilesData ?? []).filter((p) => {

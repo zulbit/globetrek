@@ -7,10 +7,12 @@ export interface VendorProfile {
   full_name: string | null;
   company_name: string | null;
   phone: string | null;
+  city?: string | null;
   vendor_status: string;
   subscription_tier: string;
   lead_credits_balance: number;
   created_at?: string;
+  kycDetails?: Record<string, any>;
 }
 
 export const getAdminVendors = createServerFn({ method: "GET" }).handler(async () => {
@@ -27,10 +29,10 @@ export const getAdminVendors = createServerFn({ method: "GET" }).handler(async (
 
     const vendorUserIds = new Set((rolesData ?? []).map((r: any) => r.user_id));
 
-    // 2. Fetch all profiles via admin service key
+    // 2. Fetch all profiles via admin service key (selecting only actual table columns)
     const { data: profilesData, error: profilesErr } = await supabaseAdmin
       .from("profiles")
-      .select("id, email, full_name, company_name, phone, vendor_status, subscription_tier, lead_credits_balance, created_at")
+      .select("id, email, full_name, company_name, vendor_status, subscription_tier, lead_credits_balance, created_at, city")
       .order("created_at", { ascending: false });
 
     if (profilesErr) {
@@ -38,14 +40,38 @@ export const getAdminVendors = createServerFn({ method: "GET" }).handler(async (
       throw new Error(profilesErr.message);
     }
 
-    // 3. Filter profiles that have vendor role, company_name, or pending vendor_status
-    const vendors = (profilesData ?? []).filter((p: any) => {
-      if (vendorUserIds.has(p.id)) return true;
-      if (p.company_name) return true;
-      if (p.vendor_status === "pending") return true;
-      if (p.email && p.email.toLowerCase().includes("vendor")) return true;
-      return false;
+    // 3. Fetch all submitted KYC details from payment_gateway_settings
+    const { data: kycRecords } = await supabaseAdmin
+      .from("payment_gateway_settings")
+      .select("provider, settings")
+      .like("provider", "vendor_kyc_%");
+
+    const kycMap = new Map<string, any>();
+    (kycRecords ?? []).forEach((r) => {
+      const uId = r.provider.replace("vendor_kyc_", "");
+      try {
+        const parsed = typeof r.settings === "string" ? JSON.parse(r.settings) : r.settings;
+        if (parsed?.fields) kycMap.set(uId, parsed.fields);
+      } catch {}
     });
+
+    // 4. Filter and enhance vendor profiles with KYC data
+    const vendors = (profilesData ?? [])
+      .filter((p: any) => {
+        if (vendorUserIds.has(p.id)) return true;
+        if (p.company_name) return true;
+        if (p.vendor_status === "pending") return true;
+        if (p.email && p.email.toLowerCase().includes("vendor")) return true;
+        return false;
+      })
+      .map((p: any) => {
+        const kycFields = kycMap.get(p.id) || {};
+        return {
+          ...p,
+          phone: kycFields.phone || p.phone || null,
+          kycDetails: kycFields,
+        };
+      });
 
     return vendors as VendorProfile[];
   } catch (err: any) {

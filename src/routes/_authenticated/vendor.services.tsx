@@ -30,10 +30,9 @@ function VendorServicesOffered() {
     queryKey: ["vendor-services", user?.id],
     queryFn: async () => {
       const { data } = await supabase.from("profiles")
-        .select("vendor_services, company_name, subscription_tier, phone, city, vendor_status").eq("id", user!.id).maybeSingle();
+        .select("vendor_services, company_name, subscription_tier, city, vendor_status").eq("id", user!.id).maybeSingle();
       if (data && !isKycLoaded) {
         setCompanyName(data.company_name || "");
-        setPhone(data.phone || "");
         setCity(data.city || "");
         setIsKycLoaded(true);
       }

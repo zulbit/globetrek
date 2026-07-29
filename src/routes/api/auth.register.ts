@@ -70,16 +70,32 @@ export const Route = createFileRoute("/api/auth/register")({
 
           const userId = adminData.user.id;
 
-          // 2. Ensure profile record exists/is updated with phone & vendor_status
+          // 2. Ensure profile record exists with valid columns
           await supabaseAdmin.from("profiles").upsert({
             id: userId,
             email,
             full_name: full_name || null,
             company_name: role === "vendor" ? company_name || null : null,
-            phone: phone || null,
             vendor_status: role === "vendor" ? "pending" : "approved",
             subscription_tier: "free",
           });
+
+          // Store initial vendor contact in payment_gateway_settings if vendor
+          if (role === "vendor" && phone) {
+            await supabaseAdmin.from("payment_gateway_settings").upsert({
+              provider: `vendor_kyc_${userId}`,
+              is_enabled: true,
+              settings: JSON.stringify({
+                userId,
+                submittedAt: new Date().toISOString(),
+                fields: {
+                  company_name: company_name || null,
+                  phone,
+                },
+              }),
+              updated_at: new Date().toISOString(),
+            });
+          }
 
           // 3. Ensure role mapping exists
           await supabaseAdmin.from("user_roles").upsert({

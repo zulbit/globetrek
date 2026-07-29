@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   getKYCTemplateSettings,
   submitVendorKYC,
+  getVendorKYCDetails,
   type KYCTemplateSettings,
   type KYCFieldConfig,
 } from "@/lib/kyc.functions";
@@ -35,6 +36,8 @@ function VendorKYCPage() {
     queryFn: () => fetchTemplateFn(),
   });
 
+  const fetchKYCDetailsFn = useServerFn(getVendorKYCDetails);
+
   // Fetch vendor profile
   const { data: profile, isLoading: isProfileLoading } = useQuery({
     enabled: !!user?.id,
@@ -42,11 +45,18 @@ function VendorKYCPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("id, email, full_name, company_name, phone, city, vendor_status")
+        .select("id, email, full_name, company_name, city, vendor_status")
         .eq("id", user!.id)
         .maybeSingle();
       return data;
     },
+  });
+
+  // Fetch previously submitted KYC payload
+  const { data: existingKyc } = useQuery({
+    enabled: !!user?.id,
+    queryKey: ["vendor-kyc-existing", user?.id],
+    queryFn: () => fetchKYCDetailsFn({ data: { userId: user!.id } }),
   });
 
   const [formData, setFormData] = React.useState<Record<string, string>>({});
@@ -56,12 +66,14 @@ function VendorKYCPage() {
     if (profile && !isFormInitialized) {
       setFormData({
         company_name: profile.company_name || "",
-        phone: profile.phone || "",
         city: profile.city || "",
+        ...(existingKyc || {}),
       });
-      setIsFormInitialized(true);
+      if (existingKyc || profile.company_name) {
+        setIsFormInitialized(true);
+      }
     }
-  }, [profile, isFormInitialized]);
+  }, [profile, existingKyc, isFormInitialized]);
 
   const submitMutation = useMutation({
     mutationFn: async () => {

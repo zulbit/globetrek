@@ -136,20 +136,17 @@ export const submitVendorKYC = createServerFn({ method: "POST" })
     const { userId, profileUpdates } = data;
     if (!userId) throw new Error("Vendor user ID is required");
 
-    // 1. Separate standard profile columns from dynamic KYC fields
-    const { company_name, phone, city, full_name, ...extraKycFields } = profileUpdates;
-
+    // 1. Strictly filter only valid columns present in profiles table schema
     const standardUpdates: Record<string, any> = {
       vendor_status: "pending",
       updated_at: new Date().toISOString(),
     };
 
-    if (company_name !== undefined) standardUpdates.company_name = company_name;
-    if (phone !== undefined) standardUpdates.phone = phone;
-    if (city !== undefined) standardUpdates.city = city;
-    if (full_name !== undefined) standardUpdates.full_name = full_name;
+    if (profileUpdates.company_name !== undefined) standardUpdates.company_name = profileUpdates.company_name;
+    if (profileUpdates.city !== undefined) standardUpdates.city = profileUpdates.city;
+    if (profileUpdates.full_name !== undefined) standardUpdates.full_name = profileUpdates.full_name;
 
-    // Update standard profile fields
+    // Update standard profile fields (only valid columns)
     const { error: profileErr } = await supabaseAdmin
       .from("profiles")
       .update(standardUpdates)
@@ -158,6 +155,17 @@ export const submitVendorKYC = createServerFn({ method: "POST" })
     if (profileErr) {
       console.error("[submitVendorKYC Profile Update Error]:", profileErr);
       throw new Error(profileErr.message);
+    }
+
+    // Update phone in Auth user_metadata if provided
+    if (profileUpdates.phone) {
+      try {
+        await supabaseAdmin.auth.admin.updateUserById(userId, {
+          user_metadata: { phone: profileUpdates.phone },
+        });
+      } catch (err) {
+        console.warn("[submitVendorKYC Phone Metadata Error]:", err);
+      }
     }
 
     // 2. Store full dynamic KYC payload in payment_gateway_settings for Admin review
@@ -178,7 +186,6 @@ export const submitVendorKYC = createServerFn({ method: "POST" })
 
     if (kycErr) {
       console.error("[submitVendorKYC Storage Error]:", kycErr);
-      // Non-fatal if payment_gateway_settings write fails
     }
 
     return { success: true };
