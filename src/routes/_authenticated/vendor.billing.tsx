@@ -597,40 +597,54 @@ function BillingPage() {
           </Badge>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 text-xs">
+        <div className="grid gap-4 sm:grid-cols-3 text-xs">
           <div className="space-y-2 rounded-xl border border-amber-500/20 bg-background/50 p-4">
             <h4 className="font-bold text-amber-300 flex items-center gap-1.5">
-              🔔 1. How You Are Notified Before Expiration
+              🔔 1. Expiration Notifications
             </h4>
             <ul className="space-y-1.5 text-muted-foreground leading-relaxed list-disc pl-4">
               <li>
-                <strong>7-Day Early Warning:</strong> A prominent alert banner appears on your vendor portal header and dashboard.
+                <strong>7-Day Early Warning:</strong> Alert banner on vendor header &amp; dashboard.
               </li>
               <li>
-                <strong>Automated WhatsApp &amp; Email Alerts:</strong> Automated reminders sent 7 days, 3 days, and 24 hours prior to expiration.
+                <strong>WhatsApp &amp; Email Alerts:</strong> Automated reminders sent at 7d, 3d, and 24h before renewal.
               </li>
               <li>
-                <strong>1-Click SafePay PKR Renewal:</strong> Fast renewal button in billing overview to maintain seamless continuity.
+                <strong>1-Click SafePay PKR Renewal:</strong> Instant renewal via SafePay quick links.
               </li>
             </ul>
           </div>
 
           <div className="space-y-2 rounded-xl border border-amber-500/20 bg-background/50 p-4">
             <h4 className="font-bold text-amber-300 flex items-center gap-1.5">
-              ⚠️ 2. What Happens If a Plan Fails to Renew?
+              ⚠️ 2. Non-Renewal Action
             </h4>
             <ul className="space-y-1.5 text-muted-foreground leading-relaxed list-disc pl-4">
               <li>
-                <strong>Automatic Downgrade to Free Tier:</strong> Your account safely reverts to the standard Starter Free tier.
+                <strong>Auto-Downgrade to Free:</strong> Account reverts to standard Starter Free tier.
               </li>
               <li>
-                <strong>Tour Listings Paused:</strong> Active listings above the Free tier limit (1 active listing) automatically unpublish (`is_active: false`) until renewed.
+                <strong>Extra Listings Paused:</strong> Listings above Free limit (1 active) unpublish (`is_active: false`).
               </li>
               <li>
-                <strong>Placement Boosts Paused:</strong> Top search placement &amp; AI Concierge recommendations pause until reactivated.
+                <strong>Zero Data Loss:</strong> Package drafts, itineraries, leads, and quotes preserved 100%.
+              </li>
+            </ul>
+          </div>
+
+          <div className="space-y-2 rounded-xl border border-amber-500/20 bg-background/50 p-4">
+            <h4 className="font-bold text-amber-300 flex items-center gap-1.5">
+              📉 3. Plan Downgrade &amp; Refund Policy
+            </h4>
+            <ul className="space-y-1.5 text-muted-foreground leading-relaxed list-disc pl-4">
+              <li>
+                <strong>Effective Next Cycle:</strong> Downgrades take effect at the start of your <strong>next payment cycle</strong>.
               </li>
               <li>
-                <strong>Zero Data Loss:</strong> All your tour drafts, itineraries, leads, and analytics are 100% preserved safely.
+                <strong>No Refunds:</strong> No partial or prorated refunds are issued for active billing cycles.
+              </li>
+              <li>
+                <strong>Retain Full Privileges:</strong> Enjoy current plan features until your next billing date.
               </li>
             </ul>
           </div>

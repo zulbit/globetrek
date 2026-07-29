@@ -621,8 +621,8 @@ function PricingFAQSection() {
       id: "faq-3",
       category: "plans",
       categoryLabel: "Plans & Billing",
-      q: "Can I switch, upgrade, or cancel anytime?",
-      a: "Yes! You can instantly upgrade or switch your plan anytime directly from your Vendor Billing panel. Changes take effect immediately without lock-in contracts.",
+      q: "Can I switch, upgrade, or cancel anytime? What is the downgrade policy?",
+      a: "Upgrades take effect immediately so you can unlock higher tier features right away. Downgrades take effect at the start of your next payment cycle, and no partial or prorated refunds are issued for the current active cycle. You retain 100% of your current plan features until your next billing date.",
     },
     {
       id: "faq-expiration",
