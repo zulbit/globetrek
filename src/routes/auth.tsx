@@ -114,6 +114,7 @@ function AuthPage() {
   const [role, setRole] = React.useState<"customer" | "vendor">("customer");
   const [companyName, setCompanyName] = React.useState("");
   const [phone, setPhone] = React.useState("");
+  const [referralCode, setReferralCode] = React.useState("");
 
   React.useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -168,6 +169,7 @@ function AuthPage() {
           role,
           company_name: role === "vendor" ? companyName : null,
           phone: role === "vendor" ? phone : null,
+          referral_code: role === "vendor" && referralCode.trim() ? referralCode.trim().toUpperCase() : null,
         }),
       });
 
@@ -401,6 +403,12 @@ function AuthPage() {
                     <div className="space-y-2">
                       <Label htmlFor="phone" className="text-white/80">Mobile / WhatsApp Number*</Label>
                       <Input id="phone" type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} className="bg-white/5 text-white placeholder:text-white/40" placeholder="e.g. +92 300 1234567" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="ref_code" className="text-white/80">Referral Code <span className="text-white/40">(optional)</span></Label>
+                      <Input id="ref_code" value={referralCode} onChange={(e) => setReferralCode(e.target.value.toUpperCase())} className="bg-white/5 text-white placeholder:text-white/40 font-mono tracking-widest" placeholder="e.g. REF-AHMED1234" />
+                      <p className="text-[10px] text-white/40">Were you introduced by a GlobeTrek Sales Partner? Enter their code.</p>
                     </div>
                   </>
                 )}

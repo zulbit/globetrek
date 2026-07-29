@@ -8,6 +8,7 @@ type SignupBody = {
   role?: "customer" | "vendor";
   company_name?: string;
   phone?: string;
+  referral_code?: string | null;
 };
 
 export const Route = createFileRoute("/api/auth/register")({
@@ -24,7 +25,7 @@ export const Route = createFileRoute("/api/auth/register")({
           });
         }
 
-        const { email, password, full_name, role = "customer", company_name, phone } = body;
+        const { email, password, full_name, role = "customer", company_name, phone, referral_code } = body;
 
         if (!email || !password) {
           return new Response(JSON.stringify({ error: "Email and password are required." }), {
@@ -78,6 +79,7 @@ export const Route = createFileRoute("/api/auth/register")({
             company_name: role === "vendor" ? company_name || null : null,
             vendor_status: role === "vendor" ? "pending" : "approved",
             subscription_tier: "free",
+            referral_code_used: role === "vendor" && referral_code ? referral_code.toUpperCase() : null,
           });
 
           // Store initial vendor contact in payment_gateway_settings if vendor

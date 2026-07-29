@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as AffiliateRouteImport } from './routes/affiliate'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BecomeAffiliateRouteImport } from './routes/become-affiliate'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as CustomTourRouteImport } from './routes/custom-tour'
 import { Route as DestinationsRouteImport } from './routes/destinations'
@@ -38,6 +40,7 @@ import { Route as ToursIdRouteImport } from './routes/tours.$id'
 import { Route as VisaIndexRouteImport } from './routes/visa.index'
 import { Route as VisaIdRouteImport } from './routes/visa.$id'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedAdminAffiliatePayoutsRouteImport } from './routes/_authenticated/admin.affiliate-payouts'
 import { Route as AuthenticatedAdminAffiliatesRouteImport } from './routes/_authenticated/admin.affiliates'
 import { Route as AuthenticatedAdminCustomLeadsRouteImport } from './routes/_authenticated/admin.custom-leads'
 import { Route as AuthenticatedAdminFinancialsRouteImport } from './routes/_authenticated/admin.financials'
@@ -78,9 +81,19 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AffiliateRoute = AffiliateRouteImport.update({
+  id: '/affiliate',
+  path: '/affiliate',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BecomeAffiliateRoute = BecomeAffiliateRouteImport.update({
+  id: '/become-affiliate',
+  path: '/become-affiliate',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompareRoute = CompareRouteImport.update({
@@ -208,6 +221,12 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminAffiliatePayoutsRoute =
+  AuthenticatedAdminAffiliatePayoutsRouteImport.update({
+    id: '/affiliate-payouts',
+    path: '/affiliate-payouts',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAffiliatesRoute =
   AuthenticatedAdminAffiliatesRouteImport.update({
     id: '/affiliates',
@@ -356,7 +375,9 @@ const ApiPublicSafepayWebhookRoute = ApiPublicSafepayWebhookRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/affiliate': typeof AffiliateRoute
   '/auth': typeof AuthRoute
+  '/become-affiliate': typeof BecomeAffiliateRoute
   '/compare': typeof CompareRoute
   '/custom-tour': typeof CustomTourRoute
   '/destinations': typeof DestinationsRoute
@@ -381,6 +402,7 @@ export interface FileRoutesByFullPath {
   '/tickets/': typeof TicketsIndexRoute
   '/tours/': typeof ToursIndexRoute
   '/visa/': typeof VisaIndexRoute
+  '/admin/affiliate-payouts': typeof AuthenticatedAdminAffiliatePayoutsRoute
   '/admin/affiliates': typeof AuthenticatedAdminAffiliatesRoute
   '/admin/custom-leads': typeof AuthenticatedAdminCustomLeadsRoute
   '/admin/financials': typeof AuthenticatedAdminFinancialsRoute
@@ -411,7 +433,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/affiliate': typeof AffiliateRoute
   '/auth': typeof AuthRoute
+  '/become-affiliate': typeof BecomeAffiliateRoute
   '/compare': typeof CompareRoute
   '/custom-tour': typeof CustomTourRoute
   '/destinations': typeof DestinationsRoute
@@ -430,6 +454,7 @@ export interface FileRoutesByTo {
   '/tickets': typeof TicketsIndexRoute
   '/tours': typeof ToursIndexRoute
   '/visa': typeof VisaIndexRoute
+  '/admin/affiliate-payouts': typeof AuthenticatedAdminAffiliatePayoutsRoute
   '/admin/affiliates': typeof AuthenticatedAdminAffiliatesRoute
   '/admin/custom-leads': typeof AuthenticatedAdminCustomLeadsRoute
   '/admin/financials': typeof AuthenticatedAdminFinancialsRoute
@@ -462,7 +487,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
+  '/affiliate': typeof AffiliateRoute
   '/auth': typeof AuthRoute
+  '/become-affiliate': typeof BecomeAffiliateRoute
   '/compare': typeof CompareRoute
   '/custom-tour': typeof CustomTourRoute
   '/destinations': typeof DestinationsRoute
@@ -487,6 +514,7 @@ export interface FileRoutesById {
   '/tickets/': typeof TicketsIndexRoute
   '/tours/': typeof ToursIndexRoute
   '/visa/': typeof VisaIndexRoute
+  '/_authenticated/admin/affiliate-payouts': typeof AuthenticatedAdminAffiliatePayoutsRoute
   '/_authenticated/admin/affiliates': typeof AuthenticatedAdminAffiliatesRoute
   '/_authenticated/admin/custom-leads': typeof AuthenticatedAdminCustomLeadsRoute
   '/_authenticated/admin/financials': typeof AuthenticatedAdminFinancialsRoute
@@ -519,7 +547,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/affiliate'
     | '/auth'
+    | '/become-affiliate'
     | '/compare'
     | '/custom-tour'
     | '/destinations'
@@ -544,6 +574,7 @@ export interface FileRouteTypes {
     | '/tickets/'
     | '/tours/'
     | '/visa/'
+    | '/admin/affiliate-payouts'
     | '/admin/affiliates'
     | '/admin/custom-leads'
     | '/admin/financials'
@@ -574,7 +605,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/affiliate'
     | '/auth'
+    | '/become-affiliate'
     | '/compare'
     | '/custom-tour'
     | '/destinations'
@@ -593,6 +626,7 @@ export interface FileRouteTypes {
     | '/tickets'
     | '/tours'
     | '/visa'
+    | '/admin/affiliate-payouts'
     | '/admin/affiliates'
     | '/admin/custom-leads'
     | '/admin/financials'
@@ -624,7 +658,9 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/about'
+    | '/affiliate'
     | '/auth'
+    | '/become-affiliate'
     | '/compare'
     | '/custom-tour'
     | '/destinations'
@@ -649,6 +685,7 @@ export interface FileRouteTypes {
     | '/tickets/'
     | '/tours/'
     | '/visa/'
+    | '/_authenticated/admin/affiliate-payouts'
     | '/_authenticated/admin/affiliates'
     | '/_authenticated/admin/custom-leads'
     | '/_authenticated/admin/financials'
@@ -681,7 +718,9 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
+  AffiliateRoute: typeof AffiliateRoute
   AuthRoute: typeof AuthRoute
+  BecomeAffiliateRoute: typeof BecomeAffiliateRoute
   CompareRoute: typeof CompareRoute
   CustomTourRoute: typeof CustomTourRoute
   DestinationsRoute: typeof DestinationsRoute
@@ -722,11 +761,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/affiliate': {
+      id: '/affiliate'
+      path: '/affiliate'
+      fullPath: '/affiliate'
+      preLoaderRoute: typeof AffiliateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/become-affiliate': {
+      id: '/become-affiliate'
+      path: '/become-affiliate'
+      fullPath: '/become-affiliate'
+      preLoaderRoute: typeof BecomeAffiliateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/compare': {
@@ -902,6 +955,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/affiliate-payouts': {
+      id: '/_authenticated/admin/affiliate-payouts'
+      path: '/affiliate-payouts'
+      fullPath: '/admin/affiliate-payouts'
+      preLoaderRoute: typeof AuthenticatedAdminAffiliatePayoutsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/affiliates': {
@@ -1083,6 +1143,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminAffiliatePayoutsRoute: typeof AuthenticatedAdminAffiliatePayoutsRoute
   AuthenticatedAdminAffiliatesRoute: typeof AuthenticatedAdminAffiliatesRoute
   AuthenticatedAdminCustomLeadsRoute: typeof AuthenticatedAdminCustomLeadsRoute
   AuthenticatedAdminFinancialsRoute: typeof AuthenticatedAdminFinancialsRoute
@@ -1099,6 +1160,8 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminAffiliatePayoutsRoute:
+    AuthenticatedAdminAffiliatePayoutsRoute,
   AuthenticatedAdminAffiliatesRoute: AuthenticatedAdminAffiliatesRoute,
   AuthenticatedAdminCustomLeadsRoute: AuthenticatedAdminCustomLeadsRoute,
   AuthenticatedAdminFinancialsRoute: AuthenticatedAdminFinancialsRoute,
@@ -1218,7 +1281,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
+  AffiliateRoute: AffiliateRoute,
   AuthRoute: AuthRoute,
+  BecomeAffiliateRoute: BecomeAffiliateRoute,
   CompareRoute: CompareRoute,
   CustomTourRoute: CustomTourRoute,
   DestinationsRoute: DestinationsRoute,

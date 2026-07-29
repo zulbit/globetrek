@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { LayoutDashboard, Users, Globe2, Boxes, CreditCard, Sparkles, Compass, BookOpen, Wallet, LayoutTemplate, FileCheck, Layers, Share2, SearchCheck } from "lucide-react";
+import { LayoutDashboard, Users, Globe2, Boxes, CreditCard, Sparkles, Compass, BookOpen, Wallet, LayoutTemplate, FileCheck, Layers, Share2, SearchCheck, HandCoins } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { RoleGuard } from "@/components/role-guard";
 
@@ -22,6 +22,7 @@ const NAV = [
   { to: "/admin/services", label: "Services Catalog", icon: Boxes },
   { to: "/admin/payments", label: "Payment gateways", icon: CreditCard },
   { to: "/admin/affiliates", label: "Affiliate Program", icon: Share2 },
+  { to: "/admin/affiliate-payouts", label: "Affiliate Payouts", icon: HandCoins, badge: "FRI" },
   { to: "/admin/seo", label: "SEO Optimization", icon: SearchCheck, badge: "NEW" },
 ];
 
