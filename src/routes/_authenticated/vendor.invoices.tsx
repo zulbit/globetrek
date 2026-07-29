@@ -155,7 +155,20 @@ function VendorInvoicesPage() {
         margin: 10,
         filename: `GlobeTrek_Invoice_${inv.id}.pdf`,
         image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          onclone: (clonedDoc: Document) => {
+            // Remove global stylesheets with oklch syntax to prevent html2canvas color parse crashes
+            const styleTags = clonedDoc.querySelectorAll("style, link[rel='stylesheet']");
+            styleTags.forEach((tag) => {
+              if (tag.textContent && tag.textContent.includes("oklch")) {
+                tag.remove();
+              }
+            });
+          },
+        },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
       };
 
@@ -168,10 +181,89 @@ function VendorInvoicesPage() {
       });
     } catch (err: any) {
       toast.dismiss(toastId);
-      toast.error(`Download failed: ${err.message}`);
+      toast.error(`PDF generation error: ${err.message}`, {
+        description: "Opening printable receipt window instead...",
+      });
+      handlePrintInvoiceWindow(inv);
     } finally {
       setDownloadingInvId(null);
     }
+  };
+
+  const handlePrintInvoiceWindow = (inv: any) => {
+    const printWin = window.open("", "_blank");
+    if (!printWin) return;
+    printWin.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>GlobeTrek PK — Invoice ${inv.id}</title>
+          <style>
+            body { font-family: system-ui, -apple-system, sans-serif; padding: 40px; color: #0f172a; max-width: 800px; margin: 0 auto; }
+            .header { border-bottom: 2px solid #059669; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end; }
+            .title { font-size: 24px; font-weight: 800; color: #047857; margin: 0; }
+            .subtitle { font-size: 11px; color: #64748b; margin: 2px 0 0 0; }
+            .badge { display: inline-block; background-color: #d1fae5; color: #047857; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; text-transform: uppercase; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; font-size: 12px; }
+            .card { background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 8px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 12px; }
+            th { background-color: #0f172a; color: #ffffff; padding: 10px 12px; text-align: left; }
+            td { border-bottom: 1px solid #e2e8f0; padding: 12px; }
+            .totals { display: flex; justify-content: flex-end; margin-bottom: 30px; }
+            .total-box { width: 250px; background-color: #f8fafc; border: 1px solid #cbd5e1; padding: 14px; border-radius: 8px; font-size: 12px; }
+            .footer { border-top: 1px solid #e2e8f0; padding-top: 16px; text-align: center; font-size: 10px; color: #94a3b8; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <h1 class="title">GlobeTrek PK</h1>
+              <p class="subtitle">Official Vendor Tax Receipt &amp; Billing Statement</p>
+            </div>
+            <div style="text-align: right;">
+              <span class="badge">${inv.status}</span>
+              <p style="font-size: 12px; font-weight: 700; font-family: monospace; margin: 6px 0 0 0;">${inv.id}</p>
+            </div>
+          </div>
+          <div class="grid">
+            <div class="card">
+              <p style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #64748b; margin: 0 0 6px 0;">Billed To</p>
+              <p style="font-size: 13px; font-weight: 700; margin: 0 0 2px 0;">${profile?.full_name || "GlobeTrek Verified Agency"}</p>
+              <p style="color: #475569; margin: 0;">City: ${profile?.city || "Pakistan"}</p>
+            </div>
+            <div class="card">
+              <p style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #64748b; margin: 0 0 6px 0;">Invoice Details</p>
+              <p style="margin: 0;"><strong>Date:</strong> ${inv.date}</p>
+              <p style="margin: 2px 0 0 0;"><strong>Period:</strong> ${inv.period}</p>
+              <p style="margin: 2px 0 0 0;"><strong>NTN:</strong> 8941029-7</p>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Item Description</th><th style="text-align:center;">Period</th><th style="text-align:right;">Amount (PKR)</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-weight: 600;">${inv.description}</td>
+                <td style="text-align: center;">${inv.period}</td>
+                <td style="text-align: right; font-family: monospace; font-weight: 700;">Rs ${inv.amount_pkr.toLocaleString()}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="totals">
+            <div class="total-box">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span>Subtotal:</span><span>Rs ${inv.amount_pkr.toLocaleString()}</span></div>
+              <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 800; color: #047857; border-top: 1px solid #cbd5e1; padding-top: 6px;"><span>Total Paid:</span><span>Rs ${inv.amount_pkr.toLocaleString()}</span></div>
+            </div>
+          </div>
+          <div class="footer">
+            <p>GlobeTrek PK Technologies — NTN: 8941029-7 | Computer-Generated Tax Receipt</p>
+          </div>
+          <script>window.onload = function() { window.print(); };</script>
+        </body>
+      </html>
+    `);
+    printWin.document.close();
   };
 
   return (
