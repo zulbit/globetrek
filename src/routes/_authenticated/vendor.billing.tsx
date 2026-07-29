@@ -23,6 +23,9 @@ const AI_LIMITS: Record<Tier, { description: number | null; plan: number | null 
 // 3. Landing Page Placement Plan: Featured Agency Spotlight badge on landing page.
 // 4. 1-Week Flash Banner Advertisement Plan: 7-Day promotional hero banner on landing page.
 
+import { useMemo } from "react";
+import { getSubscriptionPlans } from "@/lib/payments.functions";
+
 export const Route = createFileRoute("/_authenticated/vendor/billing")({
   component: BillingPage,
 });
@@ -30,6 +33,76 @@ export const Route = createFileRoute("/_authenticated/vendor/billing")({
 function BillingPage() {
   const qc = useQueryClient();
   const change = useServerFn(changeSubscriptionTier);
+  const getPlansFn = useServerFn(getSubscriptionPlans);
+
+  const { data: dbPlans } = useQuery({
+    queryKey: ["subscription-plans-config-vendor-billing"],
+    queryFn: () => getPlansFn(),
+  });
+
+  const activeAddons = useMemo(() => {
+    if (!dbPlans || dbPlans.length === 0) {
+      return [
+        {
+          id: "placement_search",
+          name: "Search Placement Boost",
+          plan_type: "placement",
+          price_pkr: 8000,
+          billing_period: "monthly",
+          tagline: "Top #1-#3 search position boost in category queries",
+          features: [
+            "Top 3 position ranking in search queries",
+            "Featured badge on search result cards",
+            "4x average traveler click-through rate",
+            "Priority lead routing",
+          ],
+        },
+        {
+          id: "placement_ai",
+          name: "AI Concierge Recommendation",
+          plan_type: "placement",
+          price_pkr: 12000,
+          billing_period: "monthly",
+          tagline: "Recommended by AI Concierge in Roman Urdu & English",
+          features: [
+            "Direct AI recommendation priority in chat queries",
+            "AI Concierge booking link placement",
+            "High-trust traveler lead conversions",
+            "Weekly performance analytics report",
+          ],
+        },
+        {
+          id: "placement_landing",
+          name: "Landing Page Spotlight",
+          plan_type: "placement",
+          price_pkr: 15000,
+          billing_period: "monthly",
+          tagline: "Featured Agency Spotlight card on main landing page",
+          features: [
+            "Featured Agency Spotlight showcase on homepage",
+            "Top hero slider package placement",
+            "Maximum brand authority & trust",
+            "Dedicated agency store link",
+          ],
+        },
+        {
+          id: "ad_flash_banner_1w",
+          name: "1-Week Hero Flash Banner Ad",
+          plan_type: "advertisement",
+          price_pkr: 15000,
+          billing_period: "weekly",
+          tagline: "7-Day exclusive promotional banner on homepage hero",
+          features: [
+            "7-Day Hero Banner Ad on GlobeTrek PK homepage",
+            "Custom CTA link to your specific package or store",
+            "Ideal for seasonal sales (Umrah, Baku Winter, Eid Specials)",
+            "Dedicated campaign analytics report",
+          ],
+        },
+      ];
+    }
+    return dbPlans.filter((p: any) => (p.plan_type === "placement" || p.plan_type === "advertisement") && p.is_enabled !== false);
+  }, [dbPlans]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["vendor-billing"],
@@ -237,6 +310,88 @@ function BillingPage() {
                   ) : (
                     `Switch to ${tier.name}`
                   )}
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Marketplace Placement & Campaign Addons Section */}
+      <div>
+        <div className="mb-4">
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-purple-400 mb-1">
+            <Sparkles className="size-3.5" /> Boost Reach &amp; Lead Conversion
+          </div>
+          <h3 className="text-base font-bold text-foreground">Marketplace Placement &amp; Flash Campaign Add-ons</h3>
+          <p className="text-xs text-muted-foreground">
+            Optional visibility boosts you can attach to your agency profile anytime.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {activeAddons.map((addon: any) => {
+            const isAd = addon.plan_type === "advertisement";
+            return (
+              <div
+                key={addon.id}
+                className={`relative flex flex-col justify-between rounded-2xl border p-5 shadow-sm transition hover:-translate-y-0.5 ${
+                  isAd
+                    ? "border-rose-500/40 bg-gradient-to-b from-rose-500/10 to-card"
+                    : "border-purple-500/40 bg-gradient-to-b from-purple-500/10 to-card"
+                }`}
+              >
+                <div>
+                  <span
+                    className={`inline-block text-[9px] uppercase font-bold px-2 py-0.5 rounded-full mb-2 border ${
+                      isAd
+                        ? "bg-rose-500/20 text-rose-300 border-rose-500/30"
+                        : "bg-purple-500/20 text-purple-300 border-purple-500/30"
+                    }`}
+                  >
+                    {isAd ? "⚡ 1-Week Flash Banner" : "🌟 Placement Add-on"}
+                  </span>
+
+                  <h4 className="text-sm font-bold text-foreground mb-1">{addon.name}</h4>
+                  <p className="text-[11px] text-muted-foreground mb-3 leading-snug">{addon.tagline}</p>
+
+                  <div className="mb-3 flex items-baseline gap-1">
+                    <span className="text-xl font-extrabold font-mono text-foreground">
+                      {formatTierPrice(addon.price_pkr)}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">
+                      / {addon.billing_period === "weekly" ? "7 days" : "mo"}
+                    </span>
+                  </div>
+
+                  <ul className="mb-4 space-y-1.5 text-[11px]">
+                    {(addon.features || []).slice(0, 3).map((f: string, i: number) => (
+                      <li key={i} className="flex items-start gap-1.5 text-muted-foreground">
+                        <Check
+                          className={`size-3 shrink-0 mt-0.5 ${
+                            isAd ? "text-rose-400" : "text-purple-400"
+                          }`}
+                        />
+                        <span className="text-foreground/90">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    toast.success(`Request sent for ${addon.name}!`, {
+                      description: "GlobeTrek Partner Desk will reach out on WhatsApp to activate this addon.",
+                    })
+                  }
+                  className={`w-full font-bold text-xs rounded-xl border ${
+                    isAd
+                      ? "bg-rose-500 hover:bg-rose-600 text-white border-rose-400/40"
+                      : "bg-purple-600 hover:bg-purple-700 text-white border-purple-400/40"
+                  }`}
+                >
+                  {isAd ? "Book Flash Banner" : "Activate Add-on"}
                 </Button>
               </div>
             );
