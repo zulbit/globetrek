@@ -60,10 +60,118 @@ function VendorInvoicesPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleDownloadInvoice = (invId: string) => {
-    toast.success(`Downloading PDF Invoice ${invId}...`, {
-      description: "Official GlobeTrek PK Tax Receipt generated.",
-    });
+  const [downloadingInvId, setDownloadingInvId] = useState<string | null>(null);
+
+  const handleDownloadInvoice = async (inv: any) => {
+    setDownloadingInvId(inv.id);
+    const toastId = toast.loading(`Generating PDF Invoice ${inv.id}...`);
+
+    try {
+      const html2pdfModule = await import("html2pdf.js");
+      const html2pdf = (html2pdfModule as any).default || html2pdfModule;
+
+      const pdfWrapper = document.createElement("div");
+      pdfWrapper.style.position = "absolute";
+      pdfWrapper.style.left = "-9999px";
+      pdfWrapper.style.top = "0";
+      pdfWrapper.style.width = "750px";
+      pdfWrapper.style.padding = "36px";
+      pdfWrapper.style.backgroundColor = "#ffffff";
+      pdfWrapper.style.color = "#0f172a";
+      pdfWrapper.style.fontFamily = "system-ui, -apple-system, sans-serif";
+
+      pdfWrapper.innerHTML = `
+        <div style="border-bottom: 2px solid #059669; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <h1 style="font-size: 24px; font-weight: 800; color: #047857; margin: 0;">GlobeTrek PK</h1>
+            <p style="font-size: 11px; color: #64748b; margin: 2px 0 0 0;">Official Vendor Tax Receipt &amp; Billing Statement</p>
+          </div>
+          <div style="text-align: right;">
+            <span style="display: inline-block; background-color: #d1fae5; color: #047857; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; text-transform: uppercase;">${inv.status}</span>
+            <p style="font-size: 12px; font-weight: 700; font-family: monospace; color: #0f172a; margin: 6px 0 0 0;">${inv.id}</p>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; font-size: 12px;">
+          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 8px;">
+            <p style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #64748b; margin: 0 0 6px 0;">Billed To (Vendor Agency)</p>
+            <p style="font-size: 13px; font-weight: 700; color: #0f172a; margin: 0 0 2px 0;">${profile?.full_name || "GlobeTrek Verified Agency"}</p>
+            <p style="color: #475569; margin: 0;">City: ${profile?.city || "Pakistan"}</p>
+            <p style="color: #475569; margin: 2px 0 0 0;">Account Tier: ${profile?.subscription_tier || "Agency"} Plan</p>
+          </div>
+
+          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 8px;">
+            <p style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #64748b; margin: 0 0 6px 0;">Invoice Metadata</p>
+            <p style="margin: 0; color: #475569;"><strong>Date:</strong> ${inv.date}</p>
+            <p style="margin: 2px 0 0 0; color: #475569;"><strong>Billing Period:</strong> ${inv.period}</p>
+            <p style="margin: 2px 0 0 0; color: #475569;"><strong>Payment Gateway:</strong> SafePay PKR</p>
+            <p style="margin: 2px 0 0 0; color: #475569;"><strong>Platform NTN:</strong> 8941029-7</p>
+          </div>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 12px;">
+          <thead>
+            <tr style="background-color: #0f172a; color: #ffffff;">
+              <th style="padding: 10px 12px; text-align: left;">Item Description</th>
+              <th style="padding: 10px 12px; text-align: center;">Billing Period</th>
+              <th style="padding: 10px 12px; text-align: right;">Amount (PKR)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+              <td style="padding: 12px; font-weight: 600;">${inv.description}</td>
+              <td style="padding: 12px; text-align: center; color: #64748b;">${inv.period}</td>
+              <td style="padding: 12px; text-align: right; font-family: monospace; font-weight: 700;">Rs ${inv.amount_pkr.toLocaleString()}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 30px;">
+          <div style="width: 250px; background-color: #f8fafc; border: 1px solid #cbd5e1; padding: 14px; border-radius: 8px; font-size: 12px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: #64748b;">
+              <span>Subtotal:</span>
+              <span style="font-family: monospace;">Rs ${inv.amount_pkr.toLocaleString()}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #64748b;">
+              <span>Sales Tax (0%):</span>
+              <span style="font-family: monospace;">Rs 0</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-top: 1.5 solid #0f172a; padding-top: 6px; font-size: 14px; font-weight: 800; color: #047857;">
+              <span>Total Paid:</span>
+              <span style="font-family: monospace;">Rs ${inv.amount_pkr.toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="border-top: 1px solid #e2e8f0; padding-top: 16px; text-align: center; font-size: 10px; color: #94a3b8; line-height: 1.5;">
+          <p style="margin: 0;">GlobeTrek PK Technologies (Private) Limited — Tax Reg / NTN: 8941029-7</p>
+          <p style="margin: 2px 0 0 0;">This is an official computer-generated receipt issued upon verified SafePay PKR gateway payment completion.</p>
+        </div>
+      `;
+
+      document.body.appendChild(pdfWrapper);
+
+      const opts = {
+        margin: 10,
+        filename: `GlobeTrek_Invoice_${inv.id}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      };
+
+      await html2pdf().set(opts).from(pdfWrapper).save();
+      document.body.removeChild(pdfWrapper);
+
+      toast.dismiss(toastId);
+      toast.success(`Downloaded ${inv.id} PDF!`, {
+        description: "Official tax receipt saved to your browser downloads.",
+      });
+    } catch (err: any) {
+      toast.dismiss(toastId);
+      toast.error(`Download failed: ${err.message}`);
+    } finally {
+      setDownloadingInvId(null);
+    }
   };
 
   return (
@@ -195,10 +303,12 @@ function VendorInvoicesPage() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => handleDownloadInvoice(inv.id)}
+                        disabled={downloadingInvId === inv.id}
+                        onClick={() => handleDownloadInvoice(inv)}
                         className="h-7 text-xs font-semibold text-primary hover:bg-primary/10 rounded-lg gap-1"
                       >
-                        <Download className="size-3" /> PDF Receipt
+                        <Download className="size-3" />
+                        {downloadingInvId === inv.id ? "Generating PDF..." : "PDF Receipt"}
                       </Button>
                     </td>
                   </tr>
