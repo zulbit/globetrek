@@ -211,29 +211,92 @@ function BecomeAffiliatePage() {
         </div>
       </section>
 
-      {/* ── COMMISSION CARDS ── */}
-      <section className="py-12 px-4">
-        <div className="mx-auto max-w-4xl">
-          <h2 className="text-center text-2xl font-bold mb-2">How much will you earn?</h2>
-          <p className="text-center text-sm text-muted-foreground mb-8">20% one-time commission on every subscription you close.</p>
-          <div className="grid sm:grid-cols-2 gap-4 max-w-xl mx-auto">
-            {PLANS.map((p) => (
-              <div key={p.name} className={cn("relative rounded-2xl border p-6 text-center", p.bg, p.border)}>
-                {p.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-violet-500 px-3 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
-                    Highest earning
-                  </div>
-                )}
-                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">{p.name}</div>
-                <div className="text-xs text-muted-foreground mb-3">PKR {p.price.toLocaleString()}/month</div>
-                <div className={cn("text-4xl font-black", p.color)}>PKR {p.commission.toLocaleString()}</div>
-                <div className="text-xs text-muted-foreground mt-1">per successful signup</div>
-              </div>
-            ))}
+      {/* ── 2 WAYS TO EARN CARDS ── */}
+      <section className="py-12 px-4 bg-surface/30 border-y border-border/40">
+        <div className="mx-auto max-w-4xl space-y-6">
+          <div className="text-center">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-bold text-primary mb-2">
+              <DollarSign className="size-3.5" /> 2 Ways to Earn Money
+            </div>
+            <h2 className="text-2xl font-bold text-foreground">Choose How You Want to Promote</h2>
+            <p className="text-sm text-muted-foreground mt-1">Whether you prefer field sales walk-ins or social media creation — you get paid the same 20% commission!</p>
           </div>
-          <p className="text-center text-xs text-muted-foreground mt-4">
-            Plus: earn again on <strong className="text-foreground">plan upgrades</strong>. If your Starter agency upgrades to Pro, you earn PKR 2,000 more.
-          </p>
+
+          <div className="grid sm:grid-cols-2 gap-5">
+            {/* Field Sales Card */}
+            <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-card to-card p-6 space-y-4 shadow-card">
+              <div className="flex items-center justify-between">
+                <div className="size-11 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
+                  <MapPin className="size-6" />
+                </div>
+                <span className="rounded-full bg-primary/15 px-3 py-1 text-[10px] font-bold text-primary border border-primary/30">
+                  IN-PERSON FIELD SALES
+                </span>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-foreground">Field Sales Partner</h3>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                  Walk into travel agencies in your city (Shah Alam Market Lahore, Saddar Karachi, Blue Area Islamabad). Pitch GlobeTrek PK directly to travel agency directors and show them a live demo.
+                </p>
+              </div>
+              <ul className="space-y-1.5 text-xs text-foreground font-medium pt-1">
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+                  Give vendor your unique code (e.g. REF-AHMED1234) for 10% Off
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+                  Earn PKR 600 (Starter) or PKR 2,000 (Pro) per agency closed
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+                  Includes ready-made Roman Urdu pitch scripts
+                </li>
+              </ul>
+              <a href="#register">
+                <Button size="sm" className="w-full bg-primary text-primary-foreground font-bold rounded-xl text-xs gap-1.5 mt-2">
+                  Join as Field Sales Partner <ArrowRight className="size-3.5" />
+                </Button>
+              </a>
+            </div>
+
+            {/* Social Media Creator Card */}
+            <div className="rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-500/10 via-card to-card p-6 space-y-4 shadow-card">
+              <div className="flex items-center justify-between">
+                <div className="size-11 rounded-xl bg-violet-500/20 flex items-center justify-center text-violet-400">
+                  <Video className="size-6" />
+                </div>
+                <span className="rounded-full bg-violet-500/15 px-3 py-1 text-[10px] font-bold text-violet-400 border border-violet-500/30">
+                  ONLINE SOCIAL CREATOR
+                </span>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-foreground">Social Media Ambassador</h3>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                  Promote GlobeTrek PK on YouTube, Instagram, TikTok, Facebook, or LinkedIn. Place your trackable bio link in your profile/description and submit video links for verification.
+                </p>
+              </div>
+              <ul className="space-y-1.5 text-xs text-foreground font-medium pt-1">
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+                  Trackable bio links (auto-saves referral for 30 days)
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+                  Earn PKR 600–2,000 for every online agency signup
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+                  Includes proof submission & verification portal
+                </li>
+              </ul>
+              <a href="#register">
+                <Button size="sm" className="w-full bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl text-xs gap-1.5 mt-2">
+                  Join as Social Creator <ArrowRight className="size-3.5" />
+                </Button>
+              </a>
+            </div>
+          </div>
         </div>
       </section>
 
