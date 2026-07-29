@@ -1,8 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
-import { registerAffiliate } from "@/lib/affiliate.functions";
+import { registerAffiliate, getAffiliateSettings } from "@/lib/affiliate.functions";
+import { TIERS } from "@/lib/pricing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -22,16 +24,10 @@ export const Route = createFileRoute("/become-affiliate")({
   head: () => ({
     meta: [
       { title: "Earn Money — GlobeTrek PK Affiliate Program" },
-      { name: "description", content: "Become a GlobeTrek PK sales partner or social media creator. Earn PKR 600–2,000 for every travel agency you bring to the platform. No targets. Unlimited earning." },
+      { name: "description", content: "Become a GlobeTrek PK sales partner or social media creator. Earn 20% commission for every travel agency you bring to the platform. No targets. Unlimited earning." },
     ],
   }),
 });
-
-/* ── Commission tiers display ── */
-const PLANS = [
-  { name: "Starter Plan", price: 3000, commission: 600, color: "text-primary", bg: "bg-primary/5", border: "border-primary/20" },
-  { name: "Pro Plan", price: 10000, commission: 2000, color: "text-violet-400", bg: "bg-violet-500/5", border: "border-violet-500/20", popular: true },
-];
 
 /* ── Social Media Promotion Guidelines per Platform ── */
 const SOCIAL_GUIDELINES = [
@@ -73,10 +69,10 @@ const EARN_MORE = [
   { icon: Phone, title: "WhatsApp first, visit second", tip: "Send a WhatsApp message introducing GlobeTrek PK before visiting. Share the platform link. Warm visits convert 3x better than cold walk-ins." },
   { icon: Users, title: "Target the right agencies", tip: "Focus on mid-size agencies (5–15 staff) that already do online business. Solo agents or very large chains are harder to convert." },
   { icon: MessageSquare, title: "Use the GlobeTrek pitch script", tip: "Say: \"I'm partnered with GlobeTrek PK — a digital platform where travel agencies get verified leads, online bookings, and visa/insurance tools. First month is free. Can I show you a 5-minute demo?\"" },
-  { icon: TrendingUp, title: "Stack referrals to earn more", tip: "There's no cap. 10 Starter signups/month = PKR 6,000. 5 Pro signups = PKR 10,000. Mix both for maximum earnings. Your code works forever." },
+  { icon: TrendingUp, title: "Stack referrals to earn more", tip: "There's no cap. Multiple signups stack up quickly. Mix all plans for maximum earnings. Your code works forever." },
   { icon: Gift, title: "Refer during Eid season", tip: "Travel agencies see the most business before Eid ul-Fitr and Eid ul-Adha. Agencies are more willing to invest in new tools during peak season (March–April, May–June)." },
-  { icon: Award, title: "Target Hajj/Umrah operators", tip: "Umrah operators are always looking for leads and payment solutions. GlobeTrek's ticketing module is perfect for them. Commission on Pro plan = PKR 2,000 each." },
-  { icon: Target, title: "Bring Pro-tier clients", tip: "Instead of signing up 10 Starter clients (PKR 6,000), convincing just 3 agencies to go Pro earns you PKR 6,000 — with less effort. Focus pitch on ROI of the Pro features." },
+  { icon: Award, title: "Target Hajj/Umrah operators", tip: "Umrah operators are always looking for leads and payment solutions. GlobeTrek's ticketing & visa modules are perfect for them." },
+  { icon: Target, title: "Bring Full Agency clients", tip: "Pitching larger agencies to go Full Agency earns you the highest single commission — with maximum recurring value." },
 ];
 
 /* ── FAQ ── */
@@ -85,23 +81,16 @@ const FAQ = [
   { q: "How do social media creators get verified?", a: "After posting a video or Reel on YouTube/Instagram/Facebook, submit your link in your affiliate dashboard. Our team verifies the post within 24 hours." },
   { q: "When do I get paid?", a: "Every Friday. As soon as the vendor's payment is confirmed, your commission appears in your dashboard. We transfer via JazzCash or EasyPaisa every Friday." },
   { q: "Is there any target or quota?", a: "Zero. No monthly targets. You earn every time a vendor you brought in pays their subscription — whether that's 1 agency or 100." },
-  { q: "What if a vendor upgrades their plan later?", a: "You earn a commission on the upgrade too! If your referred agency upgrades from Starter to Pro, you get 20% of the Pro plan value." },
+  { q: "What if a vendor upgrades their plan later?", a: "You earn a commission on the upgrade too! If your referred agency upgrades to a higher tier, you get your commission on the upgrade price." },
   { q: "How does the vendor enter my code?", a: "When the vendor signs up, they enter your referral code (e.g. REF-AHMED1234) or click your trackable bio link which pre-fills the code automatically." },
   { q: "What is the minimum payout?", a: "PKR 1,000. Once your earned balance hits PKR 1,000, you can request a payout from your affiliate dashboard." },
-];
-
-/* ── Platform Feature Cards (guide) ── */
-const PLATFORM_FEATURES = [
-  { icon: Star, title: "What is GlobeTrek PK?", body: "GlobeTrek PK is Pakistan's first B2B digital travel marketplace. Travel agencies, visa consultants, insurance brokers, and ticketing desks list their services and receive verified customer leads — all in one platform." },
-  { icon: Users, title: "Who are your prospects?", body: "Any registered travel business: tour operators, visa filing offices, Umrah/Hajj operators, travel insurance brokers, flight ticketing desks. If they handle travel services in Pakistan, they need GlobeTrek." },
-  { icon: Zap, title: "What do vendors get?", body: "A professional digital storefront, verified customer leads, WhatsApp inquiry alerts, AI tools for creating tour descriptions and itineraries, financial reporting, and a Safepay-powered payment system — all in PKR." },
-  { icon: BookOpen, title: "What are the subscription plans?", body: "Starter (PKR 3,000/mo): Basic listing + 3 lead credits. Pro (PKR 10,000/mo): Unlimited leads + AI tools + priority placement. Both plans are month-to-month, no long-term contract." },
 ];
 
 function BecomeAffiliatePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const registerFn = useServerFn(registerAffiliate);
+  const getSettingsFn = useServerFn(getAffiliateSettings);
 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ fullName: "", phone: "", cnic: "", city: "" });
@@ -110,6 +99,30 @@ function BecomeAffiliatePage() {
   const [copiedCode, setCopiedCode] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [blueprintModal, setBlueprintModal] = useState<"field" | "social" | null>(null);
+
+  const { data: settings } = useQuery({
+    queryKey: ["affiliate-settings"],
+    queryFn: () => getSettingsFn(),
+  });
+
+  const commissionPct = settings?.commission_pct ?? 20;
+
+  // Compute live plans dynamically from TIERS and commission_pct
+  const paidTiers = TIERS.filter((t) => t.price_pkr > 0);
+  const dynamicPlans = paidTiers.map((t) => ({
+    id: t.id,
+    name: t.name,
+    price: t.price_pkr,
+    commission: Math.round((t.price_pkr * commissionPct) / 100),
+    archetype: t.archetype,
+    popular: t.highlight,
+    color: t.id === "agency" ? "text-amber-400" : t.id === "pro" ? "text-primary" : "text-sky-400",
+    bg: t.id === "agency" ? "bg-amber-500/5" : t.id === "pro" ? "bg-primary/5" : "bg-sky-500/5",
+    border: t.id === "agency" ? "border-amber-500/20" : t.id === "pro" ? "border-primary/20" : "border-sky-500/20",
+  }));
+
+  const minCommission = Math.min(...dynamicPlans.map((p) => p.commission));
+  const maxCommission = Math.max(...dynamicPlans.map((p) => p.commission));
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
@@ -190,13 +203,13 @@ function BecomeAffiliatePage() {
         </div>
         <div className="relative mx-auto max-w-4xl text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary mb-6">
-            <Share2 className="size-3.5" /> Field Sales & Content Creator Affiliate Program
+            <Share2 className="size-3.5" /> Field Sales &amp; Content Creator Affiliate Program
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
             Turn your network or content<br />into <span className="text-primary">real income</span>
           </h1>
           <p className="mt-6 max-w-2xl mx-auto text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Promote GlobeTrek PK in-person or on social media. Earn <strong className="text-foreground">PKR 600–2,000</strong> for every travel agency that subscribes — paid directly to your JazzCash or EasyPaisa every Friday.
+            Promote GlobeTrek PK in-person or on social media. Earn <strong className="text-foreground">PKR {minCommission.toLocaleString()}–{maxCommission.toLocaleString()}</strong> ({commissionPct}% commission) for every travel agency that subscribes — paid directly to your JazzCash or EasyPaisa every Friday.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button
@@ -256,7 +269,7 @@ function BecomeAffiliatePage() {
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
-                    Earn PKR 600 (Starter) or PKR 2,000 (Pro) per agency closed
+                    Earn PKR {minCommission.toLocaleString()}–{maxCommission.toLocaleString()} per agency closed
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
@@ -301,7 +314,7 @@ function BecomeAffiliatePage() {
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
-                    Earn PKR 600–2,000 for every online agency signup
+                    Earn PKR {minCommission.toLocaleString()}–{maxCommission.toLocaleString()} per online agency signup
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
@@ -325,28 +338,35 @@ function BecomeAffiliatePage() {
         </div>
       </section>
 
-      {/* ── COMMISSION CARDS ── */}
+      {/* ── DYNAMIC COMMISSION CARDS ── */}
       <section className="py-12 px-4">
-        <div className="mx-auto max-w-4xl">
+        <div className="mx-auto max-w-5xl">
           <h2 className="text-center text-2xl font-bold mb-2">How much will you earn?</h2>
-          <p className="text-center text-sm text-muted-foreground mb-8">20% one-time commission on every subscription you close.</p>
-          <div className="grid sm:grid-cols-2 gap-4 max-w-xl mx-auto">
-            {PLANS.map((p) => (
-              <div key={p.name} className={cn("relative rounded-2xl border p-6 text-center", p.bg, p.border)}>
+          <p className="text-center text-sm text-muted-foreground mb-8">
+            Live {commissionPct}% commission on every vendor plan closed (aligned with GlobeTrek pricing).
+          </p>
+          <div className="grid sm:grid-cols-3 gap-4">
+            {dynamicPlans.map((p) => (
+              <div key={p.id} className={cn("relative rounded-2xl border p-6 text-center space-y-2 flex flex-col justify-between", p.bg, p.border)}>
                 {p.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-violet-500 px-3 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
                     Highest earning
                   </div>
                 )}
-                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">{p.name}</div>
-                <div className="text-xs text-muted-foreground mb-3">PKR {p.price.toLocaleString()}/month</div>
-                <div className={cn("text-4xl font-black", p.color)}>PKR {p.commission.toLocaleString()}</div>
-                <div className="text-xs text-muted-foreground mt-1">per successful signup</div>
+                <div>
+                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">{p.name}</div>
+                  <div className="text-xs text-muted-foreground mb-3">PKR {p.price.toLocaleString()}/month</div>
+                  <div className={cn("text-4xl font-black", p.color)}>PKR {p.commission.toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground mt-1 font-medium">per successful signup ({commissionPct}%)</div>
+                </div>
+                <div className="text-[11px] text-muted-foreground border-t border-border/40 pt-3 italic">
+                  {p.archetype}
+                </div>
               </div>
             ))}
           </div>
-          <p className="text-center text-xs text-muted-foreground mt-4">
-            Plus: earn again on <strong className="text-foreground">plan upgrades</strong>. If your Starter agency upgrades to Pro, you earn PKR 2,000 more.
+          <p className="text-center text-xs text-muted-foreground mt-6">
+            Plus: earn again on <strong className="text-foreground">plan upgrades</strong>. If your referred agency upgrades tier, you earn the commission difference.
           </p>
         </div>
       </section>
@@ -485,7 +505,7 @@ function BecomeAffiliatePage() {
               { step: "1", icon: BadgeCheck, title: "Register below", body: "Fill the form, get your unique referral code & trackable bio link instantly. e.g. REF-AHMED1234", color: "bg-primary/10 text-primary" },
               { step: "2", icon: Users, title: "Pitch or Post Online", body: "Visit travel agencies or post on YouTube/Instagram with your code and bio link.", color: "bg-violet-500/10 text-violet-400" },
               { step: "3", icon: Share2, title: "Vendor uses your code", body: "Agency signs up and enters your referral code (or clicks your bio link) for 10% off.", color: "bg-amber-500/10 text-amber-400" },
-              { step: "4", icon: DollarSign, title: "You earn commission", body: "PKR 600 or PKR 2,000 credited instantly. Paid every Friday via JazzCash/EasyPaisa.", color: "bg-emerald-500/10 text-emerald-400" },
+              { step: "4", icon: DollarSign, title: "You earn commission", body: `Earn PKR ${minCommission.toLocaleString()}–${maxCommission.toLocaleString()} credited instantly. Paid every Friday via JazzCash/EasyPaisa.`, color: "bg-emerald-500/10 text-emerald-400" },
             ].map((s) => (
               <div key={s.step} className="rounded-2xl border border-border bg-card p-5">
                 <div className={cn("size-10 rounded-xl flex items-center justify-center mb-3", s.color)}>
@@ -529,7 +549,7 @@ function BecomeAffiliatePage() {
           <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6 font-mono text-xs text-foreground leading-relaxed space-y-3">
             <p><span className="text-primary font-bold">YOU:</span> "Assalam-o-Alaikum, main aapko GlobeTrek PK ke baray mein batana chahta tha — yeh Pakistan ka pehla digital travel marketplace hai."</p>
             <p><span className="text-primary font-bold">YOU:</span> "Iss platform par aapki agency list hoti hai, aur verified customers seedha aapko contact kartay hain. Leads milti hain, payment online hoti hai, aur AI tools bhi hain tour descriptions likhnay ke liye."</p>
-            <p><span className="text-primary font-bold">YOU:</span> "Starter plan sirf PKR 3,000/month hai. Pehla mahina free demo kar saktay hain. Main aapko 5 minute mein poora platform dikha sakta hun?"</p>
+            <p><span className="text-primary font-bold">YOU:</span> "Travel Desk plan PKR 4,000/month aur Tour Operator plan PKR 7,500/month hai. Pehla mahina free demo kar saktay hain. Main aapko 5 minute mein poora platform dikha sakta hun?"</p>
             <div className="border-t border-primary/20 pt-3 mt-3">
               <p className="text-muted-foreground text-[10px]">If they say yes → Show them: tour.testbench.shop → login demo → features tour</p>
               <p className="text-muted-foreground text-[10px]">If they hesitate → "No commitment. Main aapko brochure chor ta hun aur WhatsApp number de ta hun."</p>
@@ -700,20 +720,19 @@ function BecomeAffiliatePage() {
 
                   <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-2">
                     <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
-                      <DollarSign className="size-4 text-emerald-400" /> Step 4: Earnings &amp; Friday Payouts
+                      <DollarSign className="size-4 text-emerald-400" /> Step 4: Live Earnings ({commissionPct}% Commission) &amp; Friday Payouts
                     </h4>
                     <p>
-                      When the vendor completes their payment via Safepay (PKR), your account is automatically credited:
+                      When the vendor completes their payment via Safepay (PKR), your account is automatically credited based on the plan they select:
                     </p>
-                    <div className="grid grid-cols-2 gap-2 text-center pt-1 font-bold">
-                      <div className="rounded-xl border border-primary/20 bg-card p-2.5">
-                        <span className="text-xs text-muted-foreground block">Starter (PKR 3,000/mo)</span>
-                        <span className="text-lg text-primary">PKR 600</span>
-                      </div>
-                      <div className="rounded-xl border border-violet-500/20 bg-card p-2.5">
-                        <span className="text-xs text-muted-foreground block">Pro (PKR 10,000/mo)</span>
-                        <span className="text-lg text-violet-400">PKR 2,000</span>
-                      </div>
+                    <div className="grid grid-cols-3 gap-2 text-center pt-1 font-bold">
+                      {dynamicPlans.map((p) => (
+                        <div key={p.id} className="rounded-xl border border-border bg-card p-2">
+                          <span className="text-[10px] text-muted-foreground block truncate">{p.name}</span>
+                          <span className="text-[10px] text-muted-foreground font-normal block">PKR {p.price.toLocaleString()}</span>
+                          <span className={cn("text-sm", p.color)}>PKR {p.commission.toLocaleString()}</span>
+                        </div>
+                      ))}
                     </div>
                     <p className="text-[11px] text-muted-foreground pt-1">
                       Payouts are transferred directly to your JazzCash / EasyPaisa every Friday!
@@ -775,10 +794,22 @@ function BecomeAffiliatePage() {
 
                   <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-2">
                     <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
-                      <DollarSign className="size-4 text-emerald-400" /> Step 4: 20% Commission &amp; Friday Payouts
+                      <DollarSign className="size-4 text-emerald-400" /> Step 4: Live Earnings ({commissionPct}% Commission) &amp; Friday Payouts
                     </h4>
                     <p>
-                      Earn <strong>PKR 600 (Starter)</strong> or <strong>PKR 2,000 (Pro)</strong> per subscriber. All earnings are paid out every Friday via JazzCash, EasyPaisa, or Bank Transfer.
+                      Earn 20% commission on every subscriber based on live pricing plans:
+                    </p>
+                    <div className="grid grid-cols-3 gap-2 text-center pt-1 font-bold">
+                      {dynamicPlans.map((p) => (
+                        <div key={p.id} className="rounded-xl border border-border bg-card p-2">
+                          <span className="text-[10px] text-muted-foreground block truncate">{p.name}</span>
+                          <span className="text-[10px] text-muted-foreground font-normal block">PKR {p.price.toLocaleString()}</span>
+                          <span className={cn("text-sm", p.color)}>PKR {p.commission.toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground pt-1">
+                      All earnings are paid out every Friday via JazzCash, EasyPaisa, or Bank Transfer.
                     </p>
                   </div>
                 </div>

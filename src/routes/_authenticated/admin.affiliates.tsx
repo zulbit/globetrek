@@ -9,6 +9,7 @@ import {
   getAdminSocialPosts,
   verifySocialPost,
 } from "@/lib/affiliate.functions";
+import { TIERS } from "@/lib/pricing";
 import {
   Users,
   DollarSign,
@@ -167,8 +168,16 @@ function AdminAffiliates() {
   }, [savedSettings]);
 
   const commissionPct = settingsForm.commission_pct;
-  const starterCommission = Math.round((3000 * commissionPct) / 100);
-  const proCommission = Math.round((10000 * commissionPct) / 100);
+  const paidTiers = TIERS.filter((t) => t.price_pkr > 0);
+  const dynamicTierRates = paidTiers.map((t) => ({
+    name: t.name,
+    price: t.price_pkr,
+    commission: Math.round((t.price_pkr * commissionPct) / 100),
+    archetype: t.archetype,
+    color: t.id === "agency" ? "text-amber-400" : t.id === "pro" ? "text-primary" : "text-sky-400",
+    bg: t.id === "agency" ? "bg-amber-500/5" : t.id === "pro" ? "bg-primary/5" : "bg-sky-500/5",
+    border: t.id === "agency" ? "border-amber-500/20" : t.id === "pro" ? "border-primary/20" : "border-sky-500/20",
+  }));
 
   const totalReferrals = referrals.length;
   const totalEarned = referrals.reduce((sum: number, r: any) => sum + (r.commission_pkr ?? 0), 0);
@@ -322,20 +331,19 @@ function AdminAffiliates() {
           </div>
 
           {/* Current Live Rates Summary */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
-              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Starter Subscription</div>
-              <div className="text-xs text-muted-foreground mb-3">Vendor pays PKR 3,000/month</div>
-              <div className="text-3xl font-black text-primary">PKR {starterCommission.toLocaleString()}</div>
-              <div className="text-xs text-muted-foreground mt-1">{commissionPct}% commission for affiliate</div>
-            </div>
-
-            <div className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-5">
-              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Pro Subscription</div>
-              <div className="text-xs text-muted-foreground mb-3">Vendor pays PKR 10,000/month</div>
-              <div className="text-3xl font-black text-violet-400">PKR {proCommission.toLocaleString()}</div>
-              <div className="text-xs text-muted-foreground mt-1">{commissionPct}% commission for affiliate</div>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {dynamicTierRates.map((t) => (
+              <div key={t.name} className={cn("rounded-2xl border p-5 space-y-1 flex flex-col justify-between", t.bg, t.border)}>
+                <div>
+                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">{t.name} Plan</div>
+                  <div className="text-xs text-muted-foreground mb-3">Vendor pays PKR {t.price.toLocaleString()}/month</div>
+                  <div className={cn("text-3xl font-black", t.color)}>PKR {t.commission.toLocaleString()}</div>
+                </div>
+                <div className="text-xs text-muted-foreground pt-2 border-t border-border/40">
+                  {commissionPct}% commission for affiliate ({t.archetype})
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
