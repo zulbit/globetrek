@@ -31,23 +31,22 @@ function AdminVendors() {
   const { data, isLoading } = useQuery({
     queryKey: ["admin-vendors"],
     queryFn: async () => {
-      const { data: rolesData, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .eq("role", "vendor");
-      if (rolesError) throw rolesError;
-
-      const ids = (rolesData ?? []).map((r) => r.user_id);
-      if (ids.length === 0) return [];
-
+      // Query profiles directly so RLS on user_roles does not filter out vendors
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
         .select("id, email, full_name, company_name, phone, vendor_status, subscription_tier, lead_credits_balance, created_at")
-        .in("id", ids)
         .order("created_at", { ascending: false });
       if (profilesError) throw profilesError;
 
-      return (profilesData ?? []) as VendorProfile[];
+      // Include profiles that are vendor accounts (have company_name, pending vendor_status, or vendor email)
+      const vendors = (profilesData ?? []).filter((p) => {
+        if (p.company_name) return true;
+        if (p.vendor_status === "pending") return true;
+        if (p.email && p.email.toLowerCase().includes("vendor")) return true;
+        return false;
+      });
+
+      return vendors as VendorProfile[];
     },
   });
 
