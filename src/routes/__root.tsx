@@ -16,6 +16,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AIChatWidget } from "@/components/AIChatWidget";
 import { CompareBar } from "@/components/compare-bar";
+import { VendorRefHandler } from "@/components/vendor-ref-handler";
 
 const themeInitScript = `(function(){try{var t=localStorage.getItem('pk-tours-theme');var m=t==='light'?'light':'dark';document.documentElement.classList.add(m);document.documentElement.style.colorScheme=m;}catch(e){document.documentElement.classList.add('dark');}})();`;
 
@@ -152,6 +153,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
+        <VendorRefHandler />
         <Outlet />
         <CompareBar />
         <AIChatWidget />

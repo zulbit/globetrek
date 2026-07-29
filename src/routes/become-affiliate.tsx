@@ -11,7 +11,8 @@ import {
   Mountain, Share2, DollarSign, Users, CheckCircle2, ArrowRight,
   Star, Zap, BookOpen, ChevronDown, ChevronRight, Phone,
   Copy, ExternalLink, Loader2, Gift, TrendingUp, Target,
-  MessageSquare, MapPin, Award, ShieldCheck, BadgeCheck,
+  MessageSquare, MapPin, Award, ShieldCheck, BadgeCheck, Video,
+  Instagram, Youtube, Facebook, Camera, Send, Link2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/become-affiliate")({
@@ -19,7 +20,7 @@ export const Route = createFileRoute("/become-affiliate")({
   head: () => ({
     meta: [
       { title: "Earn Money — GlobeTrek PK Affiliate Program" },
-      { name: "description", content: "Become a GlobeTrek PK sales affiliate. Earn PKR 600–2,000 for every travel agency you bring to the platform. No targets. Unlimited earning." },
+      { name: "description", content: "Become a GlobeTrek PK sales partner or social media creator. Earn PKR 600–2,000 for every travel agency you bring to the platform. No targets. Unlimited earning." },
     ],
   }),
 });
@@ -28,6 +29,40 @@ export const Route = createFileRoute("/become-affiliate")({
 const PLANS = [
   { name: "Starter Plan", price: 3000, commission: 600, color: "text-primary", bg: "bg-primary/5", border: "border-primary/20" },
   { name: "Pro Plan", price: 10000, commission: 2000, color: "text-violet-400", bg: "bg-violet-500/5", border: "border-violet-500/20", popular: true },
+];
+
+/* ── Social Media Promotion Guidelines per Platform ── */
+const SOCIAL_GUIDELINES = [
+  {
+    platform: "YouTube Vloggers & Tech Reviewers",
+    icon: Youtube,
+    color: "text-red-500",
+    bg: "bg-red-500/5",
+    border: "border-red-500/20",
+    action: "Make a 3-10 min video or Short showing GlobeTrek's B2B travel features & custom lead portal.",
+    linkGuidance: "Put trackable bio link in the TOP line of description & pinned comment.",
+    vendorHook: "Tell travel agents: 'Use code YOUR_CODE to get 10% off your first month'.",
+  },
+  {
+    platform: "Instagram & TikTok Content Creators",
+    icon: Instagram,
+    color: "text-pink-500",
+    bg: "bg-pink-500/5",
+    border: "border-pink-500/20",
+    action: "Post a Reel / TikTok demonstrating how Pakistani agencies list tours & collect PKR online.",
+    linkGuidance: "Put trackable bio link (tour.testbench.shop/auth?mode=signup&ref=YOUR_CODE) in Instagram bio / linktree.",
+    vendorHook: "Add text overlay in video: 'Travel agents use code YOUR_CODE for 10% Off'.",
+  },
+  {
+    platform: "Facebook Travel Operator Groups",
+    icon: Facebook,
+    color: "text-blue-500",
+    bg: "bg-blue-500/5",
+    border: "border-blue-500/20",
+    action: "Share informative posts in Pakistan travel operator & Umrah agent Facebook groups.",
+    linkGuidance: "Include signup link + referral code directly inside group post text.",
+    vendorHook: "Highlight zero commission on bookings + free demo testing.",
+  },
 ];
 
 /* ── How to earn more tips ── */
@@ -44,13 +79,13 @@ const EARN_MORE = [
 
 /* ── FAQ ── */
 const FAQ = [
-  { q: "Do I need to be a travel expert?", a: "No. You just need to be able to talk to travel agents and explain the platform's benefits. We provide you with ready-made pitch materials and a demo script." },
-  { q: "When do I get paid?", a: "Every Friday. As soon as the vendor's payment is confirmed, your commission appears in your dashboard. You request payout and we transfer via JazzCash or EasyPaisa by Friday of that week." },
+  { q: "Do I need to be a travel expert?", a: "No. You just need to be able to talk to travel agents or post content explaining the platform's benefits to travel businesses." },
+  { q: "How do social media creators get verified?", a: "After posting a video or Reel on YouTube/Instagram/Facebook, submit your link in your affiliate dashboard. Our team verifies the post within 24 hours." },
+  { q: "When do I get paid?", a: "Every Friday. As soon as the vendor's payment is confirmed, your commission appears in your dashboard. We transfer via JazzCash or EasyPaisa every Friday." },
   { q: "Is there any target or quota?", a: "Zero. No monthly targets. You earn every time a vendor you brought in pays their subscription — whether that's 1 agency or 100." },
   { q: "What if a vendor upgrades their plan later?", a: "You earn a commission on the upgrade too! If your referred agency upgrades from Starter to Pro, you get 20% of the Pro plan value." },
-  { q: "How does the vendor enter my code?", a: "When the vendor signs up or goes to the billing page, there's a field: \"Referred by a GlobeTrek Sales Partner? Enter code\". They type your unique code (e.g. REF-AHMED1234)." },
+  { q: "How does the vendor enter my code?", a: "When the vendor signs up, they enter your referral code (e.g. REF-AHMED1234) or click your trackable bio link which pre-fills the code automatically." },
   { q: "What is the minimum payout?", a: "PKR 1,000. Once your earned balance hits PKR 1,000, you can request a payout from your affiliate dashboard." },
-  { q: "Can I do this from any city?", a: "Yes. GlobeTrek is a national platform. Affiliates in Lahore, Karachi, Islamabad, Peshawar, Quetta, Multan — all cities welcome." },
 ];
 
 /* ── Platform Feature Cards (guide) ── */
@@ -146,13 +181,13 @@ function BecomeAffiliatePage() {
         </div>
         <div className="relative mx-auto max-w-4xl text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary mb-6">
-            <Share2 className="size-3.5" /> Sales Affiliate Program — Open to Everyone
+            <Share2 className="size-3.5" /> Field Sales & Content Creator Affiliate Program
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
-            Turn your network<br />into <span className="text-primary">real income</span>
+            Turn your network or content<br />into <span className="text-primary">real income</span>
           </h1>
           <p className="mt-6 max-w-2xl mx-auto text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Bring travel agencies onto GlobeTrek PK. Earn <strong className="text-foreground">PKR 600–2,000</strong> for every agency that subscribes — one-time, directly paid to your JazzCash or EasyPaisa every Friday.
+            Promote GlobeTrek PK in-person or on social media. Earn <strong className="text-foreground">PKR 600–2,000</strong> for every travel agency that subscribes — paid directly to your JazzCash or EasyPaisa every Friday.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button
@@ -160,7 +195,7 @@ function BecomeAffiliatePage() {
               className="bg-primary text-primary-foreground font-bold rounded-2xl gap-2 text-base px-8"
               onClick={() => setShowForm(true)}
             >
-              <BadgeCheck className="size-5" /> Register as Affiliate — Free
+              <BadgeCheck className="size-5" /> Register as Partner — Free
             </Button>
             <a href="#how-it-works">
               <Button size="lg" variant="outline" className="rounded-2xl text-base px-8 gap-2">
@@ -169,7 +204,7 @@ function BecomeAffiliatePage() {
             </a>
           </div>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-xs text-muted-foreground">
-            {["No targets. No pressure.", "Unlimited referrals", "Paid every Friday", "JazzCash / EasyPaisa"].map((t) => (
+            {["No targets. No pressure.", "Trackable Bio Links & Codes", "Paid every Friday", "JazzCash / EasyPaisa"].map((t) => (
               <span key={t} className="flex items-center gap-1.5"><CheckCircle2 className="size-3.5 text-emerald-400" />{t}</span>
             ))}
           </div>
@@ -202,15 +237,61 @@ function BecomeAffiliatePage() {
         </div>
       </section>
 
+      {/* ── CONTENT CREATOR & SOCIAL MEDIA AMBASSADOR GUIDE ── */}
+      <section className="py-12 px-4 bg-surface/30">
+        <div className="mx-auto max-w-4xl space-y-6">
+          <div className="text-center">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-bold text-violet-400 mb-2">
+              <Video className="size-3.5" /> Content Creator &amp; Social Ambassador Guide
+            </div>
+            <h2 className="text-2xl font-bold text-foreground">How to Promote on Social Media</h2>
+            <p className="text-sm text-muted-foreground mt-1">Step-by-step guidelines for YouTubers, Instagrammers, and Facebook creators</p>
+          </div>
+
+          <div className="grid sm:grid-cols-3 gap-4">
+            {SOCIAL_GUIDELINES.map((g) => {
+              const Icon = g.icon;
+              return (
+                <div key={g.platform} className={cn("rounded-2xl border p-5 space-y-3", g.bg, g.border)}>
+                  <div className="flex items-center gap-2">
+                    <Icon className={cn("size-5", g.color)} />
+                    <span className="font-bold text-xs text-foreground">{g.platform}</span>
+                  </div>
+                  <div className="space-y-2 text-xs text-muted-foreground">
+                    <p><strong className="text-foreground">Action:</strong> {g.action}</p>
+                    <p><strong className="text-foreground">Link Placement:</strong> {g.linkGuidance}</p>
+                    <p><strong className="text-foreground">Vendor Discount Hook:</strong> {g.vendorHook}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-xs text-foreground flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Camera className="size-5 text-primary shrink-0" />
+              <div>
+                <span className="font-bold">Proof Verification Mechanism:</span> Submit your published video/post link in your affiliate dashboard. Admin verifies creator posts within 24 hours.
+              </div>
+            </div>
+            <Link to="/affiliate">
+              <Button size="sm" className="bg-primary text-primary-foreground font-bold text-xs rounded-xl shrink-0">
+                Dashboard
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* ── HOW IT WORKS ── */}
-      <section id="how-it-works" className="py-12 px-4 bg-surface/30">
+      <section id="how-it-works" className="py-12 px-4">
         <div className="mx-auto max-w-4xl">
           <h2 className="text-center text-2xl font-bold mb-8">How it works — 4 simple steps</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { step: "1", icon: BadgeCheck, title: "Register below", body: "Fill the form, get your unique referral code instantly. e.g. REF-AHMED1234", color: "bg-primary/10 text-primary" },
-              { step: "2", icon: Users, title: "Visit a travel agency", body: "Go to any travel agency and pitch GlobeTrek PK. Show them the platform on your phone.", color: "bg-violet-500/10 text-violet-400" },
-              { step: "3", icon: Share2, title: "Vendor uses your code", body: "When the agency signs up, they enter your referral code at checkout before paying.", color: "bg-amber-500/10 text-amber-400" },
+              { step: "1", icon: BadgeCheck, title: "Register below", body: "Fill the form, get your unique referral code & trackable bio link instantly. e.g. REF-AHMED1234", color: "bg-primary/10 text-primary" },
+              { step: "2", icon: Users, title: "Pitch or Post Online", body: "Visit travel agencies or post on YouTube/Instagram with your code and bio link.", color: "bg-violet-500/10 text-violet-400" },
+              { step: "3", icon: Share2, title: "Vendor uses your code", body: "Agency signs up and enters your referral code (or clicks your bio link) for 10% off.", color: "bg-amber-500/10 text-amber-400" },
               { step: "4", icon: DollarSign, title: "You earn commission", body: "PKR 600 or PKR 2,000 credited instantly. Paid every Friday via JazzCash/EasyPaisa.", color: "bg-emerald-500/10 text-emerald-400" },
             ].map((s) => (
               <div key={s.step} className="rounded-2xl border border-border bg-card p-5">
@@ -227,7 +308,7 @@ function BecomeAffiliatePage() {
       </section>
 
       {/* ── ABOUT THE PLATFORM ── */}
-      <section className="py-12 px-4">
+      <section className="py-12 px-4 bg-surface/30">
         <div className="mx-auto max-w-4xl">
           <h2 className="text-center text-2xl font-bold mb-2">Understand what you're selling</h2>
           <p className="text-center text-sm text-muted-foreground mb-8">The more you know the platform, the easier the sale.</p>
@@ -248,10 +329,10 @@ function BecomeAffiliatePage() {
       </section>
 
       {/* ── HOW TO EARN MORE ── */}
-      <section className="py-12 px-4 bg-surface/30">
+      <section className="py-12 px-4">
         <div className="mx-auto max-w-4xl">
           <h2 className="text-center text-2xl font-bold mb-2">Tips to earn more</h2>
-          <p className="text-center text-sm text-muted-foreground mb-8">Strategies from top-performing affiliates.</p>
+          <p className="text-center text-sm text-muted-foreground mb-8">Strategies from top-performing partners.</p>
           <div className="grid sm:grid-cols-2 gap-3">
             {EARN_MORE.map((tip) => (
               <div key={tip.title} className="rounded-2xl border border-border bg-card p-4 flex gap-3">
@@ -269,7 +350,7 @@ function BecomeAffiliatePage() {
       </section>
 
       {/* ── SAMPLE PITCH SCRIPT ── */}
-      <section className="py-12 px-4">
+      <section className="py-12 px-4 bg-surface/30">
         <div className="mx-auto max-w-2xl">
           <h2 className="text-center text-2xl font-bold mb-2">Your pitch script</h2>
           <p className="text-center text-xs text-muted-foreground mb-6">Use this when approaching travel agencies</p>
@@ -286,7 +367,7 @@ function BecomeAffiliatePage() {
       </section>
 
       {/* ── FAQ ── */}
-      <section className="py-12 px-4 bg-surface/30">
+      <section className="py-12 px-4">
         <div className="mx-auto max-w-2xl">
           <h2 className="text-center text-2xl font-bold mb-8">Frequently Asked Questions</h2>
           <div className="space-y-2">
@@ -311,13 +392,13 @@ function BecomeAffiliatePage() {
       </section>
 
       {/* ── REGISTRATION FORM ── */}
-      <section id="register" className="py-16 px-4">
+      <section id="register" className="py-16 px-4 bg-surface/30">
         <div className="mx-auto max-w-md">
           {done ? (
             <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-8 text-center">
               <CheckCircle2 className="size-12 text-emerald-400 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-foreground mb-2">You're in! 🎉</h2>
-              <p className="text-sm text-muted-foreground mb-6">Your unique referral code is ready. Share it with travel agencies when they sign up on GlobeTrek PK.</p>
+              <p className="text-sm text-muted-foreground mb-6">Your unique referral code & trackable bio link are ready. Share them with travel agencies or on social media.</p>
               <div className="rounded-xl border border-emerald-500/30 bg-background p-4 mb-4">
                 <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Your Referral Code</div>
                 <div className="text-3xl font-black text-emerald-400 tracking-wider">{done.code}</div>
@@ -344,8 +425,8 @@ function BecomeAffiliatePage() {
                 <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
                   <BadgeCheck className="size-6 text-primary" />
                 </div>
-                <h2 className="text-2xl font-bold">Register as Affiliate</h2>
-                <p className="text-xs text-muted-foreground mt-1">Free. Instant approval. Start earning today.</p>
+                <h2 className="text-2xl font-bold">Register as Partner</h2>
+                <p className="text-xs text-muted-foreground mt-1">Free. Instant code & bio link. Start earning today.</p>
               </div>
               {!user && (
                 <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-400 font-medium text-center mb-4">

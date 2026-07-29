@@ -104,13 +104,20 @@ export const getAffiliateDashboard = createServerFn({ method: "GET" })
       .maybeSingle();
     if (!aff) return null;
 
-    const { data: refs } = await admin
-      .from("affiliate_referrals")
-      .select("*, profiles!affiliate_referrals_vendor_user_id_fkey(company_name, email)")
-      .eq("affiliate_id", aff.id)
-      .order("created_at", { ascending: false });
+    const [refsRes, postsRes] = await Promise.all([
+      admin
+        .from("affiliate_referrals")
+        .select("*, profiles!affiliate_referrals_vendor_user_id_fkey(company_name, email)")
+        .eq("affiliate_id", aff.id)
+        .order("created_at", { ascending: false }),
+      admin
+        .from("affiliate_social_posts")
+        .select("*")
+        .eq("affiliate_id", aff.id)
+        .order("created_at", { ascending: false }),
+    ]);
 
-    return { affiliate: aff, referrals: refs ?? [] };
+    return { affiliate: aff, referrals: refsRes.data ?? [], socialPosts: postsRes.data ?? [] };
   });
 
 /* ──────────────────────────────────────────
@@ -150,6 +157,72 @@ export const saveReferralCodeToProfile = createServerFn({ method: "POST" })
       .eq("id", data.userId);
     if (error) throw new Error(error.message);
     return { ok: true, already_set: false };
+  });
+
+/* ──────────────────────────────────────────
+   SUBMIT SOCIAL POST PROOF (affiliate)
+   ────────────────────────────────────────── */
+export const submitSocialPostProof = createServerFn({ method: "POST" })
+  .validator((d: { userId: string; platform: string; postUrl: string; screenshotUrl?: string; captionSnippet?: string }) => d)
+  .handler(async ({ data }) => {
+    const admin = getAdmin();
+    const { data: aff } = await admin
+      .from("affiliates")
+      .select("id")
+      .eq("user_id", data.userId)
+      .single();
+    if (!aff) throw new Error("Affiliate record not found");
+
+    const { data: inserted, error } = await admin
+      .from("affiliate_social_posts")
+      .insert({
+        affiliate_id: aff.id,
+        platform: data.platform,
+        post_url: data.postUrl,
+        screenshot_url: data.screenshotUrl || null,
+        caption_snippet: data.captionSnippet || null,
+        status: "pending",
+      })
+      .select("*")
+      .single();
+
+    if (error) throw new Error(error.message);
+    return { ok: true, post: inserted };
+  });
+
+/* ──────────────────────────────────────────
+   ADMIN: GET ALL SOCIAL POST PROOFS FOR VERIFICATION
+   ────────────────────────────────────────── */
+export const getAdminSocialPosts = createServerFn({ method: "GET" }).handler(async () => {
+  const admin = getAdmin();
+  const { data } = await admin
+    .from("affiliate_social_posts")
+    .select(`
+      *,
+      affiliates!affiliate_social_posts_affiliate_id_fkey(full_name, phone, referral_code, city, email)
+    `)
+    .order("created_at", { ascending: false });
+  return data ?? [];
+});
+
+/* ──────────────────────────────────────────
+   ADMIN: VERIFY / REJECT SOCIAL POST PROOF
+   ────────────────────────────────────────── */
+export const verifySocialPost = createServerFn({ method: "POST" })
+  .validator((d: { postId: string; status: "verified" | "rejected"; adminNotes?: string }) => d)
+  .handler(async ({ data }) => {
+    const admin = getAdmin();
+    const { error } = await admin
+      .from("affiliate_social_posts")
+      .update({
+        status: data.status,
+        admin_notes: data.adminNotes || null,
+        verified_at: data.status === "verified" ? new Date().toISOString() : null,
+      })
+      .eq("id", data.postId);
+
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
 
 /* ──────────────────────────────────────────

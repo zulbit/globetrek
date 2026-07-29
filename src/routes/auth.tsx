@@ -99,6 +99,8 @@ const SLIDES: Slide[] = [
   },
 ];
 
+import { getStoredReferralCode } from "@/components/vendor-ref-handler";
+
 function AuthPage() {
   const { mode = "signin", redirect } = Route.useSearch();
   const navigate = useNavigate();
@@ -114,7 +116,7 @@ function AuthPage() {
   const [role, setRole] = React.useState<"customer" | "vendor">("customer");
   const [companyName, setCompanyName] = React.useState("");
   const [phone, setPhone] = React.useState("");
-  const [referralCode, setReferralCode] = React.useState("");
+  const [referralCode, setReferralCode] = React.useState(() => getStoredReferralCode() || "");
 
   React.useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {

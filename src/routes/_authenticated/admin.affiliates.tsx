@@ -6,6 +6,8 @@ import {
   getAdminAffiliateReferrals,
   getAffiliateSettings,
   updateAffiliateSettings,
+  getAdminSocialPosts,
+  verifySocialPost,
 } from "@/lib/affiliate.functions";
 import {
   Users,
@@ -36,6 +38,12 @@ import {
   Save,
   Loader2,
   AlertCircle,
+  Video,
+  Camera,
+  XCircle,
+  Youtube,
+  Instagram,
+  Facebook,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -105,15 +113,24 @@ Use my referral code: [YOUR_REFERRAL_CODE]
 
 Pehla month demo testing free hai! Aaj hi sign up karein.`;
 
+const SOCIAL_STATUS_META: Record<string, { label: string; color: string; bg: string }> = {
+  pending: { label: "Pending Verification ⏳", color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20" },
+  verified: { label: "Verified ✓", color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20" },
+  rejected: { label: "Rejected ❌", color: "text-rose-400", bg: "bg-rose-500/10 border-rose-500/20" },
+};
+
 function AdminAffiliates() {
   const qc = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"overview" | "settings" | "channels" | "materials">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "verifications" | "settings" | "channels" | "materials">("overview");
   const [copiedPitch, setCopiedPitch] = useState(false);
   const [expandedChannel, setExpandedChannel] = useState<string | null>(null);
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
 
   const getReferralsFn = useServerFn(getAdminAffiliateReferrals);
   const getSettingsFn = useServerFn(getAffiliateSettings);
   const updateSettingsFn = useServerFn(updateAffiliateSettings);
+  const getSocialPostsFn = useServerFn(getAdminSocialPosts);
+  const verifyPostFn = useServerFn(verifySocialPost);
 
   const [settingsForm, setSettingsForm] = useState({
     commission_pct: 20,
@@ -126,6 +143,11 @@ function AdminAffiliates() {
   const { data: referrals = [] } = useQuery({
     queryKey: ["admin-affiliate-referrals"],
     queryFn: () => getReferralsFn(),
+  });
+
+  const { data: socialPosts = [] } = useQuery({
+    queryKey: ["admin-social-posts"],
+    queryFn: () => getSocialPostsFn(),
   });
 
   const { data: savedSettings } = useQuery({
@@ -154,6 +176,8 @@ function AdminAffiliates() {
   const pendingAmount = pendingPayouts.reduce((sum: number, r: any) => sum + (r.commission_pkr ?? 0), 0);
   const uniqueAffiliatesCount = new Set(referrals.map((r: any) => r.affiliate_id)).size;
 
+  const pendingSocialPosts = socialPosts.filter((p: any) => p.status === "pending");
+
   function copyPitch() {
     navigator.clipboard.writeText(OUTREACH_PITCH);
     setCopiedPitch(true);
@@ -175,8 +199,22 @@ function AdminAffiliates() {
     }
   }
 
+  async function handleVerifySocialPost(postId: string, status: "verified" | "rejected") {
+    setVerifyingId(postId);
+    try {
+      await verifyPostFn({ data: { postId, status } });
+      toast.success(`Social post marked as ${status}!`);
+      qc.invalidateQueries({ queryKey: ["admin-social-posts"] });
+    } catch (err: any) {
+      toast.error("Failed to update post status", { description: err.message });
+    } finally {
+      setVerifyingId(null);
+    }
+  }
+
   const TABS = [
     { id: "overview", label: "Overview", icon: BarChart3 },
+    { id: "verifications", label: `Social Post Verifications (${pendingSocialPosts.length})`, icon: Camera },
     { id: "settings", label: "Commission Settings", icon: Settings },
     { id: "channels", label: "Sales Channels", icon: Share2 },
     { id: "materials", label: "Pitch Materials", icon: Gift },
@@ -250,21 +288,37 @@ function AdminAffiliates() {
       {/* ── OVERVIEW ── */}
       {activeTab === "overview" && (
         <div className="space-y-5">
-          {/* Action Callout */}
-          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                <HandCoins className="size-4 text-emerald-400" /> Weekly Friday Payout Schedule
-              </h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                Currently <strong>{pendingPayouts.length} pending referral commissions</strong> totaling <strong>PKR {pendingAmount.toLocaleString()}</strong> waiting for Friday payout.
-              </p>
+          {/* Action Callouts */}
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 flex flex-col justify-between space-y-3">
+              <div>
+                <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <HandCoins className="size-4 text-emerald-400" /> Weekly Friday Payout Schedule
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Currently <strong>{pendingPayouts.length} pending referral commissions</strong> totaling <strong>PKR {pendingAmount.toLocaleString()}</strong> waiting for Friday payout.
+                </p>
+              </div>
+              <Link to="/admin/affiliate-payouts">
+                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl gap-1.5 w-fit">
+                  Process Payouts <ArrowUpRight className="size-3.5" />
+                </Button>
+              </Link>
             </div>
-            <Link to="/admin/affiliate-payouts">
-              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl gap-1.5">
-                Process Payouts <ArrowUpRight className="size-3.5" />
+
+            <div className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-5 flex flex-col justify-between space-y-3">
+              <div>
+                <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <Camera className="size-4 text-violet-400" /> Social Post Verification Queue
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Currently <strong>{pendingSocialPosts.length} social media post proofs</strong> submitted by affiliates waiting for admin verification.
+                </p>
+              </div>
+              <Button onClick={() => setActiveTab("verifications")} size="sm" className="bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs rounded-xl gap-1.5 w-fit">
+                Review Social Proofs ({pendingSocialPosts.length}) <ArrowUpRight className="size-3.5" />
               </Button>
-            </Link>
+            </div>
           </div>
 
           {/* Current Live Rates Summary */}
@@ -283,54 +337,94 @@ function AdminAffiliates() {
               <div className="text-xs text-muted-foreground mt-1">{commissionPct}% commission for affiliate</div>
             </div>
           </div>
+        </div>
+      )}
 
-          {/* How Sales Partner Model Works */}
-          <div>
-            <h3 className="text-sm font-bold text-foreground mb-3">How the Sales Partner Program Works</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-              {[
-                {
-                  step: "1",
-                  icon: BadgeCheck,
-                  title: "Partner Registers",
-                  desc: "Anyone registers at /become-affiliate with CNIC, phone, and city to receive a unique code (e.g. REF-AHMED1234).",
-                  color: "bg-primary/10 text-primary",
-                },
-                {
-                  step: "2",
-                  icon: MapPin,
-                  title: "Pitches Travel Agencies",
-                  desc: "Partner approaches travel agencies in person or via WhatsApp and presents GlobeTrek PK.",
-                  color: "bg-violet-500/10 text-violet-400",
-                },
-                {
-                  step: "3",
-                  icon: Target,
-                  title: "Vendor Enters Code",
-                  desc: "Agency enters the referral code during signup or checkout on GlobeTrek PK.",
-                  color: "bg-amber-500/10 text-amber-400",
-                },
-                {
-                  step: "4",
-                  icon: DollarSign,
-                  title: `${commissionPct}% Commission Credited`,
-                  desc: `When vendor pays subscription, partner gets credited PKR ${starterCommission.toLocaleString()} or PKR ${proCommission.toLocaleString()}, paid every Friday.`,
-                  color: "bg-emerald-500/10 text-emerald-400",
-                },
-              ].map((s) => (
-                <div key={s.step} className="rounded-2xl border border-border bg-card p-5">
-                  <div className={cn("size-9 rounded-xl flex items-center justify-center mb-3", s.color)}>
-                    <s.icon className="size-4" />
-                  </div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
-                    Step {s.step}
-                  </div>
-                  <div className="font-bold text-sm text-foreground mb-1">{s.title}</div>
-                  <div className="text-xs text-muted-foreground">{s.desc}</div>
-                </div>
-              ))}
+      {/* ── SOCIAL POST VERIFICATIONS TAB ── */}
+      {activeTab === "verifications" && (
+        <div className="space-y-4">
+          <p className="text-xs text-muted-foreground">
+            Review and verify social media post links submitted by affiliates.
+          </p>
+
+          {socialPosts.length === 0 ? (
+            <div className="rounded-2xl border border-border bg-card p-10 text-center text-xs text-muted-foreground">
+              No social posts submitted for verification yet.
             </div>
-          </div>
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-border">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border bg-surface/50 text-muted-foreground">
+                    <th className="px-4 py-3 text-left font-semibold">Affiliate</th>
+                    <th className="px-4 py-3 text-left font-semibold">Platform</th>
+                    <th className="px-4 py-3 text-left font-semibold">Post Link</th>
+                    <th className="px-4 py-3 text-center font-semibold">Status</th>
+                    <th className="px-4 py-3 text-center font-semibold">Submitted</th>
+                    <th className="px-4 py-3 text-center font-semibold">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {socialPosts.map((p: any) => {
+                    const sm = SOCIAL_STATUS_META[p.status] ?? SOCIAL_STATUS_META.pending;
+                    return (
+                      <tr key={p.id} className="hover:bg-surface/40 transition">
+                        <td className="px-4 py-3 font-semibold text-foreground">
+                          {p.affiliates?.full_name ?? "—"}
+                          <div className="text-[10px] font-mono text-muted-foreground">{p.affiliates?.phone}</div>
+                        </td>
+                        <td className="px-4 py-3 font-medium capitalize text-foreground flex items-center gap-1.5">
+                          {p.platform === "youtube" && <Youtube className="size-3.5 text-red-500" />}
+                          {p.platform === "instagram" && <Instagram className="size-3.5 text-pink-500" />}
+                          {p.platform === "facebook" && <Facebook className="size-3.5 text-blue-500" />}
+                          {p.platform}
+                        </td>
+                        <td className="px-4 py-3 font-mono text-primary max-w-[220px] truncate">
+                          <a href={p.post_url} target="_blank" rel="noopener noreferrer" className="hover:underline inline-flex items-center gap-1">
+                            <ExternalLink className="size-3" /> Open Post
+                          </a>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-bold border", sm.bg, sm.color)}>
+                            {sm.label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center text-muted-foreground">
+                          {new Date(p.created_at).toLocaleDateString("en-PK", { day: "numeric", month: "short" })}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {p.status === "pending" ? (
+                            <div className="flex gap-1.5 justify-center">
+                              <Button
+                                size="sm"
+                                disabled={verifyingId === p.id}
+                                onClick={() => handleVerifySocialPost(p.id, "verified")}
+                                className="h-7 text-[10px] bg-emerald-500 text-white font-bold rounded-lg px-2 gap-1"
+                              >
+                                {verifyingId === p.id ? <Loader2 className="size-3 animate-spin" /> : <CheckCircle2 className="size-3" />}
+                                Verify ✓
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={verifyingId === p.id}
+                                onClick={() => handleVerifySocialPost(p.id, "rejected")}
+                                className="h-7 text-[10px] border-rose-500/30 text-rose-400 hover:bg-rose-500/10 font-bold rounded-lg px-2 gap-1"
+                              >
+                                <XCircle className="size-3" /> Reject
+                              </Button>
+                            </div>
+                          ) : (
+                            <span className="text-[11px] text-muted-foreground italic">Processed</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
@@ -427,11 +521,6 @@ function AdminAffiliates() {
               Save Program Settings
             </Button>
           </form>
-
-          <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-xs text-muted-foreground max-w-xl">
-            <AlertCircle className="size-3.5 inline text-amber-400 mr-1" />
-            Changes apply to <strong>future vendor payments</strong>. Previously credited referral balances remain intact.
-          </div>
         </div>
       )}
 
