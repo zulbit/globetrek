@@ -25,14 +25,24 @@ function VendorServicesOffered() {
   const qc = useQueryClient();
   const save = useServerFn(updateVendorServices);
 
+  const [companyName, setCompanyName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [dtsLicense, setDtsLicense] = useState("");
+  const [ntnNumber, setNtnNumber] = useState("");
+  const [city, setCity] = useState("");
+  const [cnicNumber, setCnicNumber] = useState("");
+  const [officeAddress, setOfficeAddress] = useState("");
+  const [isKycLoaded, setIsKycLoaded] = useState(false);
+
   const { data: fullProfile, isLoading } = useQuery({
     enabled: !!user?.id,
     queryKey: ["vendor-services", user?.id],
     queryFn: async () => {
       const { data } = await supabase.from("profiles")
-        .select("vendor_services, company_name, subscription_tier, city, vendor_status").eq("id", user!.id).maybeSingle();
+        .select("vendor_services, company_name, subscription_tier, city, phone, vendor_status").eq("id", user!.id).maybeSingle();
       if (data && !isKycLoaded) {
         setCompanyName(data.company_name || "");
+        setPhone(data.phone || "");
         setCity(data.city || "");
         setIsKycLoaded(true);
       }
