@@ -1,60 +1,41 @@
 import * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Check, Ban, Plus, Minus, Clock, Phone, ShieldCheck, UserCheck, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  getAdminVendors,
+  updateAdminVendorStatus,
+  updateAdminVendorCredits,
+  updateAdminVendorTier,
+  type VendorProfile,
+} from "@/lib/vendors.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/vendors")({
   component: AdminVendors,
 });
 
-interface VendorProfile {
-  id: string;
-  email: string;
-  full_name: string | null;
-  company_name: string | null;
-  phone: string | null;
-  vendor_status: string;
-  subscription_tier: string;
-  lead_credits_balance: number;
-  created_at?: string;
-}
-
 function AdminVendors() {
   const qc = useQueryClient();
   const [filter, setFilter] = React.useState<"all" | "pending" | "approved" | "banned">("all");
 
+  const fetchVendorsFn = useServerFn(getAdminVendors);
+  const setStatusFn = useServerFn(updateAdminVendorStatus);
+  const setCreditsFn = useServerFn(updateAdminVendorCredits);
+  const setTierFn = useServerFn(updateAdminVendorTier);
+
   const { data, isLoading } = useQuery({
     queryKey: ["admin-vendors"],
-    queryFn: async () => {
-      // Query profiles directly so RLS on user_roles does not filter out vendors
-      const { data: profilesData, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, email, full_name, company_name, phone, vendor_status, subscription_tier, lead_credits_balance, created_at")
-        .order("created_at", { ascending: false });
-      if (profilesError) throw profilesError;
-
-      // Include profiles that are vendor accounts (have company_name, pending vendor_status, or vendor email)
-      const vendors = (profilesData ?? []).filter((p) => {
-        if (p.company_name) return true;
-        if (p.vendor_status === "pending") return true;
-        if (p.email && p.email.toLowerCase().includes("vendor")) return true;
-        return false;
-      });
-
-      return vendors as VendorProfile[];
-    },
+    queryFn: () => fetchVendorsFn(),
   });
 
   const setStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: "approved" | "banned" | "pending" }) => {
-      const { error } = await supabase.from("profiles").update({ vendor_status: status }).eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (data: { id: string; status: "approved" | "banned" | "pending" }) =>
+      setStatusFn({ data }),
     onSuccess: (_, variables) => {
       toast.success(variables.status === "approved" ? "Agency Approved & Verified!" : "Vendor Status Updated");
       qc.invalidateQueries({ queryKey: ["admin-vendors"] });
@@ -63,10 +44,7 @@ function AdminVendors() {
   });
 
   const adjustCredits = useMutation({
-    mutationFn: async ({ id, next }: { id: string; next: number }) => {
-      const { error } = await supabase.from("profiles").update({ lead_credits_balance: Math.max(0, next) }).eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (data: { id: string; next: number }) => setCreditsFn({ data }),
     onSuccess: () => {
       toast.success("Credits updated");
       qc.invalidateQueries({ queryKey: ["admin-vendors"] });
@@ -75,10 +53,7 @@ function AdminVendors() {
   });
 
   const setTier = useMutation({
-    mutationFn: async ({ id, tier }: { id: string; tier: "free" | "pro" }) => {
-      const { error } = await supabase.from("profiles").update({ subscription_tier: tier }).eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (data: { id: string; tier: "free" | "pro" }) => setTierFn({ data }),
     onSuccess: () => {
       toast.success("Subscription tier updated");
       qc.invalidateQueries({ queryKey: ["admin-vendors"] });
