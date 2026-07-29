@@ -125,6 +125,8 @@ function PricingPage() {
     }));
   }, [dbPlans]);
 
+  const activePlans = activeBasePlans;
+
   const activeAddons = useMemo(() => {
     if (!dbPlans || dbPlans.length === 0) {
       // Default fallback addons if db table empty
