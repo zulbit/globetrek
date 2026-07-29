@@ -97,8 +97,16 @@ function VendorKYCPage() {
   const enabledFields = (template?.fields || []).filter((f) => f.enabled);
   const isApproved = profile?.vendor_status === "approved";
 
+  function formatCNIC(value: string): string {
+    const digits = value.replace(/\D/g, "").slice(0, 13);
+    if (digits.length <= 5) return digits;
+    if (digits.length <= 12) return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+    return `${digits.slice(0, 5)}-${digits.slice(5, 12)}-${digits.slice(12)}`;
+  }
+
   function handleInputChange(id: string, value: string) {
-    setFormData((prev) => ({ ...prev, [id]: value }));
+    const nextVal = id === "cnic_number" ? formatCNIC(value) : value;
+    setFormData((prev) => ({ ...prev, [id]: nextVal }));
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -108,6 +116,15 @@ function VendorKYCPage() {
     for (const f of enabledFields) {
       if (f.required && !formData[f.id]?.trim()) {
         toast.error(`"${f.label}" is required for agency verification.`);
+        return;
+      }
+    }
+
+    // CNIC / NIC 13-digit format validation
+    if (formData["cnic_number"]) {
+      const digitsOnly = formData["cnic_number"].replace(/\D/g, "");
+      if (digitsOnly.length !== 13) {
+        toast.error("Invalid CNIC / NIC Number: Please enter a valid 13-digit Pakistani CNIC (e.g. 35202-1234567-1).");
         return;
       }
     }

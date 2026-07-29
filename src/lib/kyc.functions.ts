@@ -136,19 +136,68 @@ export const submitVendorKYC = createServerFn({ method: "POST" })
     const { userId, profileUpdates } = data;
     if (!userId) throw new Error("Vendor user ID is required");
 
-    const { error } = await supabaseAdmin
+    // 1. Separate standard profile columns from dynamic KYC fields
+    const { company_name, phone, city, full_name, ...extraKycFields } = profileUpdates;
+
+    const standardUpdates: Record<string, any> = {
+      vendor_status: "pending",
+      updated_at: new Date().toISOString(),
+    };
+
+    if (company_name !== undefined) standardUpdates.company_name = company_name;
+    if (phone !== undefined) standardUpdates.phone = phone;
+    if (city !== undefined) standardUpdates.city = city;
+    if (full_name !== undefined) standardUpdates.full_name = full_name;
+
+    // Update standard profile fields
+    const { error: profileErr } = await supabaseAdmin
       .from("profiles")
-      .update({
-        ...profileUpdates,
-        vendor_status: "pending",
-        updated_at: new Date().toISOString(),
-      })
+      .update(standardUpdates)
       .eq("id", userId);
 
-    if (error) {
-      console.error("[submitVendorKYC Error]:", error);
-      throw new Error(error.message);
+    if (profileErr) {
+      console.error("[submitVendorKYC Profile Update Error]:", profileErr);
+      throw new Error(profileErr.message);
+    }
+
+    // 2. Store full dynamic KYC payload in payment_gateway_settings for Admin review
+    const kycPayload = {
+      userId,
+      submittedAt: new Date().toISOString(),
+      fields: profileUpdates,
+    };
+
+    const { error: kycErr } = await supabaseAdmin
+      .from("payment_gateway_settings")
+      .upsert({
+        provider: `vendor_kyc_${userId}`,
+        is_enabled: true,
+        settings: JSON.stringify(kycPayload),
+        updated_at: new Date().toISOString(),
+      });
+
+    if (kycErr) {
+      console.error("[submitVendorKYC Storage Error]:", kycErr);
+      // Non-fatal if payment_gateway_settings write fails
     }
 
     return { success: true };
+  });
+
+export const getVendorKYCDetails = createServerFn({ method: "POST" })
+  .validator((data: { userId: string }) => data)
+  .handler(async ({ data }) => {
+    try {
+      const { data: record } = await supabaseAdmin
+        .from("payment_gateway_settings")
+        .select("settings")
+        .eq("provider", `vendor_kyc_${data.userId}`)
+        .maybeSingle();
+
+      if (!record?.settings) return null;
+      const parsed = typeof record.settings === "string" ? JSON.parse(record.settings) : record.settings;
+      return parsed?.fields || null;
+    } catch {
+      return null;
+    }
   });
