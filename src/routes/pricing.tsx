@@ -1,11 +1,12 @@
-import { Fragment, useMemo } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, Minus, Sparkles, Globe2, FileCheck, Shield, Ticket, ArrowRight, Star, Zap, Crown, Rocket } from "lucide-react";
+import { Check, Minus, Sparkles, Globe2, FileCheck, Shield, Ticket, ArrowRight, Star, Zap, Crown, Rocket, HelpCircle, Search, ChevronDown } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { BottomNav } from "@/components/bottom-nav";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { TIERS, formatTierPrice, SERVICE_LABELS, type ServiceCategory } from "@/lib/pricing";
 import { getSubscriptionPlans } from "@/lib/payments.functions";
 
@@ -503,17 +504,6 @@ function PricingPage() {
                         <p className="mt-1 line-clamp-2 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
                           {t.tagline}
                         </p>
-                        <Button
-                          asChild
-                          size="sm"
-                          variant={t.highlight ? "default" : "outline"}
-                          className="mt-4 h-8 w-full text-xs font-medium"
-                        >
-                          <Link to="/auth" search={{ mode: "signup", role: "vendor" }}>
-                            {t.price_pkr === 0 ? "Start free" : "Choose plan"}
-                            <ArrowRight className="ml-1 size-3" />
-                          </Link>
-                        </Button>
                         <div className="mt-3 flex flex-wrap gap-1">
                           {t.covers.map((c) => {
                             const CIcon = CATEGORY_ICON[c];
@@ -585,44 +575,202 @@ function PricingPage() {
           <span className="inline-flex items-center gap-1"><Minus className="size-3 text-muted-foreground/50" /> —</span>
         </div>
 
-
-        {/* FAQ */}
-        <div className="mt-10 grid gap-4 md:grid-cols-2">
-          {[
-            {
-              q: "I only sell visa & ticketing — do I need to pay for tour features?",
-              a: "No. The Travel Desk plan (₨ 4,000/mo) is built exactly for you — visa, insurance and ticket listings without paying for tour-only AI tools.",
-            },
-            {
-              q: "I do both tours and visa/tickets — which plan?",
-              a: "Go with Full Agency (₨ 12,000/mo). It's the only plan that unlocks all four service categories in one account, plus unlimited AI and featured placement.",
-            },
-            {
-              q: "How do lead credits work?",
-              a: "1 credit unlocks 1 customer's contact info from an inquiry. Unused credits do not roll over each month.",
-            },
-            {
-              q: "Can I switch or cancel anytime?",
-              a: "Yes. Upgrade, downgrade, or cancel from your vendor dashboard — no long-term contract.",
-            },
-            {
-              q: "What is the AI trip planner?",
-              a: "A tool available on the Tour Operator and Full Agency plans that drafts full day-by-day itineraries and marketing descriptions from your tour basics, in seconds.",
-            },
-            {
-              q: "Do you charge transaction fees?",
-              a: "No. GlobeTrek PK is a lead-generation marketplace. You keep 100% of the booking revenue.",
-            },
-          ].map((f) => (
-            <div key={f.q} className="rounded-xl border border-border bg-card p-5">
-              <h3 className="text-sm font-semibold">{f.q}</h3>
-              <p className="mt-1.5 text-sm text-muted-foreground">{f.a}</p>
-            </div>
-          ))}
-        </div>
+        {/* Modern Interactive FAQ Section */}
+        <PricingFAQSection />
       </section>
 
       <BottomNav />
+    </div>
+  );
+}
+
+function PricingFAQSection() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [openItems, setOpenItems] = useState<Record<string, boolean>>({
+    "faq-0": true, // First question open by default
+  });
+
+  const toggleItem = (id: string) => {
+    setOpenItems((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const FAQS = [
+    {
+      id: "faq-0",
+      category: "plans",
+      categoryLabel: "Plans & Billing",
+      q: "I only sell visa & ticketing — do I need to pay for tour features?",
+      a: "No. The Travel Desk plan (₨ 4,000/mo) is built exactly for specialized desks. You list visa, insurance, and ticket packages without paying for tour-only AI tools.",
+    },
+    {
+      id: "faq-1",
+      category: "plans",
+      categoryLabel: "Plans & Billing",
+      q: "I do both tours and visa/tickets — which plan is best?",
+      a: "Go with Full Agency (₨ 12,000/mo). It is our complete suite that unlocks all four service categories in one unified vendor portal, plus 300 lead credits, unlimited AI tools, and featured search placement.",
+    },
+    {
+      id: "faq-2",
+      category: "leads",
+      categoryLabel: "Leads & Conversion",
+      q: "How do lead credits work?",
+      a: "1 credit unlocks 1 customer contact (phone number, email, and WhatsApp inquiry) directly in your Leads Inbox. Unused monthly lead credits refresh every billing cycle.",
+    },
+    {
+      id: "faq-3",
+      category: "plans",
+      categoryLabel: "Plans & Billing",
+      q: "Can I switch, upgrade, or cancel anytime?",
+      a: "Yes! You can instantly upgrade or switch your plan anytime directly from your Vendor Billing panel. Changes take effect immediately without lock-in contracts.",
+    },
+    {
+      id: "faq-4",
+      category: "ai",
+      categoryLabel: "AI & Features",
+      q: "What is the AI Trip Planner & Concierge integration?",
+      a: "Our AI engine automatically crafts bilingual (English & Roman Urdu) itineraries, package descriptions, and highlights your agency in customer AI chat recommendations 24/7.",
+    },
+    {
+      id: "faq-5",
+      category: "leads",
+      categoryLabel: "Leads & Conversion",
+      q: "Do you charge any commission or transaction fees on bookings?",
+      a: "Zero commission! GlobeTrek PK is a direct lead-generation marketplace. You keep 100% of your booking revenue and deal with clients directly.",
+    },
+    {
+      id: "faq-6",
+      category: "ai",
+      categoryLabel: "AI & Features",
+      q: "How do Marketplace Placement & Flash Banners work?",
+      a: "Add-ons attach to active paid vendor accounts. Flash banners feature your agency on the main homepage hero for 7 days, while search placement boosts rank your listings at the top of universal search.",
+    },
+  ];
+
+  const filteredFaqs = FAQS.filter((f) => {
+    const matchesCategory = selectedCategory === "all" || f.category === selectedCategory;
+    const matchesSearch =
+      searchQuery.trim() === "" ||
+      f.q.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      f.a.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  return (
+    <div className="mt-16 border-t border-border pt-12">
+      {/* Header */}
+      <div className="text-center max-w-2xl mx-auto mb-8">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary mb-3">
+          <HelpCircle className="size-3.5" /> Frequently Asked Questions
+        </span>
+        <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          Got questions? We've got answers.
+        </h2>
+        <p className="text-xs sm:text-sm text-muted-foreground mt-2">
+          Everything you need to know about vendor plans, lead conversion, AI tools, and billing.
+        </p>
+      </div>
+
+      {/* Controls: Search & Category Filters */}
+      <div className="max-w-3xl mx-auto space-y-4 mb-8">
+        <div className="relative">
+          <Search className="absolute left-3.5 top-3 size-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search questions (e.g. leads, AI, commission, visa)..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 h-10 text-xs rounded-xl bg-card border-border shadow-xs focus:ring-primary"
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {[
+            { id: "all", label: "All Questions" },
+            { id: "plans", label: "Plans & Billing" },
+            { id: "ai", label: "AI & Features" },
+            { id: "leads", label: "Leads & Revenue" },
+          ].map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
+              className={`rounded-full px-3.5 py-1 text-xs font-semibold transition ${
+                selectedCategory === cat.id
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-surface text-muted-foreground border border-border hover:bg-surface-2 hover:text-foreground"
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Modern Accordion Items */}
+      <div className="max-w-3xl mx-auto space-y-3">
+        {filteredFaqs.length === 0 ? (
+          <div className="text-center py-8 rounded-2xl border border-dashed border-border bg-surface/20 text-muted-foreground text-xs">
+            No questions matched your search query. Try searching another keyword!
+          </div>
+        ) : (
+          filteredFaqs.map((faq) => {
+            const isOpen = !!openItems[faq.id];
+            return (
+              <div
+                key={faq.id}
+                className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
+                  isOpen
+                    ? "border-primary/40 bg-gradient-to-b from-primary/5 via-card to-card shadow-sm"
+                    : "border-border bg-card hover:border-primary/30"
+                }`}
+              >
+                <button
+                  onClick={() => toggleItem(faq.id)}
+                  className="w-full p-4 text-left flex items-start justify-between gap-3"
+                >
+                  <div className="flex items-start gap-2.5">
+                    <span className="mt-0.5 inline-flex items-center rounded-md bg-surface border border-border/80 px-2 py-0.5 text-[10px] font-mono font-bold text-primary">
+                      {faq.categoryLabel}
+                    </span>
+                    <h3 className="text-xs sm:text-sm font-bold text-foreground leading-snug">
+                      {faq.q}
+                    </h3>
+                  </div>
+                  <ChevronDown
+                    className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 ${
+                      isOpen ? "rotate-180 text-primary" : ""
+                    }`}
+                  />
+                </button>
+
+                {isOpen && (
+                  <div className="px-4 pb-4 pt-1 text-xs text-muted-foreground leading-relaxed border-t border-border/40 bg-surface/20 animate-in fade-in-50">
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Bottom CTA Card */}
+      <div className="max-w-3xl mx-auto mt-10 rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 via-card to-card p-5 text-center flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+        <div className="text-left">
+          <h4 className="text-sm font-bold text-foreground">Still have questions?</h4>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Check our operating guide or ask our 24/7 AI Concierge anytime.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button asChild size="sm" variant="outline" className="text-xs rounded-xl border-border">
+            <Link to="/vendor-guide">Read Vendor Guide</Link>
+          </Button>
+          <Button asChild size="sm" className="text-xs font-bold rounded-xl bg-primary text-primary-foreground">
+            <Link to="/auth" search={{ mode: "signup", role: "vendor" }}>Get Started Free</Link>
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

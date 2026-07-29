@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, Sparkles, CreditCard, ArrowRight, Loader2, Crown } from "lucide-react";
+import { Check, Sparkles, CreditCard, ArrowRight, Loader2, Crown, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -402,25 +402,59 @@ function BillingPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               {activeAddons.map((addon: any) => {
                 const isAd = addon.plan_type === "advertisement";
+                const isFreeTier = currentTier === "free";
+
                 return (
                   <div
                     key={addon.id}
-                    className={`relative flex flex-col justify-between rounded-2xl border p-5 shadow-sm transition hover:-translate-y-0.5 ${
-                      isAd
-                        ? "border-rose-500/40 bg-gradient-to-b from-rose-500/10 to-card"
-                        : "border-purple-500/40 bg-gradient-to-b from-purple-500/10 to-card"
+                    className={`relative flex flex-col justify-between rounded-2xl border p-5 shadow-sm transition group ${
+                      isFreeTier
+                        ? "border-border/60 bg-surface/30 opacity-75 grayscale-[25%]"
+                        : isAd
+                          ? "border-rose-500/40 bg-gradient-to-b from-rose-500/10 to-card hover:-translate-y-0.5"
+                          : "border-purple-500/40 bg-gradient-to-b from-purple-500/10 to-card hover:-translate-y-0.5"
                     }`}
                   >
+                    {/* Free Tier Overlay / Hover Warning Banner */}
+                    {isFreeTier && (
+                      <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-4 rounded-2xl bg-card/95 backdrop-blur-xs text-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 border border-amber-500/40 shadow-xl">
+                        <div className="size-8 rounded-full bg-amber-500/20 text-amber-400 grid place-items-center mb-2">
+                          <Lock className="size-4" />
+                        </div>
+                        <h5 className="text-xs font-bold text-foreground">Not Available on FREE Tier</h5>
+                        <p className="text-[11px] text-muted-foreground mt-1 mb-3 max-w-[220px] leading-relaxed">
+                          Add-ons are not available on the FREE tier. Upgrade your plan to unlock Marketplace Boosts &amp; Flash Banners.
+                        </p>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            window.scrollTo({ top: 150, behavior: "smooth" });
+                            toast.info("Please select a paid plan above to activate add-ons.");
+                          }}
+                          className="text-xs font-bold bg-amber-500 text-black hover:bg-amber-400 rounded-xl h-7 px-3 gap-1 shadow-sm"
+                        >
+                          <Sparkles className="size-3" /> Upgrade Plan
+                        </Button>
+                      </div>
+                    )}
+
                     <div>
-                      <span
-                        className={`inline-block text-[9px] uppercase font-bold px-2 py-0.5 rounded-full mb-2 border ${
-                          isAd
-                            ? "bg-rose-500/20 text-rose-300 border-rose-500/30"
-                            : "bg-purple-500/20 text-purple-300 border-purple-500/30"
-                        }`}
-                      >
-                        {isAd ? "⚡ 1-Week Flash Banner" : "🌟 Placement Add-on"}
-                      </span>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span
+                          className={`inline-block text-[9px] uppercase font-bold px-2 py-0.5 rounded-full border ${
+                            isAd
+                              ? "bg-rose-500/20 text-rose-300 border-rose-500/30"
+                              : "bg-purple-500/20 text-purple-300 border-purple-500/30"
+                          }`}
+                        >
+                          {isAd ? "⚡ 1-Week Flash Banner" : "🌟 Placement Add-on"}
+                        </span>
+                        {isFreeTier && (
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                            <Lock className="size-2.5" /> Locked on Free
+                          </span>
+                        )}
+                      </div>
 
                       <h4 className="text-sm font-bold text-foreground mb-1">{addon.name}</h4>
                       <p className="text-[11px] text-muted-foreground mb-3 leading-snug">{addon.tagline}</p>
@@ -448,21 +482,24 @@ function BillingPage() {
                       </ul>
                     </div>
 
-                <Button
-                  size="sm"
-                  onClick={() => setSelectedAddonCheckout(addon)}
-                  className={`w-full font-bold text-xs rounded-xl border ${
-                    isAd
-                      ? "bg-rose-500 hover:bg-rose-600 text-white border-rose-400/40"
-                      : "bg-purple-600 hover:bg-purple-700 text-white border-purple-400/40"
-                  }`}
-                >
-                  {isAd ? "Book Flash Banner" : "Activate Add-on"}
-                </Button>
-              </div>
-            );
-          })}
-        </div>
+                    <Button
+                      size="sm"
+                      disabled={isFreeTier}
+                      onClick={() => setSelectedAddonCheckout(addon)}
+                      className={`w-full font-bold text-xs rounded-xl border ${
+                        isFreeTier
+                          ? "bg-surface text-muted-foreground border-border cursor-not-allowed"
+                          : isAd
+                            ? "bg-rose-500 hover:bg-rose-600 text-white border-rose-400/40"
+                            : "bg-purple-600 hover:bg-purple-700 text-white border-purple-400/40"
+                      }`}
+                    >
+                      {isFreeTier ? "Requires Paid Plan" : isAd ? "Book Flash Banner" : "Activate Add-on"}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
       </div>
 
       {/* SafePay Checkout Modal for Addons */}
