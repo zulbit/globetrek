@@ -201,12 +201,8 @@ function BillingPage() {
         </p>
       </div>
 
-      {/* 2-Column Grid: Main Content (Left) vs Invoices Sidepanel (Right) */}
-      <div className="grid gap-6 lg:grid-cols-12 items-start">
-        {/* Left Main Content Column (8 cols on large screens) */}
-        <div className="lg:col-span-8 space-y-6">
-          {/* Current plan hero */}
-          <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-linear-to-br from-primary/10 via-card to-card p-6 shadow-card">
+      {/* Current plan hero */}
+      <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-linear-to-br from-primary/10 via-card to-card p-6 shadow-card">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-primary">
@@ -311,7 +307,7 @@ function BillingPage() {
               </a>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {TIERS.map((tier) => {
                 const isCurrent = tier.id === currentTier;
                 const Icon = tier.icon;
@@ -552,61 +548,6 @@ function BillingPage() {
           </div>
         </div>
       )}
-        </div>
-
-        {/* Right Side Panel: Invoices, Billing History & Tax Details (4 cols on large screens) */}
-        <div className="lg:col-span-4 space-y-6">
-          {/* Billing History & Invoices Card */}
-          <div className="rounded-2xl border border-border bg-card p-5 space-y-4 shadow-sm sticky top-6">
-            <div className="border-b border-border pb-3">
-              <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-primary mb-1">
-                <CreditCard className="size-3.5" /> Statement &amp; Receipts
-              </div>
-              <h3 className="text-base font-bold text-foreground">Billing History &amp; Invoices</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Official statements and download records for your agency subscription.
-              </p>
-            </div>
-
-            {/* Billing Profile Summary */}
-            <div className="rounded-xl border border-border/80 bg-surface/50 p-3 space-y-1.5 text-xs">
-              <div className="flex items-center justify-between text-muted-foreground">
-                <span>Billing Currency</span>
-                <span className="font-mono font-bold text-foreground">PKR (Rs)</span>
-              </div>
-              <div className="flex items-center justify-between text-muted-foreground">
-                <span>Tax ID / NTN Status</span>
-                <span className="font-mono text-emerald-400 font-semibold">Verified Partner</span>
-              </div>
-              <div className="flex items-center justify-between text-muted-foreground">
-                <span>Payment Method</span>
-                <span className="font-semibold text-foreground">SafePay PKR Gateway</span>
-              </div>
-            </div>
-
-            {/* Empty Invoices State */}
-            <div className="rounded-xl border border-dashed border-border p-6 text-center text-xs space-y-2 bg-surface/20">
-              <div className="grid size-10 place-items-center rounded-full bg-surface/80 text-muted-foreground mx-auto">
-                <CreditCard className="size-4" />
-              </div>
-              <p className="font-semibold text-foreground">No Paid Invoices Yet</p>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Invoices and downloadable PDF receipts will automatically render here when subscription charges complete.
-              </p>
-            </div>
-
-            {/* Direct Support Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => toast.info("Partner Support Desk: Contact support@globetrek.pk for invoice queries.")}
-              className="w-full text-xs font-semibold rounded-xl border-border hover:bg-surface"
-            >
-              Request Custom Tax Invoice
-            </Button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

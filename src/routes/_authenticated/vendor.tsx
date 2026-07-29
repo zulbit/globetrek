@@ -46,7 +46,7 @@ function VendorLayout() {
 
   return (
     <RoleGuard allow={["vendor", "admin"]}>
-      <DashboardShell title="Vendor Portal" subtitle="Grow your travel business" nav={nav}>
+      <DashboardShell title="Vendor Portal" subtitle="Grow your travel business" nav={nav} wide>
         <Outlet />
       </DashboardShell>
     </RoleGuard>
