@@ -143,6 +143,10 @@ function VendorTours() {
   const [aiBusy, setAiBusy] = useState<null | "description" | "plan">(null);
   const [upgradeOpen, setUpgradeOpen] = useState<null | string>(null);
 
+  const [renewModal, setRenewModal] = useState<{ tourId: string; title: string; currentDepDate: string } | null>(null);
+  const [renewDate, setRenewDate] = useState<string>("");
+  const [renewing, setRenewing] = useState(false);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? ""));
   }, []);
@@ -275,6 +279,63 @@ function VendorTours() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  function getTourDateStatus(t: TourRow) {
+    const depDateStr = (t.accommodation as any)?.departure_date || (t.accommodation as any)?.valid_until;
+    if (!depDateStr) {
+      return { status: "VALID" as const, daysLeft: 30, depDateStr: null };
+    }
+    const depDate = new Date(depDateStr);
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const diffMs = depDate.getTime() - now.getTime();
+    const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    if (daysLeft < 0) return { status: "EXPIRED" as const, daysLeft, depDateStr };
+    if (daysLeft <= 7) return { status: "APPROACHING" as const, daysLeft, depDateStr };
+    return { status: "VALID" as const, daysLeft, depDateStr };
+  }
+
+  const handleSaveRenew = async () => {
+    if (!renewModal || !renewDate) {
+      toast.error("Please select a valid future departure date.");
+      return;
+    }
+    setRenewing(true);
+    try {
+      const tour = tours.find((t) => t.id === renewModal.tourId);
+      if (!tour) throw new Error("Tour not found");
+      const updatedAcc = {
+        ...(tour.accommodation ?? DEFAULT_ACCOMMODATION),
+        departure_date: renewDate,
+      };
+      await saveTourFn({
+        data: {
+          id: tour.id,
+          vendor_id: tour.vendor_id,
+          title: tour.title,
+          description: tour.description ?? "",
+          destination_country: tour.destination_country,
+          departure_city: tour.departure_city,
+          duration_days: tour.duration_days,
+          price_pkr: Number(tour.price_pkr),
+          total_seats: tour.total_seats,
+          image_url: tour.image_url ?? "",
+          is_active: true, // Reactivate listing
+          itinerary: normalizeItinerary(tour.itinerary),
+          requirements: tour.requirements ?? DEFAULT_REQUIREMENTS,
+          accommodation: updatedAcc,
+          extra_notes: tour.extra_notes ?? "",
+        },
+      });
+      toast.success("Tour listing renewed & reactivated with new departure dates! 🎉");
+      setRenewModal(null);
+      invalidate();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to renew tour date");
+    } finally {
+      setRenewing(false);
+    }
+  };
 
   const handleImageUpload = async (raw: File) => {
     if (!editing) return;
@@ -506,6 +567,17 @@ function VendorTours() {
         ))}
       </div>
 
+      {/* Listing Expiration Notice Banner */}
+      <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-200 flex items-start gap-3">
+        <AlertCircle className="size-5 text-amber-400 shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <span className="font-bold text-amber-300">ℹ️ Tour Listing Expiration &amp; Automatic Disabling Policy:</span>
+          <p className="text-muted-foreground leading-relaxed">
+            Tour listings automatically disable (unpublish) once their departure date passes. You can keep your listing active or reactivate an expired listing anytime by setting a new future departure date.
+          </p>
+        </div>
+      </div>
+
       {/* Filters */}
       <div className="rounded-2xl border border-border bg-card p-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -555,62 +627,108 @@ function VendorTours() {
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {filteredTours.map((t) => (
-            <article key={t.id} className="group overflow-hidden rounded-2xl border border-border bg-card transition hover:border-primary/40">
-              <div className="relative aspect-[16/10] overflow-hidden bg-surface">
-                {(() => {
-                  const src = t.image_url || fallbackImageFor(t.destination_country, t.title);
-                  return src ? (
-                    <img src={src} alt="" className="h-full w-full object-cover transition group-hover:scale-105" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                      <ImageIcon className="size-8" />
+          {filteredTours.map((t) => {
+            const dateMeta = getTourDateStatus(t);
+            return (
+              <article key={t.id} className="group overflow-hidden rounded-2xl border border-border bg-card transition hover:border-primary/40 flex flex-col justify-between">
+                <div>
+                  <div className="relative aspect-[16/10] overflow-hidden bg-surface">
+                    {(() => {
+                      const src = t.image_url || fallbackImageFor(t.destination_country, t.title);
+                      return src ? (
+                        <img src={src} alt="" className="h-full w-full object-cover transition group-hover:scale-105" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                          <ImageIcon className="size-8" />
+                        </div>
+                      );
+                    })()}
+                    <div className="absolute left-3 top-3 flex flex-col gap-1 items-start">
+                      <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium backdrop-blur ${
+                        t.is_active
+                          ? "border-primary/50 bg-primary/25 text-primary-foreground"
+                          : "border-border bg-background/70 text-muted-foreground"
+                      }`}>
+                        {t.is_active ? "Published" : "Draft"}
+                      </span>
+                      {dateMeta.status === "EXPIRED" && (
+                        <span className="rounded-full border border-red-500/50 bg-red-600/90 text-white px-2 py-0.5 text-[10px] font-bold shadow backdrop-blur">
+                          🔴 Deadline Passed
+                        </span>
+                      )}
+                      {dateMeta.status === "APPROACHING" && (
+                        <span className="rounded-full border border-amber-500/50 bg-amber-600/90 text-white px-2 py-0.5 text-[10px] font-bold shadow backdrop-blur">
+                          ⚠️ Expiring in {dateMeta.daysLeft}d
+                        </span>
+                      )}
                     </div>
-                  );
-                })()}
-                <span className={`absolute left-3 top-3 rounded-full border px-2 py-0.5 text-[11px] font-medium backdrop-blur ${
-                  t.is_active
-                    ? "border-primary/50 bg-primary/25 text-primary-foreground"
-                    : "border-border bg-background/70 text-muted-foreground"
-                }`}>
-                  {t.is_active ? "Published" : "Draft"}
-                </span>
-              </div>
-              <div className="p-4">
-                <h3 className="line-clamp-1 font-semibold">{t.title || "Untitled tour"}</h3>
-                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-muted-foreground">
-                  <span className="inline-flex items-center gap-1"><MapPin className="size-3" />{t.destination_country}</span>
-                  <span className="inline-flex items-center gap-1"><Plane className="size-3" />{t.departure_city}</span>
-                  <span className="inline-flex items-center gap-1"><Calendar className="size-3" />{t.duration_days}d</span>
-                  <span className="inline-flex items-center gap-1"><Users className="size-3" />{t.total_seats} seats</span>
-                  {(() => {
-                    const acc = (t.accommodation && typeof t.accommodation === "object" ? t.accommodation as any : {});
-                    return (
-                      <>
-                        {acc.return_tickets_included === true && (
-                          <span className="inline-flex items-center gap-1 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-400">
-                            ✓ Return tickets
-                          </span>
-                        )}
-                        {acc.visa_included === true && (
-                          <span className="inline-flex items-center gap-1 rounded bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-sky-400">
-                            ✓ Visa included
-                          </span>
-                        )}
-                        {acc.insurance_included === true && (
-                          <span className="inline-flex items-center gap-1 rounded bg-violet-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-violet-400">
-                            ✓ Travel Insurance
-                          </span>
-                        )}
-                      </>
-                    );
-                  })()}
+                  </div>
+                  <div className="p-4">
+                    <h3 className="line-clamp-1 font-semibold">{t.title || "Untitled tour"}</h3>
+                    <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-muted-foreground">
+                      <span className="inline-flex items-center gap-1"><MapPin className="size-3" />{t.destination_country}</span>
+                      <span className="inline-flex items-center gap-1"><Plane className="size-3" />{t.departure_city}</span>
+                      <span className="inline-flex items-center gap-1"><Calendar className="size-3" />{t.duration_days}d</span>
+                      <span className="inline-flex items-center gap-1"><Users className="size-3" />{t.total_seats} seats</span>
+                      {dateMeta.depDateStr && (
+                        <span className="inline-flex items-center gap-1 font-medium text-foreground">
+                          <Clock className="size-3 text-amber-400" /> Departs: {dateMeta.depDateStr}
+                        </span>
+                      )}
+                      {(() => {
+                        const acc = (t.accommodation && typeof t.accommodation === "object" ? t.accommodation as any : {});
+                        return (
+                          <>
+                            {acc.return_tickets_included === true && (
+                              <span className="inline-flex items-center gap-1 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-400">
+                                ✓ Return tickets
+                              </span>
+                            )}
+                            {acc.visa_included === true && (
+                              <span className="inline-flex items-center gap-1 rounded bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-sky-400">
+                                ✓ Visa included
+                              </span>
+                            )}
+                            {acc.insurance_included === true && (
+                              <span className="inline-flex items-center gap-1 rounded bg-violet-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-violet-400">
+                                ✓ Travel Insurance
+                              </span>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                    <div className="mt-3 flex items-baseline justify-between">
+                      <span className="text-lg font-semibold tabular-nums text-highlight">{formatPKR(Number(t.price_pkr))}</span>
+                      <span className="text-[11px] text-muted-foreground">per person</span>
+                    </div>
+
+                    {/* Expiration Prompt / Renewal Button */}
+                    {(dateMeta.status === "EXPIRED" || dateMeta.status === "APPROACHING") && (
+                      <div className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 space-y-1.5">
+                        <p className="text-[11px] text-amber-200 leading-snug">
+                          {dateMeta.status === "EXPIRED"
+                            ? "This tour's departure deadline passed. Enter new departure dates to keep it active."
+                            : `Departure deadline approaching in ${dateMeta.daysLeft} days.`}
+                        </p>
+                        <Button
+                          size="sm"
+                          className="w-full bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs gap-1.5 rounded-lg h-8"
+                          onClick={() => {
+                            const defaultNext = new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0];
+                            setRenewDate(dateMeta.depDateStr || defaultNext);
+                            setRenewModal({ tourId: t.id, title: t.title, currentDepDate: dateMeta.depDateStr ?? "" });
+                          }}
+                        >
+                          <Calendar className="size-3.5" />
+                          {dateMeta.status === "EXPIRED" ? "Reactivate Listing with New Dates" : "Extend Departure Date"}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="mt-3 flex items-baseline justify-between">
-                  <span className="text-lg font-semibold tabular-nums text-highlight">{formatPKR(Number(t.price_pkr))}</span>
-                  <span className="text-[11px] text-muted-foreground">per person</span>
-                </div>
-                <div className="mt-4 flex flex-wrap items-center gap-1.5">
+
+                <div className="p-4 pt-0 flex flex-wrap items-center gap-1.5">
                   <Button size="sm" variant="secondary" className="gap-1" onClick={() => setViewing(t)}>
                     <ExternalLink className="size-3.5" /> View
                   </Button>
@@ -626,9 +744,9 @@ function VendorTours() {
                     <Trash2 className="size-3.5" />
                   </Button>
                 </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
       )}
 
@@ -708,10 +826,10 @@ function VendorTours() {
                   </div>
                 </section>
 
-                {/* Pricing & capacity */}
+                {/* Pricing, duration, seats & departure date */}
                 <section className="space-y-3 rounded-xl border border-border bg-surface/40 p-4">
-                  <SectionTitle>Pricing, duration & seats</SectionTitle>
-                  <div className="grid gap-3 sm:grid-cols-3">
+                  <SectionTitle>Pricing, duration, seats &amp; departure date</SectionTitle>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     <div>
                       <Label>Duration (days)</Label>
                       <Input type="number" min={1} value={editing.duration_days}
@@ -727,6 +845,19 @@ function VendorTours() {
                       <Label>Total seats</Label>
                       <Input type="number" min={1} value={editing.total_seats}
                         onChange={(e) => setEditing({ ...editing, total_seats: Number(e.target.value) })} />
+                    </div>
+                    <div>
+                      <Label>Departure / Deadline Date</Label>
+                      <Input type="date"
+                        value={editing.accommodation?.departure_date || ""}
+                        onChange={(e) => setEditing({
+                          ...editing,
+                          accommodation: {
+                            ...editing.accommodation,
+                            departure_date: e.target.value,
+                          },
+                        })} />
+                      <p className="mt-1 text-[10px] text-muted-foreground">Listing auto-disables after this date.</p>
                     </div>
                   </div>
                 </section>
@@ -1251,6 +1382,54 @@ function VendorTours() {
                 </Button>
               </>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Renew / Extend Departure Date Dialog */}
+      <Dialog open={!!renewModal} onOpenChange={(o) => !o && setRenewModal(null)}>
+        <DialogContent className="max-w-md rounded-2xl border border-border bg-card p-6">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-bold">
+              <Calendar className="size-5 text-amber-400" /> Reactivate / Extend Tour Listing
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              "{renewModal?.title}"
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2 text-xs">
+            <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-amber-200 space-y-1">
+              <span className="font-bold block">Notice to Vendor:</span>
+              <p className="text-[11px] text-muted-foreground">
+                Tour listings automatically unpublish when their departure date passes. Select a new departure date for your next upcoming tour batch to reactivate this listing on GlobeTrek.
+              </p>
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold block mb-1">New Departure Date *</Label>
+              <Input
+                type="date"
+                min={new Date().toISOString().split("T")[0]}
+                value={renewDate}
+                onChange={(e) => setRenewDate(e.target.value)}
+                className="text-xs rounded-xl"
+                required
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" size="sm" onClick={() => setRenewModal(null)} className="rounded-xl text-xs">
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSaveRenew}
+              disabled={renewing}
+              className="bg-primary text-primary-foreground font-bold rounded-xl text-xs gap-1.5"
+            >
+              {renewing ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCircle2 className="size-3.5" />}
+              Save &amp; Reactivate Listing
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

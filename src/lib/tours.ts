@@ -41,6 +41,8 @@ export type TourAccommodation = {
   return_tickets_included?: boolean;
   visa_included?: boolean;
   insurance_included?: boolean;
+  departure_date?: string;
+  valid_until?: string;
 };
 
 

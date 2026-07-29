@@ -61,6 +61,11 @@ function cleanAccommodation(acc?: TourAccommodation) {
   const out: Record<string, unknown> = {};
   if (std) out.standard = std;
   if (premDesc) out.premium = { description: premDesc, additional_pkr: Number.isFinite(premAdd) ? premAdd : 0 };
+  if (acc.return_tickets_included !== undefined) out.return_tickets_included = Boolean(acc.return_tickets_included);
+  if (acc.visa_included !== undefined) out.visa_included = Boolean(acc.visa_included);
+  if (acc.insurance_included !== undefined) out.insurance_included = Boolean(acc.insurance_included);
+  if (acc.departure_date) out.departure_date = acc.departure_date;
+  if (acc.valid_until) out.valid_until = acc.valid_until;
   return Object.keys(out).length ? out : null;
 }
 
