@@ -1,8 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getAdminAffiliateReferrals, getAffiliateSettings } from "@/lib/affiliate.functions";
+import {
+  getAdminAffiliateReferrals,
+  getAffiliateSettings,
+  updateAffiliateSettings,
+} from "@/lib/affiliate.functions";
 import {
   Users,
   DollarSign,
@@ -28,38 +32,20 @@ import {
   MessageSquare,
   Clock,
   Shield,
+  Settings,
+  Save,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/affiliates")({
   component: AdminAffiliates,
 });
-
-/* ─── Program Highlights ─── */
-const MODEL_TIERS = [
-  {
-    name: "Starter Subscription",
-    vendorPays: "PKR 3,000 / month",
-    commissionRate: "20% One-time",
-    affiliateEarns: "PKR 600",
-    color: "text-primary",
-    bg: "bg-primary/5",
-    border: "border-primary/20",
-  },
-  {
-    name: "Pro Subscription",
-    vendorPays: "PKR 10,000 / month",
-    commissionRate: "20% One-time",
-    affiliateEarns: "PKR 2,000",
-    color: "text-violet-400",
-    bg: "bg-violet-500/5",
-    border: "border-violet-500/20",
-    popular: true,
-  },
-];
 
 /* ─── Sales Channels ─── */
 const CHANNELS = [
@@ -120,24 +106,47 @@ Use my referral code: [YOUR_REFERRAL_CODE]
 Pehla month demo testing free hai! Aaj hi sign up karein.`;
 
 function AdminAffiliates() {
-  const [activeTab, setActiveTab] = useState<"overview" | "tiers" | "channels" | "materials">("overview");
+  const qc = useQueryClient();
+  const [activeTab, setActiveTab] = useState<"overview" | "settings" | "channels" | "materials">("overview");
   const [copiedPitch, setCopiedPitch] = useState(false);
   const [expandedChannel, setExpandedChannel] = useState<string | null>(null);
 
   const getReferralsFn = useServerFn(getAdminAffiliateReferrals);
   const getSettingsFn = useServerFn(getAffiliateSettings);
+  const updateSettingsFn = useServerFn(updateAffiliateSettings);
+
+  const [settingsForm, setSettingsForm] = useState({
+    commission_pct: 20,
+    upgrade_commission_pct: 20,
+    min_payout_pkr: 1000,
+    payout_day: "friday",
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
 
   const { data: referrals = [] } = useQuery({
     queryKey: ["admin-affiliate-referrals"],
     queryFn: () => getReferralsFn(),
   });
 
-  const { data: settings } = useQuery({
+  const { data: savedSettings } = useQuery({
     queryKey: ["affiliate-settings"],
     queryFn: () => getSettingsFn(),
   });
 
-  const commissionPct = settings?.commission_pct ?? 20;
+  useEffect(() => {
+    if (savedSettings) {
+      setSettingsForm({
+        commission_pct: savedSettings.commission_pct ?? 20,
+        upgrade_commission_pct: savedSettings.upgrade_commission_pct ?? 20,
+        min_payout_pkr: savedSettings.min_payout_pkr ?? 1000,
+        payout_day: savedSettings.payout_day ?? "friday",
+      });
+    }
+  }, [savedSettings]);
+
+  const commissionPct = settingsForm.commission_pct;
+  const starterCommission = Math.round((3000 * commissionPct) / 100);
+  const proCommission = Math.round((10000 * commissionPct) / 100);
 
   const totalReferrals = referrals.length;
   const totalEarned = referrals.reduce((sum: number, r: any) => sum + (r.commission_pkr ?? 0), 0);
@@ -152,9 +161,23 @@ function AdminAffiliates() {
     setTimeout(() => setCopiedPitch(false), 2000);
   }
 
+  async function handleSaveSettings(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingSettings(true);
+    try {
+      await updateSettingsFn({ data: settingsForm });
+      toast.success("Affiliate program settings updated!");
+      qc.invalidateQueries({ queryKey: ["affiliate-settings"] });
+    } catch (err: any) {
+      toast.error("Failed to save settings", { description: err.message });
+    } finally {
+      setSavingSettings(false);
+    }
+  }
+
   const TABS = [
     { id: "overview", label: "Overview", icon: BarChart3 },
-    { id: "tiers", label: "Commission Model", icon: Award },
+    { id: "settings", label: "Commission Settings", icon: Settings },
     { id: "channels", label: "Sales Channels", icon: Share2 },
     { id: "materials", label: "Pitch Materials", icon: Gift },
   ] as const;
@@ -239,9 +262,26 @@ function AdminAffiliates() {
             </div>
             <Link to="/admin/affiliate-payouts">
               <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl gap-1.5">
-                Manage Payouts & Settings <ArrowUpRight className="size-3.5" />
+                Process Payouts <ArrowUpRight className="size-3.5" />
               </Button>
             </Link>
+          </div>
+
+          {/* Current Live Rates Summary */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Starter Subscription</div>
+              <div className="text-xs text-muted-foreground mb-3">Vendor pays PKR 3,000/month</div>
+              <div className="text-3xl font-black text-primary">PKR {starterCommission.toLocaleString()}</div>
+              <div className="text-xs text-muted-foreground mt-1">{commissionPct}% commission for affiliate</div>
+            </div>
+
+            <div className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-5">
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Pro Subscription</div>
+              <div className="text-xs text-muted-foreground mb-3">Vendor pays PKR 10,000/month</div>
+              <div className="text-3xl font-black text-violet-400">PKR {proCommission.toLocaleString()}</div>
+              <div className="text-xs text-muted-foreground mt-1">{commissionPct}% commission for affiliate</div>
+            </div>
           </div>
 
           {/* How Sales Partner Model Works */}
@@ -273,8 +313,8 @@ function AdminAffiliates() {
                 {
                   step: "4",
                   icon: DollarSign,
-                  title: "20% Commission Credited",
-                  desc: "When vendor pays subscription, partner gets credited PKR 600 or PKR 2,000, paid every Friday.",
+                  title: `${commissionPct}% Commission Credited`,
+                  desc: `When vendor pays subscription, partner gets credited PKR ${starterCommission.toLocaleString()} or PKR ${proCommission.toLocaleString()}, paid every Friday.`,
                   color: "bg-emerald-500/10 text-emerald-400",
                 },
               ].map((s) => (
@@ -291,80 +331,106 @@ function AdminAffiliates() {
               ))}
             </div>
           </div>
-
-          {/* Priorities */}
-          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5">
-            <h4 className="text-sm font-bold text-amber-400 flex items-center gap-2 mb-3">
-              <Sparkles className="size-4" /> Program Rules & Settings Summary
-            </h4>
-            <ul className="space-y-2 text-xs text-foreground">
-              <li className="flex items-start gap-2">
-                <ArrowUpRight className="size-3.5 mt-0.5 text-amber-400 shrink-0" />
-                <strong>Current Commission Rate:</strong> {commissionPct}% one-time commission on initial vendor subscription.
-              </li>
-              <li className="flex items-start gap-2">
-                <ArrowUpRight className="size-3.5 mt-0.5 text-amber-400 shrink-0" />
-                <strong>Plan Upgrades:</strong> Partners also earn commission when referred vendors upgrade from Starter to Pro.
-              </li>
-              <li className="flex items-start gap-2">
-                <ArrowUpRight className="size-3.5 mt-0.5 text-amber-400 shrink-0" />
-                <strong>Friday Payouts:</strong> Admin transfers balances &ge; PKR 1,000 via JazzCash/EasyPaisa/Bank on Fridays.
-              </li>
-              <li className="flex items-start gap-2">
-                <ArrowUpRight className="size-3.5 mt-0.5 text-amber-400 shrink-0" />
-                <strong>Admin Control:</strong> You can adjust commission rates anytime from the <Link to="/admin/affiliate-payouts" className="underline font-bold">Payouts Manager</Link>.
-              </li>
-            </ul>
-          </div>
         </div>
       )}
 
-      {/* ── TIERS / MODEL ── */}
-      {activeTab === "tiers" && (
+      {/* ── SETTINGS ── */}
+      {activeTab === "settings" && (
         <div className="space-y-4">
           <p className="text-xs text-muted-foreground">
-            Current default commission model ({commissionPct}% one-time per vendor payout).
+            Configure default commission percentages and payout threshold for the affiliate program.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {MODEL_TIERS.map((tier) => (
-              <div
-                key={tier.name}
-                className={cn(
-                  "rounded-2xl border p-5 relative",
-                  tier.bg,
-                  tier.border
-                )}
-              >
-                {tier.popular && (
-                  <span className="absolute top-3 right-3 text-[10px] font-bold rounded-full bg-violet-500 text-white px-2 py-0.5">
-                    HIGHEST COMMISSION
-                  </span>
-                )}
-                <div className={cn("text-3xl font-black mb-0.5", tier.color)}>{tier.affiliateEarns}</div>
-                <div className="text-sm font-bold text-foreground">{tier.name}</div>
-                <div className="text-xs text-muted-foreground mt-0.5 mb-3">
-                  Vendor pays {tier.vendorPays} ({tier.commissionRate})
+          <form onSubmit={handleSaveSettings} className="rounded-2xl border border-border bg-card p-6 space-y-5 max-w-xl">
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <Settings className="size-4 text-primary" /> Program Settings & Rates
+            </h3>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground block mb-1.5">
+                  New Subscription Commission (%) *
+                </label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={100}
+                    required
+                    value={settingsForm.commission_pct}
+                    onChange={(e) => setSettingsForm((p) => ({ ...p, commission_pct: Number(e.target.value) }))}
+                    className="text-xs rounded-xl"
+                  />
+                  <span className="text-xs text-muted-foreground">%</span>
                 </div>
-                <ul className="space-y-1.5 text-xs text-foreground">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className={cn("size-3.5 shrink-0", tier.color)} />
-                    Credited automatically when payment completes
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className={cn("size-3.5 shrink-0", tier.color)} />
-                    Paid out every Friday via JazzCash/EasyPaisa
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className={cn("size-3.5 shrink-0", tier.color)} />
-                    Unlimited signups per sales partner
-                  </li>
-                </ul>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Starter = PKR {starterCommission.toLocaleString()} · Pro = PKR {proCommission.toLocaleString()}
+                </p>
               </div>
-            ))}
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4 text-xs text-muted-foreground">
-            <span className="font-semibold text-foreground">Custom Commission Rates: </span>
-            You can change the percentage rate dynamically in <Link to="/admin/affiliate-payouts" className="text-primary font-bold underline">Admin Payout Settings</Link>.
+
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground block mb-1.5">
+                  Plan Upgrade Commission (%) *
+                </label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={100}
+                    required
+                    value={settingsForm.upgrade_commission_pct}
+                    onChange={(e) => setSettingsForm((p) => ({ ...p, upgrade_commission_pct: Number(e.target.value) }))}
+                    className="text-xs rounded-xl"
+                  />
+                  <span className="text-xs text-muted-foreground">%</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Applied when vendor upgrades tier
+                </p>
+              </div>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground block mb-1.5">
+                  Minimum Payout Threshold (PKR) *
+                </label>
+                <Input
+                  type="number"
+                  min={100}
+                  required
+                  value={settingsForm.min_payout_pkr}
+                  onChange={(e) => setSettingsForm((p) => ({ ...p, min_payout_pkr: Number(e.target.value) }))}
+                  className="text-xs rounded-xl"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground block mb-1.5">Payout Schedule Day</label>
+                <select
+                  value={settingsForm.payout_day}
+                  onChange={(e) => setSettingsForm((p) => ({ ...p, payout_day: e.target.value }))}
+                  className="text-xs rounded-xl border border-border bg-background px-3 py-2 w-full"
+                >
+                  {["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"].map((d) => (
+                    <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={savingSettings}
+              className="bg-primary text-primary-foreground font-bold rounded-xl gap-1.5 text-xs"
+            >
+              {savingSettings ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
+              Save Program Settings
+            </Button>
+          </form>
+
+          <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-xs text-muted-foreground max-w-xl">
+            <AlertCircle className="size-3.5 inline text-amber-400 mr-1" />
+            Changes apply to <strong>future vendor payments</strong>. Previously credited referral balances remain intact.
           </div>
         </div>
       )}
