@@ -55,17 +55,17 @@ export function FeaturedTours() {
           .select("id, title, destination_country, departure_city, duration_days, price_pkr, total_seats, image_url")
           .eq("is_active", true)
           .order("created_at", { ascending: false })
-          .limit(6)
+          .limit(8)
           .abortSignal(controller.signal);
         clearTimeout(timer);
-        if (error || !data || data.length === 0) return TOURS.slice(0, 6);
+        if (error || !data || data.length === 0) return TOURS.slice(0, 8);
         return (data as DbTour[]).map(toTour);
       } catch {
-        return TOURS.slice(0, 6);
+        return TOURS.slice(0, 8);
       }
     },
     retry: false,
-    placeholderData: TOURS.slice(0, 6),
+    placeholderData: TOURS.slice(0, 8),
   });
 
   return (
@@ -90,8 +90,7 @@ export function FeaturedTours() {
         </Link>
       </div>
 
-
-      <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {tours.length === 0
           ? <p className="text-sm text-muted-foreground">No tours available yet.</p>
           : tours.map((t) => <TourCard key={t.id} tour={t} />)}
