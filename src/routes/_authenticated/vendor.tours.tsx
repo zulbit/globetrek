@@ -6,7 +6,7 @@ import {
   Loader2, Plus, Pencil, Trash2, Eye, EyeOff, Search, X,
   Upload, GripVertical, ArrowUp, ArrowDown, ImageIcon,
   AlertCircle, ExternalLink, MapPin, Plane, Calendar, Users, Tag,
-  Clock, FileText, BedDouble, Sparkles, Lock,
+  Clock, FileText, BedDouble, Sparkles, Lock, CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
