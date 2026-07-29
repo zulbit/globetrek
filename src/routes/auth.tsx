@@ -117,6 +117,7 @@ function AuthPage() {
   const [companyName, setCompanyName] = React.useState("");
   const [phone, setPhone] = React.useState("");
   const [referralCode, setReferralCode] = React.useState(() => getStoredReferralCode() || "");
+  const [acceptTerms, setAcceptTerms] = React.useState(false);
 
   React.useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -146,6 +147,10 @@ function AuthPage() {
 
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
+    if (!acceptTerms) {
+      toast.error("Please accept the Terms of Service & Ecosystem Policies to proceed.");
+      return;
+    }
     if (role === "vendor") {
       if (!companyName.trim()) {
         toast.error("Company name is required for vendors");
@@ -424,7 +429,25 @@ function AuthPage() {
                   <Input id="password2" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} className="bg-white/5 text-white placeholder:text-white/40" />
                 </div>
 
-                <Button disabled={loading} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+                <div className="pt-1">
+                  <label className="flex items-start gap-2.5 text-xs text-white/80 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      required
+                      checked={acceptTerms}
+                      onChange={(e) => setAcceptTerms(e.target.checked)}
+                      className="mt-0.5 size-4 rounded border-white/20 bg-white/10 text-primary focus:ring-primary shrink-0 accent-primary"
+                    />
+                    <span className="leading-snug">
+                      I have read and agree to the{" "}
+                      <Link to="/terms" target="_blank" className="text-primary font-bold underline hover:text-primary/80">
+                        Terms of Service &amp; Ecosystem Policies
+                      </Link>.
+                    </span>
+                  </label>
+                </div>
+
+                <Button disabled={loading || !acceptTerms} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
                   {loading && <Loader2 className="mr-2 size-4 animate-spin" />} Create account
                 </Button>
                 {role === "vendor" && (

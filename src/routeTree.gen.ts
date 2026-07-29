@@ -21,6 +21,7 @@ import { Route as DestinationsRouteImport } from './routes/destinations'
 import { Route as EnterpriseRouteImport } from './routes/enterprise'
 import { Route as InsuranceRouteImport } from './routes/insurance'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TicketsRouteImport } from './routes/tickets'
 import { Route as ToursRouteImport } from './routes/tours'
 import { Route as VendorGuideRouteImport } from './routes/vendor-guide'
@@ -124,6 +125,11 @@ const InsuranceRoute = InsuranceRouteImport.update({
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TicketsRoute = TicketsRouteImport.update({
@@ -384,6 +390,7 @@ export interface FileRoutesByFullPath {
   '/enterprise': typeof EnterpriseRoute
   '/insurance': typeof InsuranceRouteWithChildren
   '/pricing': typeof PricingRoute
+  '/terms': typeof TermsRoute
   '/tickets': typeof TicketsRouteWithChildren
   '/tours': typeof ToursRouteWithChildren
   '/vendor-guide': typeof VendorGuideRoute
@@ -441,6 +448,7 @@ export interface FileRoutesByTo {
   '/destinations': typeof DestinationsRoute
   '/enterprise': typeof EnterpriseRoute
   '/pricing': typeof PricingRoute
+  '/terms': typeof TermsRoute
   '/vendor-guide': typeof VendorGuideRoute
   '/wishlist': typeof WishlistRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -496,6 +504,7 @@ export interface FileRoutesById {
   '/enterprise': typeof EnterpriseRoute
   '/insurance': typeof InsuranceRouteWithChildren
   '/pricing': typeof PricingRoute
+  '/terms': typeof TermsRoute
   '/tickets': typeof TicketsRouteWithChildren
   '/tours': typeof ToursRouteWithChildren
   '/vendor-guide': typeof VendorGuideRoute
@@ -556,6 +565,7 @@ export interface FileRouteTypes {
     | '/enterprise'
     | '/insurance'
     | '/pricing'
+    | '/terms'
     | '/tickets'
     | '/tours'
     | '/vendor-guide'
@@ -613,6 +623,7 @@ export interface FileRouteTypes {
     | '/destinations'
     | '/enterprise'
     | '/pricing'
+    | '/terms'
     | '/vendor-guide'
     | '/wishlist'
     | '/dashboard'
@@ -667,6 +678,7 @@ export interface FileRouteTypes {
     | '/enterprise'
     | '/insurance'
     | '/pricing'
+    | '/terms'
     | '/tickets'
     | '/tours'
     | '/vendor-guide'
@@ -727,6 +739,7 @@ export interface RootRouteChildren {
   EnterpriseRoute: typeof EnterpriseRoute
   InsuranceRoute: typeof InsuranceRouteWithChildren
   PricingRoute: typeof PricingRoute
+  TermsRoute: typeof TermsRoute
   TicketsRoute: typeof TicketsRouteWithChildren
   ToursRoute: typeof ToursRouteWithChildren
   VendorGuideRoute: typeof VendorGuideRoute
@@ -822,6 +835,13 @@ declare module '@tanstack/react-router' {
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tickets': {
@@ -1290,6 +1310,7 @@ const rootRouteChildren: RootRouteChildren = {
   EnterpriseRoute: EnterpriseRoute,
   InsuranceRoute: InsuranceRouteWithChildren,
   PricingRoute: PricingRoute,
+  TermsRoute: TermsRoute,
   TicketsRoute: TicketsRouteWithChildren,
   ToursRoute: ToursRouteWithChildren,
   VendorGuideRoute: VendorGuideRoute,

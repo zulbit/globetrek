@@ -651,6 +651,21 @@ function BecomeAffiliatePage() {
                   <label className="text-xs font-semibold text-muted-foreground block mb-1">City *</label>
                   <Input value={form.city} onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))} placeholder="Lahore" className="text-xs rounded-xl" required />
                 </div>
+                <div className="pt-1">
+                  <label className="flex items-start gap-2 text-[11px] text-muted-foreground cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      required
+                      className="mt-0.5 size-3.5 rounded border-border bg-surface text-primary focus:ring-primary shrink-0 accent-primary"
+                    />
+                    <span className="leading-snug">
+                      I have read and agree to the{" "}
+                      <Link to="/terms" target="_blank" className="text-primary font-bold underline hover:text-primary/80">
+                        GlobeTrek Partner &amp; Affiliate Terms
+                      </Link>.
+                    </span>
+                  </label>
+                </div>
                 <Button
                   type="submit"
                   disabled={loading}
@@ -659,9 +674,6 @@ function BecomeAffiliatePage() {
                   {loading ? <Loader2 className="size-4 animate-spin" /> : <BadgeCheck className="size-4" />}
                   {loading ? "Registering..." : "Get My Referral Code"}
                 </Button>
-                <p className="text-[10px] text-muted-foreground text-center">
-                  By registering you agree to GlobeTrek's affiliate terms. CNIC is only used for payout identity verification.
-                </p>
               </form>
             </div>
           )}
