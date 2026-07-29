@@ -158,34 +158,49 @@ export const createSafepayCheckout = createServerFn({ method: "POST" })
     return { ok: true, checkoutUrl, trackerToken: trackerId };
   });
 
-// -------- Admin: get dynamic subscription plans --------
-export const getSubscriptionPlans = createServerFn({ method: "GET" }).handler(async () => {
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_nk5WJj0qOmSimrFmwh7ZWQ_teiVWYtE";
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "https://rcldabxkcwfemnigwutk.supabase.co";
-  const supabase = createClient<Database>(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: {
-      fetch: (input, init) => {
-        const h = new Headers(init?.headers);
-        if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) h.delete("Authorization");
-        h.set("apikey", key);
-        return fetch(input, { ...init, headers: h });
+// -------- Admin & Public: get subscription & placement plans --------
+export const getSubscriptionPlans = createServerFn({ method: "GET" })
+  .validator((input?: { includeDisabled?: boolean }) => input ?? {})
+  .handler(async ({ data }) => {
+    const key = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_nk5WJj0qOmSimrFmwh7ZWQ_teiVWYtE";
+    const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "https://rcldabxkcwfemnigwutk.supabase.co";
+    const supabase = createClient<Database>(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: {
+        fetch: (input, init) => {
+          const h = new Headers(init?.headers);
+          if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) h.delete("Authorization");
+          h.set("apikey", key);
+          return fetch(input, { ...init, headers: h });
+        },
       },
-    },
-  });
-  const { data, error } = await supabase
-    .from("payment_gateway_settings")
-    .select("config")
-    .eq("provider", "subscription_plans")
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  return data?.config ? (data.config as any[]) : null;
-});
+    });
 
-// -------- Admin: save dynamic subscription plans --------
-export const saveSubscriptionPlans = createServerFn({ method: "POST" })
+    let query = supabase.from("subscription_plans").select("*").order("display_order", { ascending: true });
+    if (!data?.includeDisabled) {
+      query = query.eq("is_enabled", true);
+    }
+    const { data: plans, error } = await query;
+
+    if (error || !plans || plans.length === 0) {
+      // Fallback to payment_gateway_settings if table query fails
+      const { data: gatewayData } = await supabase
+        .from("payment_gateway_settings")
+        .select("config")
+        .eq("provider", "subscription_plans")
+        .maybeSingle();
+      return gatewayData?.config ? (gatewayData.config as any[]) : null;
+    }
+    return plans;
+  });
+
+// -------- Admin: toggle subscription or placement plan enabled/disabled --------
+export const togglePlanEnabled = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: any[]) => input)
+  .validator((input: { planId: string; isEnabled: boolean }) => {
+    if (!input.planId) throw new Error("Plan ID required");
+    return input;
+  })
   .handler(async ({ data, context }) => {
     const { data: isAdmin } = await context.supabase.rpc("has_role", {
       _user_id: context.userId,
@@ -195,11 +210,59 @@ export const saveSubscriptionPlans = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
-      .from("payment_gateway_settings")
-      .upsert(
-        { provider: "subscription_plans", config: data, enabled: true, updated_at: new Date().toISOString() },
-        { onConflict: "provider" },
-      );
+      .from("subscription_plans")
+      .update({ is_enabled: data.isEnabled, updated_at: new Date().toISOString() })
+      .eq("id", data.planId);
+
     if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// -------- Admin: save / update dynamic subscription plan --------
+export const saveSubscriptionPlans = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: any) => input)
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    if (Array.isArray(data)) {
+      // Upsert multiple
+      const { error } = await supabaseAdmin
+        .from("subscription_plans")
+        .upsert(data, { onConflict: "id" });
+      if (error) throw new Error(error.message);
+    } else {
+      // Upsert single plan record
+      const { error } = await supabaseAdmin
+        .from("subscription_plans")
+        .upsert(
+          {
+            id: data.id || `custom_${Date.now()}`,
+            name: data.name,
+            plan_type: data.plan_type || "base",
+            price_pkr: Number(data.price_pkr || 0),
+            billing_period: data.billing_period || "monthly",
+            tagline: data.tagline || "",
+            archetype: data.archetype || "",
+            icon_name: data.icon_name || "Sparkles",
+            accent: data.accent || "primary",
+            covers: data.covers || ["tours"],
+            features: data.features || [],
+            limits: data.limits || {},
+            is_enabled: data.is_enabled !== undefined ? Boolean(data.is_enabled) : true,
+            display_order: Number(data.display_order || 99),
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "id" }
+        );
+      if (error) throw new Error(error.message);
+    }
+
     return { ok: true };
   });
