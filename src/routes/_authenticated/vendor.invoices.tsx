@@ -67,11 +67,140 @@ function VendorInvoicesPage() {
 
   const [downloadingInvId, setDownloadingInvId] = useState<string | null>(null);
 
-  const handleDownloadInvoice = (inv: any) => {
-    toast.success(`Opening Invoice ${inv.id} Tax Receipt...`, {
-      description: "Save as PDF or Print directly from the receipt window.",
-    });
-    handlePrintInvoiceWindow(inv);
+  // Direct Vector jsPDF File Download (0ms UI freeze, direct file save to Downloads folder)
+  const handleDirectPDFDownload = async (inv: any) => {
+    setDownloadingInvId(inv.id);
+    const toastId = toast.loading(`Generating GlobeTrek_Invoice_${inv.id}.pdf...`);
+
+    try {
+      const jspdfModule = await import("jspdf");
+      const jsPDF = jspdfModule.jsPDF || (jspdfModule as any).default;
+      const doc = new jsPDF();
+
+      // 1. Header Banner
+      doc.setFillColor(4, 120, 87); // Primary emerald #047857
+      doc.rect(0, 0, 210, 22, "F");
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.setTextColor(255, 255, 255);
+      doc.text("GlobeTrek PK", 15, 15);
+
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.text("Official Vendor Tax Receipt & Billing Statement", 115, 15);
+
+      // 2. Status Badge & Invoice ID
+      doc.setTextColor(15, 23, 42); // #0f172a
+      doc.setFontSize(13);
+      doc.setFont("helvetica", "bold");
+      doc.text(`INVOICE: ${inv.id}`, 15, 34);
+
+      doc.setFontSize(10);
+      doc.setTextColor(5, 150, 105);
+      doc.text(`STATUS: ${inv.status.toUpperCase()}`, 155, 34);
+
+      // 3. Billed To & Metadata Boxes
+      doc.setDrawColor(226, 232, 240);
+      doc.setFillColor(248, 250, 252);
+      doc.roundedRect(15, 42, 85, 38, 3, 3, "FD");
+      doc.roundedRect(110, 42, 85, 38, 3, 3, "FD");
+
+      // Billed To Text
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(100, 116, 139);
+      doc.text("BILLED TO (VENDOR AGENCY)", 20, 50);
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(15, 23, 42);
+      doc.text(agencyDisplayName, 20, 58);
+
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(71, 85, 105);
+      doc.text(`City: ${profile?.city || "Pakistan"}`, 20, 66);
+      doc.text(`Account Tier: ${profile?.subscription_tier || "Agency"} Plan`, 20, 73);
+
+      // Invoice Metadata Text
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(100, 116, 139);
+      doc.text("INVOICE METADATA", 115, 50);
+
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(71, 85, 105);
+      doc.text(`Date: ${inv.date}`, 115, 58);
+      doc.text(`Period: ${inv.period}`, 115, 66);
+      doc.text(`Gateway: SafePay PKR (NTN: 8941029-7)`, 115, 73);
+
+      // 4. Line Items Table Header
+      doc.setFillColor(15, 23, 42);
+      doc.rect(15, 88, 180, 10, "F");
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(255, 255, 255);
+      doc.text("Item Description", 20, 94);
+      doc.text("Billing Period", 105, 94);
+      doc.text("Amount (PKR)", 160, 94);
+
+      // Row Data
+      doc.setTextColor(15, 23, 42);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.text(inv.description, 20, 106);
+      doc.text(inv.period, 105, 106);
+      doc.setFont("courier", "bold");
+      doc.text(`Rs ${inv.amount_pkr.toLocaleString()}`, 160, 106);
+
+      doc.setDrawColor(226, 232, 240);
+      doc.line(15, 112, 195, 112);
+
+      // 5. Totals Box
+      doc.setFillColor(248, 250, 252);
+      doc.roundedRect(120, 120, 75, 28, 3, 3, "FD");
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      doc.text("Subtotal:", 125, 128);
+      doc.text(`Rs ${inv.amount_pkr.toLocaleString()}`, 160, 128);
+
+      doc.text("Sales Tax (0%):", 125, 135);
+      doc.text("Rs 0", 160, 135);
+
+      doc.setDrawColor(203, 213, 225);
+      doc.line(125, 138, 190, 138);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(4, 120, 87);
+      doc.text("Total Paid:", 125, 144);
+      doc.text(`Rs ${inv.amount_pkr.toLocaleString()}`, 160, 144);
+
+      // 6. Footer
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(148, 163, 184);
+      doc.text("GlobeTrek PK Technologies (Private) Limited — Tax Reg / NTN: 8941029-7", 42, 175);
+      doc.text("Official computer-generated receipt issued upon verified SafePay PKR gateway payment completion.", 30, 180);
+
+      // Direct File Save to Browser Downloads Folder!
+      doc.save(`GlobeTrek_Invoice_${inv.id}.pdf`);
+
+      toast.dismiss(toastId);
+      toast.success(`Downloaded GlobeTrek_Invoice_${inv.id}.pdf!`, {
+        description: "File saved directly to your Downloads folder.",
+      });
+    } catch (err: any) {
+      toast.dismiss(toastId);
+      toast.error(`Download failed: ${err.message}`);
+    } finally {
+      setDownloadingInvId(null);
+    }
   };
 
   const handlePrintInvoiceWindow = (inv: any) => {
@@ -276,16 +405,26 @@ function VendorInvoicesPage() {
                       </Badge>
                     </td>
                     <td className="py-3 px-3 text-right">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        disabled={downloadingInvId === inv.id}
-                        onClick={() => handleDownloadInvoice(inv)}
-                        className="h-7 text-xs font-semibold text-primary hover:bg-primary/10 rounded-lg gap-1"
-                      >
-                        <Download className="size-3" />
-                        {downloadingInvId === inv.id ? "Generating PDF..." : "PDF Receipt"}
-                      </Button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Button
+                          size="sm"
+                          disabled={downloadingInvId === inv.id}
+                          onClick={() => handleDirectPDFDownload(inv)}
+                          className="h-7 text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg gap-1 px-2.5"
+                        >
+                          <Download className="size-3" />
+                          {downloadingInvId === inv.id ? "Downloading..." : "Download PDF"}
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handlePrintInvoiceWindow(inv)}
+                          className="h-7 text-xs font-medium border-border hover:bg-surface rounded-lg gap-1 px-2.5"
+                        >
+                          <FileText className="size-3" /> Print
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
