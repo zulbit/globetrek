@@ -38,11 +38,13 @@ import { Route as ToursIdRouteImport } from './routes/tours.$id'
 import { Route as VisaIndexRouteImport } from './routes/visa.index'
 import { Route as VisaIdRouteImport } from './routes/visa.$id'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedAdminAffiliatesRouteImport } from './routes/_authenticated/admin.affiliates'
 import { Route as AuthenticatedAdminCustomLeadsRouteImport } from './routes/_authenticated/admin.custom-leads'
 import { Route as AuthenticatedAdminFinancialsRouteImport } from './routes/_authenticated/admin.financials'
 import { Route as AuthenticatedAdminKycCmsRouteImport } from './routes/_authenticated/admin.kyc-cms'
 import { Route as AuthenticatedAdminLandingCmsRouteImport } from './routes/_authenticated/admin.landing-cms'
 import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin.payments'
+import { Route as AuthenticatedAdminSeoRouteImport } from './routes/_authenticated/admin.seo'
 import { Route as AuthenticatedAdminServicesRouteImport } from './routes/_authenticated/admin.services'
 import { Route as AuthenticatedAdminSubscriptionsRouteImport } from './routes/_authenticated/admin.subscriptions'
 import { Route as AuthenticatedAdminToursRouteImport } from './routes/_authenticated/admin.tours'
@@ -206,6 +208,12 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminAffiliatesRoute =
+  AuthenticatedAdminAffiliatesRouteImport.update({
+    id: '/affiliates',
+    path: '/affiliates',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminCustomLeadsRoute =
   AuthenticatedAdminCustomLeadsRouteImport.update({
     id: '/custom-leads',
@@ -236,6 +244,11 @@ const AuthenticatedAdminPaymentsRoute =
     path: '/payments',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminSeoRoute = AuthenticatedAdminSeoRouteImport.update({
+  id: '/seo',
+  path: '/seo',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedAdminServicesRoute =
   AuthenticatedAdminServicesRouteImport.update({
     id: '/services',
@@ -368,11 +381,13 @@ export interface FileRoutesByFullPath {
   '/tickets/': typeof TicketsIndexRoute
   '/tours/': typeof ToursIndexRoute
   '/visa/': typeof VisaIndexRoute
+  '/admin/affiliates': typeof AuthenticatedAdminAffiliatesRoute
   '/admin/custom-leads': typeof AuthenticatedAdminCustomLeadsRoute
   '/admin/financials': typeof AuthenticatedAdminFinancialsRoute
   '/admin/kyc-cms': typeof AuthenticatedAdminKycCmsRoute
   '/admin/landing-cms': typeof AuthenticatedAdminLandingCmsRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
+  '/admin/seo': typeof AuthenticatedAdminSeoRoute
   '/admin/services': typeof AuthenticatedAdminServicesRoute
   '/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
   '/admin/tours': typeof AuthenticatedAdminToursRoute
@@ -415,11 +430,13 @@ export interface FileRoutesByTo {
   '/tickets': typeof TicketsIndexRoute
   '/tours': typeof ToursIndexRoute
   '/visa': typeof VisaIndexRoute
+  '/admin/affiliates': typeof AuthenticatedAdminAffiliatesRoute
   '/admin/custom-leads': typeof AuthenticatedAdminCustomLeadsRoute
   '/admin/financials': typeof AuthenticatedAdminFinancialsRoute
   '/admin/kyc-cms': typeof AuthenticatedAdminKycCmsRoute
   '/admin/landing-cms': typeof AuthenticatedAdminLandingCmsRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
+  '/admin/seo': typeof AuthenticatedAdminSeoRoute
   '/admin/services': typeof AuthenticatedAdminServicesRoute
   '/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
   '/admin/tours': typeof AuthenticatedAdminToursRoute
@@ -470,11 +487,13 @@ export interface FileRoutesById {
   '/tickets/': typeof TicketsIndexRoute
   '/tours/': typeof ToursIndexRoute
   '/visa/': typeof VisaIndexRoute
+  '/_authenticated/admin/affiliates': typeof AuthenticatedAdminAffiliatesRoute
   '/_authenticated/admin/custom-leads': typeof AuthenticatedAdminCustomLeadsRoute
   '/_authenticated/admin/financials': typeof AuthenticatedAdminFinancialsRoute
   '/_authenticated/admin/kyc-cms': typeof AuthenticatedAdminKycCmsRoute
   '/_authenticated/admin/landing-cms': typeof AuthenticatedAdminLandingCmsRoute
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
+  '/_authenticated/admin/seo': typeof AuthenticatedAdminSeoRoute
   '/_authenticated/admin/services': typeof AuthenticatedAdminServicesRoute
   '/_authenticated/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
   '/_authenticated/admin/tours': typeof AuthenticatedAdminToursRoute
@@ -525,11 +544,13 @@ export interface FileRouteTypes {
     | '/tickets/'
     | '/tours/'
     | '/visa/'
+    | '/admin/affiliates'
     | '/admin/custom-leads'
     | '/admin/financials'
     | '/admin/kyc-cms'
     | '/admin/landing-cms'
     | '/admin/payments'
+    | '/admin/seo'
     | '/admin/services'
     | '/admin/subscriptions'
     | '/admin/tours'
@@ -572,11 +593,13 @@ export interface FileRouteTypes {
     | '/tickets'
     | '/tours'
     | '/visa'
+    | '/admin/affiliates'
     | '/admin/custom-leads'
     | '/admin/financials'
     | '/admin/kyc-cms'
     | '/admin/landing-cms'
     | '/admin/payments'
+    | '/admin/seo'
     | '/admin/services'
     | '/admin/subscriptions'
     | '/admin/tours'
@@ -626,11 +649,13 @@ export interface FileRouteTypes {
     | '/tickets/'
     | '/tours/'
     | '/visa/'
+    | '/_authenticated/admin/affiliates'
     | '/_authenticated/admin/custom-leads'
     | '/_authenticated/admin/financials'
     | '/_authenticated/admin/kyc-cms'
     | '/_authenticated/admin/landing-cms'
     | '/_authenticated/admin/payments'
+    | '/_authenticated/admin/seo'
     | '/_authenticated/admin/services'
     | '/_authenticated/admin/subscriptions'
     | '/_authenticated/admin/tours'
@@ -879,6 +904,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/affiliates': {
+      id: '/_authenticated/admin/affiliates'
+      path: '/affiliates'
+      fullPath: '/admin/affiliates'
+      preLoaderRoute: typeof AuthenticatedAdminAffiliatesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/custom-leads': {
       id: '/_authenticated/admin/custom-leads'
       path: '/custom-leads'
@@ -912,6 +944,13 @@ declare module '@tanstack/react-router' {
       path: '/payments'
       fullPath: '/admin/payments'
       preLoaderRoute: typeof AuthenticatedAdminPaymentsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/seo': {
+      id: '/_authenticated/admin/seo'
+      path: '/seo'
+      fullPath: '/admin/seo'
+      preLoaderRoute: typeof AuthenticatedAdminSeoRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/services': {
@@ -1044,11 +1083,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminAffiliatesRoute: typeof AuthenticatedAdminAffiliatesRoute
   AuthenticatedAdminCustomLeadsRoute: typeof AuthenticatedAdminCustomLeadsRoute
   AuthenticatedAdminFinancialsRoute: typeof AuthenticatedAdminFinancialsRoute
   AuthenticatedAdminKycCmsRoute: typeof AuthenticatedAdminKycCmsRoute
   AuthenticatedAdminLandingCmsRoute: typeof AuthenticatedAdminLandingCmsRoute
   AuthenticatedAdminPaymentsRoute: typeof AuthenticatedAdminPaymentsRoute
+  AuthenticatedAdminSeoRoute: typeof AuthenticatedAdminSeoRoute
   AuthenticatedAdminServicesRoute: typeof AuthenticatedAdminServicesRoute
   AuthenticatedAdminSubscriptionsRoute: typeof AuthenticatedAdminSubscriptionsRoute
   AuthenticatedAdminToursRoute: typeof AuthenticatedAdminToursRoute
@@ -1058,11 +1099,13 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminAffiliatesRoute: AuthenticatedAdminAffiliatesRoute,
   AuthenticatedAdminCustomLeadsRoute: AuthenticatedAdminCustomLeadsRoute,
   AuthenticatedAdminFinancialsRoute: AuthenticatedAdminFinancialsRoute,
   AuthenticatedAdminKycCmsRoute: AuthenticatedAdminKycCmsRoute,
   AuthenticatedAdminLandingCmsRoute: AuthenticatedAdminLandingCmsRoute,
   AuthenticatedAdminPaymentsRoute: AuthenticatedAdminPaymentsRoute,
+  AuthenticatedAdminSeoRoute: AuthenticatedAdminSeoRoute,
   AuthenticatedAdminServicesRoute: AuthenticatedAdminServicesRoute,
   AuthenticatedAdminSubscriptionsRoute: AuthenticatedAdminSubscriptionsRoute,
   AuthenticatedAdminToursRoute: AuthenticatedAdminToursRoute,
