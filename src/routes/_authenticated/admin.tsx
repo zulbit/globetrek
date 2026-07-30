@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { LayoutDashboard, Users, Globe2, Boxes, CreditCard, Sparkles, Compass, BookOpen, Wallet, LayoutTemplate, FileCheck, Layers, Share2, SearchCheck, HandCoins, MessageSquare } from "lucide-react";
+import { LayoutDashboard, Users, Globe2, Boxes, CreditCard, Sparkles, Compass, BookOpen, Wallet, LayoutTemplate, FileCheck, Layers, Share2, SearchCheck, HandCoins, MessageSquare, Inbox } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { RoleGuard } from "@/components/role-guard";
 
@@ -15,6 +15,7 @@ const NAV = [
     ],
   },
   { to: "/admin/whatsapp", label: "WhatsApp Console", icon: MessageSquare, badge: "LIVE" },
+  { to: "/admin/leads", label: "Leads & Inquiries", icon: Inbox, badge: "HOT" },
   { to: "/admin/financials", label: "Financial Collections", icon: Wallet },
   { to: "/admin/custom-leads", label: "Custom Tour Leads", icon: Compass },
   { to: "/admin/vendors", label: "Vendors & Subscriptions", icon: Users },

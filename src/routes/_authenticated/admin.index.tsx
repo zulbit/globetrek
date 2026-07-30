@@ -278,7 +278,7 @@ function AdminOverview() {
             )}
           </div>
           <Link
-            to="/admin/vendors"
+            to="/admin/leads"
             className="mt-6 flex items-center justify-center gap-1.5 rounded-xl border border-border bg-surface/50 py-2.5 text-xs font-medium text-foreground hover:bg-surface transition"
           >
             Manage Vendors & Leads <ArrowRight className="h-3.5 w-3.5" />
@@ -333,8 +333,8 @@ function AdminOverview() {
           <MetricCard to="/admin/services" icon={FileCheck} label="Visa listings" value={data?.visaCount ?? 0} hint="Active visa consultants" tone="sky" />
           <MetricCard to="/admin/services" icon={Shield} label="Insurance plans" value={data?.insuranceCount ?? 0} hint="Active travel insurance" tone="emerald" />
           <MetricCard to="/admin/services" icon={Ticket} label="Ticketing services" value={data?.ticketCount ?? 0} hint="Active ticketing desks" tone="amber" />
-          <MetricCard to="/admin/services" icon={Compass} label="Custom tour leads" value={data?.customLeadsCount ?? 0} hint="Exclusive group builder" tone="sky" />
-          <MetricCard to="/admin/services" icon={Inbox} label="Total leads" value={data?.totalLeads ?? 0} hint="All customer interactions" tone="violet" />
+          <MetricCard to="/admin/custom-leads" icon={Compass} label="Custom tour leads" value={data?.customLeadsCount ?? 0} hint="Exclusive group builder" tone="sky" />
+          <MetricCard to="/admin/leads" icon={Inbox} label="Total leads" value={data?.totalLeads ?? 0} hint="All customer interactions" tone="violet" />
         </div>
       </section>
     </div>
