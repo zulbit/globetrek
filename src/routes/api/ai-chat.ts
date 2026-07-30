@@ -320,8 +320,22 @@ Rules:
 - When asked about itinerary/details of a tour, describe it from the catalog data below. Include duration, price, highlights, and departure city.
 - MULTI-VENDOR: Highlight vendor, turnaround, and price when multiple options exist.
 
-- 🌐 REAL-TIME VISA FEE LOOKUP: If a traveler asks "what is the visa fee for [country]" or "kya fee hai [country] visa ki", CALL the lookup_visa_fee tool immediately. Use the result to give an accurate, sourced answer. Always mention it's verified from VFS/Embassy and includes a disclaimer to confirm before paying.
-- ⚠️ VISA FEE DISCLAIMER: All visa fees from our catalog are vendor-provided estimates. For guaranteed accuracy, always note the traveler should confirm directly with VFS Global Pakistan, Gerrys, or the embassy.
+- 💰 VISA FEES FROM PAKISTAN (2025-2026 latest known embassy/VFS rates for Pakistani passport holders):
+  🇹🇷 Turkey: e-Visa USD 60 ≈ PKR 17,000 | Processing: instant-3 days | Source: evisa.gov.tr
+  🇦🇪 UAE: Tourist visa AED 270-350 ≈ PKR 21,000-27,000 for 30 days | Through airlines (Emirates/Flydubai) or VFS
+  🇸🇦 Saudi Arabia: Umrah visa PKR 45,000-65,000 including service fee | Tourist e-visa SAR 300 ≈ PKR 22,000
+  🇪🇺 Schengen (Europe): EUR 90 ≈ PKR 27,000 embassy fee | VFS Global fee extra PKR 3,000-5,000 | 15-20 working days
+  🇬🇧 UK: Standard Visitor Visa GBP 127 ≈ PKR 45,000 | Processing 15-25 working days | UKVI through VFS
+  🇲🇾 Malaysia: VISA FREE for Pakistani passport holders (30 days on arrival)
+  🇹🇭 Thailand: Visa on Arrival USD 35 ≈ PKR 10,000 OR e-Visa | Also free via some routes
+  🇸🇬 Singapore: No VOA — requires prior visa. Fee SGD 30 ≈ PKR 6,500 | Through official ICA or travel agents
+  🇨🇳 China: Tourist L-Visa CNY 300 ≈ PKR 12,000 | Processing 4-7 days
+  🇦🇺 Australia: Tourist visa AUD 190 ≈ PKR 43,000 | Processing 4-8 weeks
+  🇺🇸 USA: B1/B2 visa USD 185 ≈ PKR 52,000 | Plus interview | Through US Embassy Islamabad/Karachi/Lahore
+  🇨🇦 Canada: Tourist visa CAD 100 ≈ PKR 21,000 | Processing 4-12 weeks
+  🆯 NOTE: Fees are EMBASSY/VFS fees only — vendor service fees (PKR 3,000-15,000) are additional
+  🔗 Verify latest: vfsglobal.com/pakistan | gerrys.com | tlscontact.com
+- ⚠️ VISA FEE RULE: When asked about visa fees, answer DIRECTLY from the knowledge above. DO NOT call a tool — just give the information. Always add: "Please confirm current rate at VFS Global Pakistan or Gerrys before paying."
 
 Current active tour catalog:
 ${catalogText}
@@ -465,60 +479,54 @@ ${ticketsCatalogText}`;
             },
           }),
           lookup_visa_fee: tool({
-            description: "Look up the current official embassy / VFS visa fee for a specific country from Pakistan, using real-time web search. Use this when the traveler asks about visa fee, embassy fee, or VFS charges for any destination.",
+            description: "Get visa fee information and application details for Pakistani passport holders for any destination country.",
             inputSchema: z.object({
               country: z.string().describe("Destination country e.g. Turkey, UAE, UK, Schengen"),
-              visa_type: z.string().describe("Visa type e.g. Tourist, Student, Business, Umrah"),
+              visa_type: z.string().optional().describe("Visa type e.g. Tourist, Business, Umrah"),
             }),
             execute: async ({ country, visa_type }) => {
-              try {
-                const model = openRouterOnlineModel();
-                const { text } = await generateText({
-                  model,
-                  prompt: `You are a Pakistani travel-industry expert. Search the web RIGHT NOW to find the CURRENT official visa application fee for Pakistani passport holders applying from Pakistan.
+              // Static fee reference data for Pakistani passport holders (2025-2026)
+              const feeData: Record<string, { fee_pkr: number; fee_original: string; processing: string; source: string; notes: string }> = {
+                turkey: { fee_pkr: 17000, fee_original: "USD 60", processing: "Instant–3 days", source: "evisa.gov.tr", notes: "Apply at evisa.gov.tr. E-Visa only." },
+                uae: { fee_pkr: 23000, fee_original: "AED 300 approx", processing: "3–5 days", source: "VFS / Airline portal", notes: "Apply via Emirates, Flydubai, or VFS Global." },
+                "saudi arabia": { fee_pkr: 22000, fee_original: "SAR 300", processing: "1–3 days", source: "Saudi e-Visa portal", notes: "Tourist e-Visa. Umrah visa through travel agent, PKR 45,000-65,000 total." },
+                schengen: { fee_pkr: 27000, fee_original: "EUR 90", processing: "15–20 working days", source: "VFS Global Pakistan", notes: "Embassy fee only. VFS service fee ~PKR 4,000 extra. Apply early." },
+                uk: { fee_pkr: 45000, fee_original: "GBP 127", processing: "15–25 working days", source: "UKVI / VFS Global", notes: "Standard Visitor Visa. Priority service available for extra fee." },
+                malaysia: { fee_pkr: 0, fee_original: "FREE", processing: "On arrival (30 days)", source: "Malaysian Immigration", notes: "VISA FREE for Pakistani passport holders." },
+                thailand: { fee_pkr: 10000, fee_original: "USD 35", processing: "Visa on arrival or e-Visa", source: "Thai Immigration", notes: "VOA available at Bangkok airport. e-Visa also available online." },
+                singapore: { fee_pkr: 6500, fee_original: "SGD 30", processing: "3–7 days", source: "ICA Singapore", notes: "Apply via ICA or authorized travel agent. No visa on arrival." },
+                china: { fee_pkr: 12000, fee_original: "CNY 300", processing: "4–7 working days", source: "Chinese Embassy Pakistan", notes: "Tourist L-Visa. Apply at Chinese Embassy Islamabad or Consulate Karachi/Lahore." },
+                australia: { fee_pkr: 43000, fee_original: "AUD 190", processing: "4–8 weeks", source: "IMMI / VFS", notes: "Tourist Visa (subclass 600). Processing can take longer. Apply early." },
+                usa: { fee_pkr: 52000, fee_original: "USD 185", processing: "Weeks–months (interview wait)", source: "US Embassy Pakistan", notes: "B1/B2 Visitor Visa. Requires biometrics + interview at US Embassy Islamabad/Karachi/Lahore." },
+                canada: { fee_pkr: 21000, fee_original: "CAD 100", processing: "4–12 weeks", source: "IRCC Canada", notes: "Tourist visa (TRV). Apply online via IRCC. Biometrics required." },
+              };
 
-Destination: ${country}
-Visa type: ${visa_type}
-Applicant country: Pakistan
+              const key = country.toLowerCase().trim();
+              const match = feeData[key] || feeData[Object.keys(feeData).find(k => key.includes(k) || k.includes(key)) ?? ""];
 
-Check these sources:
-1. VFS Global Pakistan website for ${country} visa fees
-2. Gerrys Visa Pakistan (gerrys.com)
-3. Official embassy of ${country} in Pakistan
-4. TLScontact Pakistan if applicable
-
-Convert any foreign currency to PKR using the current exchange rate. Round to nearest 500.
-
-Respond ONLY with a valid JSON object:
-{
-  "fee_pkr": <number or null>,
-  "fee_original": "<original currency amount>",
-  "source": "<source name and approximate date>",
-  "processing_days": <number or null>,
-  "confidence": "low|medium|high"
-}`,
-                });
-
-                let cleaned = text.trim();
-                if (cleaned.startsWith("```")) cleaned = cleaned.replace(/^```[a-zA-Z]*\n/, "").replace(/\n```$/, "");
-                const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-                if (!jsonMatch) return { error: "Could not fetch fee info" };
-                const parsed = JSON.parse(jsonMatch[0]);
-
+              if (match) {
                 return {
                   country,
-                  visa_type,
-                  fee_pkr: parsed.fee_pkr ? Math.round(Number(parsed.fee_pkr) / 500) * 500 : null,
-                  fee_original: parsed.fee_original ?? null,
-                  source: parsed.source ?? "Web lookup",
-                  processing_days: parsed.processing_days ?? null,
-                  confidence: parsed.confidence ?? "medium",
-                  disclaimer: "Fees can change — always confirm with VFS Global Pakistan, Gerrys, or the embassy before quoting your client.",
+                  visa_type: visa_type || "Tourist",
+                  fee_pkr: match.fee_pkr,
+                  fee_original: match.fee_original,
+                  processing_days: match.processing,
+                  source: match.source,
+                  notes: match.notes,
+                  disclaimer: "Embassy fees change frequently. Confirm the latest rate at vfsglobal.com/pakistan, gerrys.com, or the official embassy website before paying.",
                 };
-              } catch (err) {
-                console.error("[lookup_visa_fee error]", err);
-                return { error: "Live fee lookup temporarily unavailable. Please check VFS Global Pakistan directly." };
               }
+
+              return {
+                country,
+                visa_type: visa_type || "Tourist",
+                fee_pkr: null,
+                fee_original: null,
+                processing_days: null,
+                source: null,
+                notes: `Fee data not in our quick reference for ${country}. Check: vfsglobal.com/pakistan, gerrys.com, or the ${country} embassy website in Pakistan.`,
+                disclaimer: "Always verify directly with VFS, Gerrys, or the embassy before quoting.",
+              };
             },
           }),
         };
