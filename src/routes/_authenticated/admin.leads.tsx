@@ -55,8 +55,7 @@ interface Lead {
   status: LeadStatus;
   created_at: string;
   vendor_id: string | null;
-  profiles: { company_name: string | null; full_name: string | null; city: string | null } | null;
-  tours: { title: string } | null;
+  vendor_name: string | null;
 }
 
 const SVC: Record<ServiceType, { label: string; icon: React.ElementType; color: string; bg: string }> = {
@@ -89,21 +88,35 @@ function AdminLeads() {
   const [filterService, setFilterService] = useState<"all" | ServiceType>("all");
   const [filterStatus, setFilterStatus] = useState<"all" | LeadStatus>("all");
 
-  const { data: leads = [], isLoading, refetch } = useQuery({
+  const { data: leads = [], isLoading, isError, refetch } = useQuery({
     queryKey: ["admin-leads"],
     queryFn: async () => {
+      // Fetch leads with vendor profile (vendor_id → profiles)
+      // NOTE: service_id is polymorphic so we cannot join tours directly
       const { data, error } = await supabase
         .from("leads")
-        .select(`
-          id, customer_name, customer_phone, message, notes,
-          service_type, service_id, status, created_at, vendor_id,
-          profiles:vendor_id(company_name, full_name, city),
-          tours:service_id(title)
-        `)
+        .select("id, customer_name, customer_phone, message, notes, service_type, service_id, status, created_at, vendor_id")
         .order("created_at", { ascending: false })
         .limit(500);
       if (error) throw error;
-      return (data ?? []) as unknown as Lead[];
+
+      // Fetch vendor names separately to avoid FK join issues
+      const vendorIds = [...new Set((data ?? []).map((l: any) => l.vendor_id).filter(Boolean))];
+      let vendorMap: Record<string, string> = {};
+      if (vendorIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, company_name, full_name")
+          .in("id", vendorIds);
+        (profiles ?? []).forEach((p: any) => {
+          vendorMap[p.id] = p.company_name || p.full_name || "Vendor";
+        });
+      }
+
+      return (data ?? []).map((l: any) => ({
+        ...l,
+        vendor_name: l.vendor_id ? (vendorMap[l.vendor_id] ?? "Unknown Vendor") : "—",
+      })) as Lead[];
     },
   });
 
@@ -243,6 +256,11 @@ function AdminLeads() {
         <div className="flex h-48 items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
+      ) : isError ? (
+        <div className="flex h-48 flex-col items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400">
+          <p className="text-sm font-medium">Failed to load leads</p>
+          <Button size="sm" variant="outline" onClick={() => refetch()}>Try Again</Button>
+        </div>
       ) : filtered.length === 0 ? (
         <div className="flex h-48 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border text-muted-foreground">
           <Inbox className="h-8 w-8 opacity-30" />
@@ -310,7 +328,7 @@ function AdminLeads() {
 
                       {/* Vendor */}
                       <td className="px-4 py-3">
-                        <span className="text-xs text-muted-foreground">{vendorName}</span>
+                        <span className="text-xs text-muted-foreground">{lead.vendor_name ?? "—"}</span>
                       </td>
 
                       {/* Time */}

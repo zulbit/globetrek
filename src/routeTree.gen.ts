@@ -47,6 +47,7 @@ import { Route as AuthenticatedAdminCustomLeadsRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminFinancialsRouteImport } from './routes/_authenticated/admin.financials'
 import { Route as AuthenticatedAdminKycCmsRouteImport } from './routes/_authenticated/admin.kyc-cms'
 import { Route as AuthenticatedAdminLandingCmsRouteImport } from './routes/_authenticated/admin.landing-cms'
+import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
 import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authenticated/admin.payments'
 import { Route as AuthenticatedAdminSeoRouteImport } from './routes/_authenticated/admin.seo'
 import { Route as AuthenticatedAdminServicesRouteImport } from './routes/_authenticated/admin.services'
@@ -264,6 +265,11 @@ const AuthenticatedAdminLandingCmsRoute =
     path: '/landing-cms',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminLeadsRoute = AuthenticatedAdminLeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedAdminPaymentsRoute =
   AuthenticatedAdminPaymentsRouteImport.update({
     id: '/payments',
@@ -422,6 +428,7 @@ export interface FileRoutesByFullPath {
   '/admin/financials': typeof AuthenticatedAdminFinancialsRoute
   '/admin/kyc-cms': typeof AuthenticatedAdminKycCmsRoute
   '/admin/landing-cms': typeof AuthenticatedAdminLandingCmsRoute
+  '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/seo': typeof AuthenticatedAdminSeoRoute
   '/admin/services': typeof AuthenticatedAdminServicesRoute
@@ -476,6 +483,7 @@ export interface FileRoutesByTo {
   '/admin/financials': typeof AuthenticatedAdminFinancialsRoute
   '/admin/kyc-cms': typeof AuthenticatedAdminKycCmsRoute
   '/admin/landing-cms': typeof AuthenticatedAdminLandingCmsRoute
+  '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/admin/seo': typeof AuthenticatedAdminSeoRoute
   '/admin/services': typeof AuthenticatedAdminServicesRoute
@@ -538,6 +546,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/financials': typeof AuthenticatedAdminFinancialsRoute
   '/_authenticated/admin/kyc-cms': typeof AuthenticatedAdminKycCmsRoute
   '/_authenticated/admin/landing-cms': typeof AuthenticatedAdminLandingCmsRoute
+  '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/_authenticated/admin/payments': typeof AuthenticatedAdminPaymentsRoute
   '/_authenticated/admin/seo': typeof AuthenticatedAdminSeoRoute
   '/_authenticated/admin/services': typeof AuthenticatedAdminServicesRoute
@@ -600,6 +609,7 @@ export interface FileRouteTypes {
     | '/admin/financials'
     | '/admin/kyc-cms'
     | '/admin/landing-cms'
+    | '/admin/leads'
     | '/admin/payments'
     | '/admin/seo'
     | '/admin/services'
@@ -654,6 +664,7 @@ export interface FileRouteTypes {
     | '/admin/financials'
     | '/admin/kyc-cms'
     | '/admin/landing-cms'
+    | '/admin/leads'
     | '/admin/payments'
     | '/admin/seo'
     | '/admin/services'
@@ -715,6 +726,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/financials'
     | '/_authenticated/admin/kyc-cms'
     | '/_authenticated/admin/landing-cms'
+    | '/_authenticated/admin/leads'
     | '/_authenticated/admin/payments'
     | '/_authenticated/admin/seo'
     | '/_authenticated/admin/services'
@@ -1032,6 +1044,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminLandingCmsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/leads': {
+      id: '/_authenticated/admin/leads'
+      path: '/leads'
+      fullPath: '/admin/leads'
+      preLoaderRoute: typeof AuthenticatedAdminLeadsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/payments': {
       id: '/_authenticated/admin/payments'
       path: '/payments'
@@ -1189,6 +1208,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminFinancialsRoute: typeof AuthenticatedAdminFinancialsRoute
   AuthenticatedAdminKycCmsRoute: typeof AuthenticatedAdminKycCmsRoute
   AuthenticatedAdminLandingCmsRoute: typeof AuthenticatedAdminLandingCmsRoute
+  AuthenticatedAdminLeadsRoute: typeof AuthenticatedAdminLeadsRoute
   AuthenticatedAdminPaymentsRoute: typeof AuthenticatedAdminPaymentsRoute
   AuthenticatedAdminSeoRoute: typeof AuthenticatedAdminSeoRoute
   AuthenticatedAdminServicesRoute: typeof AuthenticatedAdminServicesRoute
@@ -1208,6 +1228,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminFinancialsRoute: AuthenticatedAdminFinancialsRoute,
   AuthenticatedAdminKycCmsRoute: AuthenticatedAdminKycCmsRoute,
   AuthenticatedAdminLandingCmsRoute: AuthenticatedAdminLandingCmsRoute,
+  AuthenticatedAdminLeadsRoute: AuthenticatedAdminLeadsRoute,
   AuthenticatedAdminPaymentsRoute: AuthenticatedAdminPaymentsRoute,
   AuthenticatedAdminSeoRoute: AuthenticatedAdminSeoRoute,
   AuthenticatedAdminServicesRoute: AuthenticatedAdminServicesRoute,
