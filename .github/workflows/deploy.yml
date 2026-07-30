@@ -32,7 +32,10 @@ jobs:
 
             echo "===> Syncing Static Assets to Nginx Web Root <==="
             sudo cp -r .output/public/* /var/www/tour_testben_usr89/data/www/tour.testbench.shop/
-            sudo cp .output/public/assets/*.css /var/www/tour_testben_usr89/data/www/tour.testbench.shop/styles.css
+            for f in /var/www/tour_testben_usr89/data/www/tour.testbench.shop/assets/styles-*.css; do
+              sudo cp "$f" /var/www/tour_testben_usr89/data/www/tour.testbench.shop/assets/styles-Df1OHlXA.css 2>/dev/null || true
+              sudo cp "$f" /var/www/tour_testben_usr89/data/www/tour.testbench.shop/styles.css 2>/dev/null || true
+            done
             sudo chown -R tour_testben_usr89:tour_testben_usr89 /var/www/tour_testben_usr89/data/www/tour.testbench.shop/assets /var/www/tour_testben_usr89/data/www/tour.testbench.shop/styles.css
 
             echo "===> Restarting Server with PM2 <==="
