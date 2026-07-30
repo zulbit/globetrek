@@ -31,3 +31,8 @@ function getProvider() {
 export function openRouterModel() {
   return getProvider()("openai/gpt-4o-mini");
 }
+
+/** Web-search grounded — real-time visa fee / embassy data lookups */
+export function openRouterOnlineModel() {
+  return getProvider()("openai/gpt-4o-mini:online");
+}

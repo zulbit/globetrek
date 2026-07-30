@@ -286,7 +286,7 @@ export const Route = createFileRoute("/api/ai-chat")({
           .map((tk) => `- TICKET SERVICE: ${tk.service_name} (${tk.route_type}) · Airlines: ${tk.airlines_supported.join(", ")} · Fee ₨ ${tk.service_fee_pkr.toLocaleString("en-PK")} · Refundable: ${tk.refundable ? "Yes" : "No"} · id=${tk.id}`)
           .join("\n");
 
-        const { openRouterModel } = await import("@/integrations/openrouter/openrouter.server");
+        const { openRouterModel, openRouterOnlineModel } = await import("@/integrations/openrouter/openrouter.server");
 
         const systemPrompt = `You are the GlobeTrek PK travel concierge — a warm, expert helper for Pakistani travelers.
 
@@ -319,6 +319,9 @@ Rules:
   - When greeting / general: [[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]
 - When asked about itinerary/details of a tour, describe it from the catalog data below. Include duration, price, highlights, and departure city.
 - MULTI-VENDOR: Highlight vendor, turnaround, and price when multiple options exist.
+
+- 🌐 REAL-TIME VISA FEE LOOKUP: If a traveler asks "what is the visa fee for [country]" or "kya fee hai [country] visa ki", CALL the lookup_visa_fee tool immediately. Use the result to give an accurate, sourced answer. Always mention it's verified from VFS/Embassy and includes a disclaimer to confirm before paying.
+- ⚠️ VISA FEE DISCLAIMER: All visa fees from our catalog are vendor-provided estimates. For guaranteed accuracy, always note the traveler should confirm directly with VFS Global Pakistan, Gerrys, or the embassy.
 
 Current active tour catalog:
 ${catalogText}
@@ -458,6 +461,63 @@ ${ticketsCatalogText}`;
               } catch (err) {
                 console.error("Capture lead exception:", err);
                 return { success: true, lead_id: "demo-lead-id" };
+              }
+            },
+          }),
+          lookup_visa_fee: tool({
+            description: "Look up the current official embassy / VFS visa fee for a specific country from Pakistan, using real-time web search. Use this when the traveler asks about visa fee, embassy fee, or VFS charges for any destination.",
+            inputSchema: z.object({
+              country: z.string().describe("Destination country e.g. Turkey, UAE, UK, Schengen"),
+              visa_type: z.string().describe("Visa type e.g. Tourist, Student, Business, Umrah"),
+            }),
+            execute: async ({ country, visa_type }) => {
+              try {
+                const model = openRouterOnlineModel();
+                const { text } = await generateText({
+                  model,
+                  prompt: `You are a Pakistani travel-industry expert. Search the web RIGHT NOW to find the CURRENT official visa application fee for Pakistani passport holders applying from Pakistan.
+
+Destination: ${country}
+Visa type: ${visa_type}
+Applicant country: Pakistan
+
+Check these sources:
+1. VFS Global Pakistan website for ${country} visa fees
+2. Gerrys Visa Pakistan (gerrys.com)
+3. Official embassy of ${country} in Pakistan
+4. TLScontact Pakistan if applicable
+
+Convert any foreign currency to PKR using the current exchange rate. Round to nearest 500.
+
+Respond ONLY with a valid JSON object:
+{
+  "fee_pkr": <number or null>,
+  "fee_original": "<original currency amount>",
+  "source": "<source name and approximate date>",
+  "processing_days": <number or null>,
+  "confidence": "low|medium|high"
+}`,
+                });
+
+                let cleaned = text.trim();
+                if (cleaned.startsWith("```")) cleaned = cleaned.replace(/^```[a-zA-Z]*\n/, "").replace(/\n```$/, "");
+                const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) return { error: "Could not fetch fee info" };
+                const parsed = JSON.parse(jsonMatch[0]);
+
+                return {
+                  country,
+                  visa_type,
+                  fee_pkr: parsed.fee_pkr ? Math.round(Number(parsed.fee_pkr) / 500) * 500 : null,
+                  fee_original: parsed.fee_original ?? null,
+                  source: parsed.source ?? "Web lookup",
+                  processing_days: parsed.processing_days ?? null,
+                  confidence: parsed.confidence ?? "medium",
+                  disclaimer: "Fees can change — always confirm with VFS Global Pakistan, Gerrys, or the embassy before quoting your client.",
+                };
+              } catch (err) {
+                console.error("[lookup_visa_fee error]", err);
+                return { error: "Live fee lookup temporarily unavailable. Please check VFS Global Pakistan directly." };
               }
             },
           }),
