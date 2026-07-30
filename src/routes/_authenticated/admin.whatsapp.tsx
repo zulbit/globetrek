@@ -608,7 +608,9 @@ function AdminWhatsAppConsole() {
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 ALTER TABLE public.whatsapp_templates ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public read whatsapp_templates" ON public.whatsapp_templates;
 CREATE POLICY "Public read whatsapp_templates" ON public.whatsapp_templates FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Admins manage whatsapp_templates" ON public.whatsapp_templates;
 CREATE POLICY "Admins manage whatsapp_templates" ON public.whatsapp_templates FOR ALL USING (true) WITH CHECK (true);`;
               navigator.clipboard.writeText(sql);
               toast.success("SQL Migration Script copied to clipboard! Paste into Supabase SQL Editor.");
