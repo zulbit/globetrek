@@ -54,6 +54,7 @@ import { Route as AuthenticatedAdminSubscriptionsRouteImport } from './routes/_a
 import { Route as AuthenticatedAdminToursRouteImport } from './routes/_authenticated/admin.tours'
 import { Route as AuthenticatedAdminVendorGuideRouteImport } from './routes/_authenticated/admin.vendor-guide'
 import { Route as AuthenticatedAdminVendorsRouteImport } from './routes/_authenticated/admin.vendors'
+import { Route as AuthenticatedAdminWhatsappRouteImport } from './routes/_authenticated/admin.whatsapp'
 import { Route as AuthenticatedCustomerIndexRouteImport } from './routes/_authenticated/customer.index'
 import { Route as AuthenticatedVendorIndexRouteImport } from './routes/_authenticated/vendor.index'
 import { Route as AuthenticatedVendorBillingRouteImport } from './routes/_authenticated/vendor.billing'
@@ -303,6 +304,12 @@ const AuthenticatedAdminVendorsRoute =
     path: '/vendors',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminWhatsappRoute =
+  AuthenticatedAdminWhatsappRouteImport.update({
+    id: '/whatsapp',
+    path: '/whatsapp',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedCustomerIndexRoute =
   AuthenticatedCustomerIndexRouteImport.update({
     id: '/customer/',
@@ -422,6 +429,7 @@ export interface FileRoutesByFullPath {
   '/admin/tours': typeof AuthenticatedAdminToursRoute
   '/admin/vendor-guide': typeof AuthenticatedAdminVendorGuideRoute
   '/admin/vendors': typeof AuthenticatedAdminVendorsRoute
+  '/admin/whatsapp': typeof AuthenticatedAdminWhatsappRoute
   '/vendor/billing': typeof AuthenticatedVendorBillingRoute
   '/vendor/insurance': typeof AuthenticatedVendorInsuranceRoute
   '/vendor/invoices': typeof AuthenticatedVendorInvoicesRoute
@@ -475,6 +483,7 @@ export interface FileRoutesByTo {
   '/admin/tours': typeof AuthenticatedAdminToursRoute
   '/admin/vendor-guide': typeof AuthenticatedAdminVendorGuideRoute
   '/admin/vendors': typeof AuthenticatedAdminVendorsRoute
+  '/admin/whatsapp': typeof AuthenticatedAdminWhatsappRoute
   '/vendor/billing': typeof AuthenticatedVendorBillingRoute
   '/vendor/insurance': typeof AuthenticatedVendorInsuranceRoute
   '/vendor/invoices': typeof AuthenticatedVendorInvoicesRoute
@@ -536,6 +545,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/tours': typeof AuthenticatedAdminToursRoute
   '/_authenticated/admin/vendor-guide': typeof AuthenticatedAdminVendorGuideRoute
   '/_authenticated/admin/vendors': typeof AuthenticatedAdminVendorsRoute
+  '/_authenticated/admin/whatsapp': typeof AuthenticatedAdminWhatsappRoute
   '/_authenticated/vendor/billing': typeof AuthenticatedVendorBillingRoute
   '/_authenticated/vendor/insurance': typeof AuthenticatedVendorInsuranceRoute
   '/_authenticated/vendor/invoices': typeof AuthenticatedVendorInvoicesRoute
@@ -597,6 +607,7 @@ export interface FileRouteTypes {
     | '/admin/tours'
     | '/admin/vendor-guide'
     | '/admin/vendors'
+    | '/admin/whatsapp'
     | '/vendor/billing'
     | '/vendor/insurance'
     | '/vendor/invoices'
@@ -650,6 +661,7 @@ export interface FileRouteTypes {
     | '/admin/tours'
     | '/admin/vendor-guide'
     | '/admin/vendors'
+    | '/admin/whatsapp'
     | '/vendor/billing'
     | '/vendor/insurance'
     | '/vendor/invoices'
@@ -710,6 +722,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/tours'
     | '/_authenticated/admin/vendor-guide'
     | '/_authenticated/admin/vendors'
+    | '/_authenticated/admin/whatsapp'
     | '/_authenticated/vendor/billing'
     | '/_authenticated/vendor/insurance'
     | '/_authenticated/vendor/invoices'
@@ -1068,6 +1081,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminVendorsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/whatsapp': {
+      id: '/_authenticated/admin/whatsapp'
+      path: '/whatsapp'
+      fullPath: '/admin/whatsapp'
+      preLoaderRoute: typeof AuthenticatedAdminWhatsappRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/customer/': {
       id: '/_authenticated/customer/'
       path: '/customer'
@@ -1176,6 +1196,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminToursRoute: typeof AuthenticatedAdminToursRoute
   AuthenticatedAdminVendorGuideRoute: typeof AuthenticatedAdminVendorGuideRoute
   AuthenticatedAdminVendorsRoute: typeof AuthenticatedAdminVendorsRoute
+  AuthenticatedAdminWhatsappRoute: typeof AuthenticatedAdminWhatsappRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
@@ -1194,6 +1215,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminToursRoute: AuthenticatedAdminToursRoute,
   AuthenticatedAdminVendorGuideRoute: AuthenticatedAdminVendorGuideRoute,
   AuthenticatedAdminVendorsRoute: AuthenticatedAdminVendorsRoute,
+  AuthenticatedAdminWhatsappRoute: AuthenticatedAdminWhatsappRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 
