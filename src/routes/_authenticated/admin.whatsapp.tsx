@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, MessageSquare, Info, Save, RotateCcw, AlertTriangle, Plus, Trash2, Wifi, WifiOff, RefreshCw, Image as ImageIcon, Upload, Send, Key } from "lucide-react";
+import { Loader2, MessageSquare, Info, Save, RotateCcw, AlertTriangle, Plus, Trash2, Wifi, WifiOff, RefreshCw, Image as ImageIcon, Upload, Send, Key, Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -788,27 +788,57 @@ CREATE POLICY "Admins manage whatsapp_templates" ON public.whatsapp_templates FO
                 />
               </div>
 
-              {/* Available Variable Chips */}
-              <div className="space-y-2 rounded-2xl border border-border/80 bg-surface/50 p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                    <Info className="size-3.5 text-primary" /> Available Dynamic Variables
-                  </span>
-                  <span className="text-[11px] text-muted-foreground">Click any tag to insert into message text</span>
-                </div>
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {PRESET_VARIABLES.map((v) => (
-                    <button
-                      key={v}
-                      type="button"
-                      onClick={() => insertVariableChip(v)}
-                      className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 transition-all font-semibold"
-                    >
-                      {`{${v}}`}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* Dynamic Variable Chips with Used vs Unused Highlight */}
+              {(() => {
+                const usedVariables = new Set(
+                  (templateBody.match(/\{([a-zA-Z0-9_]+)\}/g) || []).map((v) => v.slice(1, -1))
+                );
+                return (
+                  <div className="space-y-3 rounded-2xl border border-border/80 bg-surface/50 p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                          <Info className="size-3.5 text-primary" /> Dynamic Variables Palette
+                        </span>
+                        {usedVariables.size > 0 && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                            {usedVariables.size} Active Tags
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-[11px]">
+                        <span className="flex items-center gap-1 text-cyan-300 font-bold">
+                          <span className="size-2 rounded-full bg-cyan-400 shadow-glow" /> Used in Message
+                        </span>
+                        <span className="flex items-center gap-1 text-muted-foreground">
+                          <span className="size-2 rounded-full bg-muted-foreground/40" /> Available to Click
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {PRESET_VARIABLES.map((v) => {
+                        const isIncluded = usedVariables.has(v);
+                        return (
+                          <button
+                            key={v}
+                            type="button"
+                            onClick={() => insertVariableChip(v)}
+                            className={`text-[11px] font-mono px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                              isIncluded
+                                ? "bg-cyan-500/25 text-cyan-300 border border-cyan-400/60 shadow-glow font-extrabold"
+                                : "bg-primary/10 text-muted-foreground hover:text-primary border border-primary/20 hover:bg-primary/20 font-medium"
+                            }`}
+                          >
+                            {isIncluded && <Check className="size-3 text-cyan-300 shrink-0" />}
+                            {`{${v}}`}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Save Button */}
               <div className="flex justify-end pt-2">
