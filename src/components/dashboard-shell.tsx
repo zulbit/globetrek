@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Menu, X } from "lucide-react";
 
 export interface NavSubItem {
   to: string;
@@ -46,6 +46,7 @@ export function DashboardShell({
   const { user } = useAuth();
 
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -175,14 +176,23 @@ export function DashboardShell({
               </h1>
             </div>
 
-            {/* Clickable Profile User Badge in Top Right Corner */}
-            <div className="flex items-center gap-3">
+            {/* Mobile Menu Button & User Badge */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setMobileDrawerOpen(true)}
+                className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground md:hidden shadow-xs hover:bg-surface"
+                aria-label="Open navigation menu"
+              >
+                <Menu className="size-4 text-primary" />
+                <span>Menu</span>
+              </button>
+
               <button
                 onClick={() => setPasswordModalOpen(true)}
                 title="Account Settings & Change Password"
-                className="flex items-center gap-3 rounded-2xl border border-border bg-card px-3.5 py-2 shadow-xs transition hover:border-primary/50 hover:bg-surface text-left group"
+                className="flex items-center gap-2.5 rounded-2xl border border-border bg-card px-3 py-2 shadow-xs transition hover:border-primary/50 hover:bg-surface text-left group"
               >
-                <div className="relative grid size-9 place-items-center rounded-xl bg-primary/20 font-extrabold text-primary text-xs ring-1 ring-primary/40 group-hover:scale-105 transition-transform">
+                <div className="relative grid size-8 sm:size-9 place-items-center rounded-xl bg-primary/20 font-extrabold text-primary text-xs ring-1 ring-primary/40 group-hover:scale-105 transition-transform">
                   {initials}
                 </div>
                 <div className="hidden sm:block text-left">
@@ -199,15 +209,16 @@ export function DashboardShell({
 
               <button
                 onClick={signOut}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-3 py-2 text-xs text-muted-foreground hover:text-foreground md:hidden"
+                aria-label="Sign out"
+                className="inline-flex items-center gap-1 rounded-xl border border-border bg-surface px-2.5 py-2 text-xs text-muted-foreground hover:text-foreground md:hidden"
               >
-                <LogOut className="size-3.5" /> Sign out
+                <LogOut className="size-3.5" />
               </button>
             </div>
           </header>
 
-          {/* Mobile nav */}
-          <nav className="mb-6 flex gap-2 overflow-x-auto md:hidden pb-1">
+          {/* Quick horizontal scroll pills on mobile */}
+          <nav className="mb-6 flex gap-2 overflow-x-auto md:hidden pb-1 -mx-2 px-2 scrollbar-none">
             {nav.flatMap((n) => (n.subItems ? n.subItems : [n])).map((n, idx) => {
               const active = path === n.to;
               return (
@@ -229,6 +240,125 @@ export function DashboardShell({
           {children}
         </main>
       </div>
+
+      {/* Slide-over Mobile Navigation Drawer */}
+      {mobileDrawerOpen && (
+        <div className="fixed inset-0 z-50 flex md:hidden">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity"
+            onClick={() => setMobileDrawerOpen(false)}
+          />
+
+          {/* Drawer content */}
+          <div className="relative flex w-full max-w-xs flex-col border-r border-border bg-card p-5 shadow-2xl z-10 overflow-y-auto">
+            <div className="flex items-center justify-between pb-4 border-b border-border">
+              <Link
+                to="/"
+                onClick={() => setMobileDrawerOpen(false)}
+                className="flex items-center gap-2"
+              >
+                <span className="grid size-8 place-items-center rounded-xl bg-primary/15 text-primary ring-1 ring-primary/30">
+                  <Mountain className="size-4" />
+                </span>
+                <span className="text-sm font-semibold tracking-tight">
+                  GlobeTrek <span className="text-primary">PK</span>
+                </span>
+              </Link>
+              <button
+                onClick={() => setMobileDrawerOpen(false)}
+                className="rounded-lg p-1 text-muted-foreground hover:bg-surface hover:text-foreground"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            <div className="my-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {title} Navigation
+            </div>
+
+            <nav className="flex flex-col gap-1.5 flex-1">
+              {nav.map((n, idx) => {
+                if (n.subItems && n.subItems.length > 0) {
+                  return (
+                    <div key={idx} className="space-y-1">
+                      <div className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        {n.label}
+                      </div>
+                      <div className="ml-2 border-l border-border/60 pl-2 space-y-1">
+                        {n.subItems.map((sub) => {
+                          const active = path === sub.to;
+                          const SubIcon = sub.icon;
+                          return (
+                            <Link
+                              key={sub.to}
+                              to={sub.to}
+                              onClick={() => setMobileDrawerOpen(false)}
+                              className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium transition ${
+                                active
+                                  ? "bg-primary/15 text-primary font-bold"
+                                  : "text-muted-foreground hover:bg-surface hover:text-foreground"
+                              }`}
+                            >
+                              <SubIcon className="size-4 shrink-0" />
+                              <span>{sub.label}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                }
+
+                const active = path === n.to;
+                const Icon = n.icon;
+                return (
+                  <Link
+                    key={n.to || idx}
+                    to={n.to!}
+                    onClick={() => setMobileDrawerOpen(false)}
+                    className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm transition ${
+                      active
+                        ? "bg-primary/15 text-primary ring-1 ring-primary/30 font-semibold"
+                        : "text-muted-foreground hover:bg-surface hover:text-foreground"
+                    }`}
+                  >
+                    <Icon className="size-4 shrink-0" />
+                    <span className="flex-1 truncate">{n.label}</span>
+                    {n.badge && (
+                      <span className="rounded-full bg-amber-500/20 text-amber-400 px-2 py-0.5 text-[10px] font-bold">
+                        {n.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            <div className="mt-auto border-t border-border pt-4 flex flex-col gap-2">
+              <ThemeToggle />
+              <button
+                onClick={() => {
+                  setMobileDrawerOpen(false);
+                  setPasswordModalOpen(true);
+                }}
+                className="flex items-center gap-2.5 rounded-xl px-3.5 py-2 text-xs font-medium text-muted-foreground hover:bg-surface hover:text-foreground"
+              >
+                <KeyRound className="size-4 text-amber-400" /> Change Password
+              </button>
+              <button
+                onClick={() => {
+                  setMobileDrawerOpen(false);
+                  signOut();
+                }}
+                className="flex items-center gap-2.5 rounded-xl px-3.5 py-2 text-xs font-medium text-rose-400 hover:bg-rose-500/10"
+              >
+                <LogOut className="size-4" /> Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Change Password Dialog Modal */}
       <Dialog open={passwordModalOpen} onOpenChange={setPasswordModalOpen}>
