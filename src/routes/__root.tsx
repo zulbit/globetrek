@@ -55,11 +55,11 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
       );
 
     if (isChunkError) {
-      const storageKey = "globetrek_chunk_reload_" + (error?.message || "");
-      const hasReloaded = sessionStorage.getItem(storageKey);
-      if (!hasReloaded) {
-        sessionStorage.setItem(storageKey, "true");
-        window.location.reload();
+      const storageKey = "globetrek_chunk_reload_ts";
+      const lastReload = Number(sessionStorage.getItem(storageKey) || 0);
+      if (Date.now() - lastReload > 5000) {
+        sessionStorage.setItem(storageKey, String(Date.now()));
+        window.location.href = window.location.pathname;
       }
     }
   }, [error]);
@@ -79,15 +79,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
-              const isChunkError = /dynamically imported module|failed to fetch|importing a module/i.test(
-                error?.message || ""
-              );
-              if (isChunkError) {
-                window.location.reload();
-              } else {
-                router.invalidate();
-                reset();
-              }
+              window.location.href = window.location.pathname;
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
