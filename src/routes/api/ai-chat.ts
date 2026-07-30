@@ -471,6 +471,56 @@ ${ticketsCatalogText}`;
                   return { success: true, lead_id: "demo-lead-id", note: "Lead recorded in concierge session" };
                 }
                 console.log("[capture_lead SUCCESS]", data);
+
+                // --- Dispatch WhatsApp Alerts ---
+                try {
+                  const { dispatchWhatsAppDirect } = await import("@/lib/whatsapp.functions");
+
+                  // 1. Admin Alert to +923490386131
+                  const adminAlertMsg = `*👑 Admin Alert: New AI Chat Inquiry!* 📱\n\nA new lead has been captured by the AI Concierge.\n\n*Details:*\n👤 Name: ${customer_name}\n📞 Phone: ${customer_phone}\n💼 Service: ${finalServiceType.toUpperCase()}\n💬 Message: ${notes || "Concierge Inquiry"}\n\nView details and manage leads in Admin Console:\n👉 https://tour.testbench.shop/admin/leads`;
+                  await dispatchWhatsAppDirect({
+                    phone: "+923490386131",
+                    message: adminAlertMsg,
+                    skipDeduplication: true,
+                  });
+
+                  // 2. Fetch vendor info to notify vendor
+                  let vendorPhone = "";
+                  let vendorCompany = "Travel Agency";
+                  if (resolvedVendorId) {
+                    const { data: vProf } = await supabaseAdmin
+                      .from("profiles")
+                      .select("phone, company_name, full_name")
+                      .eq("id", resolvedVendorId)
+                      .maybeSingle();
+                    if (vProf) {
+                      vendorPhone = vProf.phone || "";
+                      vendorCompany = vProf.company_name || vProf.full_name || "Travel Agency";
+                    }
+                  }
+
+                  // 3. Notify Vendor if they have a phone number registered
+                  if (vendorPhone) {
+                    const vendorMsg = `*New Customer Lead!* 🚀\n\nDear Partner,\n\nYou have received a new inquiry from the GlobeTrek AI Concierge.\n\n*Lead Summary:*\n👤 Traveler: ${customer_name}\n📞 Contact: ${customer_phone}\n💼 Service: ${finalServiceType.toUpperCase()}\n\nPlease reach out to the traveler immediately on WhatsApp or call to close the deal!\n\nBest,\n*GlobeTrek PK Team*`;
+                    await dispatchWhatsAppDirect({
+                      phone: vendorPhone,
+                      message: vendorMsg,
+                      skipDeduplication: true,
+                    });
+                  }
+
+                  // 4. Notify Traveler (Receipt Confirmation)
+                  const travelerMsg = `*GlobeTrek PK — Inquiry Confirmed* ✅\n\nDear *${customer_name}*,\n\nWe have successfully received your inquiry for *${finalServiceType.toUpperCase()}* services!\n\nA representative from *${vendorCompany}* will reach out to you shortly on this number to assist you with your booking.\n\nThank you for choosing GlobeTrek PK! ✈️`;
+                  await dispatchWhatsAppDirect({
+                    phone: customer_phone,
+                    message: travelerMsg,
+                    skipDeduplication: true,
+                  });
+
+                } catch (waErr) {
+                  console.error("Failed to send WhatsApp alerts for captured lead:", waErr);
+                }
+
                 return { success: true, lead_id: data.id };
               } catch (err) {
                 console.error("Capture lead exception:", err);

@@ -375,14 +375,17 @@ export function AIChatWidget() {
 
           {/* Composer */}
           {(() => {
-            const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant")?.content ?? "";
+            const lastMsg = messages[messages.length - 1];
             let dynamicPlaceholder = "Ask about Turkey 🇹🇷, Visas 📄, Prices in PKR ₨…";
-            if (/phone|mobile|contact|number|whatsapp/i.test(lastAssistant) && /name|naam/i.test(lastAssistant)) {
-              dynamicPlaceholder = "Please type your name and mobile number...";
-            } else if (/phone|mobile|contact|number|whatsapp/i.test(lastAssistant)) {
-              dynamicPlaceholder = "Please type your mobile number...";
-            } else if (/name|naam/i.test(lastAssistant) || /details/i.test(lastAssistant)) {
-              dynamicPlaceholder = "Please type your name...";
+            if (lastMsg?.role === "assistant") {
+              const content = lastMsg.content;
+              if (/phone|mobile|contact|number|whatsapp/i.test(content) && /name|naam/i.test(content)) {
+                dynamicPlaceholder = "Please type your name and mobile number...";
+              } else if (/phone|mobile|contact|number|whatsapp/i.test(content)) {
+                dynamicPlaceholder = "Please type your mobile number...";
+              } else if (/name|naam/i.test(content) || /details/i.test(content)) {
+                dynamicPlaceholder = "Please type your name...";
+              }
             }
             return (
               <form
