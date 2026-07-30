@@ -30,8 +30,12 @@ jobs:
             npm install --production=false
             npm run build
 
+            echo "===> Syncing Static Assets to Nginx Web Root <==="
+            sudo cp -r .output/public/* /var/www/tour_testben_usr89/data/www/tour.testbench.shop/
+            sudo chown -R tour_testben_usr89:tour_testben_usr89 /var/www/tour_testben_usr89/data/www/tour.testbench.shop/assets
+
             echo "===> Restarting Server with PM2 <==="
-            pm2 restart globetrek-tour || pm2 restart globetrek || pm2 start .output/server/index.mjs --name "globetrek-tour"
+            PORT=4005 pm2 restart globetrek --update-env || pm2 restart globetrek-tour --update-env || pm2 start .output/server/index.mjs --name "globetrek"
             pm2 save
 
 
