@@ -157,7 +157,7 @@ export function AIChatWidget() {
     const userMsg: ChatMessage = { role: "user", content: text };
     const nextMsgs = [...messages, userMsg];
     setMessages(nextMsgs);
-    if (!textToSend) setInput("");
+    setInput("");  // always clear input immediately on send
     setSending(true);
 
     try {
@@ -388,7 +388,7 @@ export function AIChatWidget() {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  sendMessage(input);
+                  sendMessage();
                 }}
                 className="flex items-center gap-2 border-t border-border/70 bg-gradient-to-r from-surface-2/70 via-surface/70 to-surface-2/70 p-3"
               >
