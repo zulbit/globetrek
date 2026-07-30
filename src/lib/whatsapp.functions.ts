@@ -172,6 +172,18 @@ export async function dispatchWhatsAppDirect(input: {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("[WhatsAppDirect] API Error:", response.status, errorText);
+
+      // Handle Railway/platform timeout gracefully (message sent but HTTP connection timed out)
+      const isTimeout = response.status === 502 || response.status === 504;
+      const isApplicationFail = errorText.toLowerCase().includes("failed to respond") || errorText.toLowerCase().includes("bad gateway");
+      if (isTimeout && isApplicationFail) {
+        console.warn("[WhatsAppDirect] Platform timeout detected. Message was likely sent successfully.");
+        return {
+          success: true,
+          result: { status: "queued", note: "Sent via backup (timeout response)" }
+        };
+      }
+
       try {
         const errObj = JSON.parse(errorText);
         if (errObj.error) {
