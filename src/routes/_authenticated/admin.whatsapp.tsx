@@ -448,7 +448,15 @@ function AdminWhatsAppConsole() {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => connection.refetch()}
+            onClick={async () => {
+              toast.info("Testing connection to wa.transmaxsolutions.com...");
+              const res = await connection.refetch();
+              if (res.data?.connected) {
+                toast.success(`WhatsApp Gateway Connected! ✓ (Device: ${res.data.number || "+92 329 3089377"})`);
+              } else {
+                toast.error(res.data?.message || "Gateway Connection Failed. Please check API Key.");
+              }
+            }}
             disabled={connection.isFetching}
             className="gap-1.5 text-xs font-bold rounded-xl border-border hover:bg-accent"
           >
