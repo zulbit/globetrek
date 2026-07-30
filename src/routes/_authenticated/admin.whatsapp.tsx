@@ -135,10 +135,33 @@ function AdminWhatsAppConsole() {
   const [newRecipient, setNewRecipient] = useState("Traveler");
   const [newBody, setNewBody] = useState("");
 
-  // Fetch templates from database
+  // Helper for localStorage template fallback when DB table does not exist yet
+  const getLocalTemplates = (): Record<string, Template> => {
+    if (typeof window === "undefined") return {};
+    try {
+      const stored = localStorage.getItem("LOCAL_WHATSAPP_TEMPLATES");
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  };
+
+  const saveLocalTemplate = (tpl: Template) => {
+    if (typeof window === "undefined") return;
+    try {
+      const existing = getLocalTemplates();
+      existing[tpl.id] = tpl;
+      localStorage.setItem("LOCAL_WHATSAPP_TEMPLATES", JSON.stringify(existing));
+    } catch (e) {
+      console.warn("Failed to write to localStorage:", e);
+    }
+  };
+
+  // Fetch templates from database or local fallback
   const { data: dbTemplates, isLoading } = useQuery({
     queryKey: ["whatsapp-templates"],
     queryFn: async () => {
+      const localMap = getLocalTemplates();
       try {
         const { data, error } = await supabase
           .from("whatsapp_templates")
@@ -155,33 +178,53 @@ function AdminWhatsAppConsole() {
 
         for (const [id, info] of Object.entries(DEFAULT_GLOBETREK_TEMPLATES)) {
           if (!existingMap.has(id)) {
-            merged.push({
-              id,
-              name: info.name,
-              description: info.desc,
-              body: info.body,
-              recipient: info.recipient,
-              image_url: info.image_url,
-              variables: info.vars,
-              updated_at: new Date().toISOString(),
-            });
+            merged.push(
+              localMap[id] || {
+                id,
+                name: info.name,
+                description: info.desc,
+                body: info.body,
+                recipient: info.recipient,
+                image_url: info.image_url,
+                variables: info.vars,
+                updated_at: new Date().toISOString(),
+              }
+            );
+          }
+        }
+
+        // Also merge any local custom templates
+        for (const [id, localTpl] of Object.entries(localMap)) {
+          if (!existingMap.has(id) && !DEFAULT_GLOBETREK_TEMPLATES[id]) {
+            merged.push(localTpl);
           }
         }
 
         return merged;
       } catch (err) {
-        console.warn("Using fallback default templates due to missing table.", err);
+        console.warn("Using local/fallback templates due to missing table.", err);
         setDbError(true);
-        return Object.entries(DEFAULT_GLOBETREK_TEMPLATES).map(([id, info]) => ({
-          id,
-          name: info.name,
-          description: info.desc,
-          body: info.body,
-          recipient: info.recipient,
-          image_url: info.image_url,
-          variables: info.vars,
-          updated_at: new Date().toISOString(),
-        })) as Template[];
+
+        const fallbackList: Template[] = Object.entries(DEFAULT_GLOBETREK_TEMPLATES).map(([id, info]) => (
+          localMap[id] || {
+            id,
+            name: info.name,
+            description: info.desc,
+            body: info.body,
+            recipient: info.recipient,
+            image_url: info.image_url,
+            variables: info.vars,
+            updated_at: new Date().toISOString(),
+          }
+        ));
+
+        for (const [id, localTpl] of Object.entries(localMap)) {
+          if (!DEFAULT_GLOBETREK_TEMPLATES[id] && !fallbackList.some(t => t.id === id)) {
+            fallbackList.push(localTpl);
+          }
+        }
+
+        return fallbackList;
       }
     },
   });
@@ -200,12 +243,8 @@ function AdminWhatsAppConsole() {
   // Save template mutation
   const saveTemplate = useMutation({
     mutationFn: async ({ id, body, recipient, imageUrl }: { id: string; body: string; recipient: string; imageUrl: string }) => {
-      if (dbError) {
-        throw new Error("Cannot save: Table 'whatsapp_templates' is missing. Run SQL migration script.");
-      }
-
       const defaultInfo = DEFAULT_GLOBETREK_TEMPLATES[id];
-      const payload: any = {
+      const payload: Template = {
         id,
         name: selectedTemplate?.name || defaultInfo?.name || id,
         description: selectedTemplate?.description || defaultInfo?.desc || null,
@@ -216,11 +255,18 @@ function AdminWhatsAppConsole() {
         updated_at: new Date().toISOString(),
       };
 
+      if (dbError) {
+        saveLocalTemplate(payload);
+        return;
+      }
+
       const { error } = await supabase
         .from("whatsapp_templates")
         .upsert(payload);
 
-      if (error) throw error;
+      if (error) {
+        saveLocalTemplate(payload);
+      }
     },
     onSuccess: () => {
       toast.success("WhatsApp Template saved successfully!");
@@ -535,14 +581,43 @@ function AdminWhatsAppConsole() {
       </div>
 
       {dbError && (
-        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 flex items-start gap-3 text-xs text-amber-300">
-          <AlertTriangle className="size-5 text-amber-400 shrink-0 mt-0.5" />
-          <div>
-            <p className="font-bold">Database Table Notice</p>
-            <p className="text-amber-300/80 mt-0.5">
-              Table <code className="bg-black/40 px-1 py-0.5 rounded text-amber-200">whatsapp_templates</code> is not found in Supabase. System fallback templates are active temporarily.
-            </p>
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs text-amber-300">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="size-5 text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold">Database Table Notice — Temporary Local Fallback Active</p>
+              <p className="text-amber-300/80 mt-0.5 leading-relaxed">
+                Table <code className="bg-black/40 px-1 py-0.5 rounded text-amber-200 font-mono">whatsapp_templates</code> was not found in Supabase. Your edits are saved locally. To persist templates permanently across all devices in Supabase, run the SQL script in your Supabase SQL Editor.
+              </p>
+            </div>
           </div>
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              const sql = `CREATE TABLE IF NOT EXISTS public.whatsapp_templates (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT,
+  body TEXT NOT NULL,
+  recipient TEXT NOT NULL DEFAULT 'Traveler',
+  image_url TEXT,
+  variables TEXT[] DEFAULT '{}',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE public.whatsapp_templates ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public read whatsapp_templates" ON public.whatsapp_templates FOR SELECT USING (true);
+CREATE POLICY "Admins manage whatsapp_templates" ON public.whatsapp_templates FOR ALL USING (true) WITH CHECK (true);`;
+              navigator.clipboard.writeText(sql);
+              toast.success("SQL Migration Script copied to clipboard! Paste into Supabase SQL Editor.");
+              window.open("https://supabase.com/dashboard/project/rcldabxkcwfemnigwutk/sql/new", "_blank");
+            }}
+            className="text-xs font-bold rounded-xl border-amber-500/40 text-amber-300 hover:bg-amber-500/20 shrink-0 gap-1.5"
+          >
+            📋 Copy SQL Migration Script
+          </Button>
         </div>
       )}
 
