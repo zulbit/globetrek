@@ -62,13 +62,14 @@ function CustomerDashboard() {
         /* grace */
       }
 
-      // 2. Fetch custom tour lead requests
+      // 2. Fetch custom tour lead requests for this traveler
       let customRequests: any[] = [];
       try {
-        const { data: cr } = await supabase
-          .from("custom_tour_leads")
-          .select("*")
-          .order("created_at", { ascending: false });
+        let q = supabase.from("custom_tour_leads").select("*").order("created_at", { ascending: false });
+        if (user?.email) {
+          q = q.ilike("contact_email", user.email);
+        }
+        const { data: cr } = await q;
         customRequests = cr ?? [];
       } catch {
         /* grace for missing table */
@@ -272,18 +273,25 @@ function CustomerDashboard() {
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                             <div>
                               <div className="flex items-center gap-2">
-                                <h3 className="font-bold text-foreground text-sm">{req.destination_country} Tour</h3>
+                                <h3 className="font-bold text-foreground text-sm">
+                                  {req.destination ? `${req.destination} Trip` : "Custom Tour Request"}
+                                </h3>
                                 <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] uppercase font-bold">
-                                  {req.status || "Bidding Open"}
+                                  {req.status || "Pending Quotes"}
                                 </Badge>
                               </div>
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                {req.duration_days} Days · Budget: {formatPKR(req.budget_pkr || 250000)} · Departure: {req.departure_city || "Karachi"}
+                              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                                📅 <strong>{req.travel_month || "Upcoming"}</strong> · ⏳ {req.duration_days ?? 7} Days · 👨‍👩‍👧‍👦 {req.group_size ?? 1} Travelers ({req.group_type || "Family"}) · ✈️ From {req.departure_city || "Pakistan"}
                               </p>
+                              {req.special_requests && (
+                                <p className="text-[11px] text-muted-foreground/80 italic mt-1 bg-surface/80 px-2.5 py-1 rounded-lg border border-border/50">
+                                  "{req.special_requests}"
+                                </p>
+                              )}
                             </div>
-                            {req.share_token && (
-                              <Button asChild size="sm" className="gap-1.5 font-bold text-xs bg-primary text-primary-foreground rounded-xl">
-                                <Link to={`/customer/quotes?token=${req.share_token}`}>
+                            {req.access_token && (
+                              <Button asChild size="sm" className="gap-1.5 font-bold text-xs bg-primary text-primary-foreground rounded-xl shrink-0">
+                                <Link to={`/customer/quotes?token=${req.access_token}`}>
                                   View Proposals <ExternalLink className="size-3.5" />
                                 </Link>
                               </Button>

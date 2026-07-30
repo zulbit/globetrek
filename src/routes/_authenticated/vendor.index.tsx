@@ -451,7 +451,15 @@ function VendorOverview() {
               </span>
               <h3 className="text-sm font-semibold">Recent Activity</h3>
             </div>
-            <Link to="/vendor/leads" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+            <Link
+              to="/vendor/leads"
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  sessionStorage.setItem("leads-tab", "marketplace");
+                }
+              }}
+              className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+            >
               View All <ChevronRight className="size-3" />
             </Link>
           </div>
