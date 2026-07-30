@@ -60,6 +60,14 @@ export const DEFAULT_GLOBETREK_TEMPLATES: Record<
     vars: ["vendor_name", "company_name", "email", "phone"],
     body: `*GlobeTrek PK — Vendor Account Received* 💼\n\nDear *{vendor_name}* ({company_name}),\n\nThank you for applying to join Pakistan's premier B2B travel marketplace!\n\nYour agency account is currently under review by our vendor verification team (KYC & registration check).\n\n*Status:* Pending Verification (24h SLA)\n\nOnce approved, you will receive full access to publish tour packages, visa services, and bid on custom traveler requests!\n\n*GlobeTrek PK Team*`,
   },
+  vendor_signup_admin_alert: {
+    name: "Vendor Signup Admin Alert (Admin)",
+    desc: "Sent to the platform admin when a new travel agency registers for a vendor account.",
+    recipient: "Admin",
+    image_url: null,
+    vars: ["vendor_name", "company_name", "phone", "email", "referral_code"],
+    body: `*👑 Admin Alert: New Vendor Application!* 🏢\n\nA new travel agency has registered on GlobeTrek PK.\n\n*Agency Details:*\n🏢 Agency: {company_name}\n👤 Contact Person: {vendor_name}\n📞 WhatsApp: {phone}\n✉️ Email: {email}\n🎟️ Referral Code Used: {referral_code}\n\nReview & approve agency KYC status in Admin Console:\n👉 https://tour.testbench.shop/admin/vendors`,
+  },
   vendor_approved: {
     name: "Vendor Account Approved (Vendor)",
     desc: "Sent to the agency when the admin approves their vendor account.",

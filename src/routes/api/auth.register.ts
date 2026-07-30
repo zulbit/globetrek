@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { dispatchWhatsAppDirect } from "@/lib/whatsapp.functions";
 
 type SignupBody = {
   email?: string;
@@ -104,6 +105,23 @@ export const Route = createFileRoute("/api/auth/register")({
             user_id: userId,
             role: role === "vendor" ? "vendor" : "customer",
           });
+
+          // 4. If vendor registration, dispatch WhatsApp notifications
+          if (role === "vendor" && phone) {
+            // Send Vendor Signup Confirmation to Agency
+            dispatchWhatsAppDirect({
+              phone,
+              message: `*GlobeTrek PK — Vendor Account Received* 💼\n\nDear *${full_name || "Partner"}* (${company_name || "Agency"}),\n\nThank you for applying to join Pakistan's premier B2B travel marketplace!\n\nYour agency account is currently under review by our vendor verification team (KYC & registration check).\n\n*Status:* Pending Verification (24h SLA)\n\nOnce approved, you will receive full access to publish tour packages, visa services, and bid on custom traveler requests!\n\n*GlobeTrek PK Team*`,
+              skipDeduplication: true,
+            }).catch((err) => console.warn("[WhatsApp] Failed vendor signup notification:", err));
+
+            // Send Vendor Signup Admin Alert to Platform Admin
+            dispatchWhatsAppDirect({
+              phone: "+923490386131",
+              message: `*👑 Admin Alert: New Vendor Application!* 🏢\n\nA new travel agency has registered on GlobeTrek PK.\n\n*Agency Details:*\n🏢 Agency: ${company_name || "N/A"}\n👤 Contact Person: ${full_name || "N/A"}\n📞 WhatsApp: ${phone}\n✉️ Email: ${email}\n🎟️ Referral Code Used: ${referral_code || "None"}\n\nReview & approve agency KYC status in Admin Console:\n👉 https://tour.testbench.shop/admin/vendors`,
+              skipDeduplication: true,
+            }).catch((err) => console.warn("[WhatsApp] Failed vendor admin alert notification:", err));
+          }
 
           return new Response(
             JSON.stringify({
