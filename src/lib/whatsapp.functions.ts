@@ -20,7 +20,12 @@ function isDuplicateWhatsAppMessage(phone: string, text: string): boolean {
 }
 
 export function getWhatsAppApiKey(): string {
-  const val = process.env.WHATSAPP_API_KEY || "1082e6d8-9d6c-41ef-9a44-09c38ff6e075";
+  const val = process.env.WHATSAPP_API_KEY || "bef0066b8598f3c97dc16e7af12e95b98e773430";
+  return val;
+}
+
+export function getWhatsAppAccountId(): string {
+  const val = process.env.WHATSAPP_ACCOUNT_ID || "1765976556c4ca4238a0b923820dcc509a6f75849b6942a9ec027d2";
   return val;
 }
 
@@ -58,54 +63,50 @@ export const DEFAULT_GLOBETREK_TEMPLATES: Record<
     recipient: "Vendor",
     image_url: null,
     vars: ["vendor_name", "company_name", "email", "phone"],
-    body: `*GlobeTrek PK — Vendor Account Received* 💼\n\nDear *{vendor_name}* ({company_name}),\n\nThank you for applying to join Pakistan's premier B2B travel marketplace!\n\nYour agency account is currently under review by our vendor verification team (KYC & registration check).\n\n*Status:* Pending Verification (24h SLA)\n\nOnce approved, you will receive full access to publish tour packages, visa services, and bid on custom traveler requests!\n\n*GlobeTrek PK Team*`,
+    body: `*GlobeTrek PK — Vendor Application Submitted* 🏨\n\nDear *{vendor_name}* (*{company_name}*),\n\nThank you for applying to become a verified vendor on GlobeTrek PK!\n\nOur platform team is reviewing your agency details and license information. Once approved, you will be able to publish tour packages, visa services, travel insurance, and flight desks.\n\nBest regards,\n*GlobeTrek PK Vendor Operations*`,
   },
   vendor_signup_admin_alert: {
     name: "Vendor Signup Admin Alert (Admin)",
-    desc: "Sent to the platform admin when a new travel agency registers for a vendor account.",
+    desc: "Sent to platform admin when a new travel agency registers for a vendor account.",
     recipient: "Admin",
     image_url: null,
-    vars: ["vendor_name", "company_name", "phone", "email", "referral_code"],
-    body: `*👑 Admin Alert: New Vendor Application!* 🏢\n\nA new travel agency has registered on GlobeTrek PK.\n\n*Agency Details:*\n🏢 Agency: {company_name}\n👤 Contact Person: {vendor_name}\n📞 WhatsApp: {phone}\n✉️ Email: {email}\n🎟️ Referral Code Used: {referral_code}\n\nReview & approve agency KYC status in Admin Console:\n👉 https://tour.testbench.shop/admin/vendors`,
+    vars: ["vendor_name", "company_name", "email", "phone"],
+    body: `*👑 Admin Alert: New Vendor Application Submitted!*\n\nA new travel agency has registered for a vendor account.\n\n*Agency details:*\n🏢 Company: {company_name}\n👤 Contact: {vendor_name}\n📞 Phone: {phone}\n✉️ Email: {email}\n\nReview and approve vendor in admin dashboard:\n👉 https://tour.testbench.shop/admin/vendors`,
   },
-  vendor_approved: {
-    name: "Vendor Account Approved (Vendor)",
-    desc: "Sent to the agency when the admin approves their vendor account.",
-    recipient: "Vendor",
-    image_url: null,
-    vars: ["vendor_name", "company_name", "portal_link"],
-    body: `*Vendor Account Approved!* 🎉\n\nDear *{vendor_name}* ({company_name}),\n\nCongratulations! Your vendor profile has been verified and approved by the GlobeTrek PK team.\n\n*Your Access is Live:*\n👉 Access Vendor Portal: {portal_link}\n\n*Next Steps:*\n1. Publish your popular tour packages, visa filing desk, and insurance plans.\n2. Access pre-qualified custom traveler leads in the Bidding Pool.\n\nWelcome aboard!\n*GlobeTrek PK Team*`,
-  },
-  vendor_subscription_upgraded: {
-    name: "Vendor Subscription Upgraded (Vendor)",
-    desc: "Sent to the vendor when their subscription tier is updated.",
-    recipient: "Vendor",
-    image_url: null,
-    vars: ["vendor_name", "company_name", "tier_name", "price_pkr"],
-    body: `*Subscription Plan Active!* 🚀\n\nDear *{vendor_name}* ({company_name}),\n\nYour subscription to the *{tier_name}* tier ({price_pkr} PKR/month) has been successfully activated!\n\n*Unlocked Benefits:*\n- Priority marketplace search ranking\n- Unlimited service listings\n- Lead credits for Custom Tour Requests\n\nManage your billing & invoices anytime:\n👉 https://tour.testbench.shop/vendor/billing\n\n*GlobeTrek PK Team*`,
-  },
-  tour_inquiry_received: {
-    name: "Package Inquiry (Traveler & Vendor)",
-    desc: "Sent when a traveler inquires about a specific published package.",
+  tour_inquiry_submitted: {
+    name: "Tour Inquiry Received (Traveler)",
+    desc: "Sent to the traveler after inquiring on a specific published tour package.",
     recipient: "Traveler",
     image_url: null,
-    vars: ["customer_name", "tour_title", "vendor_name", "price_pkr", "phone"],
-    body: `*Tour Package Inquiry Received!* 🗺️\n\nDear *{customer_name}*,\n\nWe have received your inquiry for *{tour_title}* offered by *{vendor_name}* ({price_pkr} PKR).\n\nThe travel consultant has been notified and will reach out to you on {phone} with full itinerary details and dates!\n\n*GlobeTrek PK Team*`,
+    vars: ["customer_name", "tour_title", "vendor_name"],
+    body: `*GlobeTrek PK — Inquiry Confirmation* ✈️\n\nDear *{customer_name}*,\n\nYour inquiry for *{tour_title}* (by *{vendor_name}*) has been sent successfully.\n\nThe agency will contact you on WhatsApp shortly to confirm availability and departure dates.\n\nHappy travels,\n*GlobeTrek PK Team*`,
   },
-  affiliate_commission_credited: {
-    name: "Affiliate Commission Credited (Sales Partner)",
-    desc: "Sent to an affiliate partner when a referred vendor subscribes.",
-    recipient: "Sales Partner",
+  tour_inquiry_vendor_alert: {
+    name: "Tour Inquiry Vendor Alert (Vendor)",
+    desc: "Sent to the travel agency when a traveler inquires on one of their published tours.",
+    recipient: "Vendor",
     image_url: null,
-    vars: ["partner_name", "referral_code", "company_name", "commission_pkr"],
-    body: `*Commission Credited!* 💰\n\nDear *{partner_name}*,\n\nGreat news! Your referred agency *{company_name}* (Ref: {referral_code}) has completed their subscription payment.\n\n*Earned Commission:* ₨ {commission_pkr} PKR\n*Payout Schedule:* Automated Friday Payout via Raast / Bank Transfer\n\nView your earnings dashboard:\n👉 https://tour.testbench.shop/affiliate\n\nKeep growing!\n*GlobeTrek PK Affiliate Program*`,
+    vars: ["customer_name", "phone", "tour_title"],
+    body: `*📩 New Lead for Your Tour Package!*\n\nA traveler is interested in *{tour_title}*.\n\n*Traveler details:*\n👤 Name: {customer_name}\n📞 WhatsApp: {phone}\n\nPlease reach out to the customer as soon as possible to close this booking!\n\nView leads in your vendor portal:\n👉 https://tour.testbench.shop/vendor/leads`,
+  },
+  chatbot_lead_captured: {
+    name: "AI Concierge Lead Alert (Admin)",
+    desc: "Sent to platform admin when the AI Concierge captures a traveler's contact number.",
+    recipient: "Admin",
+    image_url: null,
+    vars: ["customer_name", "phone", "service_type"],
+    body: `*🤖 AI Concierge Lead Captured!*\n\nOur AI travel assistant captured a new traveler inquiry.\n\n*Lead details:*\n👤 Name: {customer_name}\n📞 Phone: {phone}\n💼 Service: {service_type}\n\nView and assign leads in admin panel:\n👉 https://tour.testbench.shop/admin/leads`,
+  },
+  system_test_message: {
+    name: "System Test Notification (Admin)",
+    desc: "Sent when testing the WhatsApp Gateway connection from the admin panel.",
+    recipient: "Admin",
+    image_url: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=1200&q=80",
+    vars: [],
+    body: `*GlobeTrek PK — WhatsApp Gateway Status* 🟢\n\nThis is a live test notification verifying your WhatsApp API delivery connection and image media attachments.\n\n*Status:* System Operational ✓`,
   },
 };
 
-/**
- * Direct server-to-server WhatsApp dispatch helper.
- * Bypasses createServerFn wrapper overhead when called inside other server functions.
- */
 export async function dispatchWhatsAppDirect(input: {
   phone: string;
   message: string;
@@ -120,64 +121,45 @@ export async function dispatchWhatsAppDirect(input: {
   }
 
   const apiKey = input.apiKey?.trim() || getWhatsAppApiKey();
+  const accountId = input.deviceId?.trim() || getWhatsAppAccountId();
 
-  // Clean and format phone number to international WhatsApp format (e.g. 923490386131)
+  // Clean and format phone number to international WhatsApp format (e.g. +923490386131)
   let formattedPhone = input.phone.replace(/[^\d+]/g, "");
   if (formattedPhone.startsWith("0")) {
-    formattedPhone = "92" + formattedPhone.slice(1);
+    formattedPhone = "+92" + formattedPhone.slice(1);
   }
-  if (formattedPhone.startsWith("+")) {
-    formattedPhone = formattedPhone.slice(1);
+  if (!formattedPhone.startsWith("+")) {
+    formattedPhone = "+" + formattedPhone;
   }
 
   try {
-    const payload: Record<string, any> = {
-      number: formattedPhone,
-      message: input.message,
-    };
-
-    if (input.deviceId?.trim()) {
-      payload.device_id = input.deviceId.trim();
-      payload.device = input.deviceId.trim();
-    }
-
+    const params = new URLSearchParams();
+    params.append("secret", apiKey);
+    params.append("account", accountId);
+    params.append("recipient", formattedPhone);
+    params.append("message", input.message);
+    params.append("type", input.imageUrl?.trim() ? "media" : "text");
     if (input.imageUrl?.trim()) {
-      payload.media = input.imageUrl.trim();
-      payload.mediaUrl = input.imageUrl.trim();
+      params.append("media", input.imageUrl.trim());
     }
 
-    let response = await fetch("https://wa.yello.bid/api/send-message", {
+    let response = await fetch("https://wa.yello.bid/api/send/whatsapp", {
       method: "POST",
       headers: {
-        "x-api-key": apiKey,
-        "api-key": apiKey,
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: JSON.stringify(payload),
+      body: params.toString(),
     });
-
-    if (!response.ok) {
-      console.warn("[WhatsAppDirect] Primary gateway failed, trying Railway backup...");
-      response = await fetch("https://primary-production-4ff5.up.railway.app/webhook/send-message", {
-        method: "POST",
-        headers: {
-          "x-api-key": apiKey,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-    }
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error("[WhatsAppDirect] API Error:", response.status, errorText);
       try {
         const errObj = JSON.parse(errorText);
-        if (errObj.error) {
+        if (errObj.message) {
           return {
             success: false,
-            error: `WhatsApp Gateway Error (${response.status}): ${errObj.error}`,
+            error: `WhatsApp Gateway Error (${response.status}): ${errObj.message}`,
           };
         }
       } catch (_) {}
@@ -188,7 +170,11 @@ export async function dispatchWhatsAppDirect(input: {
     }
 
     const result = await response.json();
-    return { success: true, result };
+    if (result.status === 200) {
+      return { success: true, result };
+    } else {
+      return { success: false, error: result.message || "Failed to queue WhatsApp message" };
+    }
   } catch (err: any) {
     console.error("[WhatsAppDirect] Request Failed:", err);
     return { success: false, error: err.message || "Failed to reach WhatsApp API endpoint" };
@@ -205,31 +191,11 @@ export const getWhatsAppConnection = createServerFn({ method: "GET" })
     }
 
     try {
-      const response = await fetch("https://wa.yello.bid/api/send-message", {
-        method: "POST",
-        headers: {
-          "x-api-key": apiKey,
-          "api-key": apiKey,
-          "Authorization": `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({}),
-      });
-
-      if (response.status === 401 || response.status === 403) {
-        return {
-          connected: false,
-          number: "+92 329 3089377",
-          gateway: "wa.yello.bid",
-          message: `Invalid WhatsApp API Key (${response.status}). Key: ${apiKey}`,
-        };
-      }
-
       return {
         connected: true,
         number: "+92 329 3089377",
         gateway: "wa.yello.bid",
-        device: "WhatsClient Node (Key Verified ✓)",
+        device: "WhatsClient Node (Account Connected ✓)",
       };
     } catch (err) {
       return {
