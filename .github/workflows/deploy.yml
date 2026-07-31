@@ -20,20 +20,21 @@ jobs:
           script: |
             echo "===> Navigating to App Directory <==="
             cd /var/www/tour_testben_usr89/data/www/tour.testbench.shop/app || cd /home/ubuntu/app
-            pwd
 
             echo "===> Pulling latest changes <==="
             git reset --hard
             git pull origin main
 
-            echo "===> Installing & Building <==="
+            echo "===> Purging Stale Assets & Building <==="
+            sudo rm -rf /var/www/tour_testben_usr89/data/www/tour.testbench.shop/assets/*
+            rm -rf .output node_modules/.cache
             npm install --production=false
             npm run build
 
+            echo "===> Syncing Public Assets <==="
+            sudo cp -r .output/public/* /var/www/tour_testben_usr89/data/www/tour.testbench.shop/
+            sudo chown -R tour_testben_usr89:tour_testben_usr89 /var/www/tour_testben_usr89/data/www/tour.testbench.shop/
+
             echo "===> Restarting Server with PM2 <==="
-            pm2 restart globetrek-tour || pm2 restart globetrek || pm2 start .output/server/index.mjs --name "globetrek-tour"
+            PORT=4005 pm2 restart globetrek --update-env || PORT=4005 pm2 start .output/server/index.mjs --name "globetrek"
             pm2 save
-
-
-
-
