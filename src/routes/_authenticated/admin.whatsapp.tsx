@@ -90,7 +90,7 @@ function AdminWhatsAppConsole() {
         return stored;
       }
     }
-    return "1082e6d8-9d6c-41ef-9a44-09c38ff6e075";
+    return "bef0066b8598f3c97dc16e7af12e95b98e773430";
   });
 
   const saveCustomApiKey = (newKey: string) => {
