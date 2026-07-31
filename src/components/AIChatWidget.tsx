@@ -4,7 +4,6 @@ import { Bot, X, Send, Sparkles } from "lucide-react";
 import { useLocation } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -154,23 +153,6 @@ export function AIChatWidget() {
   async function sendMessage(textToSend?: string) {
     const text = (textToSend ?? input).trim();
     if (!text || sending) return;
-
-    // Validate phone number if the last assistant message was prompting for a mobile/phone number
-    const lastMsg = messages[messages.length - 1];
-    if (
-      lastMsg?.role === "assistant" &&
-      /phone|mobile|contact|number|whatsapp/i.test(lastMsg.content) &&
-      !/name|naam/i.test(lastMsg.content)
-    ) {
-      const digitsOnly = text.replace(/\D/g, "");
-      const isValidLength = digitsOnly.length >= 10 && digitsOnly.length <= 13;
-      const isPakMobile = /^(03|923|\+923|3|00923)/.test(text.trim());
-
-      if (!isValidLength || !isPakMobile) {
-        toast.error("Please enter a valid mobile number (e.g., 03001234567 or +923001234567)");
-        return;
-      }
-    }
 
     const userMsg: ChatMessage = { role: "user", content: text };
     const nextMsgs = [...messages, userMsg];
