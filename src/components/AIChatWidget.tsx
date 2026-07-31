@@ -230,7 +230,7 @@ export function AIChatWidget() {
         <button
           onClick={() => setOpen(true)}
           aria-label="Open travel concierge"
-          className="fixed bottom-20 right-3 sm:right-6 z-50 flex h-13 w-13 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-gradient-to-tr from-purple-600 via-indigo-600 to-violet-500 text-white shadow-2xl shadow-purple-950/60 ring-2 ring-purple-400/50 transition duration-300 hover:scale-110 hover:shadow-purple-500/50 md:bottom-6"
+          className="fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-tr from-purple-600 via-indigo-600 to-violet-500 text-white shadow-2xl shadow-purple-950/60 ring-2 ring-purple-400/50 transition duration-300 hover:scale-110 hover:shadow-purple-500/50 md:bottom-6"
         >
           <Bot className="h-7 w-7 text-purple-100" />
           <span className="absolute -top-1 -right-1 flex h-4 w-4">
@@ -245,7 +245,7 @@ export function AIChatWidget() {
           className={cn(
             "fixed z-50 flex flex-col overflow-hidden rounded-2xl border border-emerald-500/30",
             "bg-card/95 shadow-2xl backdrop-blur-2xl",
-            "bottom-16 sm:bottom-6 right-2 sm:right-4 left-2 sm:left-auto h-[calc(100vh-5rem)] max-h-[620px] sm:w-[420px] max-w-full",
+            "bottom-20 right-4 h-[75vh] w-[calc(100vw-2rem)] max-w-md md:bottom-6 md:h-[620px]",
           )}
         >
           {/* Header */}

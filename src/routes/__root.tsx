@@ -47,21 +47,6 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
-
-    // Auto-reload on dynamic import / chunk loading failures after a new deployment
-    const isChunkError =
-      /dynamically imported module|failed to fetch dynamically imported module|importing a module script failed/i.test(
-        error?.message || ""
-      );
-
-    if (isChunkError) {
-      const storageKey = "globetrek_chunk_reload_ts";
-      const lastReload = Number(sessionStorage.getItem(storageKey) || 0);
-      if (Date.now() - lastReload > 5000) {
-        sessionStorage.setItem(storageKey, String(Date.now()));
-        window.location.href = window.location.pathname;
-      }
-    }
   }, [error]);
 
   return (
@@ -79,7 +64,8 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
-              window.location.href = window.location.pathname;
+              router.invalidate();
+              reset();
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
@@ -142,7 +128,6 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="en" className="dark">
       <head>
         <HeadContent />
-        <link rel="stylesheet" href={appCss} />
       </head>
       <body className="bg-background text-foreground">
         {children}
@@ -157,22 +142,12 @@ function RootComponent() {
   const router = useRouter();
 
   useEffect(() => {
-    const handlePreloadError = () => {
-      console.warn("Vite module preload error detected. Reloading page...");
-      window.location.reload();
-    };
-    window.addEventListener("vite:preloadError", handlePreloadError);
-
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       router.invalidate();
       if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
     });
-
-    return () => {
-      window.removeEventListener("vite:preloadError", handlePreloadError);
-      sub.subscription.unsubscribe();
-    };
+    return () => sub.subscription.unsubscribe();
   }, [router, queryClient]);
 
   return (
