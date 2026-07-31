@@ -16,7 +16,7 @@ for item in os.listdir(build_assets):
     if os.path.isfile(src):
         shutil.copyfile(src, dst)
 
-# Find primary compiled JS & CSS files in build output
+# Find primary fallback JS & CSS files in web_root / build_assets
 js_files = glob.glob(os.path.join(build_assets, 'index-*.js'))
 css_files = glob.glob(os.path.join(build_assets, 'styles-*.css'))
 
@@ -35,21 +35,19 @@ for root, _, files in os.walk(server_dir):
                 for m in matches:
                     asset_refs.add(m)
 
-print(f"Found {len(asset_refs)} asset references in server code.")
+# Collect common prefixes from old browser tab requests
+common_prefixes = ['routes', 'arrow-right', 'arrow-up-right', 'badge-check', 'file-check', 'search', 'map-pin', 'share-2', 'shield', 'star', 'users', 'cms.functions', 'ticket', 'select', 'site-shell', 'tour-card', 'theme-toggle', 'invariant']
 
-for ref in asset_refs:
+for ref in list(asset_refs):
     target_path = os.path.join(web_root, ref)
     if not os.path.exists(target_path):
-        # Extract prefix before the last hyphen hash
         prefix = ref.rsplit('-', 1)[0] if '-' in ref else ref
         ext = os.path.splitext(ref)[1]
         
-        # Look for matching prefix file in build_assets
-        matching = glob.glob(os.path.join(build_assets, f"{prefix}-*{ext}"))
+        matching = glob.glob(os.path.join(web_root, f"{prefix}-*{ext}")) or glob.glob(os.path.join(build_assets, f"{prefix}-*{ext}"))
         source = matching[0] if matching else (primary_css if ext == '.css' else primary_js)
         
         if source and os.path.exists(source):
             shutil.copyfile(source, target_path)
-            print(f"Mapped {ref} -> {os.path.basename(source)}")
 
 print("Asset sync complete.")
