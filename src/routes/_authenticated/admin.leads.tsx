@@ -180,16 +180,6 @@ function AdminLeads() {
         </Button>
       </div>
 
-      {/* Info banner: how notifications work */}
-      <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-4 text-sm text-blue-300">
-        <span className="font-semibold">📨 How admin gets notified:</span> When a traveler provides their
-        phone number in the AI Concierge, the system automatically captures a lead here <em>and</em> dispatches
-        a WhatsApp alert to the Platform Admin ({"+923490386131"}) via the WhatsApp Gateway. You can also
-        configure per-event WhatsApp templates in the{" "}
-        <Link to="/admin/whatsapp" className="underline hover:text-blue-200">
-          WhatsApp Console
-        </Link>.
-      </div>
 
       {/* Summary stat strip */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
