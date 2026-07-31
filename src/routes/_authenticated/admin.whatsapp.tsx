@@ -495,7 +495,7 @@ function AdminWhatsAppConsole() {
             size="sm"
             variant="outline"
             onClick={async () => {
-              toast.info("Testing connection to wa.transmaxsolutions.com...");
+              toast.info("Testing connection to wa.yello.bid...");
               const res = await connection.refetch();
               if (res.data?.connected) {
                 toast.success(`WhatsApp Gateway Connected! ✓ (Device: ${res.data.number || "+92 329 3089377"})`);
@@ -538,7 +538,7 @@ function AdminWhatsAppConsole() {
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-foreground">WhatsApp Gateway API Key</span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30 font-bold">
-                  wa.transmaxsolutions.com
+                  wa.yello.bid
                 </span>
               </div>
               <p className="text-[11px] text-muted-foreground mt-0.5">

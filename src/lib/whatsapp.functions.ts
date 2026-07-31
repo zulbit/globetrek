@@ -146,7 +146,7 @@ export async function dispatchWhatsAppDirect(input: {
       payload.mediaUrl = input.imageUrl.trim();
     }
 
-    let response = await fetch("https://wa.transmaxsolutions.com/api/send-message", {
+    let response = await fetch("https://wa.yello.bid/api/send-message", {
       method: "POST",
       headers: {
         "x-api-key": apiKey,
@@ -205,7 +205,7 @@ export const getWhatsAppConnection = createServerFn({ method: "GET" })
     }
 
     try {
-      const response = await fetch("https://wa.transmaxsolutions.com/api/send-message", {
+      const response = await fetch("https://wa.yello.bid/api/send-message", {
         method: "POST",
         headers: {
           "x-api-key": apiKey,
@@ -220,7 +220,7 @@ export const getWhatsAppConnection = createServerFn({ method: "GET" })
         return {
           connected: false,
           number: "+92 329 3089377",
-          gateway: "wa.transmaxsolutions.com",
+          gateway: "wa.yello.bid",
           message: `Invalid WhatsApp API Key (${response.status}). Key: ${apiKey}`,
         };
       }
@@ -228,14 +228,14 @@ export const getWhatsAppConnection = createServerFn({ method: "GET" })
       return {
         connected: true,
         number: "+92 329 3089377",
-        gateway: "wa.transmaxsolutions.com",
+        gateway: "wa.yello.bid",
         device: "WhatsClient Node (Key Verified ✓)",
       };
     } catch (err) {
       return {
         connected: true,
         number: "+92 329 3089377",
-        gateway: "wa.transmaxsolutions.com",
+        gateway: "wa.yello.bid",
         device: "WhatsClient Node Gateway",
       };
     }
