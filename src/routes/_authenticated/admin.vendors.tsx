@@ -2,11 +2,12 @@ import * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Check, Ban, Plus, Minus, Clock, Phone, ShieldCheck, UserCheck, MessageSquare } from "lucide-react";
+import { Loader2, Check, Ban, Plus, Minus, Clock, Phone, ShieldCheck, UserCheck, MessageSquare, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   getAdminVendors,
   updateAdminVendorStatus,
@@ -14,6 +15,7 @@ import {
   updateAdminVendorTier,
   type VendorProfile,
 } from "@/lib/vendors.functions";
+import { getVendorKYCDetails } from "@/lib/kyc.functions";
 
 import { supabase } from "@/integrations/supabase/client";
 
@@ -24,6 +26,16 @@ export const Route = createFileRoute("/_authenticated/admin/vendors")({
 function AdminVendors() {
   const qc = useQueryClient();
   const [filter, setFilter] = React.useState<"all" | "pending" | "approved" | "banned">("all");
+  const [viewingKyc, setViewingKyc] = React.useState<string | null>(null);
+  const [viewingKycName, setViewingKycName] = React.useState<string>("");
+
+  const getKycFn = useServerFn(getVendorKYCDetails);
+
+  const { data: kycDetails, isLoading: loadingKyc } = useQuery({
+    queryKey: ["vendor-kyc-details", viewingKyc],
+    enabled: !!viewingKyc,
+    queryFn: () => getKycFn({ data: { userId: viewingKyc! } }),
+  });
 
   const fetchVendorsFn = useServerFn(getAdminVendors);
   const setStatusFn = useServerFn(updateAdminVendorStatus);
@@ -214,21 +226,70 @@ function AdminVendors() {
               onStatus={(status) => setStatus.mutate({ id: p.id, status })}
               onCredits={(next) => adjustCredits.mutate({ id: p.id, next })}
               onTier={(tier) => setTier.mutate({ id: p.id, tier })}
+              onViewKyc={() => {
+                setViewingKyc(p.id);
+                setViewingKycName(p.company_name || p.full_name || "Vendor");
+              }}
             />
           ))
         )}
       </div>
+
+      <Dialog open={!!viewingKyc} onOpenChange={(open) => { if (!open) setViewingKyc(null); }}>
+        <DialogContent className="max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground flex items-center gap-2">
+              <ShieldCheck className="size-5 text-amber-400" />
+              Agency Verification (KYC)
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground text-xs">
+              Submitted KYC documents for {viewingKycName}
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingKyc ? (
+            <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+              <Loader2 className="mr-2 size-4 animate-spin" /> Loading submitted details…
+            </div>
+          ) : !kycDetails ? (
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              No KYC submission record found for this vendor.
+            </div>
+          ) : (
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                {Object.entries(kycDetails).map(([key, val]) => {
+                  const label = key
+                    .replace(/_/g, " ")
+                    .replace(/\b\w/g, (c) => c.toUpperCase());
+                  return (
+                    <div key={key} className="space-y-1 bg-surface/50 border border-border p-2.5 rounded-lg">
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider block font-semibold">
+                        {label}
+                      </span>
+                      <span className="text-foreground text-sm font-medium break-all">
+                        {String(val || "—")}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
 function VendorRow({
-  p, onStatus, onCredits, onTier,
+  p, onStatus, onCredits, onTier, onViewKyc,
 }: {
   p: VendorProfile;
   onStatus: (s: "approved" | "banned" | "pending") => void;
   onCredits: (next: number) => void;
   onTier: (t: "free" | "pro") => void;
+  onViewKyc: () => void;
 }) {
   const [draft, setDraft] = React.useState<string>(String(p.lead_credits_balance));
   React.useEffect(() => setDraft(String(p.lead_credits_balance)), [p.lead_credits_balance]);
@@ -303,6 +364,14 @@ function VendorRow({
         </button>
       </div>
       <div className="flex justify-end gap-1.5">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onViewKyc}
+          className="h-7 text-xs font-semibold border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 rounded-lg px-2.5"
+        >
+          <FileText className="mr-1 size-3" /> View KYC
+        </Button>
         <Button
           size="sm"
           variant="outline"
