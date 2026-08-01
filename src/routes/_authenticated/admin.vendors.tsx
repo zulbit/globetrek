@@ -303,6 +303,21 @@ function VendorRow({
         </button>
       </div>
       <div className="flex justify-end gap-1.5">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => {
+            if (typeof window !== "undefined") {
+              localStorage.setItem("gtpk.impersonated_vendor_id", p.id);
+              localStorage.setItem("gtpk.impersonated_vendor_company", p.company_name || p.full_name || "Impersonated Vendor");
+              toast.success(`Impersonating ${p.company_name || p.full_name || "Vendor"}`);
+              window.location.href = "/vendor";
+            }
+          }}
+          className="h-7 text-xs font-semibold border-primary/40 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg px-2.5"
+        >
+          <UserCheck className="mr-1 size-3" /> Login As
+        </Button>
         {p.vendor_status !== "approved" && (
           <Button
             size="sm"

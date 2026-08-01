@@ -9,7 +9,9 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -167,6 +169,16 @@ function RootComponent() {
   const context = Route.useRouteContext();
   const queryClient = context?.queryClient || fallbackQueryClient;
   const router = useRouter();
+  const { isImpersonating, impersonatedCompany } = useAuth();
+
+  const handleExitImpersonation = () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("gtpk.impersonated_vendor_id");
+      localStorage.removeItem("gtpk.impersonated_vendor_company");
+      toast.success("Exited impersonation mode");
+      window.location.href = "/admin/vendors";
+    }
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
@@ -209,6 +221,22 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
+        {isImpersonating && (
+          <div className="sticky top-0 z-[9999] flex items-center justify-between bg-amber-500 px-4 py-2 text-xs font-bold text-black shadow-md">
+            <div className="flex items-center gap-1.5">
+              <span className="rounded bg-black/20 px-1.5 py-0.5 text-[9px] uppercase tracking-wider">
+                Impersonating
+              </span>
+              <span>Active Vendor context: {impersonatedCompany || "Unknown Agency"}</span>
+            </div>
+            <button
+              onClick={handleExitImpersonation}
+              className="rounded-lg bg-black px-2.5 py-1 text-[10px] font-semibold text-white hover:bg-black/80 transition-colors"
+            >
+              Exit Impersonation
+            </button>
+          </div>
+        )}
         <VendorRefHandler />
         <Outlet />
         <CompareBar />
