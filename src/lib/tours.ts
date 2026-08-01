@@ -385,7 +385,12 @@ function parseAccommodation(raw: unknown): TourAccommodation | undefined {
   if (typeof o.insurance_included === "boolean") {
     acc.insurance_included = o.insurance_included;
   }
-  return acc.standard || acc.premium || typeof acc.return_tickets_included === "boolean" || typeof acc.visa_included === "boolean" || typeof acc.insurance_included === "boolean" ? acc : undefined;
+  if (typeof o.departure_date === "string") acc.departure_date = o.departure_date;
+  if (typeof o.return_date === "string") acc.return_date = o.return_date;
+  if (typeof o.booking_deadline === "string") acc.booking_deadline = o.booking_deadline;
+  if (typeof o.valid_until === "string") acc.valid_until = o.valid_until;
+
+  return Object.keys(acc).length > 0 ? acc : undefined;
 }
 
 // Fallback image lookup for tours (esp. seeded ones without image_url)

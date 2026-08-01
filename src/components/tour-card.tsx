@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Clock, MapPin, Plane, Star, Heart, GitCompare, Globe } from "lucide-react";
+import { Clock, MapPin, Plane, Star, Heart, GitCompare, Globe, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 import type { Tour } from "@/lib/tours";
 import { formatPKR } from "@/lib/tours";
@@ -136,13 +136,18 @@ export function TourCard({ tour }: { tour: Tour }) {
       </div>
 
       <div className="flex flex-1 flex-col gap-3 p-4">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <Clock className="size-3.5" /> {tour.durationDays}D / {tour.nights}N
           </span>
           <span className="inline-flex items-center gap-1">
             <Plane className="size-3.5" /> Flights from {tour.departureCity === "Lahore" ? "LHE" : tour.departureCity === "Karachi" ? "KHI" : "ISB"}
           </span>
+          {tour.accommodation?.departure_date && (
+            <span className="inline-flex items-center gap-1 font-semibold text-emerald-400">
+              <CalendarDays className="size-3.5" /> Departs {new Date(tour.accommodation.departure_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+            </span>
+          )}
         </div>
         <div className="text-[11px] text-muted-foreground">
           by <span className="font-medium text-foreground">{tour.vendor}</span>
