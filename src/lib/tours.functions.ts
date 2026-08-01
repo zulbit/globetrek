@@ -65,6 +65,8 @@ function cleanAccommodation(acc?: TourAccommodation) {
   if (acc.visa_included !== undefined) out.visa_included = Boolean(acc.visa_included);
   if (acc.insurance_included !== undefined) out.insurance_included = Boolean(acc.insurance_included);
   if (acc.departure_date) out.departure_date = acc.departure_date;
+  if (acc.return_date) out.return_date = acc.return_date;
+  if (acc.booking_deadline) out.booking_deadline = acc.booking_deadline;
   if (acc.valid_until) out.valid_until = acc.valid_until;
   return Object.keys(out).length ? out : null;
 }

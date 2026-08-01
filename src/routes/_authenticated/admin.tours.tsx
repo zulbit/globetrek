@@ -889,7 +889,25 @@ function AdminTours() {
                   <Input
                     type="number" min={1}
                     value={editing.duration_days}
-                    onChange={(e) => setEditing({ ...editing, duration_days: Number(e.target.value) })}
+                    onChange={(e) => {
+                      const days = Number(e.target.value);
+                      let autoReturn = editing.accommodation?.return_date || "";
+                      if (editing.accommodation?.departure_date && days > 0) {
+                        const d = new Date(editing.accommodation.departure_date);
+                        if (!isNaN(d.getTime())) {
+                          d.setDate(d.getDate() + (days - 1));
+                          autoReturn = d.toISOString().split("T")[0];
+                        }
+                      }
+                      setEditing({
+                        ...editing,
+                        duration_days: days,
+                        accommodation: {
+                          ...editing.accommodation,
+                          return_date: autoReturn,
+                        },
+                      });
+                    }}
                   />
                 </div>
                 <div>
@@ -907,6 +925,70 @@ function AdminTours() {
                     value={editing.total_seats}
                     onChange={(e) => setEditing({ ...editing, total_seats: Number(e.target.value) })}
                   />
+                </div>
+
+                <div className="sm:col-span-2 grid gap-3 sm:grid-cols-3 border-t border-border/50 pt-3">
+                  <div>
+                    <Label>Departure Date</Label>
+                    <Input
+                      type="date"
+                      value={editing.accommodation?.departure_date || ""}
+                      onChange={(e) => {
+                        const dep = e.target.value;
+                        let autoReturn = editing.accommodation?.return_date || "";
+                        let autoDeadline = editing.accommodation?.booking_deadline || "";
+                        if (dep && editing.duration_days > 0) {
+                          const d = new Date(dep);
+                          if (!isNaN(d.getTime())) {
+                            d.setDate(d.getDate() + (editing.duration_days - 1));
+                            autoReturn = d.toISOString().split("T")[0];
+                          }
+                        }
+                        if (!autoDeadline) autoDeadline = dep;
+                        setEditing({
+                          ...editing,
+                          accommodation: {
+                            ...editing.accommodation,
+                            departure_date: dep,
+                            return_date: autoReturn,
+                            booking_deadline: autoDeadline,
+                          },
+                        });
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Label>Return Date</Label>
+                    <Input
+                      type="date"
+                      value={editing.accommodation?.return_date || ""}
+                      onChange={(e) =>
+                        setEditing({
+                          ...editing,
+                          accommodation: {
+                            ...editing.accommodation,
+                            return_date: e.target.value,
+                          },
+                        })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Booking Deadline</Label>
+                    <Input
+                      type="date"
+                      value={editing.accommodation?.booking_deadline || ""}
+                      onChange={(e) =>
+                        setEditing({
+                          ...editing,
+                          accommodation: {
+                            ...editing.accommodation,
+                            booking_deadline: e.target.value,
+                          },
+                        })
+                      }
+                    />
+                  </div>
                 </div>
 
                 {/* Image upload */}

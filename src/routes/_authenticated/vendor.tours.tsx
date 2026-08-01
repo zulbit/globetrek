@@ -281,18 +281,18 @@ function VendorTours() {
   });
 
   function getTourDateStatus(t: TourRow) {
-    const depDateStr = (t.accommodation as any)?.departure_date || (t.accommodation as any)?.valid_until;
-    if (!depDateStr) {
+    const deadlineStr = (t.accommodation as any)?.booking_deadline || (t.accommodation as any)?.departure_date || (t.accommodation as any)?.valid_until;
+    if (!deadlineStr) {
       return { status: "VALID" as const, daysLeft: 30, depDateStr: null };
     }
-    const depDate = new Date(depDateStr);
+    const depDate = new Date(deadlineStr);
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     const diffMs = depDate.getTime() - now.getTime();
     const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-    if (daysLeft < 0) return { status: "EXPIRED" as const, daysLeft, depDateStr };
-    if (daysLeft <= 7) return { status: "APPROACHING" as const, daysLeft, depDateStr };
-    return { status: "VALID" as const, daysLeft, depDateStr };
+    if (daysLeft < 0) return { status: "EXPIRED" as const, daysLeft, depDateStr: deadlineStr };
+    if (daysLeft <= 7) return { status: "APPROACHING" as const, daysLeft, depDateStr: deadlineStr };
+    return { status: "VALID" as const, daysLeft, depDateStr: deadlineStr };
   }
 
   const handleSaveRenew = async () => {
@@ -826,14 +826,32 @@ function VendorTours() {
                   </div>
                 </section>
 
-                {/* Pricing, duration, seats & departure date */}
+                {/* Pricing, duration, seats & departure/return dates */}
                 <section className="space-y-3 rounded-xl border border-border bg-surface/40 p-4">
-                  <SectionTitle>Pricing, duration, seats &amp; departure date</SectionTitle>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <SectionTitle>Pricing, duration, seats &amp; dates</SectionTitle>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     <div>
                       <Label>Duration (days)</Label>
                       <Input type="number" min={1} value={editing.duration_days}
-                        onChange={(e) => setEditing({ ...editing, duration_days: Number(e.target.value) })} />
+                        onChange={(e) => {
+                          const days = Number(e.target.value);
+                          let autoReturn = editing.accommodation?.return_date || "";
+                          if (editing.accommodation?.departure_date && days > 0) {
+                            const d = new Date(editing.accommodation.departure_date);
+                            if (!isNaN(d.getTime())) {
+                              d.setDate(d.getDate() + (days - 1));
+                              autoReturn = d.toISOString().split("T")[0];
+                            }
+                          }
+                          setEditing({
+                            ...editing,
+                            duration_days: days,
+                            accommodation: {
+                              ...editing.accommodation,
+                              return_date: autoReturn,
+                            },
+                          });
+                        }} />
                     </div>
                     <div>
                       <Label>Price per person (PKR)</Label>
@@ -846,18 +864,62 @@ function VendorTours() {
                       <Input type="number" min={1} value={editing.total_seats}
                         onChange={(e) => setEditing({ ...editing, total_seats: Number(e.target.value) })} />
                     </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-3 border-t border-border/50 pt-3">
                     <div>
-                      <Label>Departure / Deadline Date</Label>
+                      <Label>Departure Date</Label>
                       <Input type="date"
                         value={editing.accommodation?.departure_date || ""}
+                        onChange={(e) => {
+                          const dep = e.target.value;
+                          let autoReturn = editing.accommodation?.return_date || "";
+                          let autoDeadline = editing.accommodation?.booking_deadline || "";
+                          if (dep && editing.duration_days > 0) {
+                            const d = new Date(dep);
+                            if (!isNaN(d.getTime())) {
+                              d.setDate(d.getDate() + (editing.duration_days - 1));
+                              autoReturn = d.toISOString().split("T")[0];
+                            }
+                          }
+                          if (!autoDeadline) autoDeadline = dep;
+                          setEditing({
+                            ...editing,
+                            accommodation: {
+                              ...editing.accommodation,
+                              departure_date: dep,
+                              return_date: autoReturn,
+                              booking_deadline: autoDeadline,
+                            },
+                          });
+                        }} />
+                      <p className="mt-1 text-[10px] text-muted-foreground">When the group departs.</p>
+                    </div>
+                    <div>
+                      <Label>Return Date</Label>
+                      <Input type="date"
+                        value={editing.accommodation?.return_date || ""}
                         onChange={(e) => setEditing({
                           ...editing,
                           accommodation: {
                             ...editing.accommodation,
-                            departure_date: e.target.value,
+                            return_date: e.target.value,
                           },
                         })} />
-                      <p className="mt-1 text-[10px] text-muted-foreground">Listing auto-disables after this date.</p>
+                      <p className="mt-1 text-[10px] text-muted-foreground">Auto-calculated or custom return.</p>
+                    </div>
+                    <div>
+                      <Label>Booking Deadline</Label>
+                      <Input type="date"
+                        value={editing.accommodation?.booking_deadline || ""}
+                        onChange={(e) => setEditing({
+                          ...editing,
+                          accommodation: {
+                            ...editing.accommodation,
+                            booking_deadline: e.target.value,
+                          },
+                        })} />
+                      <p className="mt-1 text-[10px] text-muted-foreground">Listing auto-disables after this date (visa processing buffer).</p>
                     </div>
                   </div>
                 </section>
@@ -956,6 +1018,13 @@ function VendorTours() {
                         const issue = issuesByIndex.get(i);
                         const isDragged = dragIndex === i;
                         const isOver = overIndex === i && dragIndex !== null && dragIndex !== i;
+                        const dayDateStr = (() => {
+                          if (!editing.accommodation?.departure_date) return null;
+                          const dt = new Date(editing.accommodation.departure_date);
+                          if (isNaN(dt.getTime())) return null;
+                          dt.setDate(dt.getDate() + i);
+                          return dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                        })();
                         return (
                           <div key={i}
                             onDragOver={(e) => {
@@ -981,7 +1050,10 @@ function VendorTours() {
                                 className="flex cursor-grab flex-col items-center pt-1 text-muted-foreground hover:text-foreground active:cursor-grabbing"
                                 title="Drag to reorder" aria-label={`Drag day ${i + 1}`}>
                                 <GripVertical className="size-4" />
-                                <span className="mt-1 text-[10px] font-semibold tabular-nums">D{i + 1}</span>
+                                <span className="mt-1 text-[10px] font-semibold tabular-nums text-center">
+                                  D{i + 1}
+                                  {dayDateStr && <span className="block text-[9px] text-muted-foreground font-normal">{dayDateStr}</span>}
+                                </span>
                               </button>
                               <div className="grid flex-1 gap-2">
                                 <Input value={d.title}

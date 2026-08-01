@@ -126,40 +126,67 @@ function TourDetail() {
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
           <div className="space-y-10">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <Fact icon={<Clock className="size-4" />} k="Duration" v={`${tour.durationDays}D / ${tour.nights}N`} />
-              <Fact icon={<Plane className="size-4" />} k="Departs" v={tour.departureCity} />
-              <Fact icon={<Users className="size-4" />} k="Group" v={`Max ${tour.totalSeats}`} />
-              <Fact icon={<CalendarDays className="size-4" />} k="Next date" v="14 Mar 2026" />
-            </div>
+            {(() => {
+              const depDateStr = tour.accommodation?.departure_date;
+              const returnDateStr = tour.accommodation?.return_date;
+              const deadlineStr = tour.accommodation?.booking_deadline;
+
+              const formattedDepDate = depDateStr ? new Date(depDateStr).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Upcoming";
+              const formattedDeadline = deadlineStr ? new Date(deadlineStr).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
+
+              return (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <Fact icon={<Clock className="size-4" />} k="Duration" v={`${tour.durationDays}D / ${tour.nights}N`} />
+                  <Fact icon={<Plane className="size-4" />} k="Departs From" v={tour.departureCity} />
+                  <Fact icon={<CalendarDays className="size-4" />} k="Departure Date" v={formattedDepDate} />
+                  <Fact icon={<Users className="size-4" />} k="Book By Deadline" v={formattedDeadline || "Before departure"} />
+                </div>
+              );
+            })()}
 
             <div>
               <h2 className="text-lg font-semibold">Itinerary</h2>
               {tour.itinerary.length > 0 ? (
                 <ol className="mt-4 space-y-3">
-                  {tour.itinerary.map((d) => (
-                    <li key={d.day} className="rounded-xl border border-border bg-card p-4">
-                      <div className="flex items-start gap-4">
-                        <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/15 text-sm font-bold text-primary">
-                          {d.day}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="text-sm font-semibold">{d.title}</h3>
-                          {d.detail && <p className="mt-0.5 text-sm text-muted-foreground">{d.detail}</p>}
-                          {(d.activities?.length ?? 0) > 0 && (
-                            <ul className="mt-3 space-y-1.5 border-l-2 border-primary/30 pl-4">
-                              {d.activities!.map((a, k) => (
-                                <li key={k} className="flex gap-3 text-sm">
-                                  <span className="min-w-16 font-mono font-semibold text-primary">{a.time}</span>
-                                  <span className="text-muted-foreground">{a.title}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
+                  {tour.itinerary.map((d) => {
+                    const dayDateLabel = (() => {
+                      const depDateStr = tour.accommodation?.departure_date;
+                      if (!depDateStr) return null;
+                      const dt = new Date(depDateStr);
+                      if (isNaN(dt.getTime())) return null;
+                      dt.setDate(dt.getDate() + (d.day - 1));
+                      return dt.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+                    })();
+
+                    return (
+                      <li key={d.day} className="rounded-xl border border-border bg-card p-4">
+                        <div className="flex items-start gap-4">
+                          <div className="flex min-w-[64px] flex-col items-center justify-center rounded-lg bg-primary/15 p-2 text-center text-xs font-bold text-primary">
+                            <span>Day {d.day}</span>
+                            {dayDateLabel && (
+                              <span className="mt-0.5 block text-[10px] font-normal text-muted-foreground">
+                                {dayDateLabel}
+                              </span>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-sm font-semibold">{d.title}</h3>
+                            {d.detail && <p className="mt-0.5 text-sm text-muted-foreground">{d.detail}</p>}
+                            {(d.activities?.length ?? 0) > 0 && (
+                              <ul className="mt-3 space-y-1.5 border-l-2 border-primary/30 pl-4">
+                                {d.activities!.map((a, k) => (
+                                  <li key={k} className="flex gap-3 text-sm">
+                                    <span className="min-w-16 font-mono font-semibold text-primary">{a.time}</span>
+                                    <span className="text-muted-foreground">{a.title}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </li>
-                  ))}
+                      </li>
+                    );
+                  })}
                 </ol>
               ) : (
                 <p className="mt-4 rounded-xl border border-dashed border-border bg-card p-4 text-sm text-muted-foreground">

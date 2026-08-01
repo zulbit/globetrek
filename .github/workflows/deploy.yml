@@ -10,31 +10,73 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Trigger VPS Update via SSH
+      - name: Zero-Downtime Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
+          command_timeout: 15m
           script: |
-            echo "===> Navigating to App Directory <==="
-            cd /var/www/tour_testben_usr89/data/www/tour.testbench.shop/app || cd /home/ubuntu/app
+            set -e
+            APP_DIR="/var/www/globetrek_te_usr/data/www/globetrek.testbench.shop/app"
+            SITE_DIR="/var/www/globetrek_te_usr/data/www/globetrek.testbench.shop"
+            PORT=8899
 
-            echo "===> Pulling latest changes <==="
+            echo "===> [1/6] Navigating to App Directory <==="
+            cd "$APP_DIR"
+
+            echo "===> [2/6] Pulling latest changes <==="
             git reset --hard
             git pull origin main
 
-            echo "===> Purging Stale Assets & Building <==="
-            sudo rm -rf /var/www/tour_testben_usr89/data/www/tour.testbench.shop/assets/*
-            rm -rf .output node_modules/.cache
+            echo "===> [3/6] Installing dependencies <==="
+            rm -rf node_modules/.cache
             npm install --production=false
-            npm run build
 
-            echo "===> Syncing Public Assets <==="
-            sudo cp -r .output/public/* /var/www/tour_testben_usr89/data/www/tour.testbench.shop/
-            sudo chown -R tour_testben_usr89:tour_testben_usr89 /var/www/tour_testben_usr89/data/www/tour.testbench.shop/
+            # ── Keep old .output alive during build (prevents 502) ──
+            echo "===> [4/6] Building (old server stays live) <==="
+            cp -r .output .output.bak 2>/dev/null || true
 
-            echo "===> Restarting Server with PM2 <==="
-            PORT=4005 pm2 restart globetrek --update-env || PORT=4005 pm2 start .output/server/index.mjs --name "globetrek"
+            if npm run build; then
+              echo "✅ Build succeeded"
+              rm -rf .output.bak
+            else
+              echo "❌ Build FAILED — restoring previous build"
+              rm -rf .output
+              mv .output.bak .output
+              exit 1
+            fi
+
+            echo "===> [5/6] Syncing public assets <==="
+            sudo cp -r .output/public/* "$SITE_DIR/" 2>/dev/null || true
+            sudo chown -R globetrek_te_usr:globetrek_te_usr "$SITE_DIR/"
+
+            # ── Graceful restart: PM2 starts new process, then kills old ──
+            echo "===> [6/6] Graceful restart & health check <==="
+            export PORT=8899
+            export HOST=0.0.0.0
+            pm2 reload globetrek --update-env 2>/dev/null || \
+              pm2 start .output/server/index.mjs --name "globetrek" --update-env
             pm2 save
+
+            # ── Health check with retries ──
+            echo "Waiting for app to be ready..."
+            MAX_RETRIES=10
+            RETRY=0
+            while [ $RETRY -lt $MAX_RETRIES ]; do
+              sleep 3
+              HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:${PORT}/" 2>/dev/null || echo "000")
+              if [ "$HTTP_STATUS" = "200" ]; then
+                echo "✅ Health check passed (HTTP $HTTP_STATUS) — deployment complete!"
+                exit 0
+              fi
+              RETRY=$((RETRY + 1))
+              echo "⏳ Attempt $RETRY/$MAX_RETRIES — HTTP $HTTP_STATUS, retrying..."
+            done
+
+            echo "❌ Health check FAILED after $MAX_RETRIES attempts (last status: $HTTP_STATUS)"
+            echo "App may need manual inspection. PM2 logs:"
+            pm2 logs globetrek --nostream --lines 20
+            exit 1

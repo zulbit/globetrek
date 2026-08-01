@@ -191,22 +191,28 @@ export const Route = createFileRoute("/api/ai-chat")({
         try {
           const { data: dbTours } = await supabaseAdmin
             .from("tours")
-            .select("id, vendor_id, title, destination_country, departure_city, duration_days, price_pkr, description")
+            .select("id, vendor_id, title, destination_country, departure_city, duration_days, price_pkr, description, accommodation")
             .eq("is_active", true)
             .order("price_pkr", { ascending: true })
             .limit(30);
           if (dbTours && dbTours.length > 0) {
-            catalogList = dbTours.map((t) => ({
-              id: t.id,
-              vendor_id: t.vendor_id,
-              title: String(t.title || "Tour Package"),
-              destination_country: String(t.destination_country || "Europe"),
-              departure_city: String(t.departure_city || "Lahore"),
-              duration_days: Number(t.duration_days || 7),
-              price_pkr: Number(t.price_pkr || 250000),
-              vendor: "Verified Vendor",
-              description: String(t.description || ""),
-            }));
+            catalogList = dbTours.map((t) => {
+              const acc = (t.accommodation as Record<string, unknown> | null) || {};
+              return {
+                id: t.id,
+                vendor_id: t.vendor_id,
+                title: String(t.title || "Tour Package"),
+                destination_country: String(t.destination_country || "Europe"),
+                departure_city: String(t.departure_city || "Lahore"),
+                duration_days: Number(t.duration_days || 7),
+                price_pkr: Number(t.price_pkr || 250000),
+                vendor: "Verified Vendor",
+                description: String(t.description || ""),
+                departure_date: typeof acc.departure_date === "string" ? acc.departure_date : null,
+                return_date: typeof acc.return_date === "string" ? acc.return_date : null,
+                booking_deadline: typeof acc.booking_deadline === "string" ? acc.booking_deadline : null,
+              };
+            });
           }
 
           const { data: dbVisas } = await supabaseAdmin
@@ -271,7 +277,13 @@ export const Route = createFileRoute("/api/ai-chat")({
         }
 
         const catalogText = catalogList
-          .map((t) => `- TOUR: ${t.title} · ${t.destination_country} · from ${t.departure_city} · ${t.duration_days} days · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")} · id=${t.id}`)
+          .map((t) => {
+            const item = t as any;
+            const dateStr = item.departure_date
+              ? ` · Departs: ${item.departure_date}${item.return_date ? ` to ${item.return_date}` : ""}${item.booking_deadline ? ` (Book by: ${item.booking_deadline})` : ""}`
+              : " · Dates: Flexible / Upcoming";
+            return `- TOUR: ${t.title} · ${t.destination_country} · from ${t.departure_city} · ${t.duration_days} days · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")}${dateStr} · id=${t.id}`;
+          })
           .join("\n");
 
         const visaCatalogText = visaList
@@ -305,6 +317,10 @@ Rules:
   - Services: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets
 - PRICES: Always show prices as bold PKR (e.g. **₨ 385,000**).
 - Language: Match the user's language. English request → English reply. Roman Urdu request → warm Roman Urdu reply.
+- 📅 DATES & DEADLINES AWARENESS:
+  When recommending a tour package, ALWAYS mention its specific Departure Date and Booking Deadline if available in the catalog!
+  - Explicitly inform the user: "Departs on [Departure Date], returning on [Return Date]. Booking closes on [Booking Deadline] to allow time for visa/ticket processing."
+  - If a tour's Booking Deadline is approaching soon, explicitly warn the user: "⚠️ Booking Deadline Approaching — Reserve your slot before [Booking Deadline]!"
 
 - 🛑 NO DATA DUMP / STEP-BY-STEP GUIDED DISCOVERY FLOW (CRITICAL RULE):
   NEVER dump all catalog items or long lists when the user clicks a category chip or asks general questions (e.g., "Tour Packages", "Visa Services", "Travel Insurance", "Flight Tickets").
