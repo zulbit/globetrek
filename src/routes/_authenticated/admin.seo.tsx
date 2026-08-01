@@ -332,7 +332,7 @@ function AdminSEO() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <a
-                        href={`https://tour.testbench.shop${p.path}`}
+                        href={p.path}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 text-primary hover:underline"
