@@ -33,7 +33,8 @@ jobs:
             git pull origin main
 
             echo "===> [3/6] Installing dependencies <==="
-            rm -rf node_modules/.cache
+            sudo chown -R ubuntu:ubuntu "$APP_DIR"
+            sudo rm -rf .output .output.bak node_modules/.cache
             npm install --production=false
 
             # ── Keep old .output alive during build (prevents 502) ──
