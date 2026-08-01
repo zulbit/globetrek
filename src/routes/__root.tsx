@@ -45,9 +45,36 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
+
+    const isChunkError =
+      error?.message &&
+      (error.message.includes("Failed to fetch dynamically imported module") ||
+        error.message.includes("Importing a module script failed") ||
+        error.message.includes("dynamically imported module") ||
+        error.name === "ChunkLoadError");
+
+    if (isChunkError && typeof window !== "undefined") {
+      const key = "last_chunk_reload_time";
+      const now = Date.now();
+      const lastReload = Number(sessionStorage.getItem(key) || "0");
+      if (now - lastReload > 10_000) {
+        sessionStorage.setItem(key, String(now));
+        window.location.reload();
+      }
+    }
   }, [error]);
+
+  const handleTryAgain = () => {
+    if (typeof window !== "undefined") {
+      window.location.reload();
+    } else {
+      router.invalidate();
+      reset();
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -63,10 +90,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
-            onClick={() => {
-              router.invalidate();
-              reset();
-            }}
+            onClick={handleTryAgain}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Try again
@@ -152,6 +176,25 @@ function RootComponent() {
         }
       });
     }
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      const msg = String(event.reason?.message || event.reason || "");
+      if (
+        msg.includes("Failed to fetch dynamically imported module") ||
+        msg.includes("Importing a module script failed") ||
+        msg.includes("dynamically imported module")
+      ) {
+        event.preventDefault();
+        const key = "chunk_err_reload";
+        const last = Number(sessionStorage.getItem(key) || "0");
+        if (Date.now() - last > 10_000) {
+          sessionStorage.setItem(key, String(Date.now()));
+          window.location.reload();
+        }
+      }
+    };
+    window.addEventListener("unhandledrejection", handleUnhandledRejection);
+    return () => window.removeEventListener("unhandledrejection", handleUnhandledRejection);
   }, []);
 
   useEffect(() => {
