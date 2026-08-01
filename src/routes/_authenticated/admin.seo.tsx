@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getLiveSeoAudit } from "@/lib/seo.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -115,16 +117,28 @@ function AdminSEO() {
   const [schemaJson, setSchemaJson] = useState(SCHEMA_JSON);
   const [copiedSchema, setCopiedSchema] = useState(false);
 
+  const fetchSeoAuditFn = useServerFn(getLiveSeoAudit);
+  const { data: liveData } = useQuery({
+    queryKey: ["admin-seo-audit"],
+    queryFn: () => fetchSeoAuditFn(),
+  });
+
+  const checklist = liveData?.checklist || SEO_CHECKLIST;
+  const pagesList = liveData?.pages || PAGES;
+  const keywordsList = liveData?.keywords || KEYWORD_SEEDS;
+  const backlinksList = liveData?.backlinks || BACKLINKS;
+  const score = liveData?.overallScore ?? Math.round((checklist.filter((c) => c.status === "pass").length / checklist.length) * 100);
+  const indexedCount = liveData?.totalIndexedPages ?? 24;
+
+  const passCount = checklist.filter((c) => c.status === "pass").length;
+  const warnCount = checklist.filter((c) => c.status === "warn" || c.status === "fail").length;
+
   function copySchema() {
     navigator.clipboard.writeText(schemaJson);
     setCopiedSchema(true);
     toast.success("Schema JSON copied to clipboard!");
     setTimeout(() => setCopiedSchema(false), 2000);
   }
-
-  const passCount = SEO_CHECKLIST.filter((c) => c.status === "pass").length;
-  const warnCount = SEO_CHECKLIST.filter((c) => c.status === "warn").length;
-  const score = Math.round((passCount / SEO_CHECKLIST.length) * 100);
 
   const TABS = [
     { id: "overview", label: "Overview", icon: BarChart3 },
@@ -180,9 +194,9 @@ function AdminSEO() {
           </div>
         </div>
         {[
-          { label: "Indexed Pages", value: "24", icon: Globe2, color: "text-primary" },
-          { label: "Target Keywords", value: `${KEYWORD_SEEDS.length}`, icon: Tag, color: "text-violet-400" },
-          { label: "Referring Domains", value: `${BACKLINKS.length}`, icon: Link2, color: "text-amber-400" },
+          { label: "Indexed Pages", value: String(indexedCount), icon: Globe2, color: "text-primary" },
+          { label: "Target Keywords", value: String(keywordsList.length), icon: Tag, color: "text-violet-400" },
+          { label: "Referring Domains", value: String(backlinksList.length), icon: Link2, color: "text-amber-400" },
         ].map((stat) => (
           <div key={stat.label} className="rounded-2xl border border-border bg-card p-5">
             <stat.icon className={cn("size-5 mb-3", stat.color)} />
@@ -218,8 +232,8 @@ function AdminSEO() {
       {activeTab === "overview" && (
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-foreground">Technical SEO Audit Checklist</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {SEO_CHECKLIST.map((item) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {checklist.map((item) => (
               <div
                 key={item.id}
                 className={cn(
@@ -292,7 +306,7 @@ function AdminSEO() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {PAGES.map((p) => (
+                {pagesList.map((p) => (
                   <tr key={p.path} className="hover:bg-surface/40 transition">
                     <td className="px-4 py-3 font-mono text-primary">{p.path}</td>
                     <td className="px-4 py-3 text-foreground max-w-[240px] truncate">{p.title}</td>
@@ -348,7 +362,7 @@ function AdminSEO() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {KEYWORD_SEEDS.map((k, i) => (
+                {keywordsList.map((k, i) => (
                   <tr key={k.kw} className="hover:bg-surface/40 transition">
                     <td className="px-4 py-3 text-muted-foreground">{i + 1}</td>
                     <td className="px-4 py-3 font-medium text-foreground">{k.kw}</td>
@@ -357,11 +371,11 @@ function AdminSEO() {
                       <span
                         className={cn(
                           "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase",
-                          k.intent === "commercial"
+                          k.intent.toLowerCase() === "commercial"
                             ? "bg-primary/15 text-primary"
-                            : k.intent === "transactional"
+                            : k.intent.toLowerCase() === "transactional"
                             ? "bg-emerald-500/15 text-emerald-400"
-                            : k.intent === "local"
+                            : k.intent.toLowerCase() === "local"
                             ? "bg-violet-500/15 text-violet-400"
                             : "bg-surface text-muted-foreground"
                         )}
@@ -431,7 +445,7 @@ function AdminSEO() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {BACKLINKS.map((b) => (
+                {backlinksList.map((b) => (
                   <tr key={b.domain} className="hover:bg-surface/40 transition">
                     <td className="px-4 py-3 font-mono text-primary">{b.domain}</td>
                     <td className="px-4 py-3 text-center">
