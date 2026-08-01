@@ -95,7 +95,7 @@ function AdminLeads() {
       // NOTE: service_id is polymorphic so we cannot join tours directly
       const { data, error } = await supabase
         .from("leads")
-        .select("id, customer_name, customer_phone, message, notes, service_type, service_id, status, created_at, vendor_id")
+        .select("id, customer_name, customer_phone, message, notes, service_type, service_id, status, created_at, vendor_id, is_unlocked")
         .order("created_at", { ascending: false })
         .limit(500);
       if (error) throw error;
@@ -113,10 +113,17 @@ function AdminLeads() {
         });
       }
 
-      return (data ?? []).map((l: any) => ({
-        ...l,
-        vendor_name: l.vendor_id ? (vendorMap[l.vendor_id] ?? "Unknown Vendor") : "—",
-      })) as Lead[];
+      return (data ?? []).map((l: any) => {
+        let currentStatus = l.status;
+        if (l.is_unlocked && currentStatus === "new") {
+          currentStatus = "contacted";
+        }
+        return {
+          ...l,
+          status: currentStatus,
+          vendor_name: l.vendor_id ? (vendorMap[l.vendor_id] ?? "Unknown Vendor") : "—",
+        };
+      }) as Lead[];
     },
   });
 
@@ -329,23 +336,12 @@ function AdminLeads() {
                         </div>
                       </td>
 
-                      {/* Status selector */}
+                      {/* Status display (read-only for Admin, dynamically updated via vendor actions) */}
                       <td className="px-4 py-3">
-                        <Select
-                          value={lead.status ?? "new"}
-                          onValueChange={(v) => updateStatus.mutate({ id: lead.id, status: v as LeadStatus })}
-                        >
-                          <SelectTrigger className={cn("h-7 w-32 text-[11px] border rounded-full px-2.5", st.color)}>
-                            <StIcon className="h-3 w-3 shrink-0" />
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="new">🆕 New</SelectItem>
-                            <SelectItem value="contacted">📞 Contacted</SelectItem>
-                            <SelectItem value="converted">✅ Converted</SelectItem>
-                            <SelectItem value="closed">❌ Closed</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium", st.color)}>
+                          <StIcon className="h-3 w-3 shrink-0" />
+                          {st.label}
+                        </span>
                       </td>
                     </tr>
                   );

@@ -29,6 +29,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   getMarketplaceLeads,
   createLeadUnlockCheckout,
   verifyLeadUnlockPayment,
@@ -51,6 +58,7 @@ interface LeadRow {
   created_at: string;
   service_type: ServiceType;
   service_id: string;
+  status: string;
   tours: { title: string } | null;
 }
 
@@ -81,9 +89,9 @@ function VendorLeads() {
     queryKey: ["vendor-leads-poly"],
     queryFn: async () => {
       const { data: u } = await supabase.auth.getUser();
-      const { data, error } = await supabase
-        .from("leads")
-        .select("id, customer_name, customer_phone, message, is_unlocked, created_at, service_type, service_id, tours(title)")
+        const { data, error } = await supabase
+          .from("leads")
+          .select("id, customer_name, customer_phone, message, is_unlocked, created_at, service_type, service_id, status, tours(title)")
         .eq("vendor_id", u.user!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -120,6 +128,7 @@ function VendorLeads() {
     mutationFn: async (leadId: string) => {
       const { data, error } = await supabase.rpc("unlock_lead", { _lead_id: leadId });
       if (error) throw error;
+      await supabase.from("leads").update({ status: "contacted" }).eq("id", leadId);
       return data;
     },
     onSuccess: () => {
@@ -205,6 +214,21 @@ function VendorLeads() {
     },
     onError: (err: Error) => {
       toast.error(err.message || "Failed to submit quotation.");
+    },
+  });
+
+  // -------- Update Lead Status Mutation --------
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: "contacted" | "converted" | "closed" }) => {
+      const { error } = await supabase.from("leads").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Lead status updated successfully");
+      qc.invalidateQueries({ queryKey: ["vendor-leads-poly"] });
+    },
+    onError: () => {
+      toast.error("Failed to update status");
     },
   });
 
@@ -487,6 +511,21 @@ function VendorLeads() {
                     <div className="flex justify-end gap-2">
                       {l.is_unlocked ? (
                         <>
+                          <Select
+                            value={l.status || "contacted"}
+                            onValueChange={(val) =>
+                              updateStatusMutation.mutate({ id: l.id, status: val as any })
+                            }
+                          >
+                            <SelectTrigger className="h-8 w-28 text-xs bg-surface border-border">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="contacted">📞 Contacted</SelectItem>
+                              <SelectItem value="converted">✅ Converted</SelectItem>
+                              <SelectItem value="closed">❌ Closed</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <a
                             href={`tel:${l.customer_phone}`}
                             className="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs hover:bg-surface/70"
