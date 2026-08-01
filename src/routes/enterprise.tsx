@@ -157,6 +157,34 @@ const COMPARISON_DATA = [
     wordpress: false,
   },
   {
+    feature: "Live Dynamic SEO Optimization Center & Schema Auditor",
+    globetrek: true,
+    cloneScript: false,
+    saasPms: false,
+    wordpress: false,
+  },
+  {
+    feature: "WhatsApp Event Automation & Audience Template Engine",
+    globetrek: true,
+    cloneScript: false,
+    saasPms: false,
+    wordpress: false,
+  },
+  {
+    feature: "Agency Verification (KYC) & Compliance Review Dialog",
+    globetrek: true,
+    cloneScript: false,
+    saasPms: false,
+    wordpress: false,
+  },
+  {
+    feature: "Admin Impersonation Mode ('Login As' Vendor)",
+    globetrek: true,
+    cloneScript: false,
+    saasPms: false,
+    wordpress: false,
+  },
+  {
     feature: "100% Full Source Code & Database Ownership",
     globetrek: true,
     cloneScript: true,
@@ -673,6 +701,58 @@ function EnterpriseShowcase() {
               </p>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 Automated instant WhatsApp receipts, quote notifications, and bilingual (English &amp; Roman Urdu) AI Concierge.
+              </p>
+            </Card>
+
+            <Card className="p-6 space-y-3 border-border bg-card">
+              <div className="size-10 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-lg">
+                🔍
+              </div>
+              <h3 className="font-bold text-base text-foreground">SEO Optimization Center</h3>
+              <p className="text-xs text-muted-foreground font-medium">
+                <strong>Heading: Live Dynamic SEO Auditor</strong>
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Real-time audit of static routes and dynamic database catalog pages with schema.org validation and Google Search Console integration.
+              </p>
+            </Card>
+
+            <Card className="p-6 space-y-3 border-border bg-card">
+              <div className="size-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-lg">
+                💬
+              </div>
+              <h3 className="font-bold text-base text-foreground">WhatsApp Event Automation</h3>
+              <p className="text-xs text-muted-foreground font-medium">
+                <strong>Heading: Audience-Filtered Templates</strong>
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Automated dispatch engine for Traveler, Vendor, and Admin notifications with audience tab filters and custom variables.
+              </p>
+            </Card>
+
+            <Card className="p-6 space-y-3 border-border bg-card">
+              <div className="size-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-lg">
+                📜
+              </div>
+              <h3 className="font-bold text-base text-foreground">Agency KYC &amp; Verification</h3>
+              <p className="text-xs text-muted-foreground font-medium">
+                <strong>Heading: Compliance Document Vault</strong>
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Full DTS license, FBR NTN tax ID, owner CNIC, physical address, and bank IBAN review dialog for platform administrators.
+              </p>
+            </Card>
+
+            <Card className="p-6 space-y-3 border-border bg-card">
+              <div className="size-10 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold text-lg">
+                👤
+              </div>
+              <h3 className="font-bold text-base text-foreground">Admin Impersonation Mode</h3>
+              <p className="text-xs text-muted-foreground font-medium">
+                <strong>Heading: 'Login As' Vendor Context</strong>
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Secure real-time impersonation of vendor accounts with sticky warning header and one-click exit back to platform admin console.
               </p>
             </Card>
           </div>
