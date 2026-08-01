@@ -1,9 +1,11 @@
 import * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { SiteShell } from "@/components/site-shell";
 import { TourCard } from "@/components/tour-card";
+import { supabase } from "@/integrations/supabase/client";
 import {
-  DESTINATIONS, TOUR_TYPES, TOURS, formatPKR,
+  DESTINATIONS, TOUR_TYPES, TOURS, formatPKR, DB_TOUR_COLUMNS, mapDbTour, type DbTourRow,
 } from "@/lib/tours";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -45,7 +47,22 @@ function ToursPage() {
     search.min ?? 100000, search.max ?? 1000000,
   ]);
 
-  const filtered = TOURS.filter((t) => {
+  const { data: dbTours = [] } = useQuery({
+    queryKey: ["all-tours"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tours")
+        .select(DB_TOUR_COLUMNS)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data as DbTourRow[]).map(mapDbTour);
+    },
+  });
+
+  const tourList = dbTours.length > 0 ? dbTours : TOURS;
+
+  const filtered = tourList.filter((t) => {
     if (destination !== "any" && t.destination !== destination) return false;
     if (type !== "any" && t.type !== type) return false;
     if (t.pricePKR < budget[0] || t.pricePKR > budget[1]) return false;

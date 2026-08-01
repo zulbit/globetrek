@@ -292,7 +292,43 @@ function TourDetail() {
                 <Row label="Duration" value={`${tour.durationDays} days`} />
                 <Row label="Departure" value={tour.departureCity} />
                 <Row label="Group size" value={`${tour.totalSeats} guests`} />
-                <Row label="Next date" value="Sat, 14 Mar 2026" />
+                {tour.accommodation?.departure_date ? (
+                  <>
+                    <Row
+                      label="Departure Date"
+                      value={new Date(tour.accommodation.departure_date).toLocaleDateString("en-US", {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    />
+                    {tour.accommodation.return_date && (
+                      <Row
+                        label="Return Date"
+                        value={new Date(tour.accommodation.return_date).toLocaleDateString("en-US", {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      />
+                    )}
+                    {tour.accommodation.booking_deadline && (
+                      <Row
+                        label="Book By Deadline"
+                        value={new Date(tour.accommodation.booking_deadline).toLocaleDateString("en-US", {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      />
+                    )}
+                  </>
+                ) : (
+                  <Row label="Next date" value="Upcoming" />
+                )}
               </div>
 
               <div className="mt-5 space-y-2">

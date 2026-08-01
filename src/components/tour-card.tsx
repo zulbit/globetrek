@@ -7,9 +7,9 @@ import { useWishlist, useCompare, type TourSnapshot } from "@/hooks/use-tour-col
 
 function seatTone(left: number, total: number) {
   const pct = left / total;
-  if (left <= 3) return "border-destructive/40 bg-destructive/15 text-destructive-foreground";
-  if (pct < 0.4) return "border-highlight/40 bg-highlight/15 text-highlight";
-  return "border-primary/40 bg-primary/15 text-primary";
+  if (left <= 3) return "border-destructive/50 bg-black/85 text-red-300 font-bold";
+  if (pct < 0.4) return "border-highlight/50 bg-black/85 text-amber-300";
+  return "border-emerald-500/50 bg-black/85 text-emerald-300";
 }
 
 function toSnapshot(tour: Tour): Omit<TourSnapshot, "savedAt"> {
