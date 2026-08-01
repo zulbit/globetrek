@@ -393,6 +393,12 @@ function AuthPage() {
                       <RadioGroupItem value="vendor" /> Travel Vendor
                     </label>
                   </RadioGroup>
+                  <p className="text-[11px] text-white/50 pt-0.5">
+                    Want to earn commission? Register as a <strong>Traveler</strong> first, then join our{" "}
+                    <Link to="/become-affiliate" className="text-primary hover:underline font-bold">
+                      Affiliate Program
+                    </Link>.
+                  </p>
                 </div>
 
                 <div className="space-y-2">
