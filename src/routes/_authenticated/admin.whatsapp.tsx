@@ -62,6 +62,7 @@ const PRESET_VARIABLES = [
 function AdminWhatsAppConsole() {
   const qc = useQueryClient();
   const [selectedId, setSelectedId] = useState<string>("custom_tour_submitted");
+  const [recipientFilter, setRecipientFilter] = useState<"All" | "Traveler" | "Vendor" | "Admin">("All");
   const [templateBody, setTemplateBody] = useState<string>("");
   const [templateRecipient, setTemplateRecipient] = useState<string>("Traveler");
   const [templateImageUrl, setTemplateImageUrl] = useState<string>("");
@@ -447,6 +448,11 @@ function AdminWhatsAppConsole() {
     }
   };
 
+  const filteredTemplates = dbTemplates?.filter((t) => {
+    if (recipientFilter === "All") return true;
+    return t.recipient === recipientFilter;
+  }) || [];
+
   return (
     <div className="space-y-6 pb-12 w-full max-w-7xl mx-auto">
       {/* Top Header Bar with Live Gateway Badge & Actions */}
@@ -629,9 +635,25 @@ CREATE POLICY "Admins manage whatsapp_templates" ON public.whatsapp_templates FO
         <div className="lg:col-span-5 space-y-3">
           <div className="flex items-center justify-between px-1">
             <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Event Templates ({dbTemplates?.length || 0})
+              Event Templates ({filteredTemplates.length})
             </h2>
             <span className="text-[11px] text-muted-foreground">Select to customize</span>
+          </div>
+
+          <div className="flex gap-1.5 p-1 bg-surface border border-border rounded-xl">
+            {(["All", "Traveler", "Vendor", "Admin"] as const).map((r) => (
+              <button
+                key={r}
+                onClick={() => setRecipientFilter(r)}
+                className={`flex-1 py-1 px-2.5 text-[11px] font-bold rounded-lg transition-all ${
+                  recipientFilter === r
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {r}
+              </button>
+            ))}
           </div>
 
           <div className="space-y-2 max-h-[650px] overflow-y-auto pr-1">
@@ -639,8 +661,12 @@ CREATE POLICY "Admins manage whatsapp_templates" ON public.whatsapp_templates FO
               <div className="py-12 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
                 <Loader2 className="size-4 animate-spin text-primary" /> Loading templates...
               </div>
+            ) : filteredTemplates.length === 0 ? (
+              <div className="py-12 text-center text-xs text-muted-foreground">
+                No templates found for filter: <span className="font-semibold">{recipientFilter}</span>.
+              </div>
             ) : (
-              dbTemplates?.map((t) => {
+              filteredTemplates.map((t) => {
                 const isSelected = t.id === selectedId;
                 return (
                   <button

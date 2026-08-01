@@ -65,6 +65,22 @@ export const DEFAULT_GLOBETREK_TEMPLATES: Record<
     vars: ["vendor_name", "company_name", "email", "phone"],
     body: `*GlobeTrek PK — Vendor Application Submitted* 🏨\n\nDear *{vendor_name}* (*{company_name}*),\n\nThank you for applying to become a verified vendor on GlobeTrek PK!\n\nOur platform team is reviewing your agency details and license information. Once approved, you will be able to publish tour packages, visa services, travel insurance, and flight desks.\n\nBest regards,\n*GlobeTrek PK Vendor Operations*`,
   },
+  vendor_application_approved: {
+    name: "Vendor Application Approved (Vendor)",
+    desc: "Sent to a travel agency immediately after their application has been approved by admin.",
+    recipient: "Vendor",
+    image_url: null,
+    vars: ["vendor_name", "company_name", "portal_link"],
+    body: `*GlobeTrek PK — Application Approved* ✅\n\nDear *{vendor_name}*,\n\nWe are pleased to inform you that your travel agency registration for *{company_name}* has been approved and verified! 🎉\n\nYou can now log in to your vendor portal to publish tour packages, visa services, travel insurance, and manage leads.\n\n👉 *Vendor Portal Link:* {portal_link}\n\nBest regards,\n*GlobeTrek PK Operations*`,
+  },
+  vendor_application_rejected: {
+    name: "Vendor Application Rejected (Vendor)",
+    desc: "Sent to a travel agency when their application is rejected or banned with a specified reason.",
+    recipient: "Vendor",
+    image_url: null,
+    vars: ["vendor_name", "company_name", "rejection_reason"],
+    body: `*GlobeTrek PK — Application Update* ❌\n\nDear *{vendor_name}*,\n\nThank you for your interest in registering *{company_name}* on GlobeTrek PK.\n\nUpon reviewing your verification details and documents, our team could not approve your application at this time.\n\n*Reason for decision:*\n{rejection_reason}\n\nIf you believe this is in error or would like to submit corrected information, please contact our support team.\n\nBest regards,\n*GlobeTrek PK Operations*`,
+  },
   vendor_signup_admin_alert: {
     name: "Vendor Signup Admin Alert (Admin)",
     desc: "Sent to platform admin when a new travel agency registers for a vendor account.",

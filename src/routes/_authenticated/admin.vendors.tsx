@@ -16,6 +16,7 @@ import {
   type VendorProfile,
 } from "@/lib/vendors.functions";
 import { getVendorKYCDetails } from "@/lib/kyc.functions";
+import { sendTemplateWhatsAppMessage } from "@/lib/whatsapp.functions";
 
 import { supabase } from "@/integrations/supabase/client";
 
@@ -71,8 +72,49 @@ function AdminVendors() {
   });
 
   const setStatus = useMutation({
-    mutationFn: (data: { id: string; status: "approved" | "banned" | "pending" }) =>
-      setStatusFn({ data }),
+    mutationFn: async (variables: {
+      id: string;
+      status: "approved" | "banned" | "pending";
+      phone?: string | null;
+      fullName?: string | null;
+      companyName?: string | null;
+      reason?: string;
+    }) => {
+      const { id, status, phone, fullName, companyName, reason } = variables;
+      const res = await setStatusFn({ data: { id, status } });
+
+      if (phone && (status === "approved" || status === "banned")) {
+        try {
+          const tplId = status === "approved"
+            ? "vendor_application_approved"
+            : "vendor_application_rejected";
+
+          const vars: Record<string, string> = {
+            vendor_name: fullName || "Vendor Partner",
+            company_name: companyName || "Travel Agency",
+          };
+
+          if (status === "approved") {
+            vars.portal_link = "https://globetrek.testbench.shop/auth";
+          } else {
+            vars.rejection_reason = reason || "Submitted documents could not be verified or DTS license expired.";
+          }
+
+          await sendTemplateWhatsAppMessage({
+            data: {
+              templateId: tplId,
+              phone,
+              variables: vars,
+            }
+          });
+          toast.success("Verification alert sent via WhatsApp!");
+        } catch (err) {
+          console.warn("Failed to dispatch status alert:", err);
+        }
+      }
+
+      return res;
+    },
     onSuccess: (_, variables) => {
       toast.success(variables.status === "approved" ? "Agency Approved & Verified!" : "Vendor Status Updated");
       qc.invalidateQueries({ queryKey: ["admin-vendors"] });
@@ -223,7 +265,14 @@ function AdminVendors() {
             <VendorRow
               key={p.id}
               p={p}
-              onStatus={(status) => setStatus.mutate({ id: p.id, status })}
+              onStatus={(status, reason) => setStatus.mutate({
+                id: p.id,
+                status,
+                phone: p.phone,
+                fullName: p.full_name,
+                companyName: p.company_name,
+                reason,
+              })}
               onCredits={(next) => adjustCredits.mutate({ id: p.id, next })}
               onTier={(tier) => setTier.mutate({ id: p.id, tier })}
               onViewKyc={() => {
@@ -400,7 +449,12 @@ function VendorRow({
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onStatus("banned")}
+            onClick={() => {
+              const reason = prompt("Enter rejection/ban reason for WhatsApp alert:", "Submitted documents could not be verified or DTS license expired.");
+              if (reason !== null) {
+                onStatus("banned", reason);
+              }
+            }}
             className="h-7 text-xs font-semibold border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20 rounded-lg px-2.5"
           >
             <Ban className="mr-1 size-3" /> Ban
