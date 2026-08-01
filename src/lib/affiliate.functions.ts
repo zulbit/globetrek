@@ -1,12 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
-
-/* ─── Supabase Admin (service role) ─── */
-function getAdmin() {
-  const url = process.env.SUPABASE_URL!;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-  return createClient(url, key, { auth: { persistSession: false } });
-}
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 /* ─── Auto-generate referral code ─── */
 function generateCode(name: string): string {
@@ -23,7 +16,7 @@ function generateCode(name: string): string {
    GET AFFILIATE SETTINGS (commission rate, min payout, payout day)
    ────────────────────────────────────────── */
 export const getAffiliateSettings = createServerFn({ method: "GET" }).handler(async () => {
-  const admin = getAdmin();
+  const admin = supabaseAdmin;
   const { data } = await admin
     .from("affiliate_settings")
     .select("*")
@@ -45,7 +38,7 @@ export const getAffiliateSettings = createServerFn({ method: "GET" }).handler(as
 export const updateAffiliateSettings = createServerFn({ method: "POST" })
   .validator((d: { commission_pct: number; upgrade_commission_pct: number; min_payout_pkr: number; payout_day: string }) => d)
   .handler(async ({ data }) => {
-    const admin = getAdmin();
+    const admin = supabaseAdmin;
     // upsert single settings row
     const { error } = await admin
       .from("affiliate_settings")
@@ -60,7 +53,7 @@ export const updateAffiliateSettings = createServerFn({ method: "POST" })
 export const registerAffiliate = createServerFn({ method: "POST" })
   .validator((d: { userId: string; fullName: string; phone: string; cnic: string; city: string; email: string }) => d)
   .handler(async ({ data }) => {
-    const admin = getAdmin();
+    const admin = supabaseAdmin;
     // Check not already registered
     const { data: existing } = await admin
       .from("affiliates")
@@ -96,7 +89,7 @@ export const registerAffiliate = createServerFn({ method: "POST" })
 export const getAffiliateDashboard = createServerFn({ method: "GET" })
   .validator((d: { userId: string }) => d)
   .handler(async ({ data }) => {
-    const admin = getAdmin();
+    const admin = supabaseAdmin;
     const { data: aff } = await admin
       .from("affiliates")
       .select("*")
@@ -126,7 +119,7 @@ export const getAffiliateDashboard = createServerFn({ method: "GET" })
 export const validateReferralCode = createServerFn({ method: "POST" })
   .validator((d: { code: string }) => d)
   .handler(async ({ data }) => {
-    const admin = getAdmin();
+    const admin = supabaseAdmin;
     const { data: aff } = await admin
       .from("affiliates")
       .select("id, full_name, referral_code, status")
@@ -143,7 +136,7 @@ export const validateReferralCode = createServerFn({ method: "POST" })
 export const saveReferralCodeToProfile = createServerFn({ method: "POST" })
   .validator((d: { userId: string; referralCode: string }) => d)
   .handler(async ({ data }) => {
-    const admin = getAdmin();
+    const admin = supabaseAdmin;
     // Only save if no code already saved (can't add retroactively)
     const { data: profile } = await admin
       .from("profiles")
@@ -165,7 +158,7 @@ export const saveReferralCodeToProfile = createServerFn({ method: "POST" })
 export const submitSocialPostProof = createServerFn({ method: "POST" })
   .validator((d: { userId: string; platform: string; postUrl: string; screenshotUrl?: string; captionSnippet?: string }) => d)
   .handler(async ({ data }) => {
-    const admin = getAdmin();
+    const admin = supabaseAdmin;
     const { data: aff } = await admin
       .from("affiliates")
       .select("id")
@@ -194,7 +187,7 @@ export const submitSocialPostProof = createServerFn({ method: "POST" })
    ADMIN: GET ALL SOCIAL POST PROOFS FOR VERIFICATION
    ────────────────────────────────────────── */
 export const getAdminSocialPosts = createServerFn({ method: "GET" }).handler(async () => {
-  const admin = getAdmin();
+  const admin = supabaseAdmin;
   const { data } = await admin
     .from("affiliate_social_posts")
     .select(`
@@ -211,7 +204,7 @@ export const getAdminSocialPosts = createServerFn({ method: "GET" }).handler(asy
 export const verifySocialPost = createServerFn({ method: "POST" })
   .validator((d: { postId: string; status: "verified" | "rejected"; adminNotes?: string }) => d)
   .handler(async ({ data }) => {
-    const admin = getAdmin();
+    const admin = supabaseAdmin;
     const { error } = await admin
       .from("affiliate_social_posts")
       .update({
@@ -229,7 +222,7 @@ export const verifySocialPost = createServerFn({ method: "POST" })
    ADMIN: GET ALL REFERRALS FOR PAYOUT
    ────────────────────────────────────────── */
 export const getAdminAffiliateReferrals = createServerFn({ method: "GET" }).handler(async () => {
-  const admin = getAdmin();
+  const admin = supabaseAdmin;
   const { data } = await admin
     .from("affiliate_referrals")
     .select(`
@@ -247,7 +240,7 @@ export const getAdminAffiliateReferrals = createServerFn({ method: "GET" }).hand
 export const markReferralPaid = createServerFn({ method: "POST" })
   .validator((d: { referralId: string; paymentRef: string; affiliateId: string; commissionPkr: number }) => d)
   .handler(async ({ data }) => {
-    const admin = getAdmin();
+    const admin = supabaseAdmin;
     const { error: e1 } = await admin
       .from("affiliate_referrals")
       .update({ status: "paid", paid_at: new Date().toISOString(), admin_note: data.paymentRef })
@@ -281,7 +274,7 @@ export async function triggerAffiliateCommission({
   paymentRef: string;
   isUpgrade: boolean;
 }) {
-  const admin = getAdmin();
+  const admin = supabaseAdmin;
 
   // 1. Get referral code used by vendor
   const { data: profile } = await admin
