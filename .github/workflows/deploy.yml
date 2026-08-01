@@ -25,6 +25,7 @@ jobs:
             PORT=8899
 
             echo "===> [1/6] Navigating to App Directory <==="
+            sudo chown -R ubuntu:ubuntu "$APP_DIR"
             cd "$APP_DIR"
 
             echo "===> [2/6] Pulling latest changes <==="
