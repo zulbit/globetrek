@@ -123,12 +123,12 @@ export const getLiveSeoAudit = createServerFn({ method: "GET" }).handler(async (
     { id: "canonical", label: "Canonical URL tags set to testbench domain", status: "pass" as const },
     { id: "og-tags", label: "Open Graph (og:title, og:image) metadata present", status: "pass" as const },
     { id: "schema", label: "TravelAgency schema.org JSON-LD structured data", status: "pass" as const },
-    { id: "sitemap", label: "sitemap.xml route active", status: "pass" as const },
-    { id: "robots", label: "robots.txt crawling permissions configured", status: "pass" as const },
-    { id: "alt-text", label: "Image alt text coverage on tour cards", status: "pass" as const },
+    { id: "sitemap", label: "sitemap.xml route active", status: "warn" as const },
+    { id: "robots", label: "robots.txt crawling permissions configured", status: "warn" as const },
+    { id: "alt-text", label: "Image alt text coverage on tour cards", status: "warn" as const },
     { id: "mobile", label: "Mobile-responsive viewport meta tag", status: "pass" as const },
     { id: "https", label: "HTTPS SSL encryption enabled", status: "pass" as const },
-    { id: "speed", label: "Nitro SSR server pre-rendering active", status: "pass" as const },
+    { id: "speed", label: "Nitro SSR server pre-rendering active", status: "warn" as const },
   ];
 
   const keywords = [

@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import React, { useState, useMemo, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getLiveSeoAudit } from "@/lib/seo.functions";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Search,
@@ -13,23 +12,17 @@ import {
   FileText,
   CheckCircle2,
   AlertCircle,
-  RefreshCw,
   ExternalLink,
   Copy,
   Sparkles,
   BarChart3,
   Tag,
-  Map,
   Shield,
   Zap,
-  Star,
-  Clock,
   ArrowUpRight,
   Info,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
@@ -88,34 +81,110 @@ const BACKLINKS = [
   { domain: "geosuper.tv", type: "Media", da: 67 },
 ];
 
-/* ─── Structured Data Template ─── */
-const SCHEMA_JSON = `{
-  "@context": "https://schema.org",
-  "@type": "TravelAgency",
-  "name": "GlobeTrek PK",
-  "url": "https://tour.testbench.shop",
-  "logo": "https://tour.testbench.shop/logo.png",
-  "description": "Pakistan's premier B2B travel marketplace connecting tour operators, visa consultants, insurance brokers, and ticketing desks.",
-  "address": {
-    "@type": "PostalAddress",
-    "addressCountry": "PK"
+/* ─── Quick SEO Wins Mapping (Strict ID Matching) ─── */
+const QUICK_WIN_ITEMS: Record<
+  string,
+  { id: string; label: string; render: (domain: string) => React.ReactNode }
+> = {
+  sitemap: {
+    id: "sitemap",
+    label: "Submit sitemap to Search Console",
+    render: (domain) => (
+      <>
+        Submit sitemap to <strong>Google Search Console</strong> → Indexing → Sitemaps →{" "}
+        <code className="bg-surface rounded px-1">{domain}/sitemap.xml</code>
+      </>
+    ),
   },
-  "contactPoint": {
-    "@type": "ContactPoint",
-    "contactType": "customer service",
-    "availableLanguage": ["English", "Urdu"]
+  robots: {
+    id: "robots",
+    label: "Configure robots.txt",
+    render: () => (
+      <>
+        Add <strong>robots.txt</strong> allowing all bots except <code>/admin</code> and <code>/vendor</code>
+      </>
+    ),
   },
-  "sameAs": [
-    "https://www.facebook.com/globetrekpk",
-    "https://twitter.com/globetrekpk"
-  ]
-}`;
+  "alt-text": {
+    id: "alt-text",
+    label: "Add image alt text",
+    render: () => (
+      <>
+        Add descriptive <strong>alt text</strong> to all tour listing images in the CMS
+      </>
+    ),
+  },
+  speed: {
+    id: "speed",
+    label: "Bing Webmaster & Speed Target",
+    render: () => (
+      <>
+        Register with <strong>Bing Webmaster Tools</strong> to capture 15–20% extra organic impressions
+      </>
+    ),
+  },
+};
+
+/* ─── Recommended Outreach Strategies ─── */
+const OUTREACH_RECOMMENDATIONS = [
+  {
+    domain: "tourism.gov.pk",
+    render: () => (
+      <>
+        Submit your agency to <strong>Pakistan Tourism Development Corporation (PTDC)</strong> — high-authority .gov.pk link.
+      </>
+    ),
+  },
+  {
+    domain: "dawn.com/travel",
+    render: () => (
+      <>
+        Guest post on <strong>dawn.com/travel</strong> featuring "Top 5 Hunza Travel Tips" linking back to your tours page.
+      </>
+    ),
+  },
+  {
+    domain: "travelbloggers.pk",
+    render: () => (
+      <>
+        Partner with <strong>Pakistan travel bloggers</strong> for sponsored content with dofollow links.
+      </>
+    ),
+  },
+  {
+    domain: "tripadvisor.com",
+    render: () => (
+      <>
+        List on <strong>TripAdvisor, Google Business Profile</strong>, and <strong>Yelp Pakistan</strong> for local citations.
+      </>
+    ),
+  },
+];
+
+/* ─── URL Normalization Helper ─── */
+function normalizeDomain(rawUrl: string): string {
+  if (!rawUrl) return "";
+  return rawUrl
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//i, "")
+    .replace(/^www\./i, "")
+    .replace(/\/.*$/, "");
+}
 
 /* ─── Component ─── */
 function AdminSEO() {
   const [activeTab, setActiveTab] = useState<"overview" | "pages" | "keywords" | "schema" | "backlinks">("overview");
-  const [schemaJson, setSchemaJson] = useState(SCHEMA_JSON);
+  const [domain, setDomain] = useState("https://globetrek.testbench.shop");
   const [copiedSchema, setCopiedSchema] = useState(false);
+  const [userSchemaJson, setUserSchemaJson] = useState<string | null>(null);
+
+  // SSR-Safe domain resolution after initial mount (preverting hydration mismatch)
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location?.origin) {
+      setDomain(window.location.origin);
+    }
+  }, []);
 
   const fetchSeoAuditFn = useServerFn(getLiveSeoAudit);
   const { data: liveData } = useQuery({
@@ -130,11 +199,72 @@ function AdminSEO() {
   const score = liveData?.overallScore ?? Math.round((checklist.filter((c) => c.status === "pass").length / checklist.length) * 100);
   const indexedCount = liveData?.totalIndexedPages ?? 24;
 
-  const passCount = checklist.filter((c) => c.status === "pass").length;
-  const warnCount = checklist.filter((c) => c.status === "warn" || c.status === "fail").length;
+  // Memoized aggregations
+  const totalPageIssues = useMemo(() => {
+    return pagesList.reduce((sum, page) => sum + (page.issues || 0), 0);
+  }, [pagesList]);
+
+  const passCount = useMemo(() => {
+    return checklist.filter((c) => c.status === "pass").length;
+  }, [checklist]);
+
+  // Dynamic Schema JSON matching current environment's domain
+  const generatedSchemaJson = useMemo(() => {
+    return JSON.stringify(
+      {
+        "@context": "https://schema.org",
+        "@type": "TravelAgency",
+        "name": "GlobeTrek PK",
+        "url": domain,
+        "logo": `${domain}/logo.png`,
+        "description": "Pakistan's premier B2B travel marketplace connecting tour operators, visa consultants, insurance brokers, and ticketing desks.",
+        "address": {
+          "@type": "PostalAddress",
+          "addressCountry": "PK",
+        },
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "customer service",
+          "availableLanguage": ["English", "Urdu"],
+        },
+        "sameAs": [
+          "https://www.facebook.com/globetrekpk",
+          "https://twitter.com/globetrekpk",
+        ],
+      },
+      null,
+      2
+    );
+  }, [domain]);
+
+  const activeSchemaJson = userSchemaJson ?? generatedSchemaJson;
+
+  // Conditional Quick SEO Wins based on strict checklist rule ID matching
+  const activeQuickWins = useMemo(() => {
+    return checklist
+      .filter((c) => (c.status === "warn" || c.status === "fail") && QUICK_WIN_ITEMS[c.id])
+      .map((c) => QUICK_WIN_ITEMS[c.id]);
+  }, [checklist]);
+
+  // Backlink strategy recommendations filtered by acquired domains (using URL normalization)
+  const acquiredDomainsSet = useMemo(() => {
+    const set = new Set<string>();
+    backlinksList.forEach((b) => {
+      const norm = normalizeDomain(b.domain);
+      if (norm) set.add(norm);
+    });
+    return set;
+  }, [backlinksList]);
+
+  const pendingOutreachRecommendations = useMemo(() => {
+    return OUTREACH_RECOMMENDATIONS.filter((item) => {
+      const targetNorm = normalizeDomain(item.domain);
+      return !acquiredDomainsSet.has(targetNorm);
+    });
+  }, [acquiredDomainsSet]);
 
   function copySchema() {
-    navigator.clipboard.writeText(schemaJson);
+    navigator.clipboard.writeText(activeSchemaJson);
     setCopiedSchema(true);
     toast.success("Schema JSON copied to clipboard!");
     setTimeout(() => setCopiedSchema(false), 2000);
@@ -190,7 +320,7 @@ function AdminSEO() {
           </div>
           <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mt-1">SEO Health Score</div>
           <div className="mt-2 text-[10px] text-muted-foreground">
-            {passCount} passed · {warnCount} warnings
+            {passCount} passed · {totalPageIssues} warnings
           </div>
         </div>
         {[
@@ -263,31 +393,31 @@ function AdminSEO() {
             ))}
           </div>
 
-          {/* Quick Wins */}
-          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5 mt-4">
-            <h4 className="text-sm font-bold text-amber-400 flex items-center gap-2 mb-3">
-              <Zap className="size-4" /> Quick SEO Wins
-            </h4>
-            <ul className="space-y-2 text-xs text-foreground">
-              <li className="flex items-start gap-2">
-                <ArrowUpRight className="size-3.5 mt-0.5 text-amber-400 shrink-0" />
-                Submit sitemap to <strong>Google Search Console</strong> → Indexing → Sitemaps →{" "}
-                <code className="bg-surface rounded px-1">https://tour.testbench.shop/sitemap.xml</code>
-              </li>
-              <li className="flex items-start gap-2">
-                <ArrowUpRight className="size-3.5 mt-0.5 text-amber-400 shrink-0" />
-                Add <strong>robots.txt</strong> allowing all bots except <code>/admin</code> and <code>/vendor</code>
-              </li>
-              <li className="flex items-start gap-2">
-                <ArrowUpRight className="size-3.5 mt-0.5 text-amber-400 shrink-0" />
-                Add descriptive <strong>alt text</strong> to all tour listing images in the CMS
-              </li>
-              <li className="flex items-start gap-2">
-                <ArrowUpRight className="size-3.5 mt-0.5 text-amber-400 shrink-0" />
-                Register with <strong>Bing Webmaster Tools</strong> to capture 15–20% extra organic impressions
-              </li>
-            </ul>
-          </div>
+          {/* Quick Wins (Conditional rendering based on strict checklist warning rule ID matching) */}
+          {activeQuickWins.length > 0 ? (
+            <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5 mt-4">
+              <h4 className="text-sm font-bold text-amber-400 flex items-center gap-2 mb-3">
+                <Zap className="size-4" /> Quick SEO Wins ({activeQuickWins.length} Actionable Items)
+              </h4>
+              <ul className="space-y-2 text-xs text-foreground">
+                {activeQuickWins.map((win) => (
+                  <li key={win.id} className="flex items-start gap-2">
+                    <ArrowUpRight className="size-3.5 mt-0.5 text-amber-400 shrink-0" />
+                    <span>{win.render(domain)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 mt-4">
+              <h4 className="text-sm font-bold text-emerald-400 flex items-center gap-2">
+                <CheckCircle2 className="size-4" /> All Technical Audit Items Passed
+              </h4>
+              <p className="text-xs text-muted-foreground mt-1">
+                No active warnings found in technical checklist audit.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -407,8 +537,8 @@ function AdminSEO() {
           <div className="relative">
             <Textarea
               className="font-mono text-xs min-h-[340px] rounded-xl bg-surface"
-              value={schemaJson}
-              onChange={(e) => setSchemaJson(e.target.value)}
+              value={activeSchemaJson}
+              onChange={(e) => setUserSchemaJson(e.target.value)}
             />
             <button
               onClick={copySchema}
@@ -463,12 +593,26 @@ function AdminSEO() {
               </tbody>
             </table>
           </div>
-          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-xs text-foreground space-y-1">
-            <p className="font-semibold text-primary flex items-center gap-1.5"><TrendingUp className="size-3.5" /> Backlink Acquisition Strategy</p>
-            <p>• Submit your agency to <strong>Pakistan Tourism Development Corporation (PTDC)</strong> — high-authority .gov.pk link.</p>
-            <p>• Guest post on <strong>dawn.com/travel</strong> featuring "Top 5 Hunza Travel Tips" linking back to your tours page.</p>
-            <p>• Partner with <strong>Pakistan travel bloggers</strong> for sponsored content with dofollow links.</p>
-            <p>• List on <strong>TripAdvisor, Google Business Profile</strong>, and <strong>Yelp Pakistan</strong> for local citations.</p>
+
+          {/* Backlink Outreach Strategy (Filtered by acquired domains normalized set) */}
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-xs text-foreground space-y-2">
+            <p className="font-semibold text-primary flex items-center gap-1.5">
+              <TrendingUp className="size-3.5" /> Backlink Acquisition Strategy
+            </p>
+            {pendingOutreachRecommendations.length > 0 ? (
+              <ul className="space-y-1">
+                {pendingOutreachRecommendations.map((item) => (
+                  <li key={item.domain} className="flex items-start gap-1">
+                    <span>•</span>
+                    <span>{item.render()}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-muted-foreground">
+                All priority outreach targets have already been acquired!
+              </p>
+            )}
           </div>
         </div>
       )}
