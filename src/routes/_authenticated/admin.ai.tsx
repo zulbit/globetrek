@@ -43,6 +43,24 @@ import {
   type ModelVerificationResult,
 } from "@/lib/ai-admin.functions";
 
+function formatEventTimestamp(isoString: string) {
+  const date = new Date(isoString);
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = date.toDateString() === yesterday.toDateString();
+
+  const timeStr = date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+
+  if (isToday) return `Today, ${timeStr}`;
+  if (isYesterday) return `Yesterday, ${timeStr}`;
+
+  const monthDayStr = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return `${monthDayStr}, ${timeStr}`;
+}
+
 export const Route = createFileRoute("/_authenticated/admin/ai")({
   head: () => ({
     meta: [
@@ -631,8 +649,8 @@ function AdminAIPage() {
               <tbody className="divide-y divide-border/60">
                 {analytics?.recent_logs.slice(0, 8).map((log) => (
                   <tr key={log.id} className="hover:bg-surface/50 transition">
-                    <td className="py-2.5 px-2 font-mono text-muted-foreground">
-                      {new Date(log.created_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                    <td className="py-2.5 px-2 font-mono text-muted-foreground whitespace-nowrap">
+                      {formatEventTimestamp(log.created_at)}
                     </td>
                     <td className="py-2.5 px-2 font-semibold text-foreground">{log.feature}</td>
                     <td className="py-2.5 px-2 font-mono text-muted-foreground text-[11px] truncate max-w-[140px]">

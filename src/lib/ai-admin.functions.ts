@@ -160,19 +160,32 @@ export const getAIAnalyticsServer = createServerFn({ method: "GET" })
         .gte("created_at", monthAgo)
         .order("created_at", { ascending: false });
 
+      const FEATURE_NAME_MAP: Record<string, string> = {
+        description: "AI Concierge Chat",
+        plan: "Tour AI Generator",
+        visa: "Visa Lookup AI",
+        insurance: "Travel Insurance AI",
+        tickets: "Ticket Desk AI",
+        ai_chat: "AI Concierge Chat",
+      };
+
       if (!error && dbData && dbData.length > 0) {
-        logs = dbData.map((r: any) => ({
-          id: r.id,
-          created_at: r.created_at,
-          feature: r.kind || r.feature || "ai_chat",
-          model: r.model || "openai/gpt-4o-mini",
-          prompt_tokens: r.prompt_tokens || 120,
-          completion_tokens: r.completion_tokens || 180,
-          total_tokens: r.total_tokens || (r.prompt_tokens || 120) + (r.completion_tokens || 180),
-          estimated_cost_usd: r.cost_usd || 0.000045,
-          latency_ms: r.latency_ms || 420,
-          status: r.status === "error" ? "error" : "success",
-        }));
+        logs = dbData.map((r: any) => {
+          const rawFeature = r.kind || r.feature || "ai_chat";
+          const featureName = FEATURE_NAME_MAP[rawFeature] || rawFeature;
+          return {
+            id: r.id,
+            created_at: r.created_at,
+            feature: featureName,
+            model: r.model || "openai/gpt-4o-mini",
+            prompt_tokens: r.prompt_tokens || 120,
+            completion_tokens: r.completion_tokens || 180,
+            total_tokens: r.total_tokens || (r.prompt_tokens || 120) + (r.completion_tokens || 180),
+            estimated_cost_usd: r.cost_usd || 0.000045,
+            latency_ms: r.latency_ms || 420,
+            status: r.status === "error" ? "error" : "success",
+          };
+        });
       }
     } catch {
       // Fallback generator if table doesn't exist or has errors
