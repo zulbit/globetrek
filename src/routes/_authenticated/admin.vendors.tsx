@@ -132,7 +132,7 @@ function AdminVendors() {
   });
 
   const setTier = useMutation({
-    mutationFn: (data: { id: string; tier: "free" | "pro" }) => setTierFn({ data }),
+    mutationFn: (data: { id: string; tier: "free" | "starter" | "pro" | "agency" }) => setTierFn({ data }),
     onSuccess: () => {
       toast.success("Subscription tier updated");
       qc.invalidateQueries({ queryKey: ["admin-vendors"] });
@@ -337,7 +337,7 @@ function VendorRow({
   p: VendorProfile;
   onStatus: (s: "approved" | "banned" | "pending") => void;
   onCredits: (next: number) => void;
-  onTier: (t: "free" | "pro") => void;
+  onTier: (t: "free" | "starter" | "pro" | "agency") => void;
   onViewKyc: () => void;
 }) {
   const [draft, setDraft] = React.useState<string>(String(p.lead_credits_balance));
@@ -376,16 +376,16 @@ function VendorRow({
       </div>
       <div className="truncate text-xs font-semibold text-foreground">{p.company_name || "—"}</div>
       <div>
-        <button
-          onClick={() => onTier(isPro ? "free" : "pro")}
-          className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
-            isPro
-              ? "border-highlight/40 bg-highlight/15 text-highlight"
-              : "border-border bg-surface text-muted-foreground hover:text-foreground"
-          }`}
+        <select
+          value={p.subscription_tier || "free"}
+          onChange={(e) => onTier(e.target.value as "free" | "starter" | "pro" | "agency")}
+          className="h-8 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-semibold text-foreground focus:border-primary focus:outline-hidden transition"
         >
-          {isPro ? "PRO" : "Free"}
-        </button>
+          <option value="free">Free</option>
+          <option value="starter">Travel Desk</option>
+          <option value="pro">Tour Operator</option>
+          <option value="agency">Full Agency</option>
+        </select>
       </div>
       <div className="flex items-center gap-1">
         <button

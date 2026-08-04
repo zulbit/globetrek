@@ -105,7 +105,7 @@ export const updateAdminVendorCredits = createServerFn({ method: "POST" })
   });
 
 export const updateAdminVendorTier = createServerFn({ method: "POST" })
-  .validator((data: { id: string; tier: "free" | "pro" }) => data)
+  .validator((data: { id: string; tier: "free" | "starter" | "pro" | "agency" }) => data)
   .handler(async ({ data }) => {
     const { error } = await supabaseAdmin
       .from("profiles")
