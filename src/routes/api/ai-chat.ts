@@ -644,10 +644,14 @@ ${ticketsCatalogText}`;
             let userId: string | null = null;
             const authHeader = request.headers.get("authorization");
             if (authHeader?.startsWith("Bearer ")) {
-              const token = authHeader.substring(7);
-              const { data: claimsData } = await supabaseAdmin.auth.getClaims(token);
-              if (claimsData?.claims?.sub) {
-                userId = claimsData.claims.sub;
+              try {
+                const token = authHeader.substring(7);
+                const { data: claimsData } = await supabaseAdmin.auth.getClaims(token);
+                if (claimsData?.claims?.sub) {
+                  userId = claimsData.claims.sub as string;
+                }
+              } catch {
+                // Token parsing failed, fall through to admin lookup
               }
             }
 
@@ -663,11 +667,20 @@ ${ticketsCatalogText}`;
               }
             }
 
-            if (userId) {
-              await supabaseAdmin.from("ai_usage_events").insert({
-                user_id: userId,
-                kind: "description",
-              });
+            // Hardcoded fallback: GlobeTrek Admin user
+            if (!userId) {
+              userId = "ce083b9c-d6d3-46b4-827a-2bd3a569e978";
+            }
+
+            const { error: insertErr } = await supabaseAdmin.from("ai_usage_events").insert({
+              user_id: userId,
+              kind: "description",
+            });
+
+            if (insertErr) {
+              console.error("[ai-chat logging error]:", insertErr.message);
+            } else {
+              console.log("[ai-chat] AI usage event logged for user:", userId);
             }
           } catch (e) {
             console.warn("[ai-chat logging warning]:", e);
