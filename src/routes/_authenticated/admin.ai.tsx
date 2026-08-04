@@ -394,7 +394,7 @@ function AdminAIPage() {
                     fill="url(#costGradient)"
                   />
                 )}
-              AreaChart>
+              </AreaChart>
             </ResponsiveContainer>
           )}
         </div>
