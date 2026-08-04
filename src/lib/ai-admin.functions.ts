@@ -176,8 +176,10 @@ export const getAIAnalyticsServer = createServerFn({ method: "GET" })
       // Fallback generator if ai_usage_events table doesn't have events yet
     }
 
+    let isDemoMode = false;
     // Generate fallback demo metrics if DB table empty
     if (logs.length === 0) {
+      isDemoMode = true;
       logs = [
         { id: "evt-01", created_at: new Date().toISOString(), feature: "AI Concierge Chat", model: "openai/gpt-4o-mini", prompt_tokens: 140, completion_tokens: 220, total_tokens: 360, estimated_cost_usd: 0.000054, latency_ms: 380, status: "success" },
         { id: "evt-02", created_at: new Date(now.getTime() - 40 * 60 * 1000).toISOString(), feature: "Tour AI Generator", model: "openai/gpt-4o-mini", prompt_tokens: 180, completion_tokens: 190, total_tokens: 370, estimated_cost_usd: 0.000056, latency_ms: 450, status: "success" },
@@ -197,14 +199,14 @@ export const getAIAnalyticsServer = createServerFn({ method: "GET" })
     const calcTokens = (arr: AIEventLog[]) => arr.reduce((sum, l) => sum + l.total_tokens, 0);
     const calcCost = (arr: AIEventLog[]) => arr.reduce((sum, l) => sum + l.estimated_cost_usd, 0);
 
-    const dailyTokens = calcTokens(dailyLogs) || 1835;
-    const dailyCostUsd = calcCost(dailyLogs) || 0.00028;
+    const dailyTokens = isDemoMode ? (calcTokens(dailyLogs) || 1835) : calcTokens(dailyLogs);
+    const dailyCostUsd = isDemoMode ? (calcCost(dailyLogs) || 0.00028) : calcCost(dailyLogs);
 
-    const weeklyTokens = calcTokens(weeklyLogs) || 12450;
-    const weeklyCostUsd = calcCost(weeklyLogs) || 0.00187;
+    const weeklyTokens = isDemoMode ? (calcTokens(weeklyLogs) || 12450) : calcTokens(weeklyLogs);
+    const weeklyCostUsd = isDemoMode ? (calcCost(weeklyLogs) || 0.00187) : calcCost(weeklyLogs);
 
-    const monthlyTokens = calcTokens(monthlyLogs) || 48900;
-    const monthlyCostUsd = calcCost(monthlyLogs) || 0.00733;
+    const monthlyTokens = isDemoMode ? (calcTokens(monthlyLogs) || 48900) : calcTokens(monthlyLogs);
+    const monthlyCostUsd = isDemoMode ? (calcCost(monthlyLogs) || 0.00733) : calcCost(monthlyLogs);
 
     // Feature breakdown calculation
     const counts: Record<string, number> = {};
