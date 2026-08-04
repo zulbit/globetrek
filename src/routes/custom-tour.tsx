@@ -47,12 +47,18 @@ export const Route = createFileRoute("/custom-tour")({
     meta: [
       {
         title:
-          "Build Your Custom Tour — GlobeTrek PK",
+          "Custom Group Tour & Itinerary Planner — GlobeTrek PK",
       },
       {
         name: "description",
         content:
           "Plan an exclusive group or custom tour for family & friends. Get AI-generated itineraries and competitive quotes from Pakistan's top verified travel vendors.",
+      },
+    ],
+    links: [
+      {
+        rel: "canonical",
+        href: "https://globetrek.testbench.shop/custom-tour",
       },
     ],
   }),

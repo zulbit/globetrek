@@ -16,10 +16,10 @@ type InsuranceRow = InsurancePlan & { profiles: VendorInfo };
 export const Route = createFileRoute("/insurance/")({
   head: () => ({
     meta: [
-      { title: "Travel insurance in PKR — GlobeTrek PK" },
-      { name: "description", content: "Schengen, medical, family and adventure travel insurance plans from PK brokers. Compare coverage and price in PKR." },
-      { property: "og:title", content: "Travel insurance · GlobeTrek PK" },
-      { property: "og:description", content: "Compare Schengen and medical travel insurance plans, priced in PKR." },
+      { title: "Travel Insurance Plans in Pakistan — GlobeTrek PK" },
+      { name: "description", content: "Compare Schengen, medical, and family travel insurance plans in Pakistan from verified brokers. Get instant quotes and transparent policy coverage in PKR." },
+      { property: "og:title", content: "Travel Insurance Plans in Pakistan · GlobeTrek PK" },
+      { property: "og:description", content: "Compare Schengen, medical, and family travel insurance plans in Pakistan from verified brokers. Get transparent policy coverage in PKR." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

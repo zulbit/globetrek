@@ -16,9 +16,9 @@ type VisaRow = VisaService & { profiles: VendorInfo };
 export const Route = createFileRoute("/visa/")({
   head: () => ({
     meta: [
-      { title: "Visa services in PKR — GlobeTrek PK" },
+      { title: "Visa Filing Services & Consultants in Pakistan — GlobeTrek PK" },
       { name: "description", content: "Trusted Pakistani visa consultants for Turkey, Schengen, UAE, UK. Compare processing time, success rate and fees — all in PKR." },
-      { property: "og:title", content: "Visa services · GlobeTrek PK" },
+      { property: "og:title", content: "Visa Filing Services & Consultants in Pakistan · GlobeTrek PK" },
       { property: "og:description", content: "Compare visa consultants across popular destinations, priced in PKR." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -121,7 +121,7 @@ function VisaMarketplace() {
             <FileCheck className="size-4" /> Visa marketplace
           </div>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-5xl">
-            Visas for every destination, filed by trusted PK consultants.
+            Visa Filing Services &amp; Consultants in Pakistan
           </h1>
           <p className="mt-3 max-w-2xl text-muted-foreground">
             Turkey to Schengen, business to tourist — verified consultants show you processing time,

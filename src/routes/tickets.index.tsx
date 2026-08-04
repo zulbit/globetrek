@@ -16,12 +16,30 @@ type TicketRow = TicketService & { profiles: VendorInfo };
 export const Route = createFileRoute("/tickets/")({
   head: () => ({
     meta: [
-      { title: "Flight tickets from PK — GlobeTrek PK" },
-      { name: "description", content: "Trusted ticketing agents for domestic, international, Umrah and Hajj. Compare fees and airline coverage in PKR." },
-      { property: "og:title", content: "Flight tickets · GlobeTrek PK" },
+      { title: "Flight Ticketing Desks & Umrah Packages — GlobeTrek PK" },
+      { name: "description", content: "Trusted ticketing agents in Pakistan for domestic, international, Umrah and Hajj flights. Compare fees and airline coverage in PKR." },
+      { property: "og:title", content: "Flight Ticketing Desks & Umrah Packages · GlobeTrek PK" },
       { property: "og:description", content: "Ticketing agents from Pakistan for every route, priced in PKR." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "TravelAgency",
+          "name": "GlobeTrek PK Flight Ticketing Desks",
+          "url": "https://globetrek.testbench.shop/tickets",
+          "description": "Book domestic, international, Umrah and Hajj flight tickets with verified Pakistani IATA ticketing desks.",
+          "provider": {
+            "@type": "Organization",
+            "name": "GlobeTrek PK Marketplace"
+          },
+          "serviceType": "Flight Ticketing & Travel Agency",
+          "areaServed": "PK"
+        }),
+      },
     ],
   }),
   component: TicketsMarketplace,
