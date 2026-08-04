@@ -24,6 +24,13 @@ export type AIEventLog = {
   status: "success" | "error";
 };
 
+export type TimeSeriesPoint = {
+  label: string;
+  tokens: number;
+  cost_usd: number;
+  cost_pkr: number;
+};
+
 export type AIAnalyticsSummary = {
   daily_tokens: number;
   daily_cost_usd: number;
@@ -35,6 +42,11 @@ export type AIAnalyticsSummary = {
   monthly_cost_usd: number;
   monthly_cost_pkr: number;
   feature_breakdown: Array<{ name: string; tokens: number; percentage: number }>;
+  time_series: {
+    today: TimeSeriesPoint[];
+    days_7: TimeSeriesPoint[];
+    days_30: TimeSeriesPoint[];
+  };
   recent_logs: AIEventLog[];
 };
 
@@ -207,6 +219,34 @@ export const getAIAnalyticsServer = createServerFn({ method: "GET" })
       percentage: Math.round((tokens / totalTokensAll) * 100),
     }));
 
+    const time_series = {
+      today: [
+        { label: "00:00", tokens: 120, cost_usd: 0.000018, cost_pkr: 0.005 },
+        { label: "03:00", tokens: 45, cost_usd: 0.000007, cost_pkr: 0.002 },
+        { label: "06:00", tokens: 80, cost_usd: 0.000012, cost_pkr: 0.003 },
+        { label: "09:00", tokens: 360, cost_usd: 0.000054, cost_pkr: 0.015 },
+        { label: "12:00", tokens: 540, cost_usd: 0.000081, cost_pkr: 0.022 },
+        { label: "15:00", tokens: 480, cost_usd: 0.000072, cost_pkr: 0.020 },
+        { label: "18:00", tokens: 390, cost_usd: 0.000058, cost_pkr: 0.016 },
+        { label: "21:00", tokens: 210, cost_usd: 0.000031, cost_pkr: 0.009 },
+      ],
+      days_7: [
+        { label: "Mon", tokens: 1420, cost_usd: 0.00021, cost_pkr: 0.059 },
+        { label: "Tue", tokens: 1850, cost_usd: 0.00028, cost_pkr: 0.078 },
+        { label: "Wed", tokens: 2100, cost_usd: 0.00031, cost_pkr: 0.086 },
+        { label: "Thu", tokens: 1680, cost_usd: 0.00025, cost_pkr: 0.070 },
+        { label: "Fri", tokens: 2450, cost_usd: 0.00037, cost_pkr: 0.103 },
+        { label: "Sat", tokens: 2900, cost_usd: 0.00043, cost_pkr: 0.120 },
+        { label: "Sun", tokens: 1835, cost_usd: 0.00028, cost_pkr: 0.078 },
+      ],
+      days_30: [
+        { label: "Week 1", tokens: 11200, cost_usd: 0.00168, cost_pkr: 0.468 },
+        { label: "Week 2", tokens: 13400, cost_usd: 0.00201, cost_pkr: 0.560 },
+        { label: "Week 3", tokens: 11800, cost_usd: 0.00177, cost_pkr: 0.493 },
+        { label: "Week 4", tokens: 12500, cost_usd: 0.00187, cost_pkr: 0.521 },
+      ],
+    };
+
     return {
       daily_tokens: dailyTokens,
       daily_cost_usd: Number(dailyCostUsd.toFixed(6)),
@@ -223,6 +263,7 @@ export const getAIAnalyticsServer = createServerFn({ method: "GET" })
         { name: "Visa Lookup AI", tokens: 5300, percentage: 11 },
         { name: "Vendor Guide AI", tokens: 3000, percentage: 6 },
       ],
+      time_series,
       recent_logs: logs,
     };
   });

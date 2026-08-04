@@ -17,14 +17,24 @@ import {
   Save,
   Loader2,
   Layers,
-  ArrowUpRight,
-  ShieldCheck,
+  TrendingUp,
+  BarChart3,
+  Coins,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from "recharts";
 import {
   getAIConfigServer,
   saveAIConfigServer,
@@ -71,7 +81,7 @@ function AdminAIPage() {
     refetchInterval: 30000,
   });
 
-  // Local Form State
+  // Local Form & Chart State
   const [selectedModel, setSelectedModel] = useState<string>("openai/gpt-4o-mini");
   const [customModel, setCustomModel] = useState<string>("");
   const [maxTokens, setMaxTokens] = useState<number>(400);
@@ -79,8 +89,17 @@ function AdminAIPage() {
   const [showApiKey, setShowApiKey] = useState<boolean>(false);
   const [verificationResult, setVerificationResult] = useState<ModelVerificationResult | null>(null);
 
-  // Sync loaded config to form
-  const activeModelId = selectedModel === "custom" ? customModel : (config?.active_model || selectedModel);
+  // Recharts controls: timeframe tab & metric mode
+  const [chartTimeframe, setChartTimeframe] = useState<"today" | "7d" | "30d">("7d");
+  const [chartMetric, setChartMetric] = useState<"tokens" | "cost">("tokens");
+
+  // Get active chart data series
+  const activeChartData =
+    chartTimeframe === "today"
+      ? analytics?.time_series?.today ?? []
+      : chartTimeframe === "30d"
+      ? analytics?.time_series?.days_30 ?? []
+      : analytics?.time_series?.days_7 ?? [];
 
   // Mutations
   const saveMutation = useMutation({
@@ -161,7 +180,7 @@ function AdminAIPage() {
         </Button>
       </div>
 
-      {/* Analytics Cards */}
+      {/* Analytics Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {/* Daily Metric */}
         <div className="rounded-2xl border border-border bg-card p-5 space-y-3 shadow-sm hover:border-primary/40 transition">
@@ -251,6 +270,133 @@ function AdminAIPage() {
               )}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Interactive Recharts Usage & Cost Trend Graph */}
+      <div className="rounded-3xl border border-border bg-card p-6 space-y-6 shadow-md">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
+          <div className="flex items-center gap-3">
+            <div className="size-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <TrendingUp className="size-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold">Interactive Usage &amp; Cost Progression Trend</h2>
+              <p className="text-xs text-muted-foreground">Visualize token consumption and financial cost trajectory over time.</p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Metric Mode Toggle */}
+            <div className="flex rounded-xl bg-surface p-1 border border-border text-xs">
+              <button
+                type="button"
+                onClick={() => setChartMetric("tokens")}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition ${chartMetric === "tokens" ? "bg-emerald-500 text-slate-950 shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <BarChart3 className="size-3.5 inline mr-1" /> Tokens View
+              </button>
+              <button
+                type="button"
+                onClick={() => setChartMetric("cost")}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition ${chartMetric === "cost" ? "bg-sky-500 text-slate-950 shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <Coins className="size-3.5 inline mr-1" /> Cost View (PKR)
+              </button>
+            </div>
+
+            {/* Timeframe Tab Controls */}
+            <div className="flex rounded-xl bg-surface p-1 border border-border text-xs">
+              <button
+                type="button"
+                onClick={() => setChartTimeframe("today")}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition ${chartTimeframe === "today" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Today (Hourly)
+              </button>
+              <button
+                type="button"
+                onClick={() => setChartTimeframe("7d")}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition ${chartTimeframe === "7d" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                7 Days
+              </button>
+              <button
+                type="button"
+                onClick={() => setChartTimeframe("30d")}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition ${chartTimeframe === "30d" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                30 Days
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Recharts AreaChart Container */}
+        <div className="h-72 w-full pt-2">
+          {analyticsLoading ? (
+            <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
+              <Loader2 className="mr-2 size-4 animate-spin inline" /> Loading trend data…
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={activeChartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="tokenGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                  </linearGradient>
+                  <linearGradient id="costGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+                <XAxis dataKey="label" stroke="#a1a1aa" fontSize={11} tickLine={false} />
+                <YAxis stroke="#a1a1aa" fontSize={11} tickLine={false} />
+                <Tooltip
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="rounded-xl border border-border bg-slate-950/90 p-3 shadow-xl text-xs space-y-1 backdrop-blur-md">
+                          <p className="font-bold text-foreground border-b border-border/60 pb-1 mb-1">{label}</p>
+                          <p className="text-emerald-400 font-mono font-semibold">
+                            Tokens: {data.tokens?.toLocaleString()}
+                          </p>
+                          <p className="text-sky-400 font-mono">
+                            Cost: ${data.cost_usd} USD (₨ {data.cost_pkr} PKR)
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                {chartMetric === "tokens" ? (
+                  <Area
+                    type="monotone"
+                    dataKey="tokens"
+                    name="Tokens Consumed"
+                    stroke="#10b981"
+                    strokeWidth={2.5}
+                    fillOpacity={1}
+                    fill="url(#tokenGradient)"
+                  />
+                ) : (
+                  <Area
+                    type="monotone"
+                    dataKey="cost_pkr"
+                    name="Cost (PKR)"
+                    stroke="#0ea5e9"
+                    strokeWidth={2.5}
+                    fillOpacity={1}
+                    fill="url(#costGradient)"
+                  />
+                )}
+              AreaChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </div>
 
