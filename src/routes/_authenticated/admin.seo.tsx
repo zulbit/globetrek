@@ -62,14 +62,14 @@ const KEYWORD_SEEDS = [
 
 /* ─── Pages SEO Summary ─── */
 const PAGES = [
-  { path: "/", title: "GlobeTrek PK — Discover Pakistan's Best Tours", score: 92, issues: 0 },
-  { path: "/tours", title: "Tour Packages — GlobeTrek PK", score: 88, issues: 1 },
-  { path: "/visa", title: "Visa Filing Services — GlobeTrek PK", score: 85, issues: 1 },
-  { path: "/insurance", title: "Travel Insurance — GlobeTrek PK", score: 82, issues: 2 },
-  { path: "/tickets", title: "Flight Tickets & Umrah Packages", score: 80, issues: 2 },
-  { path: "/vendor-guide", title: "Vendor & Agency Operating Guide", score: 90, issues: 0 },
-  { path: "/custom-tour", title: "Custom Tour Planner — GlobeTrek PK", score: 78, issues: 3 },
-  { path: "/pricing", title: "Vendor Pricing Plans — GlobeTrek PK", score: 86, issues: 1 },
+  { path: "/", title: "GlobeTrek PK — Discover Pakistan's Best Tours", score: 96, issues: 0, details: "Optimal Title tag length, OpenGraph image set, canonical URL configured." },
+  { path: "/tours", title: "Tour Packages — GlobeTrek PK", score: 92, issues: 0, details: "Queries Supabase catalog, dynamic pagination schema present." },
+  { path: "/visa", title: "Visa Filing Services — GlobeTrek PK", score: 88, issues: 1, details: "Warning: Missing location-specific H1 keyword target. Fix: Add 'Visa Filing Services & Consultants in Pakistan' as primary H1 heading." },
+  { path: "/insurance", title: "Travel Insurance — GlobeTrek PK", score: 85, issues: 1, details: "Warning: Meta description is under 110 characters. Fix: Extend meta description to 150 characters incorporating target keyword 'Travel Insurance Pakistan'." },
+  { path: "/tickets", title: "Flight Tickets & Umrah Packages", score: 84, issues: 1, details: "Warning: Missing structured JSON-LD Service schema. Fix: Embed TravelAgency & FlightReservation JSON-LD schema snippet." },
+  { path: "/vendor-guide", title: "Vendor & Agency Operating Guide", score: 90, issues: 0, details: "Comprehensive documentation for travel operators with clean H2/H3 headings." },
+  { path: "/custom-tour", title: "Custom Tour Planner — GlobeTrek PK", score: 78, issues: 1, details: "Warning: Canonical tag missing on multi-step form. Fix: Add rel='canonical' href='https://globetrek.testbench.shop/custom-tour' in head." },
+  { path: "/pricing", title: "Vendor Pricing Plans — GlobeTrek PK", score: 86, issues: 0, details: "Transparent PKR subscription tiers with Safepay payment gateway integration." },
 ];
 
 /* ─── Backlink Sources ─── */
@@ -452,12 +452,30 @@ function AdminSEO() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       {p.issues === 0 ? (
-                        <CheckCircle2 className="size-4 text-emerald-400 mx-auto" />
+                        <div className="relative group inline-block">
+                          <CheckCircle2 className="size-4 text-emerald-400 mx-auto cursor-help" />
+                          <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-64 p-2.5 rounded-xl border border-emerald-500/30 bg-card text-foreground text-xs shadow-xl z-50 pointer-events-none text-left">
+                            <div className="flex items-center gap-1.5 font-bold text-emerald-400 mb-0.5">
+                              <CheckCircle2 className="size-3.5" /> All Checks Passed
+                            </div>
+                            <p className="text-[11px] text-muted-foreground leading-normal">{p.details || "Optimal route structure & tags."}</p>
+                          </div>
+                        </div>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-amber-400 font-bold">
-                          <AlertCircle className="size-3.5" />
-                          {p.issues}
-                        </span>
+                        <div className="relative group inline-block">
+                          <span className="inline-flex items-center gap-1 text-amber-400 font-bold cursor-pointer rounded-md bg-amber-500/10 px-2 py-0.5 border border-amber-500/20 hover:bg-amber-500/20 transition">
+                            <AlertCircle className="size-3.5" />
+                            {p.issues}
+                          </span>
+                          <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block w-72 p-3 rounded-xl border border-amber-500/30 bg-card text-foreground text-xs shadow-2xl z-50 text-left pointer-events-none">
+                            <div className="flex items-center gap-1.5 font-bold text-amber-400 mb-1">
+                              <AlertCircle className="size-3.5 shrink-0" /> Warning &amp; Recommended Fix
+                            </div>
+                            <p className="text-[11px] leading-relaxed text-muted-foreground">
+                              {p.details || "Optimization warning detected. Inspect page tags and schema to resolve."}
+                            </p>
+                          </div>
+                        </div>
                       )}
                     </td>
                     <td className="px-4 py-3 text-center">

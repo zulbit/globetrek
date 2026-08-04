@@ -69,7 +69,7 @@ export const getLiveSeoAudit = createServerFn({ method: "GET" }).handler(async (
       score: 88,
       issues: 1,
       status: "pass",
-      details: "Visa service index with marketplace search RPC integration.",
+      details: "Warning: Missing location-specific H1 keyword target. Fix: Add 'Visa Filing Services & Consultants in Pakistan' as primary H1 heading.",
     },
     {
       path: "/insurance",
@@ -77,7 +77,7 @@ export const getLiveSeoAudit = createServerFn({ method: "GET" }).handler(async (
       score: 85,
       issues: 1,
       status: "pass",
-      details: "Policy coverage plans listed with transparent pricing.",
+      details: "Warning: Meta description is under 110 characters. Fix: Extend meta description to 150 characters incorporating target keyword 'Travel Insurance Pakistan'.",
     },
     {
       path: "/tickets",
@@ -85,7 +85,7 @@ export const getLiveSeoAudit = createServerFn({ method: "GET" }).handler(async (
       score: 84,
       issues: 1,
       status: "pass",
-      details: "Ticketing desks catalog with direct WhatsApp booking action.",
+      details: "Warning: Missing structured JSON-LD Service schema. Fix: Embed TravelAgency & FlightReservation JSON-LD schema snippet.",
     },
     {
       path: "/vendor-guide",
@@ -101,7 +101,7 @@ export const getLiveSeoAudit = createServerFn({ method: "GET" }).handler(async (
       score: 86,
       issues: 1,
       status: "pass",
-      details: "Interactive multi-step group tour form with automatic lead capture.",
+      details: "Warning: Canonical tag missing on multi-step form. Fix: Add rel='canonical' href='https://globetrek.testbench.shop/custom-tour' in head.",
     },
     {
       path: "/pricing",
