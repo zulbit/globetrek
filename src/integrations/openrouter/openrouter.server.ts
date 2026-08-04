@@ -24,6 +24,16 @@ function getProvider() {
       "HTTP-Referer": "https://tour.testbench.shop",
       "X-Title": "GlobeTrek PK",
     },
+    fetch: async (url, options) => {
+      if (options?.body && typeof options.body === "string") {
+        try {
+          const parsed = JSON.parse(options.body);
+          parsed.max_tokens = 400;
+          options.body = JSON.stringify(parsed);
+        } catch {}
+      }
+      return fetch(url, options);
+    },
   });
 }
 
