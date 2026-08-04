@@ -638,6 +638,40 @@ ${ticketsCatalogText}`;
             maxSteps: 5,
             maxTokens: 400,
           });
+
+          // Log AI usage event to database
+          try {
+            let userId: string | null = null;
+            const authHeader = request.headers.get("authorization");
+            if (authHeader?.startsWith("Bearer ")) {
+              const token = authHeader.substring(7);
+              const { data: claimsData } = await supabaseAdmin.auth.getClaims(token);
+              if (claimsData?.claims?.sub) {
+                userId = claimsData.claims.sub;
+              }
+            }
+
+            if (!userId) {
+              const { data: adminRole } = await supabaseAdmin
+                .from("user_roles")
+                .select("user_id")
+                .eq("role", "admin")
+                .limit(1)
+                .maybeSingle();
+              if (adminRole?.user_id) {
+                userId = adminRole.user_id;
+              }
+            }
+
+            if (userId) {
+              await supabaseAdmin.from("ai_usage_events").insert({
+                user_id: userId,
+                kind: "description",
+              });
+            }
+          } catch (e) {
+            console.warn("[ai-chat logging warning]:", e);
+          }
           // Collect text from all steps — result.text may be empty if the model
           // only made tool calls in the final step, so we also check each step.
           const allStepsText = result.steps

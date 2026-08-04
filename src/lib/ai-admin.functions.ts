@@ -143,7 +143,9 @@ export const saveAIConfigServer = createServerFn({ method: "POST" })
 /** Fetch token analytics & usage summary (Daily, Weekly, Monthly) */
 export const getAIAnalyticsServer = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async (): Promise<AIAnalyticsSummary> => {
+  .validator((data: { timezoneOffset?: number }) => data)
+  .handler(async ({ data }): Promise<AIAnalyticsSummary> => {
+    const timezoneOffset = data?.timezoneOffset ?? 0;
     const now = new Date();
     const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -152,14 +154,14 @@ export const getAIAnalyticsServer = createServerFn({ method: "GET" })
     let logs: AIEventLog[] = [];
 
     try {
-      const { data, error } = await supabaseAdmin
+      const { data: dbData, error } = await supabaseAdmin
         .from("ai_usage_events")
         .select("*")
-        .order("created_at", { ascending: false })
-        .limit(100);
+        .gte("created_at", monthAgo)
+        .order("created_at", { ascending: false });
 
-      if (!error && data && data.length > 0) {
-        logs = data.map((r: any) => ({
+      if (!error && dbData && dbData.length > 0) {
+        logs = dbData.map((r: any) => ({
           id: r.id,
           created_at: r.created_at,
           feature: r.kind || r.feature || "ai_chat",
@@ -173,7 +175,7 @@ export const getAIAnalyticsServer = createServerFn({ method: "GET" })
         }));
       }
     } catch {
-      // Fallback generator if ai_usage_events table doesn't have events yet
+      // Fallback generator if table doesn't exist or has errors
     }
 
     let isDemoMode = false;
@@ -192,12 +194,17 @@ export const getAIAnalyticsServer = createServerFn({ method: "GET" })
       ];
     }
 
-    const dailyLogs = logs.filter((l) => l.created_at >= dayAgo);
-    const weeklyLogs = logs.filter((l) => l.created_at >= weekAgo);
-    const monthlyLogs = logs.filter((l) => l.created_at >= monthAgo);
+    const getLocalDate = (isoString: string) => {
+      const utcTime = new Date(isoString).getTime();
+      return new Date(utcTime - timezoneOffset * 60 * 1000);
+    };
 
     const calcTokens = (arr: AIEventLog[]) => arr.reduce((sum, l) => sum + l.total_tokens, 0);
     const calcCost = (arr: AIEventLog[]) => arr.reduce((sum, l) => sum + l.estimated_cost_usd, 0);
+
+    const dailyLogs = logs.filter((l) => l.created_at >= dayAgo);
+    const weeklyLogs = logs.filter((l) => l.created_at >= weekAgo);
+    const monthlyLogs = logs.filter((l) => l.created_at >= monthAgo);
 
     const dailyTokens = isDemoMode ? (calcTokens(dailyLogs) || 1835) : calcTokens(dailyLogs);
     const dailyCostUsd = isDemoMode ? (calcCost(dailyLogs) || 0.00028) : calcCost(dailyLogs);
@@ -221,33 +228,134 @@ export const getAIAnalyticsServer = createServerFn({ method: "GET" })
       percentage: Math.round((tokens / totalTokensAll) * 100),
     }));
 
-    const time_series = {
-      today: [
-        { label: "00:00", tokens: 120, cost_usd: 0.000018, cost_pkr: 0.005 },
-        { label: "03:00", tokens: 45, cost_usd: 0.000007, cost_pkr: 0.002 },
-        { label: "06:00", tokens: 80, cost_usd: 0.000012, cost_pkr: 0.003 },
-        { label: "09:00", tokens: 360, cost_usd: 0.000054, cost_pkr: 0.015 },
-        { label: "12:00", tokens: 540, cost_usd: 0.000081, cost_pkr: 0.022 },
-        { label: "15:00", tokens: 480, cost_usd: 0.000072, cost_pkr: 0.020 },
-        { label: "18:00", tokens: 390, cost_usd: 0.000058, cost_pkr: 0.016 },
-        { label: "21:00", tokens: 210, cost_usd: 0.000031, cost_pkr: 0.009 },
-      ],
-      days_7: [
-        { label: "Mon", tokens: 1420, cost_usd: 0.00021, cost_pkr: 0.059 },
-        { label: "Tue", tokens: 1850, cost_usd: 0.00028, cost_pkr: 0.078 },
-        { label: "Wed", tokens: 2100, cost_usd: 0.00031, cost_pkr: 0.086 },
-        { label: "Thu", tokens: 1680, cost_usd: 0.00025, cost_pkr: 0.070 },
-        { label: "Fri", tokens: 2450, cost_usd: 0.00037, cost_pkr: 0.103 },
-        { label: "Sat", tokens: 2900, cost_usd: 0.00043, cost_pkr: 0.120 },
-        { label: "Sun", tokens: 1835, cost_usd: 0.00028, cost_pkr: 0.078 },
-      ],
-      days_30: [
-        { label: "Week 1", tokens: 11200, cost_usd: 0.00168, cost_pkr: 0.468 },
-        { label: "Week 2", tokens: 13400, cost_usd: 0.00201, cost_pkr: 0.560 },
-        { label: "Week 3", tokens: 11800, cost_usd: 0.00177, cost_pkr: 0.493 },
-        { label: "Week 4", tokens: 12500, cost_usd: 0.00187, cost_pkr: 0.521 },
-      ],
-    };
+    let time_series;
+    if (isDemoMode) {
+      time_series = {
+        today: [
+          { label: "00:00", tokens: 120, cost_usd: 0.000018, cost_pkr: 0.005 },
+          { label: "03:00", tokens: 45, cost_usd: 0.000007, cost_pkr: 0.002 },
+          { label: "06:00", tokens: 80, cost_usd: 0.000012, cost_pkr: 0.003 },
+          { label: "09:00", tokens: 360, cost_usd: 0.000054, cost_pkr: 0.015 },
+          { label: "12:00", tokens: 540, cost_usd: 0.000081, cost_pkr: 0.022 },
+          { label: "15:00", tokens: 480, cost_usd: 0.000072, cost_pkr: 0.020 },
+          { label: "18:00", tokens: 390, cost_usd: 0.000058, cost_pkr: 0.016 },
+          { label: "21:00", tokens: 210, cost_usd: 0.000031, cost_pkr: 0.009 },
+        ],
+        days_7: [
+          { label: "Mon", tokens: 1420, cost_usd: 0.00021, cost_pkr: 0.059 },
+          { label: "Tue", tokens: 1850, cost_usd: 0.00028, cost_pkr: 0.078 },
+          { label: "Wed", tokens: 2100, cost_usd: 0.00031, cost_pkr: 0.086 },
+          { label: "Thu", tokens: 1680, cost_usd: 0.00025, cost_pkr: 0.070 },
+          { label: "Fri", tokens: 2450, cost_usd: 0.00037, cost_pkr: 0.103 },
+          { label: "Sat", tokens: 2900, cost_usd: 0.00043, cost_pkr: 0.120 },
+          { label: "Sun", tokens: 1835, cost_usd: 0.00028, cost_pkr: 0.078 },
+        ],
+        days_30: [
+          { label: "Week 1", tokens: 11200, cost_usd: 0.00168, cost_pkr: 0.468 },
+          { label: "Week 2", tokens: 13400, cost_usd: 0.00201, cost_pkr: 0.560 },
+          { label: "Week 3", tokens: 11800, cost_usd: 0.00177, cost_pkr: 0.493 },
+          { label: "Week 4", tokens: 12500, cost_usd: 0.00187, cost_pkr: 0.521 },
+        ],
+      };
+    } else {
+      const nowLocal = new Date(Date.now() - timezoneOffset * 60 * 1000);
+      const startOfTodayLocal = new Date(
+        Date.UTC(
+          nowLocal.getUTCFullYear(),
+          nowLocal.getUTCMonth(),
+          nowLocal.getUTCDate(),
+          0, 0, 0, 0
+        )
+      );
+
+      // Today hourly series (buckets of 3 hours)
+      const todaySeries: TimeSeriesPoint[] = [];
+      const bucketStartHours = [0, 3, 6, 9, 12, 15, 18, 21];
+      for (const startHour of bucketStartHours) {
+        const label = `${String(startHour).padStart(2, "0")}:00`;
+        const bucketStart = startOfTodayLocal.getTime() + startHour * 60 * 60 * 1000;
+        const bucketEnd = bucketStart + 3 * 60 * 60 * 1000;
+
+        // Omit future hours
+        if (bucketStart > nowLocal.getTime()) {
+          continue;
+        }
+
+        const bucketLogs = logs.filter((l) => {
+          const localTime = getLocalDate(l.created_at).getTime();
+          return localTime >= bucketStart && localTime < bucketEnd;
+        });
+
+        const tokens = calcTokens(bucketLogs);
+        const cost_usd = calcCost(bucketLogs);
+
+        todaySeries.push({
+          label,
+          tokens,
+          cost_usd: Number(cost_usd.toFixed(6)),
+          cost_pkr: Number((cost_usd * USD_TO_PKR).toFixed(2)),
+        });
+      }
+
+      // Last 7 days series (grouped chronologically ending today)
+      const days7Series: TimeSeriesPoint[] = [];
+      const weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      for (let i = 6; i >= 0; i--) {
+        const dayDateLocal = new Date(startOfTodayLocal.getTime() - i * 24 * 60 * 60 * 1000);
+        const label = weekdayNames[dayDateLocal.getUTCDay()];
+        const dayStart = dayDateLocal.getTime();
+        const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+
+        const dayLogs = logs.filter((l) => {
+          const localTime = getLocalDate(l.created_at).getTime();
+          return localTime >= dayStart && localTime < dayEnd;
+        });
+
+        const tokens = calcTokens(dayLogs);
+        const cost_usd = calcCost(dayLogs);
+
+        days7Series.push({
+          label,
+          tokens,
+          cost_usd: Number(cost_usd.toFixed(6)),
+          cost_pkr: Number((cost_usd * USD_TO_PKR).toFixed(2)),
+        });
+      }
+
+      // Last 30 days series (grouped in 4 weeks)
+      const days30Series: TimeSeriesPoint[] = [];
+      const weeksConfig = [
+        { label: "Week 1", startDaysAgo: 30, endDaysAgo: 22 },
+        { label: "Week 2", startDaysAgo: 21, endDaysAgo: 15 },
+        { label: "Week 3", startDaysAgo: 14, endDaysAgo: 8 },
+        { label: "Week 4", startDaysAgo: 7, endDaysAgo: 0 },
+      ];
+      for (const week of weeksConfig) {
+        const weekStart = startOfTodayLocal.getTime() - week.startDaysAgo * 24 * 60 * 60 * 1000;
+        const weekEnd = startOfTodayLocal.getTime() - (week.endDaysAgo - 1) * 24 * 60 * 60 * 1000;
+
+        const weekLogs = logs.filter((l) => {
+          const localTime = getLocalDate(l.created_at).getTime();
+          return localTime >= weekStart && localTime < weekEnd;
+        });
+
+        const tokens = calcTokens(weekLogs);
+        const cost_usd = calcCost(weekLogs);
+
+        days30Series.push({
+          label: week.label,
+          tokens,
+          cost_usd: Number(cost_usd.toFixed(6)),
+          cost_pkr: Number((cost_usd * USD_TO_PKR).toFixed(2)),
+        });
+      }
+
+      time_series = {
+        today: todaySeries,
+        days_7: days7Series,
+        days_30: days30Series,
+      };
+    }
 
     return {
       daily_tokens: dailyTokens,

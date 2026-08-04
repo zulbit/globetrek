@@ -77,7 +77,10 @@ function AdminAIPage() {
 
   const { data: analytics, isLoading: analyticsLoading } = useQuery({
     queryKey: ["admin-ai-analytics"],
-    queryFn: () => getAnalyticsFn(),
+    queryFn: () =>
+      getAnalyticsFn({
+        data: { timezoneOffset: new Date().getTimezoneOffset() },
+      }),
     refetchInterval: 30000,
   });
 
