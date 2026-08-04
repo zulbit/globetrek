@@ -43,6 +43,7 @@ import { Route as VisaIdRouteImport } from './routes/visa.$id'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminAffiliatePayoutsRouteImport } from './routes/_authenticated/admin.affiliate-payouts'
 import { Route as AuthenticatedAdminAffiliatesRouteImport } from './routes/_authenticated/admin.affiliates'
+import { Route as AuthenticatedAdminAiRouteImport } from './routes/_authenticated/admin.ai'
 import { Route as AuthenticatedAdminCustomLeadsRouteImport } from './routes/_authenticated/admin.custom-leads'
 import { Route as AuthenticatedAdminFinancialsRouteImport } from './routes/_authenticated/admin.financials'
 import { Route as AuthenticatedAdminKycCmsRouteImport } from './routes/_authenticated/admin.kyc-cms'
@@ -241,6 +242,11 @@ const AuthenticatedAdminAffiliatesRoute =
     path: '/affiliates',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAiRoute = AuthenticatedAdminAiRouteImport.update({
+  id: '/ai',
+  path: '/ai',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedAdminCustomLeadsRoute =
   AuthenticatedAdminCustomLeadsRouteImport.update({
     id: '/custom-leads',
@@ -424,6 +430,7 @@ export interface FileRoutesByFullPath {
   '/visa/': typeof VisaIndexRoute
   '/admin/affiliate-payouts': typeof AuthenticatedAdminAffiliatePayoutsRoute
   '/admin/affiliates': typeof AuthenticatedAdminAffiliatesRoute
+  '/admin/ai': typeof AuthenticatedAdminAiRoute
   '/admin/custom-leads': typeof AuthenticatedAdminCustomLeadsRoute
   '/admin/financials': typeof AuthenticatedAdminFinancialsRoute
   '/admin/kyc-cms': typeof AuthenticatedAdminKycCmsRoute
@@ -479,6 +486,7 @@ export interface FileRoutesByTo {
   '/visa': typeof VisaIndexRoute
   '/admin/affiliate-payouts': typeof AuthenticatedAdminAffiliatePayoutsRoute
   '/admin/affiliates': typeof AuthenticatedAdminAffiliatesRoute
+  '/admin/ai': typeof AuthenticatedAdminAiRoute
   '/admin/custom-leads': typeof AuthenticatedAdminCustomLeadsRoute
   '/admin/financials': typeof AuthenticatedAdminFinancialsRoute
   '/admin/kyc-cms': typeof AuthenticatedAdminKycCmsRoute
@@ -542,6 +550,7 @@ export interface FileRoutesById {
   '/visa/': typeof VisaIndexRoute
   '/_authenticated/admin/affiliate-payouts': typeof AuthenticatedAdminAffiliatePayoutsRoute
   '/_authenticated/admin/affiliates': typeof AuthenticatedAdminAffiliatesRoute
+  '/_authenticated/admin/ai': typeof AuthenticatedAdminAiRoute
   '/_authenticated/admin/custom-leads': typeof AuthenticatedAdminCustomLeadsRoute
   '/_authenticated/admin/financials': typeof AuthenticatedAdminFinancialsRoute
   '/_authenticated/admin/kyc-cms': typeof AuthenticatedAdminKycCmsRoute
@@ -605,6 +614,7 @@ export interface FileRouteTypes {
     | '/visa/'
     | '/admin/affiliate-payouts'
     | '/admin/affiliates'
+    | '/admin/ai'
     | '/admin/custom-leads'
     | '/admin/financials'
     | '/admin/kyc-cms'
@@ -660,6 +670,7 @@ export interface FileRouteTypes {
     | '/visa'
     | '/admin/affiliate-payouts'
     | '/admin/affiliates'
+    | '/admin/ai'
     | '/admin/custom-leads'
     | '/admin/financials'
     | '/admin/kyc-cms'
@@ -722,6 +733,7 @@ export interface FileRouteTypes {
     | '/visa/'
     | '/_authenticated/admin/affiliate-payouts'
     | '/_authenticated/admin/affiliates'
+    | '/_authenticated/admin/ai'
     | '/_authenticated/admin/custom-leads'
     | '/_authenticated/admin/financials'
     | '/_authenticated/admin/kyc-cms'
@@ -1016,6 +1028,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAffiliatesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/ai': {
+      id: '/_authenticated/admin/ai'
+      path: '/ai'
+      fullPath: '/admin/ai'
+      preLoaderRoute: typeof AuthenticatedAdminAiRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/custom-leads': {
       id: '/_authenticated/admin/custom-leads'
       path: '/custom-leads'
@@ -1204,6 +1223,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAffiliatePayoutsRoute: typeof AuthenticatedAdminAffiliatePayoutsRoute
   AuthenticatedAdminAffiliatesRoute: typeof AuthenticatedAdminAffiliatesRoute
+  AuthenticatedAdminAiRoute: typeof AuthenticatedAdminAiRoute
   AuthenticatedAdminCustomLeadsRoute: typeof AuthenticatedAdminCustomLeadsRoute
   AuthenticatedAdminFinancialsRoute: typeof AuthenticatedAdminFinancialsRoute
   AuthenticatedAdminKycCmsRoute: typeof AuthenticatedAdminKycCmsRoute
@@ -1224,6 +1244,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAffiliatePayoutsRoute:
     AuthenticatedAdminAffiliatePayoutsRoute,
   AuthenticatedAdminAffiliatesRoute: AuthenticatedAdminAffiliatesRoute,
+  AuthenticatedAdminAiRoute: AuthenticatedAdminAiRoute,
   AuthenticatedAdminCustomLeadsRoute: AuthenticatedAdminCustomLeadsRoute,
   AuthenticatedAdminFinancialsRoute: AuthenticatedAdminFinancialsRoute,
   AuthenticatedAdminKycCmsRoute: AuthenticatedAdminKycCmsRoute,

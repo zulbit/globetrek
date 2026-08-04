@@ -1,10 +1,11 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { LayoutDashboard, Users, Globe2, Boxes, CreditCard, Sparkles, Compass, BookOpen, Wallet, LayoutTemplate, FileCheck, Layers, Share2, SearchCheck, HandCoins, MessageSquare, Inbox } from "lucide-react";
+import { LayoutDashboard, Users, Globe2, Boxes, CreditCard, Sparkles, Compass, BookOpen, Wallet, LayoutTemplate, FileCheck, Layers, Share2, SearchCheck, HandCoins, MessageSquare, Inbox, Hotel, Cpu } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { RoleGuard } from "@/components/role-guard";
 
 const NAV = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard },
+  { to: "/admin/ai", label: "AI Control & Analytics", icon: Cpu, badge: "NEW" },
   {
     label: "CMS Engine",
     icon: Layers,
