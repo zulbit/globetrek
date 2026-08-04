@@ -636,6 +636,7 @@ ${ticketsCatalogText}`;
             messages: modelMessages,
             tools,
             maxSteps: 5,
+            maxTokens: 400,
           });
           // Collect text from all steps — result.text may be empty if the model
           // only made tool calls in the final step, so we also check each step.
