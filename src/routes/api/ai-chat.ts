@@ -709,10 +709,30 @@ ${ticketsCatalogText}`;
           }
         } catch (err) {
           console.error("[ai-chat handler error]:", err);
-          fullText =
-            "Assalam-o-Alaikum! Welcome to GlobeTrek PK. 🙏\n\n" +
-            "Aap hum se Turkey, UAE, Malaysia tour packages, visa filing, insurance, ya flight tickets ke baray mein puch sakte hain.\n\n" +
-            "[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]";
+          const lowerQuery = (lastUserMsg?.content || "").toLowerCase();
+          if (lowerQuery.includes("flight") || lowerQuery.includes("ticket")) {
+            fullText =
+              "✈️ **Flight Ticketing & Desk Support**\n\n" +
+              "Hum International & Domestic flights, Umrah/Hajj group tickets, aur Group Fare desks ke liye instant booking aur quotes provide kartay hain!\n\n" +
+              "Aap humein apni **Departure City**, **Destination**, **Travel Dates**, aur **Passengers count** bata dein — hum instant best fare quote bhej dein gay.\n\n" +
+              "[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]";
+          } else if (lowerQuery.includes("visa")) {
+            fullText =
+              "📄 **Visa Filing & Consultation**\n\n" +
+              "Hum UAE, Turkey, Schengen, UK, USA, Malaysia, aur Thailand ke liye complete visa documentation & appointment filing support provide kartay hain.\n\n" +
+              "Aap kin kis mulk (country) ke visa ke baray mein janna chahte hain?\n\n" +
+              "[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]";
+          } else if (lowerQuery.includes("tour") || lowerQuery.includes("package")) {
+            fullText =
+              "🌴 **International & Domestic Tour Packages**\n\n" +
+              "Hum Turkey 7-Days, Dubai 5-Days, Malaysia & Thailand multi-country, Skardu & Hunza customized packages offer kartay hain.\n\n" +
+              "Aap kis destination par travel karna chahtay hain?\n\n" +
+              "[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]";
+          } else {
+            fullText =
+              "Assalam-o-Alaikum! Aap GlobeTrek Concierge se kisi bhi travel service ke baray mein jankari le sakte hain. 🙏\n\n" +
+              "[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]";
+          }
         }
 
         if (!leadCaptured && !fullText?.trim()) {
