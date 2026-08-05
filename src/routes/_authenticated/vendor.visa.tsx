@@ -309,7 +309,18 @@ function VendorVisa() {
                       size="sm"
                       className="h-7 text-[11px] bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
                       onClick={() => {
-                        setDraft((d) => ({ ...d, price_pkr: aiSuggestion.fee_pkr }));
+                        const disclaimerText = "Please note: The embassy/visa fee is not final and may change due to currency fluctuations, VFS surcharges, and Embassy policies.";
+                        setDraft((d) => {
+                          const existingNotes = d.extra_notes?.trim();
+                          const nextNotes = existingNotes 
+                            ? `${existingNotes}\n\n${disclaimerText}` 
+                            : disclaimerText;
+                          return {
+                            ...d,
+                            price_pkr: aiSuggestion.fee_pkr,
+                            extra_notes: nextNotes,
+                          };
+                        });
                         toast.success(`Applied AI suggestion of ${formatPKR(aiSuggestion.fee_pkr)}`);
                         setAiSuggestion(null);
                       }}
