@@ -220,11 +220,19 @@ function VendorLeads() {
   // -------- Update Lead Status Mutation --------
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      // Map UI values to PostgreSQL service_lead_status ENUM values ('contacted', 'won', 'lost')
+      // 1. Try atomic RPC function first
+      const { error: rpcErr } = await supabase.rpc("update_lead_status", {
+        _lead_id: id,
+        _status: status,
+      });
+
+      if (!rpcErr) return;
+
+      // 2. Direct PostgREST fallback mapping UI values to PostgreSQL ENUM ('won' / 'lost' / 'contacted')
       const targetStatus = status === "converted" ? "won" : status === "closed" ? "lost" : status;
       const { error } = await supabase.from("leads").update({ status: targetStatus }).eq("id", id);
       if (error) {
-        // Fallback: if 'won' failed, try 'converted'; if 'lost' failed, try 'closed'
+        // Fallback retry with alternate string values
         const fallback = targetStatus === "won" ? "converted" : targetStatus === "lost" ? "closed" : null;
         if (fallback) {
           const { error: err2 } = await supabase.from("leads").update({ status: fallback }).eq("id", id);
@@ -239,7 +247,8 @@ function VendorLeads() {
       qc.invalidateQueries({ queryKey: ["vendor-leads-poly"] });
     },
     onError: (err: any) => {
-      toast.error(err?.message ? `Failed to update status: ${err.message}` : "Failed to update status");
+      const msg = err?.message || err?.details || String(err);
+      toast.error(`Status update error: ${msg}`);
     },
   });
 

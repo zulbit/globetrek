@@ -52,7 +52,8 @@ jobs:
             fi
 
             echo "===> [5/6] Syncing public assets <==="
-            sudo rm -rf "$SITE_DIR/assets/*"
+            sudo rm -rf "$SITE_DIR/assets"
+            sudo mkdir -p "$SITE_DIR/assets"
             sudo cp -r .output/public/* "$SITE_DIR/" 2>/dev/null || true
             sudo chown -R globetrek_te_usr:globetrek_te_usr "$SITE_DIR/"
 
