@@ -39,6 +39,17 @@ function getProvider() {
 
 /** Fast + powerful bilingual AI model — concierge chat, tour itineraries, fee lookup */
 export function openRouterModel() {
+  if (process.env.DEEPSEEK_API_KEY) {
+    const directProvider = createOpenAICompatible({
+      name: "deepseek",
+      baseURL: "https://api.deepseek.com",
+      headers: {
+        Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+      },
+    });
+    return directProvider("deepseek-v4-flash");
+  }
+
   return getProvider()("deepseek/deepseek-chat");
 }
 

@@ -72,7 +72,8 @@ export const Route = createFileRoute("/_authenticated/admin/ai")({
 });
 
 const PRESET_MODELS = [
-  { id: "deepseek/deepseek-chat", label: "DeepSeek V3 / V4 Flash (Recommended - ~$0.14 / 1M Tokens)", isFree: false },
+  { id: "deepseek/deepseek-chat", label: "DeepSeek V3 / V4 Flash (OpenRouter - Recommended)", isFree: false },
+  { id: "deepseek-v4-flash", label: "DeepSeek V4 Flash (Direct DeepSeek API)", isFree: false },
   { id: "deepseek/deepseek-r1:free", label: "DeepSeek R1 Reasoning (100% FREE)", isFree: true },
   { id: "deepseek/deepseek-r1", label: "DeepSeek R1 Reasoning (Paid - Fast)", isFree: false },
   { id: "google/gemini-2.0-flash-exp:free", label: "Google Gemini 2.0 Flash (100% FREE)", isFree: true },
