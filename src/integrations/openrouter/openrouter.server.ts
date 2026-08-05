@@ -37,10 +37,10 @@ function getProvider() {
 
       let res = await fetch(url, options);
 
-      // If credit limit or quota error occurs, fallback seamlessly to 100% free model
+      // If credit limit or quota error occurs, fallback seamlessly to deepseek-chat / gemini-flash
       if (!res.ok && (res.status === 402 || res.status === 429) && reqBody) {
         try {
-          reqBody.model = "deepseek/deepseek-r1:free";
+          reqBody.model = "deepseek/deepseek-chat";
           const fallbackOptions = { ...options, body: JSON.stringify(reqBody) };
           const fallbackRes = await fetch(url, fallbackOptions);
           if (fallbackRes.ok) return fallbackRes;

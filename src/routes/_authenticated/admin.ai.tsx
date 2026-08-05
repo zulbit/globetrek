@@ -72,15 +72,13 @@ export const Route = createFileRoute("/_authenticated/admin/ai")({
 });
 
 const PRESET_MODELS = [
-  { id: "deepseek/deepseek-chat", label: "DeepSeek V3 / V4 Flash (OpenRouter - Recommended)", isFree: false },
+  { id: "deepseek/deepseek-chat", label: "DeepSeek V3 / V4 Flash (Recommended - ~$0.14 / 1M Tokens)", isFree: false },
   { id: "deepseek-v4-flash", label: "DeepSeek V4 Flash (Direct DeepSeek API)", isFree: false },
-  { id: "deepseek/deepseek-r1:free", label: "DeepSeek R1 Reasoning (100% FREE)", isFree: true },
-  { id: "deepseek/deepseek-r1", label: "DeepSeek R1 Reasoning (Paid - Fast)", isFree: false },
-  { id: "google/gemini-2.0-flash-exp:free", label: "Google Gemini 2.0 Flash (100% FREE)", isFree: true },
-  { id: "meta-llama/llama-3.3-70b-instruct:free", label: "Meta Llama 3.3 70B (100% FREE)", isFree: true },
-  { id: "qwen/qwen-2.5-72b-instruct:free", label: "Qwen 2.5 72B Instruct (100% FREE)", isFree: true },
-  { id: "openai/gpt-4o-mini", label: "OpenAI GPT-4o Mini (Paid)", isFree: false },
-  { id: "anthropic/claude-3.5-haiku", label: "Anthropic Claude 3.5 Haiku (Paid)", isFree: false },
+  { id: "deepseek/deepseek-r1", label: "DeepSeek R1 Reasoning (Advanced Reasoning)", isFree: false },
+  { id: "google/gemini-2.0-flash-001", label: "Google Gemini 2.0 Flash", isFree: false },
+  { id: "meta-llama/llama-3.3-70b-instruct", label: "Meta Llama 3.3 70B Instruct", isFree: false },
+  { id: "openai/gpt-4o-mini", label: "OpenAI GPT-4o Mini", isFree: false },
+  { id: "anthropic/claude-3.5-haiku", label: "Anthropic Claude 3.5 Haiku", isFree: false },
 ];
 
 function AdminAIPage() {
