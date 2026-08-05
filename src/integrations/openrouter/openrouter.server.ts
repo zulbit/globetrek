@@ -54,7 +54,7 @@ function getProvider() {
 
 /** Fast + powerful bilingual AI model — concierge chat, tour itineraries, fee lookup */
 export function openRouterModel() {
-  if (process.env.DEEPSEEK_API_KEY) {
+  if (process.env.DEEPSEEK_API_KEY && process.env.USE_DIRECT_DEEPSEEK === "true") {
     const directProvider = createOpenAICompatible({
       name: "deepseek",
       baseURL: "https://api.deepseek.com",
