@@ -37,9 +37,9 @@ function getProvider() {
   });
 }
 
-/** Fast + cheap — concierge chat, descriptions, fee lookup */
+/** Fast + powerful bilingual AI model — concierge chat, tour itineraries, fee lookup */
 export function openRouterModel() {
-  return getProvider()("openai/gpt-4o-mini");
+  return getProvider()("deepseek/deepseek-chat");
 }
 
 /** Web-search grounded — real-time visa fee / embassy data lookups */
