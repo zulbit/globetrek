@@ -37,12 +37,23 @@ export function InquiryModal({
     try {
       // Only persist when the tour is a real database record.
       if (UUID_RE.test(tour.id)) {
-        const { data: u } = await supabase.auth.getUser();
-        const vendorId = (tour as unknown as { vendor_id?: string }).vendor_id;
-        if (vendorId) {
+        let targetVendorId = tour.vendor_id;
+        if (!targetVendorId) {
+          const { data: dbTour } = await supabase
+            .from("tours")
+            .select("vendor_id")
+            .eq("id", tour.id)
+            .maybeSingle();
+          if (dbTour?.vendor_id) {
+            targetVendorId = dbTour.vendor_id;
+          }
+        }
+
+        if (targetVendorId) {
+          const { data: u } = await supabase.auth.getUser();
           const { error } = await supabase.from("leads").insert({
             tour_id: tour.id,
-            vendor_id: vendorId,
+            vendor_id: targetVendorId,
             customer_id: u.user?.id ?? null,
             customer_name: name.trim(),
             customer_phone: phone.trim(),

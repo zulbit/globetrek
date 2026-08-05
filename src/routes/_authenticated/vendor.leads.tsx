@@ -219,16 +219,27 @@ function VendorLeads() {
 
   // -------- Update Lead Status Mutation --------
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: "contacted" | "converted" | "closed" }) => {
-      const { error } = await supabase.from("leads").update({ status }).eq("id", id);
-      if (error) throw error;
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      // Map UI values to PostgreSQL service_lead_status ENUM values ('contacted', 'won', 'lost')
+      const targetStatus = status === "converted" ? "won" : status === "closed" ? "lost" : status;
+      const { error } = await supabase.from("leads").update({ status: targetStatus }).eq("id", id);
+      if (error) {
+        // Fallback: if 'won' failed, try 'converted'; if 'lost' failed, try 'closed'
+        const fallback = targetStatus === "won" ? "converted" : targetStatus === "lost" ? "closed" : null;
+        if (fallback) {
+          const { error: err2 } = await supabase.from("leads").update({ status: fallback }).eq("id", id);
+          if (err2) throw err2;
+          return;
+        }
+        throw error;
+      }
     },
     onSuccess: () => {
       toast.success("Lead status updated successfully");
       qc.invalidateQueries({ queryKey: ["vendor-leads-poly"] });
     },
-    onError: () => {
-      toast.error("Failed to update status");
+    onError: (err: any) => {
+      toast.error(err?.message ? `Failed to update status: ${err.message}` : "Failed to update status");
     },
   });
 
@@ -512,9 +523,11 @@ function VendorLeads() {
                       {l.is_unlocked ? (
                         <>
                           <Select
-                            value={l.status || "contacted"}
+                            value={
+                              l.status === "won" ? "converted" : l.status === "lost" ? "closed" : (l.status || "contacted")
+                            }
                             onValueChange={(val) =>
-                              updateStatusMutation.mutate({ id: l.id, status: val as any })
+                              updateStatusMutation.mutate({ id: l.id, status: val })
                             }
                           >
                             <SelectTrigger className="h-8 w-28 text-xs bg-surface border-border">

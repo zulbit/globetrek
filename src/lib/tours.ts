@@ -13,6 +13,7 @@ export type DepartureCity = "Lahore" | "Karachi" | "Islamabad";
 
 export interface Tour {
   id: string;
+  vendor_id?: string;
   title: string;
   destination: Destination;
   type: TourType;
@@ -301,6 +302,7 @@ export type ItineraryDay = {
 
 export type DbTourRow = {
   id: string;
+  vendor_id?: string | null;
   title: string;
   description: string | null;
   destination_country: string | null;
@@ -316,7 +318,7 @@ export type DbTourRow = {
 };
 
 export const DB_TOUR_COLUMNS =
-  "id, title, description, destination_country, departure_city, duration_days, price_pkr, total_seats, image_url, itinerary, requirements, accommodation, extra_notes";
+  "id, vendor_id, title, description, destination_country, departure_city, duration_days, price_pkr, total_seats, image_url, itinerary, requirements, accommodation, extra_notes";
 
 function parseActivities(raw: unknown): ItineraryActivity[] | undefined {
   if (!Array.isArray(raw)) return undefined;
@@ -414,6 +416,7 @@ export function mapDbTour(row: DbTourRow): Tour {
   const dbItinerary = parseItinerary(row.itinerary);
   return {
     id: row.id,
+    vendor_id: row.vendor_id ?? undefined,
     title: row.title,
     destination: ((row.destination_country as Destination) ?? match?.destination ?? "Europe") as Destination,
     type: match?.type ?? "Cultural",

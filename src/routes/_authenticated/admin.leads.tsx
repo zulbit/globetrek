@@ -118,6 +118,8 @@ function AdminLeads() {
         if (l.is_unlocked && currentStatus === "new") {
           currentStatus = "contacted";
         }
+        if (currentStatus === "won") currentStatus = "converted";
+        if (currentStatus === "lost") currentStatus = "closed";
         return {
           ...l,
           status: currentStatus,
@@ -129,14 +131,23 @@ function AdminLeads() {
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: LeadStatus }) => {
-      const { error } = await supabase.from("leads").update({ status }).eq("id", id);
-      if (error) throw error;
+      const targetStatus = status === "converted" ? "won" : status === "closed" ? "lost" : status;
+      const { error } = await supabase.from("leads").update({ status: targetStatus }).eq("id", id);
+      if (error) {
+        const fallback = targetStatus === "won" ? "converted" : targetStatus === "lost" ? "closed" : null;
+        if (fallback) {
+          const { error: err2 } = await supabase.from("leads").update({ status: fallback }).eq("id", id);
+          if (err2) throw err2;
+          return;
+        }
+        throw error;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-leads"] });
       toast.success("Lead status updated");
     },
-    onError: () => toast.error("Failed to update status"),
+    onError: (err: any) => toast.error(err?.message ? `Failed to update status: ${err.message}` : "Failed to update status"),
   });
 
   const filtered = leads.filter((l) => {
