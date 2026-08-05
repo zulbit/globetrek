@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Sparkles, Zap, Wand2, Globe2, FileCheck, Shield, Ticket,
   TrendingUp, Users, CreditCard, ArrowUpRight, Plus, Inbox,
-  Clock, ChevronRight, BarChart2,
+  Clock, ChevronRight, BarChart2, BellRing, ArrowRight,
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis,
@@ -157,6 +157,55 @@ function VendorOverview() {
     refetchInterval: 3000,
   });
 
+  // Audible Chime Sound generator (using Web Audio API for 100% reliability and zero fetch dependency)
+  function playChime() {
+    if (typeof window === "undefined") return;
+    try {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      
+      // Tone 1 (E5)
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.type = "sine";
+      osc1.frequency.setValueAtTime(659.25, ctx.currentTime);
+      gain1.gain.setValueAtTime(0.35, ctx.currentTime);
+      gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+      osc1.start(ctx.currentTime);
+      osc1.stop(ctx.currentTime + 0.35);
+
+      // Tone 2 (A5) slightly delayed
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.type = "sine";
+      osc2.frequency.setValueAtTime(880.00, ctx.currentTime + 0.08);
+      gain2.gain.setValueAtTime(0.35, ctx.currentTime + 0.08);
+      gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+      osc2.start(ctx.currentTime + 0.08);
+      osc2.stop(ctx.currentTime + 0.45);
+    } catch (err) {
+      console.warn("Chime audio playback error:", err);
+    }
+  }
+
+  const prevLockedCountRef = useRef<number | null>(null);
+  const lockedLeadsCount = data ? data.totalLeads - data.unlockedLeads : 0;
+
+  // Sound alert on new lead receipt
+  useEffect(() => {
+    if (data) {
+      if (prevLockedCountRef.current !== null && lockedLeadsCount > prevLockedCountRef.current) {
+        playChime();
+      }
+      prevLockedCountRef.current = lockedLeadsCount;
+    }
+  }, [lockedLeadsCount, data]);
+
   // Supabase Realtime Subscription
   useEffect(() => {
     let channel: any;
@@ -169,6 +218,7 @@ function VendorOverview() {
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "leads", filter: `vendor_id=eq.${vendorId}` }, (payload: any) => {
           const lead = payload.new;
           const svc = (lead.service_type || "Service").toUpperCase();
+          playChime();
           toast.success(`🎉 New ${svc} Inquiry Received!`, {
             description: `${lead.customer_name || "Customer"} (${lead.customer_phone || "Phone"}) left an inquiry!`,
             duration: 10000,
@@ -194,6 +244,36 @@ function VendorOverview() {
   return (
     <div className="space-y-6">
       <UpgradeModal open={upgradeOpen} onOpenChange={setUpgradeOpen} recommend="pro" />
+
+      {/* ── New Lead Waiting Alert ── */}
+      {lockedLeadsCount > 0 && (
+        <div className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent p-5 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="absolute -right-8 -top-8 size-32 rounded-full bg-amber-500/10 blur-2xl animate-pulse" />
+          <div className="relative flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5 min-w-0 flex-1">
+              <span className="grid size-10 place-items-center rounded-xl bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30 shrink-0">
+                <BellRing className="size-5 animate-bounce" />
+              </span>
+              <div className="min-w-0">
+                <h3 className="text-sm font-bold text-amber-400 flex items-center gap-1.5">
+                  New Customer Inquiry Awaiting Unlock!
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                  You have <strong className="text-foreground font-semibold">{lockedLeadsCount}</strong> new travel lead{lockedLeadsCount === 1 ? "" : "s"} waiting. Claim now to unlock traveler contact details and submit your quotation.
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={() => {
+                window.location.href = "/vendor/leads";
+              }}
+              className="bg-amber-500 text-black hover:bg-amber-400 font-bold shrink-0 shadow-sm"
+            >
+              Open Leads Inbox <ArrowRight className="ml-1.5 size-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* ── Upgrade Banner ── */}
       {!isPro && (
