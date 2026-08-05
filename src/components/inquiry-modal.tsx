@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tour } from "@/lib/tours";
 
+import { formatAndLimitPhone, validatePhone } from "@/lib/phone";
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function InquiryModal({
@@ -29,10 +31,18 @@ export function InquiryModal({
   const [busy, setBusy] = React.useState(false);
 
   async function submit() {
-    if (!name.trim() || !phone.trim()) {
-      toast.error("Please enter your name and phone number");
+    if (!name.trim()) {
+      toast.error("Please enter your name");
       return;
     }
+
+    const phoneValidation = validatePhone(phone);
+    if (!phoneValidation.isValid) {
+      toast.error(phoneValidation.error);
+      return;
+    }
+    const cleanPhone = phoneValidation.formatted;
+
     setBusy(true);
     try {
       // Only persist when the tour is a valid UUID
@@ -53,7 +63,7 @@ export function InquiryModal({
             vendor_id: dbTour.vendor_id,
             customer_id: u.user?.id ?? null,
             customer_name: name.trim(),
-            customer_phone: phone.trim(),
+            customer_phone: cleanPhone,
             message: message.trim() || null,
           });
           if (error) throw error;
@@ -74,7 +84,7 @@ export function InquiryModal({
               vendor_id: fallbackVendorId,
               customer_id: u.user?.id ?? null,
               customer_name: name.trim(),
-              customer_phone: phone.trim(),
+              customer_phone: cleanPhone,
               message: `[${tour.title}] ${message.trim() || "Inquiry requested"}`,
             });
             if (error) throw error;
@@ -117,8 +127,20 @@ export function InquiryModal({
             <Input id="iq-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ali Raza" />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="iq-phone">Phone number</Label>
-            <Input id="iq-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+92 3XX XXXXXXX" inputMode="tel" />
+            <div className="flex items-center justify-between">
+              <Label htmlFor="iq-phone">Phone number</Label>
+              <span className="text-[11px] font-mono text-muted-foreground">
+                {phone.length}/13
+              </span>
+            </div>
+            <Input
+              id="iq-phone"
+              value={phone}
+              maxLength={13}
+              onChange={(e) => setPhone(formatAndLimitPhone(e.target.value))}
+              placeholder="+923001234567"
+              inputMode="tel"
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="iq-msg">Message (optional)</Label>

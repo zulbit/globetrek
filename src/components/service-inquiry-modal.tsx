@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { ServiceType } from "@/lib/services";
 
+import { formatAndLimitPhone, validatePhone } from "@/lib/phone";
+
 export function ServiceInquiryModal({
   serviceType,
   serviceId,
@@ -33,10 +35,18 @@ export function ServiceInquiryModal({
   const [busy, setBusy] = React.useState(false);
 
   async function submit() {
-    if (!name.trim() || !phone.trim()) {
-      toast.error("Please enter your name and phone number");
+    if (!name.trim()) {
+      toast.error("Please enter your name");
       return;
     }
+
+    const phoneValidation = validatePhone(phone);
+    if (!phoneValidation.isValid) {
+      toast.error(phoneValidation.error);
+      return;
+    }
+    const cleanPhone = phoneValidation.formatted;
+
     setBusy(true);
     try {
       const { data: u } = await supabase.auth.getUser();
@@ -48,7 +58,7 @@ export function ServiceInquiryModal({
         vendor_id: null as unknown as string, // trigger will fill
         customer_id: u.user?.id ?? null,
         customer_name: name.trim(),
-        customer_phone: phone.trim(),
+        customer_phone: cleanPhone,
         message: message.trim() || null,
       } as never);
       if (error) throw error;
@@ -87,8 +97,20 @@ export function ServiceInquiryModal({
             <Input id="siq-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ali Raza" />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="siq-phone">Phone number</Label>
-            <Input id="siq-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+92 3XX XXXXXXX" inputMode="tel" />
+            <div className="flex items-center justify-between">
+              <Label htmlFor="siq-phone">Phone number</Label>
+              <span className="text-[11px] font-mono text-muted-foreground">
+                {phone.length}/13
+              </span>
+            </div>
+            <Input
+              id="siq-phone"
+              value={phone}
+              maxLength={13}
+              onChange={(e) => setPhone(formatAndLimitPhone(e.target.value))}
+              placeholder="+923001234567"
+              inputMode="tel"
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="siq-msg">Message (optional)</Label>
