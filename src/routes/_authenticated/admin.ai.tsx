@@ -72,13 +72,13 @@ export const Route = createFileRoute("/_authenticated/admin/ai")({
 });
 
 const PRESET_MODELS = [
-  { id: "deepseek/deepseek-chat", label: "DeepSeek V3 / V4 Flash (Recommended - Fast & Cheap)", isFree: false },
-  { id: "deepseek/deepseek-r1", label: "DeepSeek R1 Reasoning (Advanced)", isFree: false },
+  { id: "deepseek/deepseek-chat", label: "DeepSeek V3 / V4 Flash (Recommended - ~$0.14 / 1M Tokens)", isFree: false },
   { id: "deepseek/deepseek-r1:free", label: "DeepSeek R1 Reasoning (100% FREE)", isFree: true },
-  { id: "openai/gpt-4o-mini", label: "OpenAI GPT-4o Mini (Paid)", isFree: false },
+  { id: "deepseek/deepseek-r1", label: "DeepSeek R1 Reasoning (Paid - Fast)", isFree: false },
   { id: "google/gemini-2.0-flash-exp:free", label: "Google Gemini 2.0 Flash (100% FREE)", isFree: true },
   { id: "meta-llama/llama-3.3-70b-instruct:free", label: "Meta Llama 3.3 70B (100% FREE)", isFree: true },
   { id: "qwen/qwen-2.5-72b-instruct:free", label: "Qwen 2.5 72B Instruct (100% FREE)", isFree: true },
+  { id: "openai/gpt-4o-mini", label: "OpenAI GPT-4o Mini (Paid)", isFree: false },
   { id: "anthropic/claude-3.5-haiku", label: "Anthropic Claude 3.5 Haiku (Paid)", isFree: false },
 ];
 
@@ -539,8 +539,21 @@ function AdminAIPage() {
                   </Badge>
                 )}
 
-                <Badge variant="outline" className={`text-xs ${verificationResult.is_free ? "border-cyan-500/40 bg-cyan-500/15 text-cyan-300 font-extrabold" : "border-amber-500/40 bg-amber-500/15 text-amber-300 font-bold"}`}>
-                  {verificationResult.is_free ? "100% FREE MODEL ($0/1M Tokens)" : "PAID MODEL"}
+                <Badge
+                  variant="outline"
+                  className={`text-xs ${
+                    verificationResult.is_free
+                      ? "border-cyan-500/40 bg-cyan-500/15 text-cyan-300 font-extrabold"
+                      : verificationResult.model_id.startsWith("deepseek/")
+                      ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300 font-bold"
+                      : "border-amber-500/40 bg-amber-500/15 text-amber-300 font-bold"
+                  }`}
+                >
+                  {verificationResult.is_free
+                    ? "100% FREE MODEL ($0 / 1M Tokens)"
+                    : verificationResult.model_id.startsWith("deepseek/")
+                    ? "ULTRA LOW COST (~$0.14 / 1M Tokens)"
+                    : "PAID MODEL"}
                 </Badge>
               </div>
 
