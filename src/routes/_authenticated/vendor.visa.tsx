@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import {
   saveServiceListing, toggleServiceActive, deleteServiceListing,
 } from "@/lib/services.functions";
+import { cn } from "@/lib/utils";
 import { lookupEmbassyFeeServer } from "@/lib/visa-ai.functions";
 import {
   VISA_TYPES, POPULAR_VISA_COUNTRIES, DEFAULT_VISA_DOCS,
@@ -32,6 +33,13 @@ export const Route = createFileRoute("/_authenticated/vendor/visa")({
 });
 
 type Draft = Partial<VisaService> & { documents_text?: string };
+
+type AiSuggestion = {
+  fee_pkr: number;
+  confidence: string;
+  source_note: string;
+  disclaimer: string;
+};
 
 function emptyDraft(): Draft {
   return {
@@ -56,6 +64,7 @@ function VendorVisa() {
   const remove = useServerFn(deleteServiceListing);
   const lookupFee = useServerFn(lookupEmbassyFeeServer);
   const [aiBusy, setAiBusy] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<AiSuggestion | null>(null);
 
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Draft>(emptyDraft());
@@ -72,10 +81,11 @@ function VendorVisa() {
     },
   });
 
-  function openNew() { setDraft(emptyDraft()); setEditingId(null); setOpen(true); }
+  function openNew() { setDraft(emptyDraft()); setEditingId(null); setAiSuggestion(null); setOpen(true); }
   function openEdit(r: VisaService) {
     setDraft({ ...r, documents_text: (r.documents_required ?? []).join("\n") });
     setEditingId(r.id);
+    setAiSuggestion(null);
     setOpen(true);
   }
 
@@ -210,14 +220,14 @@ function VendorVisa() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>Country</Label>
-              <Select value={draft.country} onValueChange={(v) => setDraft({ ...draft, country: v })}>
+              <Select value={draft.country} onValueChange={(v) => { setDraft({ ...draft, country: v }); setAiSuggestion(null); }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{POPULAR_VISA_COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Visa type</Label>
-              <Select value={draft.visa_type} onValueChange={(v) => setDraft({ ...draft, visa_type: v })}>
+              <Select value={draft.visa_type} onValueChange={(v) => { setDraft({ ...draft, visa_type: v }); setAiSuggestion(null); }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{VISA_TYPES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
               </Select>
@@ -242,11 +252,13 @@ function VendorVisa() {
                     try {
                       const res = await lookupFee({ data: { country: draft.country!, visa_type: draft.visa_type! } });
                       if (res.fee_pkr && res.fee_pkr > 0) {
-                        setDraft((d) => ({ ...d, price_pkr: res.fee_pkr! }));
-                        toast.success(
-                          `Suggested ${formatPKR(res.fee_pkr)} · ${res.confidence} confidence`,
-                          { description: `${res.source_note} — ${res.disclaimer}`, duration: 9000 },
-                        );
+                        setAiSuggestion({
+                          fee_pkr: res.fee_pkr,
+                          confidence: res.confidence || "Unknown",
+                          source_note: res.source_note || "",
+                          disclaimer: res.disclaimer || "",
+                        });
+                        toast.success("AI lookup complete! Review the suggested fee details below.");
                       } else {
                         toast.warning("AI couldn't find a reliable fee — set manually or mark TBC.",
                           { description: res.source_note });
@@ -260,6 +272,53 @@ function VendorVisa() {
                   AI lookup
                 </Button>
               </div>
+
+              {aiSuggestion && (
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4.5 space-y-3 text-left animate-in fade-in slide-in-from-top-1 duration-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 font-bold text-amber-400 text-xs">
+                      <Sparkles className="size-4 shrink-0 text-amber-400 animate-pulse" />
+                      AI Suggested Fee: {formatPKR(aiSuggestion.fee_pkr)}
+                    </div>
+                    <Badge variant="outline" className="text-[9px] uppercase font-bold px-2 py-0.5 border-amber-500/40 bg-amber-500/20 text-amber-400">
+                      {aiSuggestion.confidence} Confidence
+                    </Badge>
+                  </div>
+                  
+                  <div className="space-y-1 text-xs">
+                    <p className="text-foreground leading-normal">
+                      {aiSuggestion.source_note}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground leading-normal italic">
+                      Disclaimer: {aiSuggestion.disclaimer}
+                    </p>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 text-[11px] hover:bg-surface/50 text-muted-foreground hover:text-foreground"
+                      onClick={() => setAiSuggestion(null)}
+                    >
+                      Dismiss
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-7 text-[11px] bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
+                      onClick={() => {
+                        setDraft((d) => ({ ...d, price_pkr: aiSuggestion.fee_pkr }));
+                        toast.success(`Applied AI suggestion of ${formatPKR(aiSuggestion.fee_pkr)}`);
+                        setAiSuggestion(null);
+                      }}
+                    >
+                      Accept Suggestion
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               <label className="flex items-center gap-2 text-sm">
                 <Checkbox
