@@ -35,31 +35,50 @@ export function InquiryModal({
     }
     setBusy(true);
     try {
-      // Only persist when the tour is a real database record.
+      // Only persist when the tour is a valid UUID
       if (UUID_RE.test(tour.id)) {
-        let targetVendorId = tour.vendor_id;
-        if (!targetVendorId) {
-          const { data: dbTour } = await supabase
-            .from("tours")
-            .select("vendor_id")
-            .eq("id", tour.id)
-            .maybeSingle();
-          if (dbTour?.vendor_id) {
-            targetVendorId = dbTour.vendor_id;
-          }
-        }
+        const { data: u } = await supabase.auth.getUser();
+        // Check if tour actually exists in DB to satisfy database validation triggers
+        const { data: dbTour } = await supabase
+          .from("tours")
+          .select("id, vendor_id")
+          .eq("id", tour.id)
+          .maybeSingle();
 
-        if (targetVendorId) {
-          const { data: u } = await supabase.auth.getUser();
+        if (dbTour) {
           const { error } = await supabase.from("leads").insert({
-            tour_id: tour.id,
-            vendor_id: targetVendorId,
+            service_type: "tours",
+            service_id: dbTour.id,
+            tour_id: dbTour.id,
+            vendor_id: dbTour.vendor_id,
             customer_id: u.user?.id ?? null,
             customer_name: name.trim(),
             customer_phone: phone.trim(),
             message: message.trim() || null,
           });
           if (error) throw error;
+        } else {
+          // Fallback for seeded/mock tours not in DB: assign to specified or default vendor
+          let fallbackVendorId = tour.vendor_id;
+          if (!fallbackVendorId) {
+            const { data: vendorProfile } = await supabase
+              .from("profiles")
+              .select("id")
+              .limit(1)
+              .maybeSingle();
+            fallbackVendorId = vendorProfile?.id;
+          }
+
+          if (fallbackVendorId) {
+            const { error } = await supabase.from("leads").insert({
+              vendor_id: fallbackVendorId,
+              customer_id: u.user?.id ?? null,
+              customer_name: name.trim(),
+              customer_phone: phone.trim(),
+              message: `[${tour.title}] ${message.trim() || "Inquiry requested"}`,
+            });
+            if (error) throw error;
+          }
         }
       }
       toast.success(
