@@ -708,8 +708,11 @@ ${ticketsCatalogText}`;
             }
           }
         } catch (err) {
-          const msg = err instanceof Error ? err.message : String(err);
-          fullText = `Sorry, a server error occurred: ${msg}`;
+          console.error("[ai-chat handler error]:", err);
+          fullText =
+            "Assalam-o-Alaikum! Welcome to GlobeTrek PK. 🙏\n\n" +
+            "Aap hum se Turkey, UAE, Malaysia tour packages, visa filing, insurance, ya flight tickets ke baray mein puch sakte hain.\n\n" +
+            "[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]";
         }
 
         if (!leadCaptured && !fullText?.trim()) {

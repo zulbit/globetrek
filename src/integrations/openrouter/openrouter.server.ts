@@ -25,14 +25,29 @@ function getProvider() {
       "X-Title": "GlobeTrek PK",
     },
     fetch: async (url, options) => {
+      let reqBody: any = null;
       if (options?.body && typeof options.body === "string") {
         try {
-          const parsed = JSON.parse(options.body);
-          parsed.max_tokens = 400;
-          options.body = JSON.stringify(parsed);
+          reqBody = JSON.parse(options.body);
+          // Keep max_tokens small (250) so requests fit within free/low credit caps
+          reqBody.max_tokens = Math.min(Number(reqBody.max_tokens) || 250, 250);
+          options.body = JSON.stringify(reqBody);
         } catch {}
       }
-      return fetch(url, options);
+
+      let res = await fetch(url, options);
+
+      // If credit limit or quota error occurs, fallback seamlessly to 100% free model
+      if (!res.ok && (res.status === 402 || res.status === 429) && reqBody) {
+        try {
+          reqBody.model = "deepseek/deepseek-r1:free";
+          const fallbackOptions = { ...options, body: JSON.stringify(reqBody) };
+          const fallbackRes = await fetch(url, fallbackOptions);
+          if (fallbackRes.ok) return fallbackRes;
+        } catch {}
+      }
+
+      return res;
     },
   });
 }
