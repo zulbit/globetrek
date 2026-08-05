@@ -169,16 +169,17 @@ export const Route = createFileRoute("/api/ai-chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        let body: { messages?: ChatMessage[] };
         try {
-          body = await request.json();
-        } catch {
-          return new Response("Invalid JSON", { status: 400 });
-        }
-        const messages = body.messages;
-        if (!Array.isArray(messages) || messages.length === 0) {
-          return new Response("messages required", { status: 400 });
-        }
+          let body: { messages?: ChatMessage[] };
+          try {
+            body = await request.json();
+          } catch {
+            return new Response("Invalid JSON", { status: 400 });
+          }
+          const messages = body.messages;
+          if (!Array.isArray(messages) || messages.length === 0) {
+            return new Response("messages required", { status: 400 });
+          }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -745,7 +746,22 @@ ${ticketsCatalogText}`;
             "Cache-Control": "no-cache",
           },
         });
-      },
+      } catch (globalErr) {
+        console.error("[ai-chat global exception]:", globalErr);
+        return new Response(
+          "Assalam-o-Alaikum! Welcome to GlobeTrek PK. 🙏\n\n" +
+          "Aap hum se Turkey, UAE, Malaysia tour packages, visa filing, insurance, ya flight tickets ke baray mein puch sakte hain.\n\n" +
+          "[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]",
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "text/plain; charset=utf-8",
+              "Cache-Control": "no-cache",
+            },
+          }
+        );
+      }
     },
   },
+},
 });

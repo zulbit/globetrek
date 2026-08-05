@@ -173,25 +173,26 @@ export function AIChatWidget() {
         const replyText = await res.text();
         setMessages((m) => [...m, { role: "assistant", content: replyText }]);
       } else {
-        const errText = await res.text().catch(() => "");
-        setMessages((m) => {
-          const copy = [...m];
-          copy[copy.length - 1] = {
+        let errText = await res.text().catch(() => "");
+        if (errText.includes("<!doctype") || errText.includes("<html")) {
+          errText = "Server temporary connection issue. Please try again.";
+        }
+        setMessages((m) => [
+          ...m,
+          {
             role: "assistant",
-            content: `Maafi chahta hoon, error aaya (${res.status}): ${errText || "Please try again"}`,
-          };
-          return copy;
-        });
+            content: `Maafi chahta hoon, connection issue aaya (${res.status}). 🙏\n\nAap dobara try kar saktay hain ya hum se direct contact kar saktay hain.\n\n[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]`,
+          },
+        ]);
       }
     } catch (err) {
-      setMessages((m) => {
-        const copy = [...m];
-        copy[copy.length - 1] = {
+      setMessages((m) => [
+        ...m,
+        {
           role: "assistant",
-          content: `Network error: ${err instanceof Error ? err.message : "unknown"}`,
-        };
-        return copy;
-      });
+          content: "Network issue. Please check your internet connection and try again. 🙏\n\n[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]",
+        },
+      ]);
     } finally {
       setSending(false);
     }
