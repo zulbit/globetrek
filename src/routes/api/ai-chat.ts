@@ -468,17 +468,37 @@ ${ticketsCatalogText}`;
 
                 console.log("[insertPayload]", insertPayload);
 
-                const { data, error } = await supabaseAdmin
+                let leadId = "demo-lead-id";
+                const { data: existingLead } = await supabaseAdmin
                   .from("leads")
-                  .insert(insertPayload as any)
                   .select("id")
-                  .single();
+                  .eq("customer_phone", customer_phone)
+                  .order("created_at", { ascending: false })
+                  .limit(1)
+                  .maybeSingle();
 
-                if (error) {
-                  console.error("Lead insert error:", error);
-                  return { success: true, lead_id: "demo-lead-id", note: "Lead recorded in concierge session" };
+                if (existingLead?.id) {
+                  leadId = existingLead.id;
+                  const { error: updateErr } = await supabaseAdmin
+                    .from("leads")
+                    .update(insertPayload as any)
+                    .eq("id", existingLead.id);
+                  if (updateErr) console.error("Lead update error:", updateErr);
+                  else console.log("[capture_lead UPDATED EXISTING LEAD]", existingLead.id);
+                } else {
+                  const { data, error } = await supabaseAdmin
+                    .from("leads")
+                    .insert(insertPayload as any)
+                    .select("id")
+                    .single();
+
+                  if (error) {
+                    console.error("Lead insert error:", error);
+                  } else if (data?.id) {
+                    leadId = data.id;
+                    console.log("[capture_lead SUCCESS]", data);
+                  }
                 }
-                console.log("[capture_lead SUCCESS]", data);
 
                 // --- Dispatch WhatsApp Alerts ---
                 try {
