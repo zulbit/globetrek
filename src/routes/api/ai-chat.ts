@@ -624,6 +624,25 @@ ${ticketsCatalogText}`;
           }),
         };
 
+        // Fetch configured max_tokens cap dynamically from DB
+        let activeMaxTokens = 250;
+        try {
+          const { data: aiSetting } = await supabaseAdmin
+            .from("payment_gateway_settings")
+            .select("config")
+            .eq("provider", "openrouter_config")
+            .maybeSingle();
+
+          if (aiSetting?.config) {
+            const parsed = typeof aiSetting.config === "string" ? JSON.parse(aiSetting.config) : (aiSetting.config as any);
+            if (parsed.max_tokens) {
+              activeMaxTokens = Number(parsed.max_tokens);
+            }
+          }
+        } catch (err) {
+          console.warn("[AI Chat Config Fetch Warning]:", err);
+        }
+
         // Use generateText (non-streaming) — fully awaits all tool-call steps
         // and returns the complete text once all maxSteps are resolved.
         // The widget collects bytes anyway, so streaming gives no UX benefit.
@@ -636,7 +655,7 @@ ${ticketsCatalogText}`;
             messages: modelMessages,
             tools,
             maxSteps: 5,
-            maxTokens: 400,
+            maxTokens: activeMaxTokens,
           });
 
           // Log AI usage event to database

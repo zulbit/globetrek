@@ -28,7 +28,9 @@ function getProvider() {
       if (options?.body && typeof options.body === "string") {
         try {
           const parsed = JSON.parse(options.body);
-          parsed.max_tokens = 400;
+          if (!parsed.max_tokens) {
+            parsed.max_tokens = 250;
+          }
           options.body = JSON.stringify(parsed);
         } catch {}
       }

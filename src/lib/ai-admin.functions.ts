@@ -89,7 +89,7 @@ export const getAIConfigServer = createServerFn({ method: "GET" })
 
         return {
           active_model: parsed.active_model || "openai/gpt-4o-mini",
-          max_tokens: Number(parsed.max_tokens) || 400,
+          max_tokens: Number(parsed.max_tokens) || 250,
           api_key_configured: Boolean(rawKey),
           masked_api_key: masked,
           updated_at: data.updated_at || new Date().toISOString(),
@@ -104,7 +104,7 @@ export const getAIConfigServer = createServerFn({ method: "GET" })
 
     return {
       active_model: "openai/gpt-4o-mini",
-      max_tokens: 400,
+      max_tokens: 250,
       api_key_configured: true,
       masked_api_key: masked,
       updated_at: new Date().toISOString(),
@@ -122,7 +122,7 @@ export const saveAIConfigServer = createServerFn({ method: "POST" })
 
     const payload = {
       active_model: active_model || "openai/gpt-4o-mini",
-      max_tokens: Math.max(50, Math.min(4000, Number(max_tokens) || 400)),
+      max_tokens: Math.max(50, Math.min(4000, Number(max_tokens) || 250)),
       custom_api_key: custom_api_key?.trim() || undefined,
     };
 

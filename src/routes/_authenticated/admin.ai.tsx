@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -105,10 +105,22 @@ function AdminAIPage() {
   // Local Form & Chart State
   const [selectedModel, setSelectedModel] = useState<string>("openai/gpt-4o-mini");
   const [customModel, setCustomModel] = useState<string>("");
-  const [maxTokens, setMaxTokens] = useState<number>(400);
+  const [maxTokens, setMaxTokens] = useState<number>(250);
   const [apiKeyInput, setApiKeyInput] = useState<string>("");
   const [showApiKey, setShowApiKey] = useState<boolean>(false);
   const [verificationResult, setVerificationResult] = useState<ModelVerificationResult | null>(null);
+
+  useEffect(() => {
+    if (config) {
+      if (PRESET_MODELS.some((m) => m.id === config.active_model)) {
+        setSelectedModel(config.active_model);
+      } else {
+        setSelectedModel("custom");
+        setCustomModel(config.active_model);
+      }
+      setMaxTokens(config.max_tokens ?? 250);
+    }
+  }, [config]);
 
   // Recharts controls: timeframe tab & metric mode
   const [chartTimeframe, setChartTimeframe] = useState<"today" | "7d" | "30d">("7d");
