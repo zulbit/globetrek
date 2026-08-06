@@ -31,11 +31,15 @@ function parseChips(content: string): { text: string; chips: string[] } {
   if (chips.length === 0) {
     const lines = content.split("\n");
     for (const line of lines) {
-      // Match headers like "1. 🇹🇷 Turkey Explorer" or "3. 🇲🇾 Malaysia - Vietnam - Thailand"
+      // Match headers like "1. 🇦🇪 UAE Tour" or "3. 🇲🇾 Malaysia - Vietnam - Thailand"
       const match = line.match(/^\s*\d+\.\s*([^\n—•\–\:]+)/i);
       if (match) {
         const title = match[1].replace(/[*_#]/g, "").trim();
-        if (title && title.length < 40 && !/special tip|aap humara|note/i.test(title)) {
+        if (
+          title &&
+          title.length < 40 &&
+          !/special tip|aap humara|note|fixed vendor|visa filing|travel insurance|flight ticketing|exclusive & custom/i.test(title)
+        ) {
           chips.push(title);
         }
       }
@@ -82,30 +86,30 @@ function getChipStyle(chipText: string): { label: string; className: string } {
         "border-sky-500/40 bg-sky-500/15 text-sky-300 hover:bg-sky-500/30 hover:border-sky-400 shadow-xs shadow-sky-950/40",
     };
   }
-  if (lower.includes("tour") || lower.includes("package")) {
+  if (lower === "tour packages" || lower === "tours") {
     return {
-      label: chipText.includes("🌴") ? chipText : "Tour Packages 🌴",
+      label: "Tour Packages 🌴",
       className:
         "border-amber-500/40 bg-amber-500/15 text-amber-300 hover:bg-amber-500/30 hover:border-amber-400 shadow-xs shadow-amber-950/40",
     };
   }
-  if (lower.includes("visa")) {
+  if (lower === "visa services" || lower === "visas") {
     return {
-      label: chipText.includes("📄") ? chipText : "Visa Services 📄",
+      label: "Visa Services 📄",
       className:
         "border-teal-500/40 bg-teal-500/15 text-teal-300 hover:bg-teal-500/30 hover:border-teal-400 shadow-xs shadow-teal-950/40",
     };
   }
-  if (lower.includes("insurance")) {
+  if (lower === "travel insurance" || lower === "insurance") {
     return {
-      label: chipText.includes("🛡️") ? chipText : "Travel Insurance 🛡️",
+      label: "Travel Insurance 🛡️",
       className:
         "border-purple-500/40 bg-purple-500/15 text-purple-300 hover:bg-purple-500/30 hover:border-purple-400 shadow-xs shadow-purple-950/40",
     };
   }
-  if (lower.includes("ticket") || lower.includes("flight")) {
+  if (lower === "flight tickets" || lower === "tickets") {
     return {
-      label: chipText.includes("✈️") ? chipText : "Flight Tickets ✈️",
+      label: "Flight Tickets ✈️",
       className:
         "border-blue-500/40 bg-blue-500/15 text-blue-300 hover:bg-blue-500/30 hover:border-blue-400 shadow-xs shadow-blue-950/40",
     };
@@ -113,11 +117,12 @@ function getChipStyle(chipText: string): { label: string; className: string } {
 
   for (const [key, flag] of Object.entries(COUNTRY_FLAGS)) {
     if (lower.includes(key)) {
-      const cleanLabel = chipText.replace(/^[^\w\s\u0600-\u06FF]+/, "").trim();
+      const hasFlag = chipText.includes(flag);
+      const label = hasFlag ? chipText : `${flag} ${chipText}`;
       return {
-        label: `${flag} ${cleanLabel}`,
+        label,
         className:
-          "border-primary/40 bg-primary/15 text-primary hover:bg-primary/30 hover:border-primary shadow-xs",
+          "border-emerald-500/40 bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/30 hover:border-emerald-400 shadow-xs",
       };
     }
   }
@@ -125,7 +130,7 @@ function getChipStyle(chipText: string): { label: string; className: string } {
   return {
     label: chipText,
     className:
-      "border-border/60 bg-surface-2/80 text-foreground/90 hover:bg-surface-2 hover:border-border",
+      "border-emerald-500/40 bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/30 hover:border-emerald-400 shadow-xs",
   };
 }
 
