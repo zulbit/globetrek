@@ -344,6 +344,9 @@ Rules:
   * STAGE 2 (Reservation & Contact Capture): ONLY after the user selects a package, expresses interest in reserving/booking, or asks to speak with an expert, ask for their contact details:
     "Great choice! To reserve your slots or get a direct callback from our booking desk, please share your Full Name & Mobile Number below! 📞"
   * LEAD TOOL CALL: When the customer provides their name and phone number, ALWAYS call the capture_lead tool immediately with customer_name, customer_phone, service_type, and service_id.
+- STRICT MULTI-VENDOR ATTRIBUTION RULE:
+  * When a user compares multiple options from different vendors (e.g. Vendor A Turkey vs Vendor B Dubai) and selects one (e.g. "I'll take the first one", "book Turkey"), ALWAYS verify and pass the EXACT item ID corresponding to the specific selected option to capture_lead!
+  * NEVER pass Vendor B's service_id if the traveler selected Vendor A's tour!
 - DATE FORMATTING RULE: ALWAYS display all travel dates, departure dates, and booking deadlines in human-readable format like "07 Sept 2026" or "15 Oct 2026" (DD MMM YYYY). NEVER output raw ISO dates like "2026-09-07"!
 - NEVER print internal database UUIDs (e.g. id=e72bebf... or 🆔 e72bebf...) in your chat messages! IDs in the catalog are strictly for internal tool calls (capture_lead).
 - CRITICAL DB GROUNDING RULE FOR VISAS:
@@ -458,8 +461,39 @@ ${ticketsCatalogText}`;
                   tickets: "ticket_services",
                 };
 
-                // 1. Check if realServiceId actually exists in the specific Postgres table
-                if (realServiceId) {
+                // 1. Semantic Multi-Vendor Attribution Cross-Check
+                // If user's latest message explicitly mentions a destination (e.g. Turkey, Dubai, Thailand),
+                // verify that realServiceId matches the vendor offering that destination.
+                const lastUserPrompt = (messages[messages.length - 1]?.content || "").toLowerCase();
+                let targetCountry: string | null = null;
+                if (/\bturkey\b|\btürkiye\b/i.test(lastUserPrompt)) targetCountry = "Turkey";
+                else if (/\bdubai\b|\buae\b/i.test(lastUserPrompt)) targetCountry = "Dubai";
+                else if (/\bthailand\b/i.test(lastUserPrompt)) targetCountry = "Thailand";
+                else if (/\beurope\b/i.test(lastUserPrompt)) targetCountry = "Europe";
+                else if (/\buk\b|\bunited kingdom\b/i.test(lastUserPrompt)) targetCountry = "UK";
+                else if (/\bvietnam\b/i.test(lastUserPrompt)) targetCountry = "Vietnam";
+                else if (/\bsingapore\b/i.test(lastUserPrompt)) targetCountry = "Singapore";
+                else if (/\bmalaysia\b/i.test(lastUserPrompt)) targetCountry = "Malaysia";
+
+                if (targetCountry) {
+                  const { data: matchedService } = await supabaseAdmin
+                    .from("tours")
+                    .select("id, vendor_id, destination_country, title")
+                    .eq("is_active", true)
+                    .or(`destination_country.ilike.%${targetCountry}%,title.ilike.%${targetCountry}%`)
+                    .limit(1)
+                    .maybeSingle();
+
+                  if (matchedService) {
+                    realServiceId = matchedService.id;
+                    resolvedVendorId = matchedService.vendor_id;
+                    finalServiceType = "tours";
+                    console.log("[capture_lead RECONCILED ATTRIBUTION]", { targetCountry, realServiceId, resolvedVendorId });
+                  }
+                }
+
+                // 2. Check if realServiceId actually exists in the specific Postgres table
+                if (realServiceId && !targetCountry) {
                   const tableName = tableMap[finalServiceType] || "tours";
                   const { data: dbItem } = await supabaseAdmin
                     .from(tableName)
