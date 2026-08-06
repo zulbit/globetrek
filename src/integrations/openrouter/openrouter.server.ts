@@ -52,20 +52,9 @@ function getProvider() {
   });
 }
 
-/** Fast + powerful bilingual AI model — concierge chat, tour itineraries, fee lookup */
+/** Fast + powerful AI model — concierge chat, tour itineraries, fee lookup */
 export function openRouterModel() {
-  if (process.env.USE_DIRECT_DEEPSEEK === "true" && process.env.DEEPSEEK_API_KEY) {
-    const directProvider = createOpenAICompatible({
-      name: "deepseek",
-      baseURL: "https://api.deepseek.com",
-      headers: {
-        Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
-      },
-    });
-    return directProvider("deepseek-chat");
-  }
-
-  return getProvider()("deepseek/deepseek-chat");
+  return getProvider()("openai/gpt-4o-mini");
 }
 
 /** Web-search grounded — real-time visa fee / embassy data lookups */
