@@ -11,7 +11,7 @@ export function LandingMapSection() {
 
   return (
     <section className="border-y border-border/80 bg-surface-2/40 py-12 sm:py-16 overflow-hidden">
-      <div className="mx-auto max-w-[1800px] px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Header - Dreamstay Style */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
           <div className="space-y-2">

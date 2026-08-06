@@ -34,8 +34,8 @@ function Home() {
   return (
     <SiteShell>
       <Hero />
-      <LandingMapSection />
       <FeaturedTours />
+      <LandingMapSection />
       <ExclusiveSection />
       <ServicesStrip />
       <AffiliateCTASection />

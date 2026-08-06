@@ -91,8 +91,12 @@ export function InteractiveTourMap({
     layersRef.current.forEach((layer) => map.removeLayer(layer));
     layersRef.current = [];
 
-    // 1. Render Destination Pins for ALL Tours in the list
-    tours.forEach((tour) => {
+    // 1. Render Destination Pins (Exclude other tours when a specific tour is hovered/active to avoid clutter)
+    const toursToRenderPins = activeTourId
+      ? tours.filter((t) => t.id === activeTourId)
+      : tours;
+
+    toursToRenderPins.forEach((tour) => {
       const details = getTourMapDetails(tour);
       const isActive = tour.id === (activeTourId || activeTour?.id);
       const landing = details.landingAirport;
