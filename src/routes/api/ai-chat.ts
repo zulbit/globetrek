@@ -550,8 +550,11 @@ ${ticketsCatalogText}`;
           }),
         };
 
-        // Fetch configured max_tokens cap dynamically from DB
+        // Fetch configured max_tokens cap and active AI model dynamically from DB
         let activeMaxTokens = 250;
+        let activeModel = "deepseek-v4-flash";
+        let customApiKey: string | undefined = undefined;
+
         try {
           const { data: aiSetting } = await supabaseAdmin
             .from("payment_gateway_settings")
@@ -563,6 +566,12 @@ ${ticketsCatalogText}`;
             const parsed = typeof aiSetting.config === "string" ? JSON.parse(aiSetting.config) : (aiSetting.config as any);
             if (parsed.max_tokens) {
               activeMaxTokens = Number(parsed.max_tokens);
+            }
+            if (parsed.active_model) {
+              activeModel = String(parsed.active_model);
+            }
+            if (parsed.custom_api_key) {
+              customApiKey = String(parsed.custom_api_key).trim();
             }
           }
         } catch (err) {
@@ -576,7 +585,7 @@ ${ticketsCatalogText}`;
         let leadCaptured = false;
         try {
           const result = await generateText({
-            model: openRouterModel(),
+            model: openRouterModel(activeModel, customApiKey),
             system: systemPrompt,
             messages: modelMessages,
             tools,

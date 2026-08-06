@@ -84,11 +84,11 @@ export const getAIConfigServer = createServerFn({ method: "GET" })
 
       if (data?.config) {
         const parsed = typeof data.config === "string" ? JSON.parse(data.config) : (data.config as any);
-        const rawKey = parsed.custom_api_key || process.env.OPENROUTER_API_KEY || "";
+        const rawKey = parsed.custom_api_key || process.env.DEEPSEEK_API_KEY || process.env.OPENROUTER_API_KEY || "";
         const masked = rawKey ? `${rawKey.slice(0, 8)}...${rawKey.slice(-4)}` : "Built-in Environment Key";
 
         return {
-          active_model: parsed.active_model || "openai/gpt-4o-mini",
+          active_model: parsed.active_model || "deepseek-v4-flash",
           max_tokens: Number(parsed.max_tokens) || 250,
           api_key_configured: Boolean(rawKey),
           masked_api_key: masked,
@@ -99,11 +99,11 @@ export const getAIConfigServer = createServerFn({ method: "GET" })
       console.warn("[getAIConfigServer Warning]:", err);
     }
 
-    const rawKey = process.env.OPENROUTER_API_KEY || "";
+    const rawKey = process.env.DEEPSEEK_API_KEY || process.env.OPENROUTER_API_KEY || "";
     const masked = rawKey ? `${rawKey.slice(0, 8)}...${rawKey.slice(-4)}` : "Built-in Environment Key";
 
     return {
-      active_model: "openai/gpt-4o-mini",
+      active_model: "deepseek-v4-flash",
       max_tokens: 250,
       api_key_configured: true,
       masked_api_key: masked,
@@ -121,7 +121,7 @@ export const saveAIConfigServer = createServerFn({ method: "POST" })
     const { active_model, max_tokens, custom_api_key } = data;
 
     const payload = {
-      active_model: active_model || "openai/gpt-4o-mini",
+      active_model: active_model || "deepseek-v4-flash",
       max_tokens: Math.max(50, Math.min(4000, Number(max_tokens) || 250)),
       custom_api_key: custom_api_key?.trim() || undefined,
     };

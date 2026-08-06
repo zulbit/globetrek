@@ -72,7 +72,9 @@ export const Route = createFileRoute("/_authenticated/admin/ai")({
 });
 
 const PRESET_MODELS = [
-  { id: "openai/gpt-4o-mini", label: "OpenAI GPT-4o Mini (Default - Paid)", isFree: false },
+  { id: "deepseek-v4-flash", label: "DeepSeek V4 Flash (Direct DeepSeek API - Recommended)", isFree: false },
+  { id: "deepseek/deepseek-chat", label: "DeepSeek V4 / V3 (OpenRouter Gateway)", isFree: false },
+  { id: "openai/gpt-4o-mini", label: "OpenAI GPT-4o Mini (Paid)", isFree: false },
   { id: "google/gemini-2.0-flash-exp:free", label: "Google Gemini 2.0 Flash (100% FREE)", isFree: true },
   { id: "meta-llama/llama-3.3-70b-instruct:free", label: "Meta Llama 3.3 70B (100% FREE)", isFree: true },
   { id: "deepseek/deepseek-r1:free", label: "DeepSeek R1 Reasoning (100% FREE)", isFree: true },

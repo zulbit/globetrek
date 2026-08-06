@@ -1,20 +1,16 @@
-/**
- * OpenRouter LLM provider — server-side only.
- *
- * Uses @ai-sdk/openai-compatible pointed at OpenRouter.
- */
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
-function getProvider() {
-  const fallbackKey = Buffer.from(
-    "c2stb3ItdjEtOGZiYTYzNzE2ZWYyM2I1NGMwMmQ5MmI1YjMyOGY3NGI1MDNiMTQxMTAzNTFkODE2NjdlZDEwZWRjNTU2YWQyOA==",
-    "base64",
-  ).toString("utf-8");
+const FALLBACK_OPENROUTER_KEY = Buffer.from(
+  "c2stb3ItdjEtOGZiYTYzNzE2ZWYyM2I1NGMwMmQ5MmI1YjMyOGY3NGI1MDNiMTQxMTAzNTFkODE2NjdlZDEwZWRjNTU2YWQyOA==",
+  "base64",
+).toString("utf-8");
 
+function getOpenRouterProvider(customKey?: string) {
   const apiKey =
+    customKey ||
     process.env.OPENROUTER_API_KEY ||
     process.env.LOVABLE_API_KEY ||
-    fallbackKey;
+    FALLBACK_OPENROUTER_KEY;
 
   return createOpenAICompatible({
     name: "openrouter",
@@ -39,12 +35,34 @@ function getProvider() {
   });
 }
 
-/** Fast + cheap — concierge chat, descriptions, fee lookup */
-export function openRouterModel() {
-  return getProvider()("openai/gpt-4o-mini");
+function getDeepSeekDirectProvider(customKey?: string) {
+  const apiKey =
+    customKey ||
+    process.env.DEEPSEEK_API_KEY ||
+    process.env.OPENROUTER_API_KEY ||
+    FALLBACK_OPENROUTER_KEY;
+
+  return createOpenAICompatible({
+    name: "deepseek",
+    baseURL: "https://api.deepseek.com",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+    },
+  });
+}
+
+/** Fast + powerful AI model — concierge chat, tour itineraries, fee lookup */
+export function openRouterModel(targetModel?: string, customKey?: string) {
+  const modelId = targetModel || "deepseek-v4-flash";
+
+  if (modelId === "deepseek-v4-flash" || modelId === "deepseek-chat") {
+    return getDeepSeekDirectProvider(customKey)("deepseek-chat");
+  }
+
+  return getOpenRouterProvider(customKey)(modelId);
 }
 
 /** Web-search grounded — real-time visa fee / embassy data lookups */
 export function openRouterOnlineModel() {
-  return getProvider()("openai/gpt-4o-mini:online");
+  return getOpenRouterProvider()("openai/gpt-4o-mini:online");
 }
