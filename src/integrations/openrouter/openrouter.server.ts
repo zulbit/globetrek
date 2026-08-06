@@ -48,6 +48,18 @@ function getDeepSeekDirectProvider(customKey?: string) {
     headers: {
       Authorization: `Bearer ${apiKey}`,
     },
+    fetch: async (url, options) => {
+      if (options?.body && typeof options.body === "string") {
+        try {
+          const parsed = JSON.parse(options.body);
+          if (!parsed.max_tokens) {
+            parsed.max_tokens = 350;
+          }
+          options.body = JSON.stringify(parsed);
+        } catch {}
+      }
+      return fetch(url, options);
+    },
   });
 }
 
