@@ -63,14 +63,16 @@ function getDeepSeekDirectProvider(customKey?: string) {
   });
 }
 
-/** Fast + powerful AI model — concierge chat, tour itineraries, fee lookup */
 export function openRouterModel(targetModel?: string, customKey?: string) {
-  const modelId = targetModel || "deepseek-v4-flash";
+  // Use direct DeepSeek API ONLY if an explicit DEEPSEEK_API_KEY is configured
+  const hasDeepSeekKey = Boolean(customKey || process.env.DEEPSEEK_API_KEY);
 
-  if (modelId === "deepseek-v4-flash" || modelId === "deepseek-chat") {
-    return getDeepSeekDirectProvider(customKey)("deepseek-chat");
+  if (hasDeepSeekKey && (!targetModel || targetModel.includes("deepseek"))) {
+    return getDeepSeekDirectProvider(customKey || process.env.DEEPSEEK_API_KEY)("deepseek-chat");
   }
 
+  // Safe fallback to OpenRouter endpoint (works with OPENROUTER_API_KEY & FALLBACK_OPENROUTER_KEY)
+  const modelId = targetModel && !targetModel.includes("deepseek-v4-flash") ? targetModel : "openai/gpt-4o-mini";
   return getOpenRouterProvider(customKey)(modelId);
 }
 
