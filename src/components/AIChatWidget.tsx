@@ -18,11 +18,35 @@ const GREETING: ChatMessage = {
 
 function parseChips(content: string): { text: string; chips: string[] } {
   const m = content.match(CHIP_REGEX);
-  if (!m) return { text: content, chips: [] };
-  return {
-    text: content.replace(CHIP_REGEX, "").trim(),
-    chips: m[1].split("|").map((s) => s.trim()).filter(Boolean),
-  };
+  let text = content;
+  const chips: string[] = [];
+
+  if (m) {
+    text = content.replace(CHIP_REGEX, "").trim();
+    const explicit = m[1].split("|").map((s) => s.trim()).filter(Boolean);
+    chips.push(...explicit);
+  }
+
+  // If no explicit [[choose:]] tag was provided, automatically extract numbered headers / package titles
+  if (chips.length === 0) {
+    const lines = content.split("\n");
+    for (const line of lines) {
+      // Match headers like "1. 🇹🇷 Turkey Explorer" or "3. 🇲🇾 Malaysia - Vietnam - Thailand"
+      const match = line.match(/^\s*\d+\.\s*([^\n—•\–\:]+)/i);
+      if (match) {
+        const title = match[1].replace(/[*_#]/g, "").trim();
+        if (title && title.length < 40 && !/special tip|aap humara|note/i.test(title)) {
+          chips.push(title);
+        }
+      }
+    }
+
+    if (chips.length > 0 && /custom|exclusive|private/i.test(content) && !chips.some((c) => /custom/i.test(c))) {
+      chips.push("🌴 Build Custom Tour");
+    }
+  }
+
+  return { text, chips: Array.from(new Set(chips)).slice(0, 5) };
 }
 
 const COUNTRY_FLAGS: Record<string, string> = {
