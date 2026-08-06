@@ -90,7 +90,7 @@ export const getAIConfigServer = createServerFn({ method: "GET" })
         const masked = rawKey ? `${rawKey.slice(0, 8)}...${rawKey.slice(-4)}` : "Built-in Environment Key";
 
         return {
-          active_model: (parsed.active_model as string) || "openai/gpt-4o-mini",
+          active_model: (parsed.active_model as string) || "deepseek/deepseek-chat",
           max_tokens: Number(parsed.max_tokens) || 400,
           api_key_configured: Boolean(rawKey),
           masked_api_key: masked,
@@ -105,7 +105,7 @@ export const getAIConfigServer = createServerFn({ method: "GET" })
     const masked = rawKey ? `${rawKey.slice(0, 8)}...${rawKey.slice(-4)}` : "Built-in Environment Key";
 
     return {
-      active_model: "openai/gpt-4o-mini",
+      active_model: "deepseek/deepseek-chat",
       max_tokens: 400,
       api_key_configured: true,
       masked_api_key: masked,
@@ -123,7 +123,7 @@ export const saveAIConfigServer = createServerFn({ method: "POST" })
     const { active_model, max_tokens, custom_api_key } = data;
 
     const payload = {
-      active_model: active_model || "openai/gpt-4o-mini",
+      active_model: active_model || "deepseek/deepseek-chat",
       max_tokens: Math.max(50, Math.min(4000, Number(max_tokens) || 400)),
       custom_api_key: custom_api_key?.trim() || undefined,
     };

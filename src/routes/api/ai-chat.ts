@@ -210,31 +210,24 @@ export const Route = createFileRoute("/api/ai-chat")({
             }));
           }
 
-          const fallbackCountries = ["UAE", "Saudi Arabia", "Turkey", "Schengen", "UK"];
           const { data: dbVisas } = await supabaseAdmin
             .from("visa_services")
             .select("id, vendor_id, country, visa_type, processing_days, price_pkr, service_fee_pkr, success_rate")
             .eq("is_active", true)
             .limit(5);
           if (dbVisas && dbVisas.length > 0) {
-            visaList = dbVisas.map((v, idx) => {
-              let countryName = String(v.country || "").trim();
-              if (!countryName || countryName.toLowerCase().includes("visa")) {
-                countryName = fallbackCountries[idx % fallbackCountries.length];
-              }
-              return {
-                id: v.id,
-                vendor_id: v.vendor_id,
-                country: countryName,
-                visa_type: String(v.visa_type || "Tourist Visa"),
-                processing_days: Number(v.processing_days || 3),
-                price_pkr: Number(v.price_pkr || 35000),
-                service_fee_pkr: Number(v.service_fee_pkr || 5000),
-                success_rate: Number(v.success_rate ?? 98),
-                vendor: "Verified Consultant",
-                description: "",
-              };
-            });
+            visaList = dbVisas.map((v) => ({
+              id: v.id,
+              vendor_id: v.vendor_id,
+              country: String(v.country || "UAE"),
+              visa_type: String(v.visa_type || "Tourist Visa"),
+              processing_days: Number(v.processing_days || 3),
+              price_pkr: Number(v.price_pkr || 35000),
+              service_fee_pkr: Number(v.service_fee_pkr || 5000),
+              success_rate: Number(v.success_rate ?? 98),
+              vendor: "Verified Consultant",
+              description: "",
+            }));
           }
 
           const { data: dbInsurance } = await supabaseAdmin
@@ -316,13 +309,35 @@ Rules:
   - Explicitly inform the user: "Departs on [Departure Date], returning on [Return Date]. Booking closes on [Booking Deadline] to allow time for visa/ticket processing."
   - If a tour's Booking Deadline is approaching soon, explicitly warn the user: "⚠️ Booking Deadline Approaching — Reserve your slot before [Booking Deadline]!"
 
-- ⚡ INSTANT DIRECT DATA DUMP RULE (NO ASKING OR SEQUENCING):
-  NEVER ask questions back-and-forth or make the user go through multi-step quizzes/sequencing when they click a service chip or ask a question.
-  Instead, ALWAYS present the exact catalog options, pricing, turnaround times, and details IMMEDIATELY on the very first response:
-  1. 🌴 FOR TOUR PACKAGES: Immediately list top 3-4 tour packages with prices in bold PKR, departure city, and duration!
-  2. 📄 FOR VISA SERVICES: Immediately list all top visa options (UAE ₨ 27,000, Saudi ₨ 45,000, Turkey ₨ 17,000, Schengen ₨ 27,000, UK ₨ 45,000) with turnaround times and fees!
-  3. 🛡️ FOR TRAVEL INSURANCE: Immediately list Schengen (₨ 8,500) and Worldwide (₨ 15,000) policies with medical cover amounts!
-  4. ✈️ FOR FLIGHT TICKETS: Immediately list Flight Ticketing & Group Desk support details and prompt for departure/destination dates!
+- 🛑 NO DATA DUMP / STEP-BY-STEP GUIDED DISCOVERY FLOW (CRITICAL RULE):
+  NEVER dump all catalog items or long lists when the user clicks a category chip or asks general questions (e.g., "Tour Packages", "Visa Services", "Travel Insurance", "Flight Tickets").
+  Instead, ALWAYS guide the user through a warm, precise, step-by-step discovery flow:
+
+  1. 🌴 FOR TOUR PACKAGES (User clicks "Tour Packages", "tours", "show packages"):
+     - **Step 1 (Destination & Country)**: Do NOT list all tours. Ask the user which destination country or region they wish to visit.
+       Always end Step 1 with destination chips:
+       [[choose: 🇹🇷 Turkey | 🇹🇭 Thailand | 🇦🇪 UAE / Dubai | 🇪🇺 Europe | 🕋 Umrah / Saudi | 🇲🇾 Malaysia]]
+     - **Step 2 (Departure City & Travel Dates)**: Once destination is selected, ask for departure city (Islamabad, Lahore, Karachi) or preferred travel month.
+       Provide city chips:
+       [[choose: 📍 Islamabad | 📍 Lahore | 📍 Karachi | 🗓️ Next Month]]
+     - **Step 3 (Targeted Recommendations - MAX 2-3)**: Present ONLY the TOP 2-3 most relevant matching packages from the catalog with duration, price in bold PKR, key highlights, and vendor name. NEVER list more than 3 packages in a single message!
+
+  2. 📄 FOR VISA SERVICES (User clicks "Visa Services", "visa"):
+     - **Step 1**: Ask which specific destination country they need a visa for.
+       Provide country chips:
+       [[choose: 🇦🇪 UAE Visa | 🇸🇦 Saudi / Umrah | 🇹🇷 Turkey Visa | 🇪🇺 Schengen Visa | 🇬🇧 UK Visa]]
+     - **Step 2**: Provide specific turnaround time, embassy fee vs service fee, and required documents for that chosen country only.
+
+  3. 🛡️ FOR TRAVEL INSURANCE (User clicks "Travel Insurance"):
+     - **Step 1**: Ask for destination region and travel duration.
+       Provide chips:
+       [[choose: 🇪🇺 Schengen Cover | 🌍 Worldwide Shield | 👨‍👩‍👧 Family Plan]]
+     - **Step 2**: Present 1-2 matching insurance policies.
+
+  4. ✈️ FOR FLIGHT TICKETS (User clicks "Flight Tickets"):
+     - **Step 1**: Ask for departure city, destination, and travel dates.
+       Provide chips:
+       [[choose: ✈️ International Flight | 🕋 Umrah Flight | 🇵🇰 Domestic Flight]]
 
 - 💡 LEAD PROMPTING: Whenever you describe or recommend a tour package, visa service, or deal (or when user clicks Book/Inquire), ALWAYS explicitly prompt the user to type their details in the chatbox: "Please type your Name and Mobile Number in the chatbox below so we can process your inquiry! 📞"
 - ⛔ NO MISLEADING CHIPS WHEN ASKING FOR CONTACT INFO: When you are prompting the user to type their Name or Phone Number, DO NOT output category chips (like Tour Packages, Visa Services). Instead, end with NO chips or only [[choose: ✏️ I will type my details]].
@@ -681,101 +696,25 @@ ${ticketsCatalogText}`;
           }
         } catch (err) {
           console.error("[ai-chat handler error]:", err);
-          const rawQuery = lastUserMsg?.content || "";
-          const cleanQuery = rawQuery
-            .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, "")
-            .toLowerCase()
-            .trim();
-
-          // 1. Check Visa Match against preloaded visa catalog
-          const matchingVisa = visaList.find(
-            (v) =>
-              cleanQuery.includes(v.country.toLowerCase()) ||
-              (v.country.toLowerCase().includes("saudi") && (cleanQuery.includes("umrah") || cleanQuery.includes("saudi") || cleanQuery.includes("hajj"))) ||
-              (v.country.toLowerCase().includes("uae") && (cleanQuery.includes("dubai") || cleanQuery.includes("uae")))
-          );
-
-          // 2. Check Tour Match against preloaded tour catalog
-          const matchingTours = catalogList.filter(
-            (t) =>
-              cleanQuery.includes(t.destination_country.toLowerCase()) ||
-              cleanQuery.includes(t.departure_city.toLowerCase()) ||
-              t.title.toLowerCase().includes(cleanQuery) ||
-              cleanQuery.includes(t.title.toLowerCase())
-          );
-
-          // 3. Check Insurance Match against preloaded insurance plans
-          const matchingInsurance = insuranceList.filter(
-            (i) =>
-              cleanQuery.includes(i.plan_name.toLowerCase()) ||
-              cleanQuery.includes(i.coverage_type.toLowerCase()) ||
-              cleanQuery.includes("insurance") ||
-              cleanQuery.includes("shield") ||
-              cleanQuery.includes("cover")
-          );
-
-          // 4. Check Flight Ticket Match
-          const isTicketQuery = cleanQuery.includes("flight") || cleanQuery.includes("ticket") || cleanQuery.includes("fare") || cleanQuery.includes("airline");
-
-          if (matchingVisa) {
+          const lowerQuery = (lastUserMsg?.content || "").toLowerCase();
+          if (lowerQuery.includes("flight") || lowerQuery.includes("ticket")) {
             fullText =
-              `📄 **${matchingVisa.country} Visa Filing & Requirements**\n\n` +
-              `• **Visa Type**: ${matchingVisa.visa_type}\n` +
-              `• **Embassy Fee**: ₨ ${matchingVisa.price_pkr.toLocaleString("en-PK")}\n` +
-              `• **Service Fee**: ₨ ${matchingVisa.service_fee_pkr.toLocaleString("en-PK")}\n` +
-              `• **Total**: **₨ ${(matchingVisa.price_pkr + matchingVisa.service_fee_pkr).toLocaleString("en-PK")}**\n` +
-              `• **Turnaround Time**: ~${matchingVisa.processing_days} working days\n` +
-              `• **Approval Rate**: ${matchingVisa.success_rate}%\n\n` +
-              `Please type your **Name & Mobile Number** in the chatbox below so our Visa Specialist can process your application! 📞\n\n` +
-              `[[choose: ✏️ I will type my details | 🇦🇪 UAE Visa | 🇸🇦 Saudi / Umrah | 🇹🇷 Turkey Visa | 🇪🇺 Schengen Visa]]`;
-          } else if (cleanQuery.includes("visa")) {
-            const visaItems = visaList
-              .map((v) => `• **${v.country}** (${v.visa_type}) · **₨ ${(v.price_pkr + v.service_fee_pkr).toLocaleString("en-PK")}** total · ~${v.processing_days} days`)
-              .join("\n");
+              "✈️ **Flight Ticketing & Desk Support**\n\n" +
+              "We provide instant fare quotes for international & domestic flights, Umrah/Hajj group tickets, and group desks.\n\n" +
+              "Please share your **Departure City**, **Destination**, **Travel Dates**, and **Passengers count** — we will send you the best quote right away.\n\n" +
+              "[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]";
+          } else if (lowerQuery.includes("visa")) {
             fullText =
-              `📄 **Top Visa Filing Services & Rates**\n\n` +
-              `${visaItems}\n\n` +
-              `Please type your **Name & Mobile Number** in the chatbox below to start your visa filing! 📞\n\n` +
-              `[[choose: ✏️ I will type my details | 🇦🇪 UAE Visa | 🇸🇦 Saudi / Umrah | 🇹🇷 Turkey Visa | 🇪🇺 Schengen Visa | 🇬🇧 UK Visa]]`;
-          } else if (matchingTours.length > 0) {
-            const tourItems = matchingTours
-              .slice(0, 3)
-              .map((t, idx) => `${idx + 1}. **${t.title}** (${t.duration_days} Days) · from ${t.departure_city} · **₨ ${Number(t.price_pkr).toLocaleString("en-PK")}**`)
-              .join("\n");
-
+              "📄 **Visa Filing & Consultation**\n\n" +
+              "We provide visa documentation, consultation, and appointment filing for UAE, Turkey, Schengen, UK, USA, Malaysia, and Thailand.\n\n" +
+              "Which destination country's visa requirements would you like to check?\n\n" +
+              "[[choose: 🇦🇪 UAE Visa | 🇸🇦 Saudi / Umrah | 🇹🇷 Turkey Visa | 🇪🇺 Schengen Visa | 🇬🇧 UK Visa]]";
+          } else if (lowerQuery.includes("tour") || lowerQuery.includes("package")) {
             fullText =
-              `🌴 **Matching Tour Packages Found!**\n\n` +
-              `${tourItems}\n\n` +
-              `Please type your **Name & Mobile Number** in the chatbox below to reserve your slots or request a custom itinerary! 📞\n\n` +
-              `[[choose: ✏️ I will type my details | 🇹🇷 Turkey Tours | 🇦🇪 Dubai Packages | 🇲🇾 Malaysia & Thailand]]`;
-          } else if (cleanQuery.includes("tour") || cleanQuery.includes("package") || cleanQuery.includes("trip")) {
-            const allTours = catalogList
-              .slice(0, 4)
-              .map((t, idx) => `${idx + 1}. **${t.title}** (${t.duration_days} Days) · from ${t.departure_city} · **₨ ${Number(t.price_pkr).toLocaleString("en-PK")}**`)
-              .join("\n");
-            fullText =
-              `🌴 **Top Featured Tour Packages**\n\n` +
-              `${allTours}\n\n` +
-              `Please type your **Name & Mobile Number** in the chatbox below to reserve your slots or get custom itinerary! 📞\n\n` +
-              `[[choose: ✏️ I will type my details | 🇹🇷 Turkey Tours | 🇦🇪 Dubai Packages | 🇲🇾 Malaysia & Thailand]]`;
-          } else if (matchingInsurance.length > 0 || cleanQuery.includes("insurance") || cleanQuery.includes("shield") || cleanQuery.includes("cover")) {
-            const insItems = insuranceList
-              .map((i) => `• **${i.plan_name}** (${i.coverage_type}) · **₨ ${i.price_pkr.toLocaleString("en-PK")}** · Up to ₨ ${(i.coverage_amount_pkr / 100000).toFixed(0)} Lakh medical cover`)
-              .join("\n");
-            fullText =
-              `🛡️ **Travel Insurance Plans & Rates**\n\n` +
-              `${insItems}\n\n` +
-              `Please type your **Name & Mobile Number** in the chatbox below to issue your instant policy! 📞\n\n` +
-              `[[choose: ✏️ I will type my details | 🇪🇺 Schengen Cover | 🌍 Worldwide Shield]]`;
-          } else if (isTicketQuery) {
-            const tktItems = ticketsList
-              .map((tk) => `• **${tk.service_name}** (${tk.route_type}) · Desk Fee ₨ ${tk.service_fee_pkr.toLocaleString("en-PK")} · ${tk.refundable ? "Refundable" : "Standard"}`)
-              .join("\n");
-            fullText =
-              `✈️ **Flight Ticketing & Group Desk Support**\n\n` +
-              `${tktItems}\n\n` +
-              `Please share your **Departure City**, **Destination**, **Travel Dates**, and **Passengers count** — or type your **Name & Phone Number** for an instant callback! 📞\n\n` +
-              `[[choose: ✏️ I will type my details | ✈️ International Flight | 🕋 Umrah Flight]]`;
+              "🌴 **International & Domestic Tour Packages**\n\n" +
+              "We offer curated tour packages for Turkey, Dubai, Malaysia & Thailand, Europe, as well as Hunza & Skardu in Northern Pakistan.\n\n" +
+              "Which destination country or region are you planning to visit?\n\n" +
+              "[[choose: 🇹🇷 Turkey Tours | 🇦🇪 Dubai Packages | 🇲🇾 Malaysia & Thailand | 🇵🇰 Northern Pakistan]]";
           } else {
             fullText =
               "Welcome to GlobeTrek PK! ✈️ How can we help you plan your journey today?\n\n" +

@@ -37,23 +37,14 @@ function getProvider() {
 
       let res = await fetch(url, options);
 
-      // If credit limit, quota error, or model error occurs, fallback seamlessly across providers
+      // If credit limit, quota error, or model error occurs, fallback seamlessly to gpt-4o-mini
       if (!res.ok && reqBody) {
-        const fallbackModels = [
-          "openai/gpt-4o-mini",
-          "google/gemini-2.0-flash-001",
-          "meta-llama/llama-3.3-70b-instruct",
-          "anthropic/claude-3.5-haiku",
-        ];
-
-        for (const model of fallbackModels) {
-          try {
-            reqBody.model = model;
-            const fallbackOptions = { ...options, body: JSON.stringify(reqBody) };
-            const fallbackRes = await fetch(url, fallbackOptions);
-            if (fallbackRes.ok) return fallbackRes;
-          } catch {}
-        }
+        try {
+          reqBody.model = "openai/gpt-4o-mini";
+          const fallbackOptions = { ...options, body: JSON.stringify(reqBody) };
+          const fallbackRes = await fetch(url, fallbackOptions);
+          if (fallbackRes.ok) return fallbackRes;
+        } catch {}
       }
 
       return res;
@@ -61,9 +52,20 @@ function getProvider() {
   });
 }
 
-/** Fast + powerful AI model — concierge chat, tour itineraries, fee lookup */
+/** Fast + powerful bilingual AI model — concierge chat, tour itineraries, fee lookup */
 export function openRouterModel() {
-  return getProvider()("openai/gpt-4o-mini");
+  if (process.env.USE_DIRECT_DEEPSEEK === "true" && process.env.DEEPSEEK_API_KEY) {
+    const directProvider = createOpenAICompatible({
+      name: "deepseek",
+      baseURL: "https://api.deepseek.com",
+      headers: {
+        Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+      },
+    });
+    return directProvider("deepseek-chat");
+  }
+
+  return getProvider()("deepseek/deepseek-chat");
 }
 
 /** Web-search grounded — real-time visa fee / embassy data lookups */

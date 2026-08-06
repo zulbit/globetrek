@@ -72,9 +72,12 @@ export const Route = createFileRoute("/_authenticated/admin/ai")({
 });
 
 const PRESET_MODELS = [
-  { id: "openai/gpt-4o-mini", label: "OpenAI GPT-4o Mini (Recommended - Fast & Reliable)", isFree: false },
+  { id: "deepseek/deepseek-chat", label: "DeepSeek V3 / V4 Flash (Recommended - ~$0.14 / 1M Tokens)", isFree: false },
+  { id: "deepseek-v4-flash", label: "DeepSeek V4 Flash (Direct DeepSeek API)", isFree: false },
+  { id: "deepseek/deepseek-r1", label: "DeepSeek R1 Reasoning (Advanced Reasoning)", isFree: false },
   { id: "google/gemini-2.0-flash-001", label: "Google Gemini 2.0 Flash", isFree: false },
   { id: "meta-llama/llama-3.3-70b-instruct", label: "Meta Llama 3.3 70B Instruct", isFree: false },
+  { id: "openai/gpt-4o-mini", label: "OpenAI GPT-4o Mini", isFree: false },
   { id: "anthropic/claude-3.5-haiku", label: "Anthropic Claude 3.5 Haiku", isFree: false },
 ];
 
@@ -101,7 +104,7 @@ function AdminAIPage() {
   });
 
   // Local Form & Chart State
-  const [selectedModel, setSelectedModel] = useState<string>("openai/gpt-4o-mini");
+  const [selectedModel, setSelectedModel] = useState<string>("deepseek/deepseek-chat");
   const [customModel, setCustomModel] = useState<string>("");
   const [maxTokens, setMaxTokens] = useState<number>(400);
   const [apiKeyInput, setApiKeyInput] = useState<string>("");
@@ -540,12 +543,16 @@ function AdminAIPage() {
                   className={`text-xs ${
                     verificationResult.is_free
                       ? "border-cyan-500/40 bg-cyan-500/15 text-cyan-300 font-extrabold"
+                      : verificationResult.model_id.startsWith("deepseek/")
+                      ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300 font-bold"
                       : "border-amber-500/40 bg-amber-500/15 text-amber-300 font-bold"
                   }`}
                 >
                   {verificationResult.is_free
                     ? "100% FREE MODEL ($0 / 1M Tokens)"
-                    : "STANDARD MODEL"}
+                    : verificationResult.model_id.startsWith("deepseek/")
+                    ? "ULTRA LOW COST (~$0.14 / 1M Tokens)"
+                    : "PAID MODEL"}
                 </Badge>
               </div>
 
