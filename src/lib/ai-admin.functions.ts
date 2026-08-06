@@ -394,6 +394,16 @@ export const getAIAnalyticsServer = createServerFn({ method: "GET" })
     };
   });
 
+/** Test and verify model & API key status (Checking Free/Paid status & Latency) */
+export const verifyAIModelServer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator(
+    (data: { model_id: string; custom_api_key?: string }) => data,
+  )
+  .handler(async ({ data }): Promise<ModelVerificationResult> => {
+    const { model_id, custom_api_key } = data;
+    const targetModel = model_id?.trim() || "deepseek-v4-flash";
+
     // Direct DeepSeek API testing
     if (targetModel === "deepseek-v4-flash" || targetModel === "deepseek-chat") {
       const apiKey = custom_api_key?.trim() || process.env.DEEPSEEK_API_KEY || process.env.OPENROUTER_API_KEY || FALLBACK_KEY;

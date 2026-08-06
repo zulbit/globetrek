@@ -285,18 +285,21 @@ export const Route = createFileRoute("/api/ai-chat")({
           })
           .join("\n");
 
-        const visaCatalogText = visaList
-          .slice(0, 3)
-          .map((v) => `- VISA: ${v.country} ${v.visa_type} · Total ₨ ${(v.price_pkr + v.service_fee_pkr).toLocaleString("en-PK")} · ~${v.processing_days} days · id=${v.id}`)
-          .join("\n");
+        const activeVisaCountries = Array.from(new Set(visaList.map((v) => v.country.trim()))).filter(Boolean);
+
+        const visaCatalogText = visaList.length > 0
+          ? visaList
+              .map((v) => `- VISA SERVICE: ${v.country} ${v.visa_type} by ${v.vendor} · Total ₨ ${(v.price_pkr + v.service_fee_pkr).toLocaleString("en-PK")} · ~${v.processing_days} days · id=${v.id}`)
+              .join("\n")
+          : "No active vendor visa filing services currently available in database.";
 
         const insuranceCatalogText = insuranceList
-          .slice(0, 2)
+          .slice(0, 3)
           .map((i) => `- INS: ${i.plan_name} (${i.coverage_type}) · ₨ ${i.price_pkr.toLocaleString("en-PK")} · id=${i.id}`)
           .join("\n");
 
         const ticketsCatalogText = ticketsList
-          .slice(0, 2)
+          .slice(0, 3)
           .map((tk) => `- FLIGHT: ${tk.service_name} (${tk.route_type}) · Fee ₨ ${tk.service_fee_pkr.toLocaleString("en-PK")} · id=${tk.id}`)
           .join("\n");
 
@@ -305,13 +308,19 @@ export const Route = createFileRoute("/api/ai-chat")({
         const systemPrompt = `You are the GlobeTrek PK travel concierge (bilingual English & Roman Urdu).
 GlobeTrek PK is a travel marketplace in Pakistan for tours, visas, insurance, and flight tickets.
 
+Active Vendor Visa Services in DB: ${activeVisaCountries.length > 0 ? activeVisaCountries.join(", ") : "None"}.
+
 Rules:
 - Be warm and helpful. Always show prices in bold PKR (e.g. **₨ 250,000**).
 - Match user's language (English request -> English reply, Roman Urdu request -> Roman Urdu reply).
 - Show 2-3 relevant packages max per response. Include duration, price, and departure city.
 - Prompt users to type their Name & Phone number to reserve or inquire: "Please type your Name & Mobile Number below to reserve your slots! 📞"
 - MANDATORY: When customer provides phone number or contact info, ALWAYS call the capture_lead tool with customer_name, customer_phone, service_type, and service_id.
-- Visa Fees (Pakistani Passport): 🇦🇪 UAE: ₨ 27k (3d) | 🇸🇦 Saudi: ₨ 45k (3d) | 🇹🇷 Turkey: ₨ 17k (evisa) | 🇪🇺 Schengen: ₨ 27k (15d) | 🇬🇧 UK: ₨ 45k (15d) | 🇲🇾 Malaysia: FREE.
+- CRITICAL DB GROUNDING RULE FOR VISAS:
+  * If user asks for a visa service for a country NOT in the active database list above (e.g. Schengen, UK, USA, Canada, Australia):
+    YOU MUST IMMEDIATELY AND DIRECTLY DISCLOSE: "❌ Currently, no vendor on GlobeTrek PK is offering a [Country] visa filing service."
+    Do NOT output placeholder sentences like "Let me fetch information for you..." or pretend a service exists!
+    State straight away that no vendor is currently offering that visa service on GlobeTrek PK, and list the active ones (${activeVisaCountries.join(", ") || "None"}).
 
 Catalog:
 ${catalogText}
