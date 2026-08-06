@@ -169,18 +169,16 @@ export const Route = createFileRoute("/api/ai-chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        let body: { messages?: ChatMessage[] };
         try {
-          let body: { messages?: ChatMessage[] };
-          try {
-            body = await request.json();
-          } catch {
-            return new Response("Invalid JSON", { status: 400 });
-          }
-          const messages = body.messages;
-          if (!Array.isArray(messages) || messages.length === 0) {
-            return new Response("messages required", { status: 400 });
-          }
-          const lastUserMsg = messages[messages.length - 1];
+          body = await request.json();
+        } catch {
+          return new Response("Invalid JSON", { status: 400 });
+        }
+        const messages = body.messages;
+        if (!Array.isArray(messages) || messages.length === 0) {
+          return new Response("messages required", { status: 400 });
+        }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -193,49 +191,58 @@ export const Route = createFileRoute("/api/ai-chat")({
         try {
           const { data: dbTours } = await supabaseAdmin
             .from("tours")
-            .select("id, vendor_id, title, destination_country, departure_city, duration_days, price_pkr, description")
+            .select("id, vendor_id, title, destination_country, departure_city, duration_days, price_pkr, description, accommodation")
             .eq("is_active", true)
             .order("price_pkr", { ascending: true })
-            .limit(6);
+            .limit(30);
           if (dbTours && dbTours.length > 0) {
-            catalogList = dbTours.map((t) => ({
-              id: t.id,
-              vendor_id: t.vendor_id,
-              title: String(t.title || "Tour Package"),
-              destination_country: String(t.destination_country || "Europe"),
-              departure_city: String(t.departure_city || "Lahore"),
-              duration_days: Number(t.duration_days || 7),
-              price_pkr: Number(t.price_pkr || 250000),
-              vendor: "Verified Vendor",
-              description: String(t.description || ""),
-            }));
+            catalogList = dbTours.map((t) => {
+              const acc = (t.accommodation as Record<string, unknown> | null) || {};
+              return {
+                id: t.id,
+                vendor_id: t.vendor_id,
+                title: String(t.title || "Tour Package"),
+                destination_country: String(t.destination_country || "Europe"),
+                departure_city: String(t.departure_city || "Lahore"),
+                duration_days: Number(t.duration_days || 7),
+                price_pkr: Number(t.price_pkr || 250000),
+                vendor: "Verified Vendor",
+                description: String(t.description || ""),
+                departure_date: typeof acc.departure_date === "string" ? acc.departure_date : null,
+                return_date: typeof acc.return_date === "string" ? acc.return_date : null,
+                booking_deadline: typeof acc.booking_deadline === "string" ? acc.booking_deadline : null,
+              };
+            });
           }
 
           const { data: dbVisas } = await supabaseAdmin
             .from("visa_services")
-            .select("id, vendor_id, country, visa_type, processing_days, price_pkr, service_fee_pkr, success_rate")
-            .eq("is_active", true)
-            .limit(5);
+            .select("id, vendor_id, country, visa_type, processing_days, price_pkr, service_fee_pkr, success_rate, description, profiles:vendor_id(company_name, full_name, city)")
+            .eq("is_active", true);
           if (dbVisas && dbVisas.length > 0) {
-            visaList = dbVisas.map((v) => ({
-              id: v.id,
-              vendor_id: v.vendor_id,
-              country: String(v.country || "UAE"),
-              visa_type: String(v.visa_type || "Tourist Visa"),
-              processing_days: Number(v.processing_days || 3),
-              price_pkr: Number(v.price_pkr || 35000),
-              service_fee_pkr: Number(v.service_fee_pkr || 5000),
-              success_rate: Number(v.success_rate ?? 98),
-              vendor: "Verified Consultant",
-              description: "",
-            }));
+            visaList = dbVisas.map((v) => {
+              const vendorObj = (v as unknown as { profiles: { company_name?: string; full_name?: string; city?: string } | null }).profiles;
+              const vendorName = vendorObj?.company_name || vendorObj?.full_name || "Verified Consultant";
+              const cityTag = vendorObj?.city ? ` (${vendorObj.city})` : "";
+              return {
+                id: v.id,
+                vendor_id: v.vendor_id,
+                country: String(v.country || "UAE"),
+                visa_type: String(v.visa_type || "Tourist Visa"),
+                processing_days: Number(v.processing_days || 3),
+                price_pkr: Number(v.price_pkr || 35000),
+                service_fee_pkr: Number(v.service_fee_pkr || 5000),
+                success_rate: Number(v.success_rate ?? 98),
+                vendor: `${vendorName}${cityTag}`,
+                description: String(v.description || ""),
+              };
+            });
           }
 
           const { data: dbInsurance } = await supabaseAdmin
             .from("insurance_plans")
-            .select("id, vendor_id, plan_name, coverage_type, coverage_amount_pkr, duration_days, price_pkr")
-            .eq("is_active", true)
-            .limit(3);
+            .select("id, vendor_id, plan_name, coverage_type, coverage_amount_pkr, duration_days, price_pkr, description")
+            .eq("is_active", true);
           if (dbInsurance && dbInsurance.length > 0) {
             insuranceList = dbInsurance.map((i) => ({
               id: i.id,
@@ -245,15 +252,14 @@ export const Route = createFileRoute("/api/ai-chat")({
               coverage_amount_pkr: Number(i.coverage_amount_pkr || 15000000),
               duration_days: Number(i.duration_days || 30),
               price_pkr: Number(i.price_pkr || 8500),
-              description: "",
+              description: String(i.description || ""),
             }));
           }
 
           const { data: dbTickets } = await supabaseAdmin
             .from("ticket_services")
-            .select("id, vendor_id, service_name, route_type, airlines_supported, service_fee_pkr, refundable")
-            .eq("is_active", true)
-            .limit(3);
+            .select("id, vendor_id, service_name, route_type, airlines_supported, service_fee_pkr, refundable, description")
+            .eq("is_active", true);
           if (dbTickets && dbTickets.length > 0) {
             ticketsList = dbTickets.map((tk) => ({
               id: tk.id,
@@ -263,7 +269,7 @@ export const Route = createFileRoute("/api/ai-chat")({
               airlines_supported: Array.isArray(tk.airlines_supported) ? tk.airlines_supported.map(String) : ["PIA", "Emirates"],
               service_fee_pkr: Number(tk.service_fee_pkr || 3500),
               refundable: Boolean(tk.refundable),
-              description: "",
+              description: String(tk.description || ""),
             }));
           }
         } catch (error) {
@@ -388,7 +394,7 @@ ${ticketsCatalogText}`;
 
         // Only keep capture_lead — AI answers from catalog context in system prompt.
         // Lookup tools caused empty responses when the model only called tools with no text.
-        const modelMessages: ModelMessage[] = messages.slice(-4).map((m) => ({
+        const modelMessages: ModelMessage[] = messages.map((m) => ({
           role: m.role,
           content: m.content,
         })) as ModelMessage[];
@@ -701,32 +707,12 @@ ${ticketsCatalogText}`;
                 "[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]";
             }
           }
-        } catch (err: any) {
+        } catch (err) {
           console.error("[ai-chat handler error]:", err);
-          const lowerQuery = (lastUserMsg?.content || "").toLowerCase();
-          if (lowerQuery.includes("flight") || lowerQuery.includes("ticket")) {
-            fullText =
-              "✈️ **Flight Ticketing & Desk Support**\n\n" +
-              "Hum International & Domestic flights, Umrah/Hajj group tickets, aur Group Fare desks ke liye instant booking aur quotes provide kartay hain!\n\n" +
-              "Aap humein apni **Departure City**, **Destination**, **Travel Dates**, aur **Passengers count** bata dein — hum instant best fare quote bhej dein gay.\n\n" +
-              "[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]";
-          } else if (lowerQuery.includes("visa")) {
-            fullText =
-              "📄 **Visa Filing & Consultation**\n\n" +
-              "Hum UAE, Turkey, Schengen, UK, USA, Malaysia, aur Thailand ke liye complete visa documentation & appointment filing support provide kartay hain.\n\n" +
-              "Aap kin kis mulk (country) ke visa ke baray mein janna chahte hain?\n\n" +
-              "[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]";
-          } else if (lowerQuery.includes("tour") || lowerQuery.includes("package")) {
-            fullText =
-              "🌴 **International & Domestic Tour Packages**\n\n" +
-              "Hum Turkey 7-Days, Dubai 5-Days, Malaysia & Thailand multi-country, Skardu & Hunza customized packages offer kartay hain.\n\n" +
-              "Aap kis destination par travel karna chahtay hain?\n\n" +
-              "[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]";
-          } else {
-            fullText =
-              "Assalam-o-Alaikum! Aap GlobeTrek Concierge se kisi bhi travel service ke baray mein jankari le sakte hain. 🙏\n\n" +
-              "[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]";
-          }
+          fullText =
+            "Assalam-o-Alaikum! Welcome to GlobeTrek PK. 🙏\n\n" +
+            "Aap hum se Turkey, UAE, Malaysia tour packages, visa filing, insurance, ya flight tickets ke baray mein puch sakte hain.\n\n" +
+            "[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]";
         }
 
         if (!leadCaptured && !fullText?.trim()) {
@@ -739,22 +725,7 @@ ${ticketsCatalogText}`;
             "Cache-Control": "no-cache",
           },
         });
-      } catch (globalErr: any) {
-        console.error("[ai-chat global exception]:", globalErr);
-        return new Response(
-          "Assalam-o-Alaikum! Welcome to GlobeTrek PK. 🙏\n\n" +
-          "Aap hum se Turkey, UAE, Malaysia tour packages, visa filing, insurance, ya flight tickets ke baray mein puch sakte hain.\n\n" +
-          "[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]",
-          {
-            status: 200,
-            headers: {
-              "Content-Type": "text/plain; charset=utf-8",
-              "Cache-Control": "no-cache",
-            },
-          }
-        );
-      }
+      },
     },
   },
-},
 });

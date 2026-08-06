@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
-const STORAGE_KEY = "globetrek-ai-chat-v2";
+const STORAGE_KEY = "globetrek-ai-chat-v1";
 const CHIP_REGEX = /\[\[choose:\s*([^\]]+)\]\]/i;
 
 const GREETING: ChatMessage = {
@@ -173,26 +173,25 @@ export function AIChatWidget() {
         const replyText = await res.text();
         setMessages((m) => [...m, { role: "assistant", content: replyText }]);
       } else {
-        let errText = await res.text().catch(() => "");
-        if (errText.includes("<!doctype") || errText.includes("<html")) {
-          errText = "Server temporary connection issue. Please try again.";
-        }
-        setMessages((m) => [
-          ...m,
-          {
+        const errText = await res.text().catch(() => "");
+        setMessages((m) => {
+          const copy = [...m];
+          copy[copy.length - 1] = {
             role: "assistant",
-            content: `Maafi chahta hoon, connection issue aaya (${res.status}). 🙏\n\nAap dobara try kar saktay hain ya hum se direct contact kar saktay hain.\n\n[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]`,
-          },
-        ]);
+            content: `Maafi chahta hoon, error aaya (${res.status}): ${errText || "Please try again"}`,
+          };
+          return copy;
+        });
       }
     } catch (err) {
-      setMessages((m) => [
-        ...m,
-        {
+      setMessages((m) => {
+        const copy = [...m];
+        copy[copy.length - 1] = {
           role: "assistant",
-          content: "Network issue. Please check your internet connection and try again. 🙏\n\n[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]",
-        },
-      ]);
+          content: `Network error: ${err instanceof Error ? err.message : "unknown"}`,
+        };
+        return copy;
+      });
     } finally {
       setSending(false);
     }
