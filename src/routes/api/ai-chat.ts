@@ -166,10 +166,45 @@ const DEFAULT_TICKETS = [
   },
 ];
 
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const MAX_REQUESTS_PER_WINDOW = 30; // Max 30 requests per 10 minutes per IP
+const WINDOW_MS = 10 * 60 * 1000;
+
+function getClientIp(req: Request): string {
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0].trim();
+  const realIp = req.headers.get("x-real-ip") || req.headers.get("cf-connecting-ip");
+  if (realIp) return realIp.trim();
+  return "127.0.0.1";
+}
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.resetTime) {
+    rateLimitMap.set(ip, { count: 1, resetTime: now + WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= MAX_REQUESTS_PER_WINDOW) {
+    return false;
+  }
+  entry.count++;
+  return true;
+}
+
 export const Route = createFileRoute("/api/ai-chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const clientIp = getClientIp(request);
+        if (!checkRateLimit(clientIp)) {
+          console.warn(`[AI Chat Rate Limit Exceeded] IP: ${clientIp}`);
+          return new Response(
+            JSON.stringify({ error: "Too many AI chat requests. Please wait a few minutes before trying again." }),
+            { status: 429, headers: { "Content-Type": "application/json", "Retry-After": "600" } }
+          );
+        }
+
         let body: { messages?: ChatMessage[] };
         try {
           body = await request.json();
