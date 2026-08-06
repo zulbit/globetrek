@@ -37,10 +37,10 @@ function getProvider() {
 
       let res = await fetch(url, options);
 
-      // If credit limit or quota error occurs, fallback seamlessly to deepseek-chat / gemini-flash
-      if (!res.ok && (res.status === 402 || res.status === 429) && reqBody) {
+      // If credit limit, quota error, or model error occurs, fallback seamlessly to gpt-4o-mini
+      if (!res.ok && reqBody) {
         try {
-          reqBody.model = "deepseek/deepseek-chat";
+          reqBody.model = "openai/gpt-4o-mini";
           const fallbackOptions = { ...options, body: JSON.stringify(reqBody) };
           const fallbackRes = await fetch(url, fallbackOptions);
           if (fallbackRes.ok) return fallbackRes;
@@ -54,7 +54,7 @@ function getProvider() {
 
 /** Fast + powerful bilingual AI model — concierge chat, tour itineraries, fee lookup */
 export function openRouterModel() {
-  if (process.env.DEEPSEEK_API_KEY) {
+  if (process.env.USE_DIRECT_DEEPSEEK === "true" && process.env.DEEPSEEK_API_KEY) {
     const directProvider = createOpenAICompatible({
       name: "deepseek",
       baseURL: "https://api.deepseek.com",
@@ -62,7 +62,7 @@ export function openRouterModel() {
         Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
       },
     });
-    return directProvider("deepseek-v4-flash");
+    return directProvider("deepseek-chat");
   }
 
   return getProvider()("deepseek/deepseek-chat");
