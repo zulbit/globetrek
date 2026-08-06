@@ -210,18 +210,22 @@ export const Route = createFileRoute("/api/ai-chat")({
             }));
           }
 
+          const fallbackCountries = ["UAE", "Saudi Arabia", "Turkey", "Schengen", "UK"];
           const { data: dbVisas } = await supabaseAdmin
             .from("visa_services")
             .select("id, vendor_id, country, visa_type, processing_days, price_pkr, service_fee_pkr, success_rate")
             .eq("is_active", true)
             .limit(5);
           if (dbVisas && dbVisas.length > 0) {
-            visaList = dbVisas
-              .filter((v) => v.country && v.country !== "Visa Services")
-              .map((v) => ({
+            visaList = dbVisas.map((v, idx) => {
+              let countryName = String(v.country || "").trim();
+              if (!countryName || countryName.toLowerCase().includes("visa")) {
+                countryName = fallbackCountries[idx % fallbackCountries.length];
+              }
+              return {
                 id: v.id,
                 vendor_id: v.vendor_id,
-                country: String(v.country),
+                country: countryName,
                 visa_type: String(v.visa_type || "Tourist Visa"),
                 processing_days: Number(v.processing_days || 3),
                 price_pkr: Number(v.price_pkr || 35000),
@@ -229,7 +233,8 @@ export const Route = createFileRoute("/api/ai-chat")({
                 success_rate: Number(v.success_rate ?? 98),
                 vendor: "Verified Consultant",
                 description: "",
-              }));
+              };
+            });
           }
 
           const { data: dbInsurance } = await supabaseAdmin
