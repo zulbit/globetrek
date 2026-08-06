@@ -282,8 +282,10 @@ export const Route = createFileRoute("/api/ai-chat")({
           .map((t) => {
             const item = t as any;
             const formattedDate = formatDateReadable(item.departure_date);
+            const formattedDeadline = formatDateReadable(item.booking_deadline);
             const dateStr = formattedDate ? ` · Departs: ${formattedDate}` : "";
-            return `- TOUR: ${t.title} (${t.duration_days}d) · from ${t.departure_city} · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")}${dateStr} · id=${t.id}`;
+            const deadlineStr = formattedDeadline ? ` · Booking Deadline: ${formattedDeadline}` : "";
+            return `- TOUR: ${t.title} (${t.duration_days}d) · from ${t.departure_city} · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")}${dateStr}${deadlineStr} · id=${t.id}`;
           })
           .join("\n");
 
@@ -315,7 +317,8 @@ Active Vendor Visa Services in DB: ${activeVisaCountries.length > 0 ? activeVisa
 Rules:
 - Be warm and helpful. Always show prices in bold PKR (e.g. **₨ 250,000**).
 - Match user's language (English request -> English reply, Roman Urdu request -> Roman Urdu reply).
-- Show 2-3 relevant packages max per response. Include duration, price, and departure city.
+- Show 2-3 relevant packages max per response. Include duration, price, departure city, departure date, AND booking deadline.
+- BOOKING DEADLINES: When user asks about deadlines or booking details, ALWAYS highlight the "Booking Deadline" (e.g. "🗓️ Booking Deadline: 25 Aug 2026") from the catalog so travelers know when submission closes!
 - Prompt users to type their Name & Phone number to reserve or inquire: "Please type your Name & Mobile Number below to reserve your slots! 📞"
 - DATE FORMATTING RULE: ALWAYS display all travel dates, departure dates, and booking deadlines in human-readable format like "07 Sept 2026" or "15 Oct 2026" (DD MMM YYYY). NEVER output raw ISO dates like "2026-09-07"!
 - NEVER print internal database UUIDs (e.g. id=e72bebf... or 🆔 e72bebf...) in your chat messages! IDs in the catalog are strictly for internal tool calls (capture_lead).
