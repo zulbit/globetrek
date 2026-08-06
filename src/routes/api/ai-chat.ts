@@ -698,55 +698,92 @@ ${ticketsCatalogText}`;
           }
         } catch (err) {
           console.error("[ai-chat handler error]:", err);
-          const lowerQuery = (lastUserMsg?.content || "").toLowerCase();
-          if (lowerQuery.includes("flight") || lowerQuery.includes("ticket")) {
+          const rawQuery = lastUserMsg?.content || "";
+          const cleanQuery = rawQuery
+            .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, "")
+            .toLowerCase()
+            .trim();
+
+          // 1. Check Visa Match against preloaded visa catalog
+          const matchingVisa = visaList.find(
+            (v) =>
+              cleanQuery.includes(v.country.toLowerCase()) ||
+              (v.country.toLowerCase().includes("saudi") && (cleanQuery.includes("umrah") || cleanQuery.includes("saudi") || cleanQuery.includes("hajj"))) ||
+              (v.country.toLowerCase().includes("uae") && (cleanQuery.includes("dubai") || cleanQuery.includes("uae")))
+          );
+
+          // 2. Check Tour Match against preloaded tour catalog
+          const matchingTours = catalogList.filter(
+            (t) =>
+              cleanQuery.includes(t.destination_country.toLowerCase()) ||
+              cleanQuery.includes(t.departure_city.toLowerCase()) ||
+              t.title.toLowerCase().includes(cleanQuery) ||
+              cleanQuery.includes(t.title.toLowerCase())
+          );
+
+          // 3. Check Insurance Match against preloaded insurance plans
+          const matchingInsurance = insuranceList.filter(
+            (i) =>
+              cleanQuery.includes(i.plan_name.toLowerCase()) ||
+              cleanQuery.includes(i.coverage_type.toLowerCase()) ||
+              cleanQuery.includes("insurance") ||
+              cleanQuery.includes("shield") ||
+              cleanQuery.includes("cover")
+          );
+
+          // 4. Check Flight Ticket Match
+          const isTicketQuery = cleanQuery.includes("flight") || cleanQuery.includes("ticket") || cleanQuery.includes("fare") || cleanQuery.includes("airline");
+
+          if (matchingVisa) {
+            fullText =
+              `📄 **${matchingVisa.country} Visa Filing & Requirements**\n\n` +
+              `• **Visa Type**: ${matchingVisa.visa_type}\n` +
+              `• **Embassy Fee**: ₨ ${matchingVisa.price_pkr.toLocaleString("en-PK")}\n` +
+              `• **Service Fee**: ₨ ${matchingVisa.service_fee_pkr.toLocaleString("en-PK")}\n` +
+              `• **Total**: **₨ ${(matchingVisa.price_pkr + matchingVisa.service_fee_pkr).toLocaleString("en-PK")}**\n` +
+              `• **Turnaround Time**: ~${matchingVisa.processing_days} working days\n` +
+              `• **Approval Rate**: ${matchingVisa.success_rate}%\n\n` +
+              `Please type your **Name & Mobile Number** in the chatbox below so our Visa Specialist can process your application! 📞\n\n` +
+              `[[choose: ✏️ I will type my details | 📄 Visa Services | 🌴 Tour Packages]]`;
+          } else if (cleanQuery.includes("visa")) {
+            fullText =
+              "📄 **Visa Filing & Consultation**\n\n" +
+              "We provide visa documentation, consultation, and appointment filing for top destinations!\n\n" +
+              "Which destination country's visa requirements would you like to check?\n\n" +
+              "[[choose: 🇦🇪 UAE Visa | 🇸🇦 Saudi / Umrah | 🇹🇷 Turkey Visa | 🇪🇺 Schengen Visa | 🇬🇧 UK Visa]]";
+          } else if (matchingTours.length > 0) {
+            const tourItems = matchingTours
+              .slice(0, 3)
+              .map((t, idx) => `${idx + 1}. **${t.title}** (${t.duration_days} Days) · from ${t.departure_city} · **₨ ${Number(t.price_pkr).toLocaleString("en-PK")}**`)
+              .join("\n");
+
+            fullText =
+              `🌴 **Matching Tour Packages Found!**\n\n` +
+              `${tourItems}\n\n` +
+              `Please type your **Name & Mobile Number** in the chatbox below to reserve your slots or request a custom itinerary! 📞\n\n` +
+              `[[choose: ✏️ I will type my details | 🌴 Tour Packages | 📄 Visa Services]]`;
+          } else if (cleanQuery.includes("tour") || cleanQuery.includes("package") || cleanQuery.includes("trip")) {
+            fullText =
+              "🌴 **International & Domestic Tour Packages**\n\n" +
+              "We offer curated tour packages for Turkey, Dubai, Malaysia & Thailand, Europe, and Northern Pakistan!\n\n" +
+              "Which destination region are you planning to visit?\n\n" +
+              "[[choose: 🇹🇷 Turkey Tours | 🇦🇪 Dubai Packages | 🇲🇾 Malaysia & Thailand | 🇵🇰 Northern Pakistan]]";
+          } else if (matchingInsurance.length > 0 || cleanQuery.includes("insurance") || cleanQuery.includes("shield") || cleanQuery.includes("cover")) {
+            const insItem = matchingInsurance[0] || insuranceList[0];
+            fullText =
+              `🛡️ **Travel Insurance Plan — ${insItem.plan_name}**\n\n` +
+              `• **Coverage Type**: ${insItem.coverage_type} Visa Compliant\n` +
+              `• **Coverage Amount**: Up to ₨ ${(insItem.coverage_amount_pkr / 100000).toFixed(1)} Lakh medical cover\n` +
+              `• **Duration**: ${insItem.duration_days} Days\n` +
+              `• **Price**: **₨ ${insItem.price_pkr.toLocaleString("en-PK")}**\n\n` +
+              `Please type your **Name & Mobile Number** in the chatbox below to issue your instant policy! 📞\n\n` +
+              `[[choose: ✏️ I will type my details | 🛡️ Travel Insurance | 📄 Visa Services]]`;
+          } else if (isTicketQuery) {
             fullText =
               "✈️ **Flight Ticketing & Desk Support**\n\n" +
               "We provide instant fare quotes for international & domestic flights, Umrah/Hajj group tickets, and group desks.\n\n" +
               "Please share your **Departure City**, **Destination**, **Travel Dates**, and **Passengers count** — we will send you the best quote right away.\n\n" +
               "[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]";
-          } else if (lowerQuery.includes("visa")) {
-            fullText =
-              "📄 **Visa Filing & Consultation**\n\n" +
-              "We provide visa documentation, consultation, and appointment filing for UAE, Turkey, Schengen, UK, USA, Malaysia, and Thailand.\n\n" +
-              "Which destination country's visa requirements would you like to check?\n\n" +
-              "[[choose: 🇦🇪 UAE Visa | 🇸🇦 Saudi / Umrah | 🇹🇷 Turkey Visa | 🇪🇺 Schengen Visa | 🇬🇧 UK Visa]]";
-          } else if (lowerQuery.includes("saudi") || lowerQuery.includes("umrah") || lowerQuery.includes("hajj")) {
-            fullText =
-              "🇸🇦 **Saudi Arabia & Umrah Visa Filing**\n\n" +
-              "We provide Tourist e-Visas and Umrah Package Filing for Pakistani travelers!\n\n" +
-              "• **Umrah Package Visa**: **₨ 45,000 – ₨ 65,000** total including service fee (~3-5 days turnaround).\n" +
-              "• **Saudi Tourist e-Visa**: **₨ 22,000** embassy fee (SAR 300).\n\n" +
-              "Please type your **Name & Mobile Number** in the chatbox below so our Umrah consultant can assist you! 📞\n\n" +
-              "[[choose: 📄 Visa Services | 🌴 Tour Packages | ✈️ Flight Tickets]]";
-          } else if (lowerQuery.includes("uae") || lowerQuery.includes("dubai")) {
-            fullText =
-              "🇦🇪 **UAE / Dubai Visa & Packages**\n\n" +
-              "• **30-Days Express Tourist Visa**: Embassy ₨ 23,000 + Service ₨ 4,000 = **₨ 27,000** total.\n" +
-              "• **Dubai Express 5-Days Tour Package**: **₨ 195,000** per person.\n\n" +
-              "Please type your **Name & Mobile Number** so our consultant can assist you! 📞\n\n" +
-              "[[choose: 📄 Visa Services | 🌴 Tour Packages | ✈️ Flight Tickets]]";
-          } else if (lowerQuery.includes("insurance")) {
-            fullText =
-              "🛡️ **Travel Insurance Plans**\n\n" +
-              "We offer Schengen Visa Compliant Insurance, Worldwide Medical Coverage, and Family Protection Plans.\n\n" +
-              "Standard Schengen Cover starts at **₨ 8,500** for 30 days.\n\n" +
-              "[[choose: 🇪🇺 Schengen Insurance | 🌍 Worldwide Shield | 📄 Visa Services | 🌴 Tour Packages]]";
-          } else if (lowerQuery.includes("karachi") || lowerQuery.includes("lahore") || lowerQuery.includes("islamabad") || lowerQuery.includes("month") || lowerQuery.includes("thailand") || lowerQuery.includes("turkey") || lowerQuery.includes("dubai")) {
-            fullText =
-              "🌴 **Matching Tour Packages Found!**\n\n" +
-              "Here are top packages based on your preference:\n\n" +
-              "1. 🇹🇭 **Thailand & Malaysia Combo 7-Days** · from Karachi/Lahore · **₨ 245,000**\n" +
-              "2. 🇹🇷 **Turkey Wonders 7-Days** · Istanbul & Cappadocia · **₨ 385,000**\n" +
-              "3. 🇦🇪 **Dubai Express 5-Days** · Luxury Hotel & Desert Safari · **₨ 195,000**\n\n" +
-              "Would you like details, booking dates, or custom quotation for any of these?\n\n" +
-              "[[choose: 🇹🇭 Thailand Details | 🇹🇷 Turkey Details | 🇦🇪 Dubai Details | 📄 Get Quote]]";
-          } else if (lowerQuery.includes("tour") || lowerQuery.includes("package")) {
-            fullText =
-              "🌴 **International & Domestic Tour Packages**\n\n" +
-              "We offer curated tour packages for Turkey, Dubai, Malaysia & Thailand, Europe, as well as Hunza & Skardu in Northern Pakistan.\n\n" +
-              "Which destination country or region are you planning to visit?\n\n" +
-              "[[choose: 🇹🇷 Turkey Tours | 🇦🇪 Dubai Packages | 🇲🇾 Malaysia & Thailand | 🇵🇰 Northern Pakistan]]";
           } else {
             fullText =
               "Welcome to GlobeTrek PK! ✈️ How can we help you plan your journey today?\n\n" +
