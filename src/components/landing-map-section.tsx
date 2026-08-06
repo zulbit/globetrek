@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { TOURS, formatPKR, type Tour } from "@/lib/tours";
 import { InteractiveTourMap } from "@/components/InteractiveTourMap";
-import { TourCard } from "@/components/tour-card";
 import { Navigation, ArrowRight, Plane, MapPin, Sparkles, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -40,42 +39,55 @@ export function LandingMapSection() {
           </Link>
         </div>
 
-        {/* Dreamstay Full-Width Split Container */}
-        <div className="grid gap-6 lg:grid-cols-[480px_1fr] xl:grid-cols-[540px_1fr] 2xl:grid-cols-[580px_1fr] items-start">
-          {/* Left Column: Scrollable Interactive Tour Cards List */}
-          <div className="max-h-[660px] overflow-y-auto pr-2 space-y-4 rounded-2xl p-1 border border-border/40 bg-background/50 backdrop-blur">
-            <div className="flex items-center justify-between px-2 py-1 text-xs font-bold uppercase tracking-wider text-muted-foreground border-b border-border/40 mb-2">
-              <span>Tour Packages ({featuredTours.length})</span>
-              <span className="text-emerald-400 text-[10px]">Hover to highlight map</span>
-            </div>
+        {/* Horizontal Interactive Tour Selector Bar */}
+        <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-border/60 bg-background/60 p-4 backdrop-blur-md">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <Plane className="h-3.5 w-3.5 text-emerald-400" />
+              Select Tour Package to Trace Live Flight Path ({featuredTours.length})
+            </span>
+            <span className="text-[11px] font-medium text-emerald-400 hidden sm:inline">
+              Hover or click any tour to update route map
+            </span>
+          </div>
 
+          <div className="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-none">
             {featuredTours.map((t) => {
               const isSelected = activeTourId === t.id;
+              const formattedPrice = t.pricePKR ? `₨ ${(t.pricePKR / 1000).toFixed(0)}k` : "";
               return (
-                <div
+                <button
                   key={t.id}
                   onMouseEnter={() => setActiveTourId(t.id)}
                   onClick={() => setActiveTourId(t.id)}
-                  className={`cursor-pointer transition-all duration-300 rounded-2xl ${
+                  className={`flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all duration-300 border cursor-pointer ${
                     isSelected
-                      ? "ring-2 ring-emerald-500 shadow-emerald-950/50 shadow-xl scale-[1.01]"
-                      : "opacity-85 hover:opacity-100"
+                      ? "bg-slate-900 text-emerald-400 border-emerald-500/80 ring-2 ring-emerald-500/30 shadow-lg scale-[1.02]"
+                      : "bg-surface/80 text-muted-foreground border-border/50 hover:bg-surface hover:text-foreground hover:border-emerald-500/40"
                   }`}
                 >
-                  <TourCard tour={t} />
-                </div>
+                  <span className="text-sm">📍</span>
+                  <div className="flex flex-col text-left">
+                    <span className="font-extrabold text-foreground line-clamp-1 max-w-[160px]">
+                      {t.title}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground font-medium">
+                      {t.destination} · <span className="text-emerald-400 font-bold">{formattedPrice}</span>
+                    </span>
+                  </div>
+                </button>
               );
             })}
           </div>
+        </div>
 
-          {/* Right Column: Full-Height Interactive Leaflet OpenStreetMap */}
-          <div className="h-[660px] w-full overflow-hidden rounded-2xl border border-border shadow-2xl">
-            <InteractiveTourMap
-              tours={featuredTours}
-              activeTourId={activeTourId}
-              onSelectTour={(id) => setActiveTourId(id)}
-            />
-          </div>
+        {/* Full-Width Interactive Leaflet OpenStreetMap Container */}
+        <div className="h-[640px] w-full overflow-hidden rounded-2xl border border-border/80 shadow-2xl">
+          <InteractiveTourMap
+            tours={featuredTours}
+            activeTourId={activeTourId}
+            onSelectTour={(id) => setActiveTourId(id)}
+          />
         </div>
       </div>
     </section>
