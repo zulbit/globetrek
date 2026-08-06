@@ -111,6 +111,7 @@ export const TIERS: PricingTier[] = [
     covers: ["tours"],
     features: [
       "Unlimited tour listings",
+      "🗺️ OpenStreetMap Interactive Map & Flight Paths",
       "100 lead credits / month",
       "Unlimited AI descriptions",
       "50 AI full-trip plans / month",
@@ -124,7 +125,7 @@ export const TIERS: PricingTier[] = [
       leadCredits: "100 / month",
       aiDrafts: "Unlimited",
       aiPlans: "50 / month",
-      placement: "Priority",
+      placement: "Priority + Interactive Map",
       support: "Priority · 12h",
     },
   },
@@ -139,6 +140,7 @@ export const TIERS: PricingTier[] = [
     covers: ["tours", "visa", "insurance", "tickets"],
     features: [
       "Unlimited listings across all 4 categories",
+      "🗺️ OpenStreetMap Interactive Map & Animated Flight Paths",
       "300 lead credits / month",
       "Unlimited AI plans & descriptions",
       "Featured homepage placement",
@@ -151,7 +153,7 @@ export const TIERS: PricingTier[] = [
       leadCredits: "300 / month",
       aiDrafts: "Unlimited",
       aiPlans: "Unlimited",
-      placement: "Featured",
+      placement: "Featured + Interactive Map",
       support: "Dedicated AM",
     },
   },

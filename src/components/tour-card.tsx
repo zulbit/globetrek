@@ -71,7 +71,7 @@ export function TourCard({ tour }: { tour: Tour }) {
         />
         <div className="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-black/70 to-transparent" />
 
-        <div className="absolute left-3 top-3 flex gap-2">
+        <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
           <span className="rounded-full border border-white/15 bg-black/50 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur">
             {tour.type}
           </span>
@@ -79,6 +79,9 @@ export function TourCard({ tour }: { tour: Tour }) {
             className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold backdrop-blur ${seatTone(tour.seatsLeft, tour.totalSeats)}`}
           >
             {tour.seatsLeft} seats left
+          </span>
+          <span className="rounded-full border border-amber-500/40 bg-black/60 px-2 py-0.5 text-[10px] font-bold text-amber-300 backdrop-blur">
+            🗺️ Pro Map
           </span>
         </div>
 
