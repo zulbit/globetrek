@@ -216,18 +216,20 @@ export const Route = createFileRoute("/api/ai-chat")({
             .eq("is_active", true)
             .limit(5);
           if (dbVisas && dbVisas.length > 0) {
-            visaList = dbVisas.map((v) => ({
-              id: v.id,
-              vendor_id: v.vendor_id,
-              country: String(v.country || "UAE"),
-              visa_type: String(v.visa_type || "Tourist Visa"),
-              processing_days: Number(v.processing_days || 3),
-              price_pkr: Number(v.price_pkr || 35000),
-              service_fee_pkr: Number(v.service_fee_pkr || 5000),
-              success_rate: Number(v.success_rate ?? 98),
-              vendor: "Verified Consultant",
-              description: "",
-            }));
+            visaList = dbVisas
+              .filter((v) => v.country && v.country !== "Visa Services")
+              .map((v) => ({
+                id: v.id,
+                vendor_id: v.vendor_id,
+                country: String(v.country),
+                visa_type: String(v.visa_type || "Tourist Visa"),
+                processing_days: Number(v.processing_days || 3),
+                price_pkr: Number(v.price_pkr || 35000),
+                service_fee_pkr: Number(v.service_fee_pkr || 5000),
+                success_rate: Number(v.success_rate ?? 98),
+                vendor: "Verified Consultant",
+                description: "",
+              }));
           }
 
           const { data: dbInsurance } = await supabaseAdmin
@@ -709,6 +711,21 @@ ${ticketsCatalogText}`;
               "We provide visa documentation, consultation, and appointment filing for UAE, Turkey, Schengen, UK, USA, Malaysia, and Thailand.\n\n" +
               "Which destination country's visa requirements would you like to check?\n\n" +
               "[[choose: 🇦🇪 UAE Visa | 🇸🇦 Saudi / Umrah | 🇹🇷 Turkey Visa | 🇪🇺 Schengen Visa | 🇬🇧 UK Visa]]";
+          } else if (lowerQuery.includes("saudi") || lowerQuery.includes("umrah") || lowerQuery.includes("hajj")) {
+            fullText =
+              "🇸🇦 **Saudi Arabia & Umrah Visa Filing**\n\n" +
+              "We provide Tourist e-Visas and Umrah Package Filing for Pakistani travelers!\n\n" +
+              "• **Umrah Package Visa**: **₨ 45,000 – ₨ 65,000** total including service fee (~3-5 days turnaround).\n" +
+              "• **Saudi Tourist e-Visa**: **₨ 22,000** embassy fee (SAR 300).\n\n" +
+              "Please type your **Name & Mobile Number** in the chatbox below so our Umrah consultant can assist you! 📞\n\n" +
+              "[[choose: 📄 Visa Services | 🌴 Tour Packages | ✈️ Flight Tickets]]";
+          } else if (lowerQuery.includes("uae") || lowerQuery.includes("dubai")) {
+            fullText =
+              "🇦🇪 **UAE / Dubai Visa & Packages**\n\n" +
+              "• **30-Days Express Tourist Visa**: Embassy ₨ 23,000 + Service ₨ 4,000 = **₨ 27,000** total.\n" +
+              "• **Dubai Express 5-Days Tour Package**: **₨ 195,000** per person.\n\n" +
+              "Please type your **Name & Mobile Number** so our consultant can assist you! 📞\n\n" +
+              "[[choose: 📄 Visa Services | 🌴 Tour Packages | ✈️ Flight Tickets]]";
           } else if (lowerQuery.includes("insurance")) {
             fullText =
               "🛡️ **Travel Insurance Plans**\n\n" +
