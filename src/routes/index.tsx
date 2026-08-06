@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { SiteShell } from "@/components/site-shell";
 import { Hero } from "@/components/hero";
 import { FeaturedTours } from "@/components/featured-tours";
+import { LandingMapSection } from "@/components/landing-map-section";
 import { ServicesStrip } from "@/components/services-strip";
 import { Testimonials } from "@/components/testimonials";
 import { ExclusiveSection } from "@/components/exclusive-section";
@@ -33,6 +34,7 @@ function Home() {
   return (
     <SiteShell>
       <Hero />
+      <LandingMapSection />
       <FeaturedTours />
       <ExclusiveSection />
       <ServicesStrip />
