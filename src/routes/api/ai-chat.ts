@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { generateText, tool, type ModelMessage } from "ai";
 import { z } from "zod";
+import { formatDateReadable } from "@/lib/utils";
 
 type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
 
@@ -280,7 +281,8 @@ export const Route = createFileRoute("/api/ai-chat")({
           .slice(0, 3)
           .map((t) => {
             const item = t as any;
-            const dateStr = item.departure_date ? ` · Departs: ${item.departure_date}` : "";
+            const formattedDate = formatDateReadable(item.departure_date);
+            const dateStr = formattedDate ? ` · Departs: ${formattedDate}` : "";
             return `- TOUR: ${t.title} (${t.duration_days}d) · from ${t.departure_city} · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")}${dateStr} · id=${t.id}`;
           })
           .join("\n");
@@ -315,6 +317,7 @@ Rules:
 - Match user's language (English request -> English reply, Roman Urdu request -> Roman Urdu reply).
 - Show 2-3 relevant packages max per response. Include duration, price, and departure city.
 - Prompt users to type their Name & Phone number to reserve or inquire: "Please type your Name & Mobile Number below to reserve your slots! 📞"
+- DATE FORMATTING RULE: ALWAYS display all travel dates, departure dates, and booking deadlines in human-readable format like "07 Sept 2026" or "15 Oct 2026" (DD MMM YYYY). NEVER output raw ISO dates like "2026-09-07"!
 - NEVER print internal database UUIDs (e.g. id=e72bebf... or 🆔 e72bebf...) in your chat messages! IDs in the catalog are strictly for internal tool calls (capture_lead).
 - CRITICAL DB GROUNDING RULE FOR VISAS:
   * If user asks for a visa service for a country NOT in the active database list above (e.g. Schengen, UK, USA, Canada, Australia):
