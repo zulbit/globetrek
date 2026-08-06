@@ -179,6 +179,7 @@ export const Route = createFileRoute("/api/ai-chat")({
         if (!Array.isArray(messages) || messages.length === 0) {
           return new Response("messages required", { status: 400 });
         }
+        const lastUserMsg = messages[messages.length - 1];
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -191,58 +192,49 @@ export const Route = createFileRoute("/api/ai-chat")({
         try {
           const { data: dbTours } = await supabaseAdmin
             .from("tours")
-            .select("id, vendor_id, title, destination_country, departure_city, duration_days, price_pkr, description, accommodation")
+            .select("id, vendor_id, title, destination_country, departure_city, duration_days, price_pkr, description")
             .eq("is_active", true)
             .order("price_pkr", { ascending: true })
-            .limit(30);
+            .limit(6);
           if (dbTours && dbTours.length > 0) {
-            catalogList = dbTours.map((t) => {
-              const acc = (t.accommodation as Record<string, unknown> | null) || {};
-              return {
-                id: t.id,
-                vendor_id: t.vendor_id,
-                title: String(t.title || "Tour Package"),
-                destination_country: String(t.destination_country || "Europe"),
-                departure_city: String(t.departure_city || "Lahore"),
-                duration_days: Number(t.duration_days || 7),
-                price_pkr: Number(t.price_pkr || 250000),
-                vendor: "Verified Vendor",
-                description: String(t.description || ""),
-                departure_date: typeof acc.departure_date === "string" ? acc.departure_date : null,
-                return_date: typeof acc.return_date === "string" ? acc.return_date : null,
-                booking_deadline: typeof acc.booking_deadline === "string" ? acc.booking_deadline : null,
-              };
-            });
+            catalogList = dbTours.map((t) => ({
+              id: t.id,
+              vendor_id: t.vendor_id,
+              title: String(t.title || "Tour Package"),
+              destination_country: String(t.destination_country || "Europe"),
+              departure_city: String(t.departure_city || "Lahore"),
+              duration_days: Number(t.duration_days || 7),
+              price_pkr: Number(t.price_pkr || 250000),
+              vendor: "Verified Vendor",
+              description: String(t.description || ""),
+            }));
           }
 
           const { data: dbVisas } = await supabaseAdmin
             .from("visa_services")
-            .select("id, vendor_id, country, visa_type, processing_days, price_pkr, service_fee_pkr, success_rate, description, profiles:vendor_id(company_name, full_name, city)")
-            .eq("is_active", true);
+            .select("id, vendor_id, country, visa_type, processing_days, price_pkr, service_fee_pkr, success_rate")
+            .eq("is_active", true)
+            .limit(5);
           if (dbVisas && dbVisas.length > 0) {
-            visaList = dbVisas.map((v) => {
-              const vendorObj = (v as unknown as { profiles: { company_name?: string; full_name?: string; city?: string } | null }).profiles;
-              const vendorName = vendorObj?.company_name || vendorObj?.full_name || "Verified Consultant";
-              const cityTag = vendorObj?.city ? ` (${vendorObj.city})` : "";
-              return {
-                id: v.id,
-                vendor_id: v.vendor_id,
-                country: String(v.country || "UAE"),
-                visa_type: String(v.visa_type || "Tourist Visa"),
-                processing_days: Number(v.processing_days || 3),
-                price_pkr: Number(v.price_pkr || 35000),
-                service_fee_pkr: Number(v.service_fee_pkr || 5000),
-                success_rate: Number(v.success_rate ?? 98),
-                vendor: `${vendorName}${cityTag}`,
-                description: String(v.description || ""),
-              };
-            });
+            visaList = dbVisas.map((v) => ({
+              id: v.id,
+              vendor_id: v.vendor_id,
+              country: String(v.country || "UAE"),
+              visa_type: String(v.visa_type || "Tourist Visa"),
+              processing_days: Number(v.processing_days || 3),
+              price_pkr: Number(v.price_pkr || 35000),
+              service_fee_pkr: Number(v.service_fee_pkr || 5000),
+              success_rate: Number(v.success_rate ?? 98),
+              vendor: "Verified Consultant",
+              description: "",
+            }));
           }
 
           const { data: dbInsurance } = await supabaseAdmin
             .from("insurance_plans")
-            .select("id, vendor_id, plan_name, coverage_type, coverage_amount_pkr, duration_days, price_pkr, description")
-            .eq("is_active", true);
+            .select("id, vendor_id, plan_name, coverage_type, coverage_amount_pkr, duration_days, price_pkr")
+            .eq("is_active", true)
+            .limit(3);
           if (dbInsurance && dbInsurance.length > 0) {
             insuranceList = dbInsurance.map((i) => ({
               id: i.id,
@@ -252,14 +244,15 @@ export const Route = createFileRoute("/api/ai-chat")({
               coverage_amount_pkr: Number(i.coverage_amount_pkr || 15000000),
               duration_days: Number(i.duration_days || 30),
               price_pkr: Number(i.price_pkr || 8500),
-              description: String(i.description || ""),
+              description: "",
             }));
           }
 
           const { data: dbTickets } = await supabaseAdmin
             .from("ticket_services")
-            .select("id, vendor_id, service_name, route_type, airlines_supported, service_fee_pkr, refundable, description")
-            .eq("is_active", true);
+            .select("id, vendor_id, service_name, route_type, airlines_supported, service_fee_pkr, refundable")
+            .eq("is_active", true)
+            .limit(3);
           if (dbTickets && dbTickets.length > 0) {
             ticketsList = dbTickets.map((tk) => ({
               id: tk.id,
@@ -269,7 +262,7 @@ export const Route = createFileRoute("/api/ai-chat")({
               airlines_supported: Array.isArray(tk.airlines_supported) ? tk.airlines_supported.map(String) : ["PIA", "Emirates"],
               service_fee_pkr: Number(tk.service_fee_pkr || 3500),
               refundable: Boolean(tk.refundable),
-              description: String(tk.description || ""),
+              description: "",
             }));
           }
         } catch (error) {
@@ -277,13 +270,7 @@ export const Route = createFileRoute("/api/ai-chat")({
         }
 
         const catalogText = catalogList
-          .map((t) => {
-            const item = t as any;
-            const dateStr = item.departure_date
-              ? ` · Departs: ${item.departure_date}${item.return_date ? ` to ${item.return_date}` : ""}${item.booking_deadline ? ` (Book by: ${item.booking_deadline})` : ""}`
-              : " · Dates: Flexible / Upcoming";
-            return `- TOUR: ${t.title} · ${t.destination_country} · from ${t.departure_city} · ${t.duration_days} days · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")}${dateStr} · id=${t.id}`;
-          })
+          .map((t) => `- TOUR: ${t.title} · ${t.destination_country} · from ${t.departure_city} · ${t.duration_days} days · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")} · id=${t.id}`)
           .join("\n");
 
         const visaCatalogText = visaList
@@ -298,9 +285,9 @@ export const Route = createFileRoute("/api/ai-chat")({
           .map((tk) => `- TICKET SERVICE: ${tk.service_name} (${tk.route_type}) · Airlines: ${tk.airlines_supported.join(", ")} · Fee ₨ ${tk.service_fee_pkr.toLocaleString("en-PK")} · Refundable: ${tk.refundable ? "Yes" : "No"} · id=${tk.id}`)
           .join("\n");
 
-        const { openRouterModel, openRouterOnlineModel } = await import("@/integrations/openrouter/openrouter.server");
+        const { openRouterModel } = await import("@/integrations/openrouter/openrouter.server");
 
-        const systemPrompt = `You are the GlobeTrek PK travel concierge — a warm, expert helper for Pakistani travelers.
+        const systemPrompt = `You are the GlobeTrek PK travel concierge — a professional, expert helper for Pakistani travelers.
 
 GlobeTrek PK is a multi-service travel marketplace. You help with:
 1. Tour packages (Turkey, Thailand, UAE, Europe, Malaysia, Singapore, Vietnam, UK, and more).
@@ -308,15 +295,15 @@ GlobeTrek PK is a multi-service travel marketplace. You help with:
 3. Travel insurance — Schengen, medical, family, adventure plans.
 4. Flight ticketing — domestic, international, Umrah & Hajj.
 
-IMPORTANT: The complete catalog is embedded below for grounding. Answer ALL questions about tours, visas, insurance, and tickets DIRECTLY from this catalog. Do NOT say packages are unavailable if they exist below.
+IMPORTANT: The complete catalog is embedded below for grounding. Answer questions about tours, visas, insurance, and tickets DIRECTLY from this catalog.
 
 Rules:
 - ALWAYS write a full, helpful text response. Never leave a response empty.
-- VISUAL & COLORFUL PRESENTATION: Use country flags and emojis generously:
+- VISUAL & COLORFUL PRESENTATION: Use country flags and emojis:
   - Countries: 🇹🇷 Turkey | 🇹🇭 Thailand | 🇦🇪 UAE / Dubai | 🇪🇺 Europe | 🇲🇾 Malaysia | 🇸🇬 Singapore | 🇻🇳 Vietnam | 🇬🇧 UK | 🇸🇦 Saudi Arabia / 🕋 Umrah
   - Services: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets
 - PRICES: Always show prices as bold PKR (e.g. **₨ 385,000**).
-- Language: Match the user's language. English request → English reply. Roman Urdu request → warm Roman Urdu reply.
+- Language: Default to clear, professional English. Respond in Roman Urdu ONLY if the user explicitly writes in Roman Urdu or requests Urdu!
 - 📅 DATES & DEADLINES AWARENESS:
   When recommending a tour package, ALWAYS mention its specific Departure Date and Booking Deadline if available in the catalog!
   - Explicitly inform the user: "Departs on [Departure Date], returning on [Return Date]. Booking closes on [Booking Deadline] to allow time for visa/ticket processing."
@@ -709,10 +696,30 @@ ${ticketsCatalogText}`;
           }
         } catch (err) {
           console.error("[ai-chat handler error]:", err);
-          fullText =
-            "Assalam-o-Alaikum! Welcome to GlobeTrek PK. 🙏\n\n" +
-            "Aap hum se Turkey, UAE, Malaysia tour packages, visa filing, insurance, ya flight tickets ke baray mein puch sakte hain.\n\n" +
-            "[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]";
+          const lowerQuery = (lastUserMsg?.content || "").toLowerCase();
+          if (lowerQuery.includes("flight") || lowerQuery.includes("ticket")) {
+            fullText =
+              "✈️ **Flight Ticketing & Desk Support**\n\n" +
+              "We provide instant fare quotes for international & domestic flights, Umrah/Hajj group tickets, and group desks.\n\n" +
+              "Please share your **Departure City**, **Destination**, **Travel Dates**, and **Passengers count** — we will send you the best quote right away.\n\n" +
+              "[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]";
+          } else if (lowerQuery.includes("visa")) {
+            fullText =
+              "📄 **Visa Filing & Consultation**\n\n" +
+              "We provide visa documentation, consultation, and appointment filing for UAE, Turkey, Schengen, UK, USA, Malaysia, and Thailand.\n\n" +
+              "Which destination country's visa requirements would you like to check?\n\n" +
+              "[[choose: 🇦🇪 UAE Visa | 🇸🇦 Saudi / Umrah | 🇹🇷 Turkey Visa | 🇪🇺 Schengen Visa | 🇬🇧 UK Visa]]";
+          } else if (lowerQuery.includes("tour") || lowerQuery.includes("package")) {
+            fullText =
+              "🌴 **International & Domestic Tour Packages**\n\n" +
+              "We offer curated tour packages for Turkey, Dubai, Malaysia & Thailand, Europe, as well as Hunza & Skardu in Northern Pakistan.\n\n" +
+              "Which destination country or region are you planning to visit?\n\n" +
+              "[[choose: 🇹🇷 Turkey Tours | 🇦🇪 Dubai Packages | 🇲🇾 Malaysia & Thailand | 🇵🇰 Northern Pakistan]]";
+          } else {
+            fullText =
+              "Welcome to GlobeTrek PK! ✈️ How can we help you plan your journey today?\n\n" +
+              "[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]";
+          }
         }
 
         if (!leadCaptured && !fullText?.trim()) {

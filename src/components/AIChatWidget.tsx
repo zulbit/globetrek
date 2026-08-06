@@ -7,13 +7,13 @@ import { cn } from "@/lib/utils";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
-const STORAGE_KEY = "globetrek-ai-chat-v1";
+const STORAGE_KEY = "globetrek-ai-chat-v3";
 const CHIP_REGEX = /\[\[choose:\s*([^\]]+)\]\]/i;
 
 const GREETING: ChatMessage = {
   role: "assistant",
   content:
-    "Assalam-o-Alaikum! ✈️ Welcome to **GlobeTrek PK** — your 24/7 travel concierge!\n\nAap English ya Roman Urdu mein baat kar sakte hain. Aapko kis cheez mein madad chahiye?\n\n[[choose: 🇵🇰 Roman Urdu | 🇬🇧 English | 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]",
+    "Welcome to **GlobeTrek PK** — your 24/7 travel concierge! ✈️\n\nHow can we assist your journey today? Ask about tour packages, visa filing, travel insurance, or flight tickets.\n\n[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]",
 };
 
 function parseChips(content: string): { text: string; chips: string[] } {
