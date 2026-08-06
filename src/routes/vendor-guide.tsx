@@ -58,6 +58,9 @@ const ICON_MAP: Record<string, any> = {
 };
 
 const SUGGESTED_AI_PROMPTS = [
+  "Interactive OpenStreetMap placement tour packages par kaise milti hai?",
+  "WhatsApp lead alerts mein traveler phone number obfuscated kyun hota hai?",
+  "Pro Tour Operator plan mein OpenStreetMap placement ke kya fayde hain?",
   "Plan expiry notice kaise milta hai aur non-renewal par kya hoga?",
   "What happens to my tour listings if my subscription plan expires?",
   "What documents are required for vendor KYC verification?",

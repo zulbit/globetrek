@@ -191,9 +191,45 @@ const COMPARISON_DATA = [
     saasPms: false,
     wordpress: true,
   },
+  {
+    feature: "OpenStreetMap Interactive Tour Explorer & Flight Arc Paths",
+    globetrek: true,
+    cloneScript: false,
+    saasPms: false,
+    wordpress: false,
+  },
+  {
+    feature: "Tool-Based Dynamic DB Search (search_catalog)",
+    globetrek: true,
+    cloneScript: false,
+    saasPms: false,
+    wordpress: false,
+  },
+  {
+    feature: "Lead Privacy Protection & Obfuscated WhatsApp Alerts",
+    globetrek: true,
+    cloneScript: false,
+    saasPms: false,
+    wordpress: false,
+  },
+  {
+    feature: "Interactive Clickable Action Chips in Chat",
+    globetrek: true,
+    cloneScript: false,
+    saasPms: false,
+    wordpress: false,
+  },
 ];
 
 const FAQS = [
+  {
+    q: "How does the OpenStreetMap Interactive Tour Explorer work?",
+    a: "GlobeTrek PK integrates an interactive, split-screen Leaflet & CartoDB OpenStreetMap engine on /tours. It renders Pakistani departure hubs (LHE, KHI, ISB), destination landing airports (IST, CDG, DXB, BKK, etc.), curved flight arcs with flight time badges (e.g. ✈️ 5h 50m), and interactive multi-hop itinerary stop popups with exact dates. This premium feature is integrated as a placement benefit for Pro Tour Operator (₨ 7,500/mo) and Full Agency (₨ 12,000/mo) subscription plans.",
+  },
+  {
+    q: "How does Lead Privacy & WhatsApp Notification Obfuscation operate?",
+    a: "When a traveler submits contact details or requests a callback, the AI Concierge triggers the capture_lead server tool. To protect vendor subscription monetization, the automated WhatsApp alert sent to vendors masks traveler contact details (e.g. 0300****67) and provides a secure link to the Vendor Portal (/vendor/leads) where partners unlock full lead details according to their plan credits.",
+  },
   {
     q: "Can GlobeTrek PK be customized for white-label enterprise deployment?",
     a: "Yes! GlobeTrek PK is built on modular architecture with 100% source code ownership. It can be white-labeled with custom logos, domains, regional currencies, and local payment gateways.",
