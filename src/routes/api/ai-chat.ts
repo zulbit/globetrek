@@ -709,6 +709,21 @@ ${ticketsCatalogText}`;
               "We provide visa documentation, consultation, and appointment filing for UAE, Turkey, Schengen, UK, USA, Malaysia, and Thailand.\n\n" +
               "Which destination country's visa requirements would you like to check?\n\n" +
               "[[choose: 🇦🇪 UAE Visa | 🇸🇦 Saudi / Umrah | 🇹🇷 Turkey Visa | 🇪🇺 Schengen Visa | 🇬🇧 UK Visa]]";
+          } else if (lowerQuery.includes("insurance")) {
+            fullText =
+              "🛡️ **Travel Insurance Plans**\n\n" +
+              "We offer Schengen Visa Compliant Insurance, Worldwide Medical Coverage, and Family Protection Plans.\n\n" +
+              "Standard Schengen Cover starts at **₨ 8,500** for 30 days.\n\n" +
+              "[[choose: 🇪🇺 Schengen Insurance | 🌍 Worldwide Shield | 📄 Visa Services | 🌴 Tour Packages]]";
+          } else if (lowerQuery.includes("karachi") || lowerQuery.includes("lahore") || lowerQuery.includes("islamabad") || lowerQuery.includes("month") || lowerQuery.includes("thailand") || lowerQuery.includes("turkey") || lowerQuery.includes("dubai")) {
+            fullText =
+              "🌴 **Matching Tour Packages Found!**\n\n" +
+              "Here are top packages based on your preference:\n\n" +
+              "1. 🇹🇭 **Thailand & Malaysia Combo 7-Days** · from Karachi/Lahore · **₨ 245,000**\n" +
+              "2. 🇹🇷 **Turkey Wonders 7-Days** · Istanbul & Cappadocia · **₨ 385,000**\n" +
+              "3. 🇦🇪 **Dubai Express 5-Days** · Luxury Hotel & Desert Safari · **₨ 195,000**\n\n" +
+              "Would you like details, booking dates, or custom quotation for any of these?\n\n" +
+              "[[choose: 🇹🇭 Thailand Details | 🇹🇷 Turkey Details | 🇦🇪 Dubai Details | 📄 Get Quote]]";
           } else if (lowerQuery.includes("tour") || lowerQuery.includes("package")) {
             fullText =
               "🌴 **International & Domestic Tour Packages**\n\n" +

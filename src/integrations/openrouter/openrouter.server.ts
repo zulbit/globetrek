@@ -37,14 +37,23 @@ function getProvider() {
 
       let res = await fetch(url, options);
 
-      // If credit limit, quota error, or model error occurs, fallback seamlessly to gpt-4o-mini
+      // If credit limit, quota error, or model error occurs, fallback seamlessly across providers
       if (!res.ok && reqBody) {
-        try {
-          reqBody.model = "openai/gpt-4o-mini";
-          const fallbackOptions = { ...options, body: JSON.stringify(reqBody) };
-          const fallbackRes = await fetch(url, fallbackOptions);
-          if (fallbackRes.ok) return fallbackRes;
-        } catch {}
+        const fallbackModels = [
+          "openai/gpt-4o-mini",
+          "google/gemini-2.0-flash-001",
+          "meta-llama/llama-3.3-70b-instruct",
+          "anthropic/claude-3.5-haiku",
+        ];
+
+        for (const model of fallbackModels) {
+          try {
+            reqBody.model = model;
+            const fallbackOptions = { ...options, body: JSON.stringify(reqBody) };
+            const fallbackRes = await fetch(url, fallbackOptions);
+            if (fallbackRes.ok) return fallbackRes;
+          } catch {}
+        }
       }
 
       return res;
