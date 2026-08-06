@@ -364,9 +364,70 @@ ${ticketsCatalogText}`;
           content: m.content,
         })) as ModelMessage[];
 
-        let requestLeadsCount = 0;
-
         const tools = {
+          search_catalog: tool({
+            description: "Search live GlobeTrek PK database for specific tours, visas, insurance plans, or flight tickets matching destination keyword, price, or city.",
+            inputSchema: z.object({
+              query: z.string().describe("Destination or service keyword e.g. 'Thailand', 'Turkey', 'Dubai', 'Lahore', 'Schengen'"),
+              service_type: z.enum(["tours", "visa", "insurance", "tickets", "all"]).optional(),
+              max_price_pkr: z.number().optional(),
+            }),
+            execute: async ({ query, service_type = "all", max_price_pkr }) => {
+              try {
+                const searchStr = `%${query.trim().toLowerCase()}%`;
+                const results: string[] = [];
+
+                if (service_type === "all" || service_type === "tours") {
+                  let tourQuery = supabaseAdmin
+                    .from("tours")
+                    .select("id, title, destination_country, departure_city, duration_days, price_pkr, accommodation")
+                    .eq("is_active", true)
+                    .or(`title.ilike.${searchStr},destination_country.ilike.${searchStr},departure_city.ilike.${searchStr}`);
+
+                  if (max_price_pkr) {
+                    tourQuery = tourQuery.lte("price_pkr", max_price_pkr);
+                  }
+
+                  const { data: dbTours } = await tourQuery.limit(3);
+                  if (dbTours && dbTours.length > 0) {
+                    dbTours.forEach((t) => {
+                      const acc = (t.accommodation as Record<string, unknown> | null) || {};
+                      const formattedDate = formatDateReadable(typeof acc.departure_date === "string" ? acc.departure_date : null);
+                      const formattedDeadline = formatDateReadable(typeof acc.booking_deadline === "string" ? acc.booking_deadline : null);
+                      const dateStr = formattedDate ? ` · Departs: ${formattedDate}` : "";
+                      const deadlineStr = formattedDeadline ? ` · Booking Deadline: ${formattedDeadline}` : "";
+                      results.push(`- TOUR: ${t.title} (${t.duration_days}d) · from ${t.departure_city} · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")}${dateStr}${deadlineStr} · id=${t.id}`);
+                    });
+                  }
+                }
+
+                if (service_type === "all" || service_type === "visa") {
+                  const { data: dbVisas } = await supabaseAdmin
+                    .from("visa_services")
+                    .select("id, country, visa_type, price_pkr, service_fee_pkr, processing_days")
+                    .eq("is_active", true)
+                    .or(`country.ilike.${searchStr},visa_type.ilike.${searchStr}`)
+                    .limit(3);
+
+                  if (dbVisas && dbVisas.length > 0) {
+                    dbVisas.forEach((v) => {
+                      results.push(`- VISA SERVICE: ${v.country} ${v.visa_type} · Total ₨ ${(v.price_pkr + v.service_fee_pkr).toLocaleString("en-PK")} · ~${v.processing_days} days · id=${v.id}`);
+                    });
+                  }
+                }
+
+                if (results.length === 0) {
+                  return { success: false, message: `No active services found matching '${query}'.` };
+                }
+
+                return { success: true, count: results.length, matches: results.join("\n") };
+              } catch (err) {
+                console.error("[search_catalog tool error]:", err);
+                return { success: false, message: "Search query failed." };
+              }
+            },
+          }),
+
           capture_lead: tool({
             description: "Save a customer lead / inquiry after collecting customer name, phone, service_type, and service_id.",
             inputSchema: z.object({
