@@ -267,63 +267,77 @@ export function InteractiveTourMap({
     }
   }
 
+  const [isCardExpanded, setIsCardExpanded] = React.useState<boolean>(true);
+
   return (
     <div className="relative h-full w-full overflow-hidden rounded-2xl border border-border shadow-card bg-card">
       <div ref={mapContainerRef} className="h-full w-full z-0" />
 
       {/* Floating Active Tour Info Badge (Top Left) */}
       {activeDetails && (
-        <div className="absolute top-4 left-4 z-10 max-w-xs sm:max-w-sm rounded-xl border border-border/80 bg-background/95 p-3.5 shadow-2xl backdrop-blur-md">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-400">
-            <Plane className="h-3.5 w-3.5 animate-pulse text-emerald-400" />
-            <span>Interactive Route &amp; Flight Explorer</span>
-          </div>
-          <h3 className="mt-1 text-sm font-bold text-foreground line-clamp-1">
-            {activeDetails.tourTitle}
-          </h3>
-
-          <div className="mt-2 grid grid-cols-2 gap-2 text-[11px]">
-            <div className="rounded-lg border border-border/50 bg-surface-2/80 p-2">
-              <span className="text-muted-foreground block text-[10px] font-medium uppercase">
-                Departure
-              </span>
-              <span className="font-bold text-foreground">
-                🛫 {activeDetails.departureAirport.code} ({activeDetails.departureAirport.city})
+        <div className="absolute top-3 left-3 z-[400] max-w-xs sm:max-w-sm rounded-xl border border-border/80 bg-background/95 p-3 shadow-2xl backdrop-blur-md transition-all duration-300">
+          <div className="flex items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-400">
+            <div className="flex items-center gap-1.5 line-clamp-1">
+              <Plane className="h-3.5 w-3.5 shrink-0 animate-pulse text-emerald-400" />
+              <span className="text-[11px] font-bold text-foreground line-clamp-1">
+                {activeDetails.tourTitle}
               </span>
             </div>
-            <div className="rounded-lg border border-border/50 bg-surface-2/80 p-2">
-              <span className="text-muted-foreground block text-[10px] font-medium uppercase">
-                Landing Hub
-              </span>
-              <span className="font-bold text-foreground">
-                🛬 {activeDetails.landingAirport.code} ({activeDetails.landingAirport.city})
-              </span>
-            </div>
+            <button
+              onClick={() => setIsCardExpanded(!isCardExpanded)}
+              className="inline-flex items-center gap-1 rounded-md bg-surface/80 px-2 py-0.5 text-[10px] font-bold text-emerald-400 hover:bg-surface border border-emerald-500/30 shrink-0 cursor-pointer"
+              title={isCardExpanded ? "Minimize Card" : "Expand Flight Details"}
+            >
+              {isCardExpanded ? "Minimize ▲" : "Details ▼"}
+            </button>
           </div>
 
-          <div className="mt-2 flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1.5 text-xs text-emerald-400 font-semibold">
-            <span>{activeDetails.flightDurationText}</span>
-            <span className="text-[10px] opacity-80">{activeDetails.transitsText}</span>
-          </div>
-
-          {activeDetails.hops.length > 0 && (
-            <div className="mt-2 space-y-1.5 border-t border-border/50 pt-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
-                Itinerary Schedule &amp; Hops ({activeDetails.hops.length} Stops)
-              </span>
-              {activeDetails.hops.map((h) => (
-                <div
-                  key={h.step}
-                  className="flex items-center justify-between rounded-md bg-surface/80 px-2 py-1 text-[11px]"
-                >
-                  <span className="font-medium text-foreground">
-                    #{h.step} {h.city}, {h.country}
+          {isCardExpanded && (
+            <div className="mt-2.5 pt-2 border-t border-border/50 animate-in fade-in duration-200">
+              <div className="grid grid-cols-2 gap-2 text-[11px]">
+                <div className="rounded-lg border border-border/50 bg-surface-2/80 p-2">
+                  <span className="text-muted-foreground block text-[10px] font-medium uppercase">
+                    Departure
                   </span>
-                  <span className="text-[10px] text-emerald-400 font-bold">
-                    {h.startDate}
+                  <span className="font-bold text-foreground">
+                    🛫 {activeDetails.departureAirport.code} ({activeDetails.departureAirport.city})
                   </span>
                 </div>
-              ))}
+                <div className="rounded-lg border border-border/50 bg-surface-2/80 p-2">
+                  <span className="text-muted-foreground block text-[10px] font-medium uppercase">
+                    Landing Hub
+                  </span>
+                  <span className="font-bold text-foreground">
+                    🛬 {activeDetails.landingAirport.code} ({activeDetails.landingAirport.city})
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-2 flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1.5 text-xs text-emerald-400 font-semibold">
+                <span>{activeDetails.flightDurationText}</span>
+                <span className="text-[10px] opacity-80">{activeDetails.transitsText}</span>
+              </div>
+
+              {activeDetails.hops.length > 0 && (
+                <div className="mt-2 space-y-1.5 border-t border-border/50 pt-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+                    Itinerary Schedule &amp; Hops ({activeDetails.hops.length} Stops)
+                  </span>
+                  {activeDetails.hops.map((h) => (
+                    <div
+                      key={h.step}
+                      className="flex items-center justify-between rounded-md bg-surface/80 px-2 py-1 text-[11px]"
+                    >
+                      <span className="font-medium text-foreground">
+                        #{h.step} {h.city}, {h.country}
+                      </span>
+                      <span className="text-[10px] text-emerald-400 font-bold">
+                        {h.startDate}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
