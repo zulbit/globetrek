@@ -180,6 +180,7 @@ export const Route = createFileRoute("/api/ai-chat")({
           if (!Array.isArray(messages) || messages.length === 0) {
             return new Response("messages required", { status: 400 });
           }
+          const lastUserMsg = messages[messages.length - 1];
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -740,14 +741,18 @@ ${ticketsCatalogText}`;
         });
       } catch (globalErr: any) {
         console.error("[ai-chat global exception]:", globalErr);
-        const errMsg = globalErr?.message || String(globalErr);
-        return new Response(`DEBUG_GLOBAL_ERROR: ${errMsg}`, {
-          status: 200,
-          headers: {
-            "Content-Type": "text/plain; charset=utf-8",
-            "Cache-Control": "no-cache",
-          },
-        });
+        return new Response(
+          "Assalam-o-Alaikum! Welcome to GlobeTrek PK. 🙏\n\n" +
+          "Aap hum se Turkey, UAE, Malaysia tour packages, visa filing, insurance, ya flight tickets ke baray mein puch sakte hain.\n\n" +
+          "[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]",
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "text/plain; charset=utf-8",
+              "Cache-Control": "no-cache",
+            },
+          }
+        );
       }
     },
   },
