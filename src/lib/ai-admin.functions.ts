@@ -78,12 +78,12 @@ export const getAIConfigServer = createServerFn({ method: "GET" })
     try {
       const { data } = await supabaseAdmin
         .from("payment_gateway_settings")
-        .select("settings, updated_at")
+        .select("config, updated_at")
         .eq("provider", "openrouter_config")
         .maybeSingle();
 
-      if (data?.settings) {
-        const parsed = typeof data.settings === "string" ? JSON.parse(data.settings) : data.settings;
+      if (data?.config) {
+        const parsed = typeof data.config === "string" ? JSON.parse(data.config) : (data.config as any);
         const rawKey = parsed.custom_api_key || process.env.OPENROUTER_API_KEY || "";
         const masked = rawKey ? `${rawKey.slice(0, 8)}...${rawKey.slice(-4)}` : "Built-in Environment Key";
 
@@ -126,12 +126,15 @@ export const saveAIConfigServer = createServerFn({ method: "POST" })
       custom_api_key: custom_api_key?.trim() || undefined,
     };
 
-    const { error } = await supabaseAdmin.from("payment_gateway_settings").upsert({
-      provider: "openrouter_config",
-      is_enabled: true,
-      settings: JSON.stringify(payload),
-      updated_at: new Date().toISOString(),
-    });
+    const { error } = await supabaseAdmin.from("payment_gateway_settings").upsert(
+      {
+        provider: "openrouter_config",
+        enabled: true,
+        config: payload,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "provider" },
+    );
 
     if (error) {
       throw new Error(`Failed to save AI config: ${error.message}`);
