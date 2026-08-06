@@ -292,6 +292,24 @@ export function AIChatWidget() {
                       <div className="prose prose-sm prose-invert max-w-none prose-p:my-1.5 prose-ul:my-1.5 prose-li:my-0.5">
                         <ReactMarkdown
                           components={{
+                            a: ({ href, children }) => {
+                              const isExternal = href?.startsWith("http");
+                              return (
+                                <a
+                                  href={href}
+                                  target={isExternal ? "_blank" : "_self"}
+                                  rel={isExternal ? "noreferrer" : undefined}
+                                  onClick={() => {
+                                    if (!isExternal) {
+                                      setOpen(false);
+                                    }
+                                  }}
+                                  className="inline-flex items-center gap-1 font-semibold text-emerald-400 underline underline-offset-3 hover:text-emerald-300 transition-colors"
+                                >
+                                  {children}
+                                </a>
+                              );
+                            },
                             p: ({ children }) => <p className="my-1 leading-relaxed">{children}</p>,
                             strong: ({ children }) => {
                               const textContent = String(children).trim();
