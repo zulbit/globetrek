@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
-const STORAGE_KEY = "globetrek-ai-chat-v1";
+const STORAGE_KEY = "globetrek-ai-chat-v2";
 const CHIP_REGEX = /\[\[choose:\s*([^\]]+)\]\]/i;
 
 const GREETING: ChatMessage = {
