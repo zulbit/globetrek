@@ -527,9 +527,14 @@ ${ticketsCatalogText}`;
                     }
                   }
 
-                  // 3. Notify Vendor if they have a phone number registered
+                  // 3. Notify Vendor (Obfuscated contact details - vendor must log in to unlock)
                   if (vendorPhone) {
-                    const vendorMsg = `*New Customer Lead!* 🚀\n\nDear Partner,\n\nYou have received a new inquiry from the GlobeTrek AI Concierge.\n\n*Lead Summary:*\n👤 Traveler: ${customer_name}\n📞 Contact: ${customer_phone}\n💼 Service: ${finalServiceType.toUpperCase()}\n\nPlease reach out to the traveler immediately on WhatsApp or call to close the deal!\n\nBest,\n*GlobeTrek PK Team*`;
+                    const cleanPhone = customer_phone.replace(/\D/g, "");
+                    const maskedPhone = cleanPhone.length >= 8
+                      ? `${cleanPhone.slice(0, 4)}****${cleanPhone.slice(-2)}`
+                      : `${customer_phone.slice(0, 3)}****`;
+
+                    const vendorMsg = `*New Customer Lead Alert!* 🚀\n\nDear Partner,\n\nYou have received a new inquiry via GlobeTrek PK.\n\n*Inquiry Summary:*\n👤 Traveler: ${customer_name}\n📞 Phone: ${maskedPhone} (Protected)\n💼 Service: ${finalServiceType.toUpperCase()}\n\n🔒 *Contact info is protected.* Log in to your Vendor Portal to unlock full lead details:\n👉 https://tour.testbench.shop/vendor/leads\n\nBest,\n*GlobeTrek PK Team*`;
                     await dispatchWhatsAppDirect({
                       phone: vendorPhone,
                       message: vendorMsg,
