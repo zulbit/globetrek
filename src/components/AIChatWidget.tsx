@@ -138,11 +138,6 @@ export function AIChatWidget() {
   const location = useLocation();
   const pathname = location.pathname;
 
-  // Do not render the customer AI chat widget in vendor or admin dashboard routes
-  if (pathname.startsWith("/vendor") || pathname.startsWith("/admin")) {
-    return null;
-  }
-
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     try {
@@ -178,6 +173,11 @@ export function AIChatWidget() {
       }, 50);
     }
   }, [open, messages, sending]);
+
+  // Do not render the customer AI chat widget in vendor or admin dashboard routes
+  if (pathname.startsWith("/vendor") || pathname.startsWith("/admin")) {
+    return null;
+  }
 
   async function sendMessage(textToSend?: string) {
     const text = (textToSend ?? input).trim();
