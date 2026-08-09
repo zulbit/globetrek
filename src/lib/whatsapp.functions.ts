@@ -55,7 +55,7 @@ export const DEFAULT_GLOBETREK_TEMPLATES: Record<
     recipient: "Admin",
     image_url: null,
     vars: ["customer_name", "phone", "email", "departure_city", "destination", "travel_month", "duration_days", "group_size", "group_type"],
-    body: `*👑 Admin Alert: New Custom Tour Request!*\n\nA traveler has submitted a custom group tour request.\n\n*Request details:*\n👤 Name: {customer_name}\n📞 Phone: {phone}\n✉️ Email: {email}\n✈️ Trip: {departure_city} → {destination}\n📅 Travel Month: {travel_month} ({duration_days} Days)\n👨‍👩‍👧‍👦 Group: {group_size} ({group_type})\n\nView details and manage leads in the admin panel:\n👉 https://tour.testbench.shop/admin/custom-leads`,
+    body: `*👑 Admin Alert: New Custom Tour Request!*\n\nA traveler has submitted a custom group tour request.\n\n*Request details:*\n👤 Name: {customer_name}\n📞 Phone: {phone}\n✉️ Email: {email}\n✈️ Trip: {departure_city} → {destination}\n📅 Travel Month: {travel_month} ({duration_days} Days)\n👨‍👩‍👧‍👦 Group: {group_size} ({group_type})\n\nView details and manage leads in the admin panel:\n👉 https://globetrek.pk/admin/custom-leads`,
   },
   vendor_signup_submitted: {
     name: "Vendor Application Received (Vendor)",
@@ -87,7 +87,7 @@ export const DEFAULT_GLOBETREK_TEMPLATES: Record<
     recipient: "Admin",
     image_url: null,
     vars: ["vendor_name", "company_name", "email", "phone"],
-    body: `*👑 Admin Alert: New Vendor Application Submitted!*\n\nA new travel agency has registered for a vendor account.\n\n*Agency details:*\n🏢 Company: {company_name}\n👤 Contact: {vendor_name}\n📞 Phone: {phone}\n✉️ Email: {email}\n\nReview and approve vendor in admin dashboard:\n👉 https://tour.testbench.shop/admin/vendors`,
+    body: `*👑 Admin Alert: New Vendor Application Submitted!*\n\nA new travel agency has registered for a vendor account.\n\n*Agency details:*\n🏢 Company: {company_name}\n👤 Contact: {vendor_name}\n📞 Phone: {phone}\n✉️ Email: {email}\n\nReview and approve vendor in admin dashboard:\n👉 https://globetrek.pk/admin/vendors`,
   },
   tour_inquiry_submitted: {
     name: "Tour Inquiry Received (Traveler)",

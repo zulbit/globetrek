@@ -10,7 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Project Deployment & VPS Context
-- **Target Server**: `globetrek.testbench.shop` (and `tour.testbench.shop`)
+- **Target Server & Domain**: `globetrek.pk` (formerly `globetrek.testbench.shop` / `tour.testbench.shop`)
 - **SSH User**: `ubuntu`
 - **SSH Private Key Path (Local)**: `C:\Users\Zulqarnain\Downloads\ssh-key-2026-05-29.key`
 - **Live VPS Web Root / Project Path**: `/var/www/globetrek_te_usr/data/www/globetrek.testbench.shop/app`

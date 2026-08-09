@@ -118,7 +118,7 @@ export const Route = createFileRoute("/api/auth/register")({
             // Send Vendor Signup Admin Alert to Platform Admin
             dispatchWhatsAppDirect({
               phone: "+923490386131",
-              message: `*👑 Admin Alert: New Vendor Application!* 🏢\n\nA new travel agency has registered on GlobeTrek PK.\n\n*Agency Details:*\n🏢 Agency: ${company_name || "N/A"}\n👤 Contact Person: ${full_name || "N/A"}\n📞 WhatsApp: ${phone}\n✉️ Email: ${email}\n🎟️ Referral Code Used: ${referral_code || "None"}\n\nReview & approve agency KYC status in Admin Console:\n👉 https://tour.testbench.shop/admin/vendors`,
+              message: `*👑 Admin Alert: New Vendor Application!* 🏢\n\nA new travel agency has registered on GlobeTrek PK.\n\n*Agency Details:*\n🏢 Agency: ${company_name || "N/A"}\n👤 Contact Person: ${full_name || "N/A"}\n📞 WhatsApp: ${phone}\n✉️ Email: ${email}\n🎟️ Referral Code Used: ${referral_code || "None"}\n\nReview & approve agency KYC status in Admin Console:\n👉 https://globetrek.pk/admin/vendors`,
               skipDeduplication: true,
             }).catch((err) => console.warn("[WhatsApp] Failed vendor admin alert notification:", err));
           }

@@ -458,7 +458,7 @@ export const submitLeadQuote = createServerFn({ method: "POST" })
 
       if (lead) {
         const { sendWhatsAppMessage } = await import("@/lib/whatsapp.functions");
-        const quoteUrl = `https://tour.testbench.shop/customer/quotes?token=${lead.access_token}`;
+        const quoteUrl = `https://globetrek.pk/customer/quotes?token=${lead.access_token}`;
         const msg = `*GlobeTrek PK — New Quote Received!* ✈️\n\nDear *${lead.contact_name}*,\n\nA verified vendor has submitted a proposal of *Rs ${data.quoteAmount.toLocaleString()}* for your custom tour to *${lead.destination}*.\n\nReview & compare your quotes online here:\n${quoteUrl}`;
         await sendWhatsAppMessage({
           data: { phone: lead.contact_phone, message: msg, skipDeduplication: true }
