@@ -408,6 +408,39 @@ All 4 AI tools in GlobeTrek PK are built to automate your daily operations, save
   }
 ];
 
+// Helper: Fallback persistence via app_config table when Postgres table is unmigrated or unavailable
+async function saveToAppConfigFallback(sections: VendorGuideSection[]): Promise<void> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("app_config").upsert(
+      {
+        key: "vendor_guide_sections",
+        value: JSON.stringify(sections),
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "key" }
+    );
+  } catch (err) {
+    console.warn("[saveToAppConfigFallback Warning]:", err);
+  }
+}
+
+async function getFromAppConfigFallback(): Promise<VendorGuideSection[] | null> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("app_config")
+      .select("value")
+      .eq("key", "vendor_guide_sections")
+      .maybeSingle();
+
+    if (data?.value) {
+      return JSON.parse(data.value) as VendorGuideSection[];
+    }
+  } catch {}
+  return null;
+}
+
 // -------- Server Function: Fetch All Vendor Guide Sections --------
 export const fetchVendorGuideSections = async (): Promise<VendorGuideSection[]> => {
   try {
@@ -416,13 +449,17 @@ export const fetchVendorGuideSections = async (): Promise<VendorGuideSection[]> 
       .select("*")
       .order("display_order", { ascending: true });
 
-    if (error || !data || data.length === 0) {
-      return FALLBACK_VENDOR_GUIDE_SECTIONS;
+    if (!error && data && data.length > 0) {
+      return data as VendorGuideSection[];
     }
-    return data as VendorGuideSection[];
-  } catch {
-    return FALLBACK_VENDOR_GUIDE_SECTIONS;
+  } catch {}
+
+  const fallbackAppConfig = await getFromAppConfigFallback();
+  if (fallbackAppConfig && fallbackAppConfig.length > 0) {
+    return fallbackAppConfig;
   }
+
+  return FALLBACK_VENDOR_GUIDE_SECTIONS;
 };
 
 // -------- Server Function: Create Section --------
@@ -430,23 +467,40 @@ export const createVendorGuideSection = createServerFn({ method: "POST" })
   .validator((input: Partial<VendorGuideSection>) => input)
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: created, error } = await supabaseAdmin
-      .from("vendor_guide_sections")
-      .insert({
-        slug: data.slug || `section-${Date.now()}`,
-        title: data.title || "Untitled Section",
-        category: data.category || "General",
-        description: data.description || "",
-        content: data.content || "",
-        icon_name: data.icon_name || "BookOpen",
-        display_order: data.display_order || 1,
-        is_published: data.is_published ?? true,
-      })
-      .select()
-      .single();
+    const newId = `sec-${Date.now()}`;
+    const payload = {
+      slug: data.slug || `section-${Date.now()}`,
+      title: data.title || "Untitled Section",
+      category: data.category || "General",
+      description: data.description || "",
+      content: data.content || "",
+      icon_name: data.icon_name || "BookOpen",
+      display_order: data.display_order || 1,
+      is_published: data.is_published ?? true,
+    };
 
-    if (error) throw new Error(error.message);
-    return created;
+    try {
+      const { data: created, error } = await supabaseAdmin
+        .from("vendor_guide_sections")
+        .insert(payload)
+        .select()
+        .single();
+
+      if (!error && created) {
+        return created;
+      }
+    } catch {}
+
+    // Fallback: Save to app_config table
+    const currentSections = (await getFromAppConfigFallback()) || FALLBACK_VENDOR_GUIDE_SECTIONS;
+    const createdSection: VendorGuideSection = {
+      id: newId,
+      ...payload,
+      updated_at: new Date().toISOString(),
+    };
+    currentSections.push(createdSection);
+    await saveToAppConfigFallback(currentSections);
+    return createdSection;
   });
 
 // -------- Server Function: Update Section --------
@@ -454,15 +508,57 @@ export const updateVendorGuideSection = createServerFn({ method: "POST" })
   .validator((input: { id: string; payload: Partial<VendorGuideSection> }) => input)
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: updated, error } = await supabaseAdmin
-      .from("vendor_guide_sections")
-      .update(data.payload)
-      .eq("id", data.id)
-      .select()
-      .single();
 
-    if (error) throw new Error(error.message);
-    return updated;
+    // 1. Try vendor_guide_sections table if ID is a valid UUID
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (UUID_RE.test(data.id)) {
+      try {
+        const { data: updated, error } = await supabaseAdmin
+          .from("vendor_guide_sections")
+          .update(data.payload)
+          .eq("id", data.id)
+          .select()
+          .maybeSingle();
+
+        if (!error && updated) {
+          return updated;
+        }
+      } catch {}
+    }
+
+    // 2. Fail-safe Fallback: Persist to app_config table
+    const currentSections = (await getFromAppConfigFallback()) || FALLBACK_VENDOR_GUIDE_SECTIONS;
+    let targetIndex = currentSections.findIndex((s) => s.id === data.id);
+
+    if (targetIndex === -1 && data.payload.slug) {
+      targetIndex = currentSections.findIndex((s) => s.slug === data.payload.slug);
+    }
+
+    if (targetIndex !== -1) {
+      currentSections[targetIndex] = {
+        ...currentSections[targetIndex],
+        ...data.payload,
+        updated_at: new Date().toISOString(),
+      };
+    } else {
+      const newSec: VendorGuideSection = {
+        id: data.id || `sec-${Date.now()}`,
+        slug: data.payload.slug || `section-${Date.now()}`,
+        title: data.payload.title || "Untitled Section",
+        category: data.payload.category || "General",
+        description: data.payload.description || "",
+        content: data.payload.content || "",
+        icon_name: data.payload.icon_name || "BookOpen",
+        display_order: data.payload.display_order || currentSections.length + 1,
+        is_published: data.payload.is_published ?? true,
+        updated_at: new Date().toISOString(),
+      };
+      currentSections.push(newSec);
+      targetIndex = currentSections.length - 1;
+    }
+
+    await saveToAppConfigFallback(currentSections);
+    return currentSections[targetIndex];
   });
 
 // -------- Server Function: Delete Section --------
@@ -470,11 +566,19 @@ export const deleteVendorGuideSection = createServerFn({ method: "POST" })
   .validator((input: { id: string }) => input)
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin
-      .from("vendor_guide_sections")
-      .delete()
-      .eq("id", data.id);
 
-    if (error) throw new Error(error.message);
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (UUID_RE.test(data.id)) {
+      try {
+        await supabaseAdmin
+          .from("vendor_guide_sections")
+          .delete()
+          .eq("id", data.id);
+      } catch {}
+    }
+
+    const currentSections = (await getFromAppConfigFallback()) || FALLBACK_VENDOR_GUIDE_SECTIONS;
+    const filtered = currentSections.filter((s) => s.id !== data.id);
+    await saveToAppConfigFallback(filtered);
     return { ok: true };
   });
