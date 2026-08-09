@@ -117,13 +117,75 @@ To maintain marketplace trust, every vendor undergoes mandatory identity and lic
 2. Upon approval, your **Vendor Operating Console** is unlocked, allowing you to list packages, receive direct customer leads, and bid on high-value Custom Tour requests.`
   },
   {
+    id: "fallback-6",
+    slug: "ai-tools-itinerary-generator",
+    title: "GlobeTrek AI Engine — All 4 Tools Explained",
+    category: "AI Tools & Automation",
+    description: "Complete guide to the GlobeTrek AI Engine: Bilingual Concierge (English & Roman Urdu), Premium AI Trip Planner, AI Embassy Fee Lookup, and the AI Partner Operational Assistant — with tier gates, monthly quotas, and step-by-step vendor workflows.",
+    icon_name: "Sparkles",
+    display_order: 3,
+    is_published: true,
+    content: `# GlobeTrek AI Engine — Complete AI Features Guide
+
+GlobeTrek PK embeds a suite of **four production-ready AI tools** powered by OpenRouter (GPT-4o-mini via \`@ai-sdk/openai-compatible\`). Each tool is purpose-built for a different stage of the travel workflow — from real-time customer chat to automated package writing to vendor operational support.
+
+---
+
+## Tool 1 — Bilingual AI Travel Concierge (Customer-Facing)
+
+**Location:** Floating chat widget on every public page | **Tier:** Available to all visitors — no login required.
+
+The AI Travel Concierge greets visitors, answers destination and package questions in English or Roman Urdu, and captures high-intent customer leads.
+
+### Capabilities:
+- **Bilingual Conversations:** Responds fluently in the visitor's preferred language.
+- **Catalog-Grounded Answers:** Answers queries using live listings from the GlobeTrek database.
+- **Interactive Choice Chips:** Renders tap-to-select pills (\`[[choose: 🇦🇪 Dubai \| 🇹🇷 Turkey]]\`) for quick navigation.
+- **Lead Capture Integration:** Asks for customer name and WhatsApp number when booking intent is expressed, firing the \`capture_lead\` tool to store the lead and alert vendors via WhatsApp.
+
+---
+
+## Tool 2 — Premium AI Trip Planner (Vendor Console)
+
+**Location:** Vendor Console → Tours Catalog → **"Generate with AI"** | **Tier:** Starter & Pro Tier vendors.
+
+The AI Trip Planner creates complete, day-by-day tour itineraries in under 10 seconds.
+
+### Inputs Required:
+- Destination Country & Departure City
+- Duration in Days & Target PKR Budget
+- Travel Style (Family, Honeymoon, Luxury, Budget)
+
+### Outputs Generated:
+- **Day-by-Day Itinerary** with morning/afternoon/evening activities
+- **Inclusions & Exclusions** checklist
+- **Hotel & Transport Recommendations**
+- **Recommended PKR Price Range**
+
+---
+
+## Tool 3 — AI Embassy Fee Lookup (Visa Dashboard)
+
+**Location:** Vendor Console → Visa Services → Create/Edit Visa Service → **"AI Fee Lookup"** | **Tier:** Pro & Agency only.
+
+Provides instant estimates of embassy fees in PKR and source currency for Schengen, UK, USA, Turkey, and Gulf visas.
+
+---
+
+## Tool 4 — AI Partner Operational Assistant (Vendor Guide)
+
+**Location:** Vendor Guide page (\`/vendor-guide\`) — embedded assistant panel | **Tier:** Free for all partners.
+
+Answers partner operational queries regarding DTS license verification, lead bidding caps, SafePay payouts, and subscription plans.`
+  },
+  {
     id: "fallback-2",
     slug: "marketplace-custom-lead-bidding",
     title: "Custom Tour Requests & Lead Bidding System",
     category: "Lead Generation",
     description: "How custom group tour leads work, Max 3 vendor unlock limits, online proposal submission, and automated WhatsApp alerts.",
     icon_name: "Compass",
-    display_order: 2,
+    display_order: 4,
     is_published: true,
     content: `# Custom Tour Requests & Lead Bidding System
 
@@ -251,160 +313,6 @@ Upon passing KYC document audit (DTS License + NTN Tax ID), your agency automati
 1. 🛡️ **"Verified Partner" Badge**: Displayed on all tour packages, visa services, and custom lead quotations to prove government registration.
 2. 🥇 **"Gold Tier Vendor" Badge**: Awarded to **Pro** and **Agency** subscription plans maintaining a 4.5+ star rating, granting priority placement in universal search.
 3. ⚡ **"Fast Responder" Badge**: Automatically earned by partner agencies maintaining an average quote submission time under **6 hours**.`
-  },
-  {
-    id: "fallback-6",
-    slug: "ai-tools-itinerary-generator",
-    title: "GlobeTrek AI Engine — All 4 Tools Explained",
-    category: "AI Tools & Automation",
-    description: "Complete guide to the GlobeTrek AI Engine: Bilingual Concierge (English & Roman Urdu), Premium AI Trip Planner, AI Embassy Fee Lookup, and the AI Partner Operational Assistant — with tier gates, monthly quotas, and step-by-step usage.",
-    icon_name: "Sparkles",
-    display_order: 6,
-    is_published: true,
-    content: `# GlobeTrek AI Engine — Complete AI Features Guide
-
-GlobeTrek PK embeds a suite of **four production-ready AI tools** powered by OpenRouter (GPT-4o-mini via \`@ai-sdk/openai-compatible\`). Each tool is purpose-built for a different stage of the travel workflow — from real-time customer chat to automated package writing to vendor operational support.
-
----
-
-## Tool 1 — Bilingual AI Travel Concierge (Customer-Facing)
-
-**Location:** Floating chat widget on every public page | **Tier:** Available to all visitors — no login required.
-
-The AI Concierge is the primary customer-facing intelligence layer. It answers traveler inquiries in real time across all four service verticals.
-
-### Key Capabilities:
-- **Full bilingual support — English & Roman Urdu**: The concierge detects the traveler's language automatically and responds in the same language. A traveler typing *"Turkey ka 7 din ka tour kitne ka hai?"* receives a complete reply in warm Roman Urdu with flags, pricing in ₨, and a booking prompt. A traveler typing in English receives a structured English reply.
-- **Live catalog grounding**: Every response is grounded in the live Supabase database — tours, visa services, insurance plans, and flight desks. It never fabricates packages.
-- **Real-time enquiry capture (Lead Generation)**: When a traveler expresses interest and provides their name and phone number, the Concierge automatically calls the \`capture_lead\` tool to write a database record — which triggers an instant WhatsApp notification to your agency.
-- **Smart contextual chips**: Guides travelers through the funnel with context-aware quick-reply chips (e.g., *📝 Book / Inquire Now | ℹ️ Full Itinerary | 🌴 View Other Packages*).
-
-### Roman Urdu Interaction Example:
-> **Traveler:** *"Dubai ka 4 din ka package Karachi se chahiye, price bhi batao"*
->
-> **AI:** *"🇦🇪 Dubai City Break — Karachi se!*
-> *Gulf Wings Travel ka 4-Din Dubai Package aapke liye bilkul fit hai!*
-> *₨ **1,65,000** mein aapko milega: Burj Khalifa At The Top, Desert Safari with dune bashing, aur Old Dubai Souks.*
-> *Apna Naam aur Mobile Number type karein taake hum aapki inquiry process kar sakein! 📞"*
-
-### How Your Agency Benefits:
-1. Traveler asks about a tour you list → Concierge recommends it with your price.
-2. Traveler shares their phone number → Lead is instantly written to your dashboard inbox.
-3. You receive a WhatsApp alert → Call the traveler within minutes.
-
----
-
-## Tool 2 — Premium AI Trip Planner (Vendor Dashboard)
-
-**Location:** Vendor Console → Tour Management → Edit/Create Tour → **"✨ AI"** button | **Tier:** Starter (descriptions only) · Pro & Agency (full itinerary plans).
-
-The AI Trip Planner runs directly inside the tour creation/edit workflow. It eliminates hours of manual writing for every package.
-
-### Two Generation Modes:
-
-#### Mode A — AI Description Generator *(Starter Plan: 10/month | Pro/Agency: Unlimited)*
-- Generates a **55–75 word marketing-optimized package summary** in plain text — punchy, highlight-focused, and tailored to Pakistani travelers.
-- Automatically factors in destination, departure city, duration, and price.
-- **How to use:**
-  1. Open any tour in your Vendor Console.
-  2. Fill in Destination, Departure City, Duration, and Price fields.
-  3. Click the **✨ Sparkles icon** next to the Description field.
-  4. AI generates the description in 3–5 seconds. Review and save.
-
-#### Mode B — Full AI Itinerary & Day Plan *(Pro Plan: 50/month | Agency: Unlimited)*
-- Generates a **complete day-by-day itinerary** including:
-  - An evocative title for each day (e.g., *"Day 1: Istanbul Arrival & Bosphorus Sunset Cruise"*)
-  - 1–2 sentences of narrative detail per day
-  - Timed activity slots (e.g., \`09:00 — Airport pickup & hotel check-in\`)
-  - Departure from your city on Day 1 and return on the final day
-  - For Europe destinations: automatically designs multi-country itineraries with border crossing/train details
-- **How to use:**
-  1. Open any tour in your Vendor Console.
-  2. Fill in all tour fields (destination, departure city, duration).
-  3. Switch the AI mode toggle to **"Full Trip Plan"**.
-  4. Click **"Generate AI Plan"** — plan appears in 5–8 seconds.
-  5. Review each day card, edit any day manually if needed, then save.
-
-### 30-Day Rolling Quota System:
-
-| Plan | AI Descriptions | Full AI Trip Plans |
-|:---|:---|:---|
-| **Starter** | 10 / 30-days | ❌ Not included |
-| **Pro** | Unlimited | 50 / 30-days |
-| **Agency** | Unlimited | Unlimited |
-
-> **Fair Billing Guarantee**: Quotas run on a **30-day rolling billing cycle** based on your subscription or registration date. If your agency registers or upgrades on the 25th of the month, your full quota is available immediately and resets on the 25th of every month — ensuring you never lose days regardless of when you join!
-
----
-
-## Tool 3 — AI Embassy Fee Lookup (Visa Dashboard)
-
-**Location:** Vendor Console → Visa Services → Create/Edit Visa Service → **"AI Fee Lookup"** | **Tier:** Pro & Agency only.
-
-The AI Embassy Fee Lookup saves visa consultants hours of research. Instead of manually checking VFS/TLS portals and embassy websites, you get an AI-powered estimate in seconds.
-
-### What It Returns:
-- **Fee in PKR** (converted from USD/EUR/GBP at current typical rates — approx. PKR 280/USD, PKR 300/EUR)
-- **Original fee in source currency** (e.g., *USD 185, EUR 90, GBP 127*)
-- **Source note** — names the fee schedule source (e.g., *"Turkish e-Visa portal, VFS Global Schengen fee schedule for Pakistan applicants"*)
-- **Confidence level** — low / medium / high based on how recent the AI's training data is for that embassy
-- **Last known update period** (e.g., *"2024 Q2"*)
-- **Mandatory disclaimer** reminding you to verify with the embassy before quoting the client
-
-### How to Use:
-1. Go to **Vendor Console → Visa Services**.
-2. Click **Add New** or **Edit** an existing service.
-3. Select the destination country and visa type.
-4. Click **"🤖 AI Fee Lookup"**.
-5. Review the result, cross-check with the embassy, then enter your final service fee.
-
-> ⚠️ **Important:** The AI fee is an estimate based on last-known public data. Embassy fees change without notice. Always verify with the official embassy or VFS/TLS centre before quoting a client.
-
----
-
-## Tool 4 — AI Partner Operational Assistant (Vendor Guide)
-
-**Location:** Vendor Guide page (\`/vendor-guide\`) — the purple chat panel at the top of the content area | **Tier:** Available to all partners — no login required.
-
-The AI Partner Assistant is your always-on operational support agent. It knows the complete GlobeTrek PK rulebook and can answer any question about running your partner account.
-
-### Knows and Can Answer:
-- **KYC & onboarding:** Document requirements, verification timelines, DTS license queries
-- **Custom lead system:** Max 3 unlock cap rules, unlock fee process, quotation deadlines
-- **SafePay & billing:** Payment flow, receipt delivery, payout timelines, subscription tiers
-- **AI tools:** How to use the trip planner, visa lookup, and quotas
-- **Marketplace rules:** Quality standards, hotel rating policies, WhatsApp lead contact rules
-
-### Bilingual Support:
-Like the customer concierge, the Partner Assistant responds in the same language you ask in.
-
-- *"KYC ke liye konse documents chahiye?"* → Roman Urdu structured response
-- *"How does the Max 3 unlock cap work?"* → English structured response
-- *"SafePay payment lead unlock mein kitna time lagta hai?"* → Roman Urdu response
-
-### Quick Prompt Examples:
-- *"What documents are required for vendor KYC verification?"*
-- *"How does the Max 3 lead unlock cap work?"*
-- *"SafePay payment lead unlock procedure kitna time leta hai?"*
-- *"How can I generate AI itineraries for my tour packages?"*
-- *"Pro plan mein kitne AI itinerary plans milte hain per month?"*
-- *"AI embassy fee lookup kaise use karte hain visa services mein?"*
-
----
-
-## How GlobeTrek AI Empowers Your Travel Agency 🚀
-
-All 4 AI tools in GlobeTrek PK are built to automate your daily operations, save hours of manual work, and increase customer bookings:
-
-| Business Feature | How It Helps Your Agency |
-|---|---|
-| 🧠 **Powered by Premium AI Models** | Powered by state-of-the-art AI models (DeepSeek V4 Flash & GPT-4o) for maximum speed, high accuracy, and natural Roman Urdu & English conversations. |
-| 🤖 **24/7 Virtual Concierge** | Greet travelers instantly, answer trip questions, and capture verified WhatsApp lead contacts even while you sleep. |
-| 🗺️ **Instant Itinerary Builder** | Create day-wise tour plans for northern areas, Umrah, or international trips in 10 seconds to attach to your package listings. |
-| 🛂 **Real-Time Embassy Fee Lookup** | Instant PKR fee estimates for Schengen, UK, USA, Turkey, and Gulf visas without manual web research. |
-| 🛡️ **Bank-Grade Security & Privacy** | Your vendor account details, custom lead bids, and client phone numbers are encrypted and protected at all times. |
-| 📊 **Easy Quota Tracking** | Easily view your remaining AI itinerary generations and visa lookups per month right from your Vendor Console. |
-`
   }
 ];
 

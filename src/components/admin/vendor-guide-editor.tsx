@@ -78,7 +78,7 @@ export function AdminVendorGuideEditor() {
   // Save mutation
   const saveMutation = useMutation({
     mutationFn: async (payload: Partial<VendorGuideSection>) => {
-      if (payload.id && !payload.id.startsWith("fallback-")) {
+      if (payload.id) {
         return await updateVendorGuideSection({ data: { id: payload.id, payload } });
       } else {
         return await createVendorGuideSection({
@@ -109,10 +109,6 @@ export function AdminVendorGuideEditor() {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      if (id.startsWith("fallback-")) {
-        toast.info("Cannot delete built-in template section.");
-        return;
-      }
       return await deleteVendorGuideSection({ data: { id } });
     },
     onSuccess: () => {
