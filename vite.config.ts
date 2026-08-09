@@ -21,4 +21,11 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    define: {
+      "process.env.DEEPSEEK_API_KEY": JSON.stringify(
+        process.env.DEEPSEEK_API_KEY || "sk-63b81cc565044a77a4672887143e9ef4",
+      ),
+    },
+  },
 });

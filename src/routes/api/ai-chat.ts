@@ -310,6 +310,36 @@ export const Route = createFileRoute("/api/ai-chat")({
           }
         } catch (error) {
           console.error("[AI Catalog Load Error]:", error);
+        }        // Pre-Retrieval Grounding (RAG): Search database for user's explicit query BEFORE invoking LLM
+        const lastUserPrompt = (messages[messages.length - 1]?.content || "").trim();
+        const isRomanUrdu = /\b(batao|bataen|chahiye|hain|hai|karo|apna|chahta|shukriya|shamil|kardein|pasand|din|kahan|kaise|mujhe|humare|koi|aur)\b/i.test(lastUserPrompt);
+        const detectedLanguage = isRomanUrdu ? "Roman Urdu" : "English";
+
+        let preSearchQuery = "";
+        let preSearchResults: string[] = [];
+
+        // Match 2+ letter words so 2-letter countries ("UK", "US", "EU", "PK") are captured
+        const locWords = lastUserPrompt.match(/\b[A-Za-z]{2,}\b/g) || [];
+        const ignoreWords = new Set(["you", "have", "any", "listing", "tour", "tours", "package", "packages", "trip", "trips", "from", "with", "about", "show", "tell", "what", "there", "here", "want", "like", "need", "book", "good", "best", "some", "details", "please", "the", "for", "and", "are", "near", "future"]);
+        const targetKeywords = locWords.filter((w) => !ignoreWords.has(w.toLowerCase()));
+
+        if (targetKeywords.length > 0) {
+          preSearchQuery = targetKeywords.join(" ");
+          const matchedTours = catalogList.filter((t) => {
+            const text = `${t.title} ${t.destination_country} ${t.departure_city} ${t.description}`.toLowerCase();
+            return targetKeywords.some((kw) => text.includes(kw.toLowerCase()));
+          });
+
+          if (matchedTours.length > 0) {
+            preSearchResults = matchedTours.slice(0, 3).map((t) => {
+              const item = t as any;
+              const formattedDate = formatDateReadable(item.departure_date);
+              const formattedDeadline = formatDateReadable(item.booking_deadline);
+              const dateStr = formattedDate ? ` · Departs: ${formattedDate}` : "";
+              const deadlineStr = formattedDeadline ? ` · Booking Deadline: ${formattedDeadline}` : "";
+              return `- MATCHED TOUR: ${t.title} (${t.duration_days}d) · from ${t.departure_city} · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")}${dateStr}${deadlineStr} · id=${t.id}`;
+            });
+          }
         }
 
         const catalogText = catalogList
@@ -344,8 +374,15 @@ export const Route = createFileRoute("/api/ai-chat")({
 
         const { openRouterModel } = await import("@/integrations/openrouter/openrouter.server");
 
-        const systemPrompt = `You are the GlobeTrek PK travel concierge (bilingual English & Roman Urdu).
+        const systemPrompt = `You are the GlobeTrek PK travel concierge.
 GlobeTrek PK is a travel marketplace in Pakistan for fixed tours, custom exclusive group tours, visa filing, travel insurance, and flight tickets.
+
+DETECTED TRAVELER LANGUAGE: ${detectedLanguage.toUpperCase()}
+YOU MUST RESPOND EXCLUSIVELY IN ${detectedLanguage.toUpperCase()}!
+${detectedLanguage === "English" ? "NEVER use Roman Urdu words like 'Humare', 'Aap', 'karta hai', 'hai', 'chahte'. Use 100% natural, professional English!" : "Use warm, professional Roman Urdu."}
+
+USER QUERY PRE-RETRIEVAL SEARCH RESULTS (for "${preSearchQuery || "general query"}"):
+${preSearchResults.length > 0 ? preSearchResults.join("\n") : `0 direct matches found in database for "${preSearchQuery || "query"}".`}
 
 Active Vendor Visa Services in DB: ${activeVisaCountries.length > 0 ? activeVisaCountries.join(", ") : "None"}.
 
@@ -372,6 +409,15 @@ Rules:
        - "Aap humara **'Plan an Exclusive Tour for Family & Friends'** section Homepage par (ya top navigation bar mein) dekh sakte hain."
     3. Direct them to click the link to open the form directly:
        - "Aap abhi **[🌴 Build Your Custom Tour](/custom-tour)** par click karke 30 seconds mein apna custom itinerary build karein aur Pakistan ke top travel experts se direct quotes haasil karein! ✨"
+- LARGE CATALOG & SYSTEMATIC GUIDANCE RULE:
+  * GlobeTrek PK has over 100+ verified tour packages and travel services!
+  * When a traveler asks a broad/general question (e.g. "Tour Packages", "Show tours", "What trips do you have?"):
+    1. Acknowledge our large catalog first: "Humare paas 100+ verified tour packages (Domestic & International) available hain!"
+    2. Show ONLY 2 to 3 featured highlights max. Include duration, price, departure city, departure date, AND booking deadline.
+    3. Systematically ask 1-2 guiding questions to narrow down their preference:
+       "Aap kis country/destination (e.g. 🇹🇷 Turkey, 🇦🇪 Dubai, 🇪🇺 Europe, 🇵🇰 Northern PK), kitne budget, ya kitne dinon ke plan mein interested hain?"
+    4. Provide clean clickable category selection chips:
+       [[choose: 🇦🇪 UAE / Dubai | 🇹🇷 Turkey | 🇪🇺 Europe | 🇵🇰 Northern PK | 🌴 Build Custom Tour]]
 - Show 2-3 relevant packages max per response. Include duration, price, departure city, departure date, AND booking deadline.
 - MANDATORY CLICKABLE SELECTION CHIPS TAG RULE:
   * Whenever you present packages, destinations, or ask which package the user prefers, ALWAYS append a selection chip tag at the very bottom of your message!
@@ -395,10 +441,20 @@ Rules:
   * NEVER pass Vendor B's service_id if the traveler selected Vendor A's tour!
 - DATE FORMATTING RULE: ALWAYS display all travel dates, departure dates, and booking deadlines in human-readable format like "07 Sept 2026" or "15 Oct 2026" (DD MMM YYYY). NEVER output raw ISO dates like "2026-09-07"!
 - NEVER print internal database UUIDs (e.g. id=e72bebf... or 🆔 e72bebf...) in your chat messages! IDs in the catalog are strictly for internal tool calls (capture_lead).
-- CRITICAL DB GROUNDING RULE FOR VISAS:
-  * If user asks for a visa service for a country NOT in the active database list above (e.g. Schengen, UK, USA, Canada, Australia):
-    YOU MUST IMMEDIATELY AND DIRECTLY DISCLOSE: "❌ Currently, no vendor on GlobeTrek PK is offering a [Country] visa filing service."
-    Do NOT output placeholder sentences like "Let me fetch information for you..." or pretend a service exists!
+- STRICT LANGUAGE MIRRORING RULE (CRITICAL):
+  * You MUST dynamically match the user's language EXACTLY!
+  * If the user asks in ENGLISH (e.g. "Any tours for UK in near future?", "Do you have trips from Sialkot?"), YOU MUST RESPOND IN 100% FLUENT, NATURAL ENGLISH!
+  * NEVER reply in Roman Urdu when a traveler speaks to you in English!
+  * Reply in Roman Urdu ONLY when the user explicitly speaks to you in Roman Urdu (e.g. "UK ke koi tours hain?").
+- SILENT TOOL CALL & NO PREAMBLE RULE:
+  * DO NOT output pre-tool filler statements like "Let me check our database..." or "Searching listings...".
+  * Execute all database tools SILENTLY so that your response text is ALWAYS the complete, evaluated final answer!
+- NO FALLBACK HALLUCINATIONS & HONEST NO-MATCH RULE:
+  * If a user asks for a city, country, or departure location (e.g. UK, Sialkot, Multan, Peshawar, Italy) that has 0 matching fixed listings in our database:
+    1. State honestly in the user's language: "We don't currently have active fixed tour packages for [Country/City]."
+    2. Suggest nearest major hubs or related services (e.g. UK Visa Filing Services, Grand Europe Tour, Lahore/Islamabad departure hubs).
+    3. Invite custom tour creation: "You can also click **[🌴 Build Your Custom Tour](/custom-tour)** to request a private trip!"
+    4. Provide clickable selection chips in user's language!
     State straight away that no vendor is currently offering that visa service on GlobeTrek PK, and list the active ones (${activeVisaCountries.join(", ") || "None"}).
 
 Catalog:
@@ -466,10 +522,10 @@ ${ticketsCatalogText}`;
                 }
 
                 if (results.length === 0) {
-                  return { success: false, message: `No active services found matching '${query}'.` };
+                  return `NO MATCHES FOUND FOR '${query}'. You MUST now reply directly to the traveler in their exact language (100% fluent English if they asked in English, Roman Urdu if asked in Roman Urdu) explaining that we currently do not have fixed packages for '${query}', but they can check related services or click [🌴 Build Your Custom Tour](/custom-tour).`;
                 }
 
-                return { success: true, count: results.length, matches: results.join("\n") };
+                return results.join("\n");
               } catch (err) {
                 console.error("[search_catalog tool error]:", err);
                 return { success: false, message: "Search query failed." };
@@ -756,7 +812,7 @@ ${ticketsCatalogText}`;
         };
 
         // Fetch configured max_tokens cap and active AI model dynamically from DB
-        let activeMaxTokens = 250;
+        let activeMaxTokens = 800;
         let activeModel = "deepseek-v4-flash";
         let customApiKey: string | undefined = undefined;
 
@@ -770,7 +826,8 @@ ${ticketsCatalogText}`;
           if (aiSetting?.config) {
             const parsed = typeof aiSetting.config === "string" ? JSON.parse(aiSetting.config) : (aiSetting.config as any);
             if (parsed.max_tokens) {
-              activeMaxTokens = Number(parsed.max_tokens);
+              // Ensure chat completion token limit is at least 800 so responses are never truncated mid-sentence
+              activeMaxTokens = Math.max(Number(parsed.max_tokens), 800);
             }
             if (parsed.active_model) {
               activeModel = String(parsed.active_model);
@@ -844,13 +901,36 @@ ${ticketsCatalogText}`;
           } catch (e) {
             console.warn("[ai-chat logging warning]:", e);
           }
-          // Collect text from all steps — result.text may be empty if the model
-          // only made tool calls in the final step, so we also check each step.
+          // Collect text from steps — prefer final step text (after tool resolution)
+          // over pre-tool filler statements like "Let me check..."
+          let finalAnswer = "";
+
+          if (result.steps && result.steps.length > 0) {
+            for (let i = result.steps.length - 1; i >= 0; i--) {
+              const step = result.steps[i];
+              if (step.text && step.text.trim().length > 0) {
+                if (!step.toolCalls || step.toolCalls.length === 0) {
+                  finalAnswer = step.text.trim();
+                  break;
+                }
+                if (!finalAnswer) {
+                  finalAnswer = step.text.trim();
+                }
+              }
+            }
+          }
+
           const allStepsText = result.steps
             .map((s) => s.text)
             .filter(Boolean)
             .join("\n\n");
-          fullText = result.text?.trim() ? result.text : allStepsText;
+
+          fullText = finalAnswer || result.text?.trim() || allStepsText;
+
+          // Clean out pre-tool preamble sentences without mangling subsequent output
+          fullText = fullText
+            .replace(/^\s*(let me (check|search|look)|checking live database|searching database)[^.\n]*[.!]?\s*/gim, "")
+            .trim();
 
           // Detect if capture_lead tool was called in any step
           const hasCaptureLeadCall = result.steps.some((step) =>
@@ -872,7 +952,14 @@ ${ticketsCatalogText}`;
         }
 
         if (!leadCaptured && !fullText?.trim()) {
-          fullText = "Maafi chahta hoon, mujhe samajh nahi aaya. 🙏 Please try: 'UAE tour packages', 'Turkey visa details', or 'Travel insurance plans'.";
+          const lastUserMsg = (messages[messages.length - 1]?.content || "").trim();
+          const isEnglish = !/hai|hain|karo|batao|apna|chahta|shukriya|shamil|kardein|pasand|din/i.test(lastUserMsg);
+
+          if (isEnglish) {
+            fullText = "I'm sorry, I couldn't find an active fixed package matching your query. However, you can explore our featured travel packages (Turkey 🇹🇷, Dubai 🇦🇪, Europe 🇪🇺) or click **[🌴 Build Your Custom Tour](/custom-tour)** for a private itinerary!\n\n[[choose: 🌴 Build Custom Tour | 🇪🇺 Europe | 🇹🇷 Turkey | 🇦🇪 Dubai]]";
+          } else {
+            fullText = "Maafi chahta hoon, mujhe is waqt koi matching package nahi mila. Aap humare top packages (Turkey 🇹🇷, Dubai 🇦🇪, Europe 🇪🇺) explore kar sakte hain ya **[🌴 Build Your Custom Tour](/custom-tour)** par click karke custom trip plan request kar sakte hain!\n\n[[choose: 🌴 Build Custom Tour | 🇪🇺 Europe | 🇹🇷 Turkey | 🇦🇪 Dubai]]";
+          }
         }
 
         return new Response(fullText, {

@@ -227,7 +227,30 @@ To protect traveler confidence across Pakistan, all GlobeTrek PK partner agencie
 1. **Accurate Package Pricing**: Listed tour rates must reflect real total prices with clear inclusion/exclusion notes.
 2. **Timely Quotations**: Custom tour lead quotations must be submitted within **12 hours** of unlocking a lead.
 3. **No Unsolicited Spam**: Travelers' contact details unlocked via custom leads must be used strictly for requested travel inquiries.
-4. **Honest Hotel Ratings**: Hotel star ratings listed in tour packages must match official hotel classifications.`
+4. **Honest Hotel Ratings**: Hotel star ratings listed in tour packages must match official hotel classifications.
+
+---
+
+### How Your Business Rating is Carried Out
+
+Every partner agency on GlobeTrek PK receives a public trust rating (e.g. ⭐ **4.8 / 5.0**) displayed on package listings and agency profile cards. Ratings are computed and updated through three transparent mechanisms:
+
+1. **Verified Traveler Reviews**: After completing a booked tour or custom trip, travelers submit post-trip ratings (1 to 5 stars) evaluating hotel accuracy, itinerary fulfillment, punctuality, and tour guide quality.
+2. **Platform Admin & KYC Accreditation**: During partner onboarding, GlobeTrek Admins audit official Department of Tourist Services (**DTS**) licenses, NTN tax registrations, and office credentials. Verified agencies receive an accredited baseline score (e.g. ⭐ 4.8 Verified Vendor) until organic customer reviews accumulate.
+3. **Automated Operational Governance**: GlobeTrek system algorithms continuously monitor partner performance metrics:
+   - **Quotation Speed**: Submitting custom lead quotes within **12 hours**.
+   - **Listing Integrity**: Strict compliance with Honest Hotel Ratings (3-Star / 4-Star / 5-Star accuracy).
+   - **Dispute Ratio**: SafePay refund and transaction dispute history.
+
+---
+
+### Verified Partner Trust Badges 🛡️
+
+Upon passing KYC document audit (DTS License + NTN Tax ID), your agency automatically unlocks official platform trust badges displayed across marketplace listings and quotation cards:
+
+1. 🛡️ **"Verified Partner" Badge**: Displayed on all tour packages, visa services, and custom lead quotations to prove government registration.
+2. 🥇 **"Gold Tier Vendor" Badge**: Awarded to **Pro** and **Agency** subscription plans maintaining a 4.5+ star rating, granting priority placement in universal search.
+3. ⚡ **"Fast Responder" Badge**: Automatically earned by partner agencies maintaining an average quote submission time under **6 hours**.`
   },
   {
     id: "fallback-6",
@@ -302,14 +325,15 @@ The AI Trip Planner runs directly inside the tour creation/edit workflow. It eli
   4. Click **"Generate AI Plan"** — plan appears in 5–8 seconds.
   5. Review each day card, edit any day manually if needed, then save.
 
-### Monthly Quota System:
-| Plan | AI Descriptions | Full AI Trip Plans |
-|------|----------------|-------------------|
-| Starter | 10 / month | ❌ Not included |
-| Pro | Unlimited | 50 / month |
-| Agency | Unlimited | Unlimited |
+### 30-Day Rolling Quota System:
 
-> **Note:** Quota resets on the 1st of each calendar month. Usage is tracked per-account in the \`ai_usage_events\` table.
+| Plan | AI Descriptions | Full AI Trip Plans |
+|:---|:---|:---|
+| **Starter** | 10 / 30-days | ❌ Not included |
+| **Pro** | Unlimited | 50 / 30-days |
+| **Agency** | Unlimited | Unlimited |
+
+> **Fair Billing Guarantee**: Quotas run on a **30-day rolling billing cycle** based on your subscription or registration date. If your agency registers or upgrades on the 25th of the month, your full quota is available immediately and resets on the 25th of every month — ensuring you never lose days regardless of when you join!
 
 ---
 
@@ -368,18 +392,18 @@ Like the customer concierge, the Partner Assistant responds in the same language
 
 ---
 
-## AI Engine Architecture (Technical Summary)
+## How GlobeTrek AI Empowers Your Travel Agency 🚀
 
-All four AI tools share a common backend:
+All 4 AI tools in GlobeTrek PK are built to automate your daily operations, save hours of manual work, and increase customer bookings:
 
-| Layer | Technology |
-|-------|-----------|
-| **AI Provider** | OpenRouter — \`openai/gpt-4o-mini\` |
-| **SDK** | Vercel AI SDK (\`@ai-sdk/openai-compatible\`) |
-| **Execution** | TanStack Start \`createServerFn\` (server-side, never exposes API keys to client) |
-| **Auth Guard** | \`requireSupabaseAuth\` middleware on all vendor-facing tools |
-| **Quota Tracking** | \`ai_usage_events\` Supabase table (per-user, per-mode, per-month) |
-| **Lead Capture** | \`capture_lead\` tool call inside concierge → writes to \`leads\` table → WhatsApp webhook |
+| Business Feature | How It Helps Your Agency |
+|---|---|
+| 🧠 **Powered by Premium AI Models** | Powered by state-of-the-art AI models (DeepSeek V4 Flash & GPT-4o) for maximum speed, high accuracy, and natural Roman Urdu & English conversations. |
+| 🤖 **24/7 Virtual Concierge** | Greet travelers instantly, answer trip questions, and capture verified WhatsApp lead contacts even while you sleep. |
+| 🗺️ **Instant Itinerary Builder** | Create day-wise tour plans for northern areas, Umrah, or international trips in 10 seconds to attach to your package listings. |
+| 🛂 **Real-Time Embassy Fee Lookup** | Instant PKR fee estimates for Schengen, UK, USA, Turkey, and Gulf visas without manual web research. |
+| 🛡️ **Bank-Grade Security & Privacy** | Your vendor account details, custom lead bids, and client phone numbers are encrypted and protected at all times. |
+| 📊 **Easy Quota Tracking** | Easily view your remaining AI itinerary generations and visa lookups per month right from your Vendor Console. |
 `
   }
 ];

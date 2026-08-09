@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Clock, MapPin, Plane, Star, Heart, GitCompare, Globe, CalendarDays } from "lucide-react";
+import { Clock, MapPin, Plane, Star, Heart, GitCompare, Globe, CalendarDays, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import type { Tour } from "@/lib/tours";
 import { formatPKR } from "@/lib/tours";
@@ -71,46 +71,43 @@ export function TourCard({ tour }: { tour: Tour }) {
         />
         <div className="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-black/70 to-transparent" />
 
-        <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
-          <span className="rounded-full border border-white/15 bg-black/50 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur">
+        <div className="absolute left-3 top-3 max-w-[calc(100%-92px)] flex flex-wrap gap-1.5 z-10">
+          <span className="rounded-full border border-white/15 bg-black/60 px-2.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-md">
             {tour.type}
           </span>
           <span
-            className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold backdrop-blur ${seatTone(tour.seatsLeft, tour.totalSeats)}`}
+            className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold backdrop-blur-md ${seatTone(tour.seatsLeft, tour.totalSeats)}`}
           >
             {tour.seatsLeft} seats left
           </span>
-          <span className="rounded-full border border-amber-500/40 bg-black/60 px-2 py-0.5 text-[10px] font-bold text-amber-300 backdrop-blur">
-            🗺️ Pro Map
-          </span>
         </div>
 
-        <div className="absolute right-3 top-3 flex gap-1.5">
+        <div className="absolute right-3 top-3 z-10 flex items-center gap-1 bg-black/60 backdrop-blur-md p-1 rounded-full border border-white/15 shadow-md">
           <button
             type="button"
             onClick={onWish}
             aria-label={saved ? "Remove from wishlist" : "Save to wishlist"}
             aria-pressed={saved}
-            className={`grid size-9 place-items-center rounded-full border backdrop-blur transition ${
+            className={`grid size-7 place-items-center rounded-full transition ${
               saved
-                ? "border-rose-400/60 bg-rose-500/25 text-rose-200"
-                : "border-white/20 bg-black/40 text-white hover:bg-black/60"
+                ? "bg-rose-500/80 text-white"
+                : "text-white/80 hover:bg-white/20 hover:text-white"
             }`}
           >
-            <Heart className={`size-4 ${saved ? "fill-rose-400 text-rose-300" : ""}`} />
+            <Heart className={`size-3.5 ${saved ? "fill-white text-white" : ""}`} />
           </button>
           <button
             type="button"
             onClick={onCompare}
             aria-label={comparing ? "Remove from compare" : "Add to compare"}
             aria-pressed={comparing}
-            className={`grid size-9 place-items-center rounded-full border backdrop-blur transition ${
+            className={`grid size-7 place-items-center rounded-full transition ${
               comparing
-                ? "border-primary/70 bg-primary/25 text-primary"
-                : "border-white/20 bg-black/40 text-white hover:bg-black/60"
+                ? "bg-primary text-black font-bold"
+                : "text-white/80 hover:bg-white/20 hover:text-white"
             }`}
           >
-            <GitCompare className="size-4" />
+            <GitCompare className="size-3.5" />
           </button>
         </div>
 
@@ -152,8 +149,14 @@ export function TourCard({ tour }: { tour: Tour }) {
             </span>
           )}
         </div>
-        <div className="text-[11px] text-muted-foreground">
-          by <span className="font-medium text-foreground">{tour.vendor}</span>
+        <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 flex-wrap">
+          <span>by <span className="font-semibold text-foreground">{tour.vendor}</span></span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 text-[9px] font-bold text-emerald-400">
+            <ShieldCheck className="size-3 text-emerald-400" /> Verified Partner
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 text-[9px] font-bold text-amber-300">
+            ⚡ 6h Quote
+          </span>
         </div>
 
         <ul className="flex flex-wrap gap-1.5">

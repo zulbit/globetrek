@@ -427,10 +427,10 @@ export function AIChatWidget() {
             if (lastMsg?.role === "assistant") {
               const content = lastMsg.content;
               if (/phone|mobile|contact|number|whatsapp/i.test(content) && /name|naam/i.test(content)) {
-                dynamicPlaceholder = "Please type your name and mobile number...";
+                dynamicPlaceholder = "Please type your name and WhatsApp number...";
               } else if (/phone|mobile|contact|number|whatsapp/i.test(content)) {
-                dynamicPlaceholder = "Please type your mobile number...";
-              } else if (/name|naam/i.test(content) || /details/i.test(content)) {
+                dynamicPlaceholder = "Please type your WhatsApp number...";
+              } else if (/apna naam|your name|naam bataen/i.test(content)) {
                 dynamicPlaceholder = "Please type your name...";
               }
             }

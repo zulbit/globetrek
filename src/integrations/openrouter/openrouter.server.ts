@@ -5,6 +5,11 @@ const FALLBACK_OPENROUTER_KEY = Buffer.from(
   "base64",
 ).toString("utf-8");
 
+const FALLBACK_DEEPSEEK_KEY = Buffer.from(
+  "c2stNjNiODFjYzU2NTA0NGE3N2E0NjcyODg3MTQzZTllZjQ=",
+  "base64",
+).toString("utf-8");
+
 function getOpenRouterProvider(customKey?: string) {
   const apiKey =
     customKey ||
@@ -37,10 +42,9 @@ function getOpenRouterProvider(customKey?: string) {
 
 function getDeepSeekDirectProvider(customKey?: string) {
   const apiKey =
-    customKey ||
-    process.env.DEEPSEEK_API_KEY ||
-    process.env.OPENROUTER_API_KEY ||
-    FALLBACK_OPENROUTER_KEY;
+    customKey && !customKey.startsWith("sk-or-v1-")
+      ? customKey
+      : process.env.DEEPSEEK_API_KEY || FALLBACK_DEEPSEEK_KEY;
 
   return createOpenAICompatible({
     name: "deepseek",
@@ -64,16 +68,22 @@ function getDeepSeekDirectProvider(customKey?: string) {
 }
 
 export function openRouterModel(targetModel?: string, customKey?: string) {
-  // Use direct DeepSeek API ONLY if an explicit DEEPSEEK_API_KEY is configured
-  const hasDeepSeekKey = Boolean(customKey || process.env.DEEPSEEK_API_KEY);
+  const isDeepSeekTarget =
+    !targetModel ||
+    targetModel.includes("deepseek") ||
+    targetModel === "deepseek-v4-flash";
 
-  if (hasDeepSeekKey && (!targetModel || targetModel.includes("deepseek"))) {
-    return getDeepSeekDirectProvider(customKey || process.env.DEEPSEEK_API_KEY)("deepseek-chat");
+  if (isDeepSeekTarget) {
+    const deepSeekKey =
+      customKey && !customKey.startsWith("sk-or-v1-")
+        ? customKey
+        : process.env.DEEPSEEK_API_KEY || FALLBACK_DEEPSEEK_KEY;
+
+    return getDeepSeekDirectProvider(deepSeekKey)("deepseek-chat");
   }
 
-  // Safe fallback to OpenRouter endpoint (works with OPENROUTER_API_KEY & FALLBACK_OPENROUTER_KEY)
-  const modelId = targetModel && !targetModel.includes("deepseek-v4-flash") ? targetModel : "openai/gpt-4o-mini";
-  return getOpenRouterProvider(customKey)(modelId);
+  // OpenRouter fallback for non-deepseek models
+  return getOpenRouterProvider(customKey)(targetModel || "openai/gpt-4o-mini");
 }
 
 /** Web-search grounded — real-time visa fee / embassy data lookups */

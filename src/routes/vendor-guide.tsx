@@ -28,6 +28,7 @@ import {
   Loader2,
   Bot,
   HelpCircle,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -183,6 +184,7 @@ function VendorGuidePage() {
   const [activeSlug, setActiveSlug] = useState<string>("vendor-onboarding-kyc");
 
   // AI Assistant State
+  const [showAiAssistant, setShowAiAssistant] = useState(false);
   const [aiQuestion, setAiQuestion] = useState("");
   const [aiAnswer, setAiAnswer] = useState<string | null>(null);
   const [isAskingAI, setIsAskingAI] = useState(false);
@@ -452,6 +454,7 @@ function VendorGuidePage() {
       {/* Main Body: Sidebar Navigation + Content Area */}
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Sidebar Table of Contents */}
+        {/* Left Sidebar Table of Contents & AI Assistant */}
         <aside className="lg:col-span-4 space-y-6 print:hidden">
           <div className="sticky top-24 space-y-4">
             <div className="rounded-2xl border border-border bg-card p-4 shadow-sm space-y-3">
@@ -459,7 +462,7 @@ function VendorGuidePage() {
                 <BookOpen className="size-4 text-primary" /> Guide Chapters ({filteredSections.length})
               </h3>
 
-              <div className="space-y-1 max-h-[50vh] overflow-y-auto pr-1">
+              <div className="space-y-1 max-h-[40vh] overflow-y-auto pr-1">
                 {filteredSections.map((sec) => {
                   const IconComp = ICON_MAP[sec.icon_name] || BookOpen;
                   const isActive = sec.slug === activeSlug;
@@ -485,6 +488,86 @@ function VendorGuidePage() {
               </div>
             </div>
 
+            {/* Collapsible Sidebar AI Partner Assistant */}
+            <div className="rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-500/10 via-card to-card p-4 shadow-sm space-y-3">
+              <button
+                type="button"
+                onClick={() => setShowAiAssistant(!showAiAssistant)}
+                className="w-full flex items-center justify-between gap-2 text-left"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="size-8 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
+                    <Bot className="size-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                      AI Partner Assistant
+                      <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-[9px] px-1.5 py-0">
+                        AI
+                      </Badge>
+                    </h3>
+                    <p className="text-[10px] text-muted-foreground">
+                      Operational Q&amp;A (English &amp; Urdu)
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown
+                  className={`size-4 text-purple-400 transition-transform duration-200 shrink-0 ${
+                    showAiAssistant ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {showAiAssistant && (
+                <div className="space-y-3 pt-2 border-t border-border/60">
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                      <HelpCircle className="size-3 text-purple-400" /> Quick Prompts:
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {SUGGESTED_AI_PROMPTS.slice(0, 4).map((promptText, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => handleAskAI(promptText)}
+                          className="text-[10px] text-left rounded-lg bg-surface/80 hover:bg-purple-500/20 border border-border/80 text-foreground px-2 py-1 transition-all"
+                        >
+                          💡 {promptText}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-1.5">
+                    <Input
+                      placeholder="Ask Operational Q&A..."
+                      value={aiQuestion}
+                      onChange={(e) => setAiQuestion(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleAskAI()}
+                      className="text-xs rounded-xl bg-card border-border flex-1 h-8"
+                    />
+                    <Button
+                      onClick={() => handleAskAI()}
+                      disabled={isAskingAI || !aiQuestion.trim()}
+                      className="h-8 gap-1 font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white rounded-xl px-3"
+                    >
+                      {isAskingAI ? <Loader2 className="size-3 animate-spin" /> : <Send className="size-3" />}
+                    </Button>
+                  </div>
+
+                  {aiAnswer && (
+                    <div className="rounded-xl border border-purple-500/30 bg-purple-500/10 p-3 space-y-1.5 text-xs leading-relaxed max-h-60 overflow-y-auto">
+                      <div className="flex items-center gap-1.5 font-bold text-purple-300 text-[11px]">
+                        <Sparkles className="size-3" /> Answer:
+                      </div>
+                      <div className="prose prose-xs dark:prose-invert max-w-none text-[11px]">
+                        <ReactMarkdown components={mdComponentsAI}>{aiAnswer}</ReactMarkdown>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Quick Link Card to ROI Simulator */}
             <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-transparent p-4 space-y-2">
               <h4 className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
@@ -499,74 +582,6 @@ function VendorGuidePage() {
 
         {/* Right Main Content Panel */}
         <section className="lg:col-span-8 space-y-8">
-          {/* AI Partner Assistant Interactive Q&A Box */}
-          <div className="rounded-3xl border border-purple-500/30 bg-gradient-to-br from-purple-500/10 via-card to-card p-6 sm:p-8 shadow-sm space-y-5 print:hidden">
-            <div className="flex items-center justify-between gap-4 border-b border-border/80 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="size-10 rounded-2xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
-                  <Bot className="size-5" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                    AI Partner Operational Assistant
-                    <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-[10px]">GlobeTrek AI Engine</Badge>
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    Ask any operational question in English or Roman Urdu to get instant structured guidance.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Suggested Prompt Chips */}
-            <div className="space-y-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                <HelpCircle className="size-3 text-purple-400" /> Suggested Quick Prompts:
-              </span>
-              <div className="flex flex-wrap gap-2">
-                {SUGGESTED_AI_PROMPTS.map((promptText, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleAskAI(promptText)}
-                    className="text-[11px] text-left rounded-xl bg-surface/80 hover:bg-purple-500/20 border border-border/80 hover:border-purple-500/30 px-3 py-1.5 text-foreground transition-all"
-                  >
-                    💡 {promptText}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Input Form */}
-            <div className="flex gap-2">
-              <Input
-                placeholder="Ask about KYC, SafePay payouts, custom lead limits, or AI tools..."
-                value={aiQuestion}
-                onChange={(e) => setAiQuestion(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAskAI()}
-                className="text-xs rounded-xl bg-card border-border flex-1"
-              />
-              <Button
-                onClick={() => handleAskAI()}
-                disabled={isAskingAI || !aiQuestion.trim()}
-                className="gap-1.5 font-bold text-xs bg-purple-600 hover:bg-purple-700 text-white rounded-xl"
-              >
-                {isAskingAI ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-                Ask AI
-              </Button>
-            </div>
-
-            {/* AI Answer Display */}
-            {aiAnswer && (
-              <div className="rounded-2xl border border-purple-500/30 bg-purple-500/10 p-5 space-y-2 text-xs leading-relaxed">
-                <div className="flex items-center gap-2 font-bold text-purple-300">
-                  <Sparkles className="size-4" /> AI Partner Assistant Response:
-                </div>
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <ReactMarkdown components={mdComponentsAI}>{aiAnswer}</ReactMarkdown>
-                </div>
-              </div>
-            )}
-          </div>
 
           {/* Main Active Chapter Content */}
           {isLoading ? (

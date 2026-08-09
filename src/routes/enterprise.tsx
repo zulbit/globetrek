@@ -129,6 +129,27 @@ const COMPARISON_DATA = [
     wordpress: false,
   },
   {
+    feature: "DeepSeek V4 Flash & GPT-4o Premium Model Integration",
+    globetrek: true,
+    cloneScript: false,
+    saasPms: false,
+    wordpress: false,
+  },
+  {
+    feature: "Fair 30-Day Rolling Quota Cycle (No Loss on Mid-Month Signup)",
+    globetrek: true,
+    cloneScript: false,
+    saasPms: false,
+    wordpress: false,
+  },
+  {
+    feature: "Verified Business Rating & Governance Scorecard (DTS + Post-Trip)",
+    globetrek: true,
+    cloneScript: false,
+    saasPms: false,
+    wordpress: false,
+  },
+  {
     feature: "AI Tour Itinerary & Description Generator (Tier-Gated)",
     globetrek: true,
     cloneScript: false,
@@ -335,6 +356,77 @@ function EnterpriseShowcase() {
         </div>
       </section>
 
+      {/* Enterprise Feature Matrix & Platform Capabilities Section (Moved Up for Immediate Visibility) */}
+      <section id="features" className="py-12 border-b bg-surface/40">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
+          <div className="text-center space-y-2 max-w-2xl mx-auto">
+            <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 font-bold px-3 py-1 text-xs">
+              ⚡ Full Platform Capabilities &amp; Enterprise Feature Matrix
+            </Badge>
+            <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-foreground">
+              GlobeTrek PK Enterprise Capabilities &amp; Feature Comparison
+            </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+              Comparing GlobeTrek PK's modern SSR travel architecture against traditional clone scripts and legacy PMS platforms.
+            </p>
+          </div>
+
+          <div className="overflow-x-auto rounded-3xl border border-border bg-card shadow-lg">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-surface/90 border-b border-border text-muted-foreground uppercase text-[10px] font-bold">
+                <tr>
+                  <th className="p-4 sm:px-6">Feature / Architectural Capability</th>
+                  <th className="p-4 text-center text-primary font-black bg-primary/10 border-x border-primary/20">
+                    GlobeTrek PK (Enterprise)
+                  </th>
+                  <th className="p-4 text-center">Generic Clone Scripts</th>
+                  <th className="p-4 text-center">Standard SaaS PMS</th>
+                  <th className="p-4 text-center">WordPress Plugins</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {COMPARISON_DATA.map((row, i) => {
+                  const isNewFeature =
+                    row.feature.includes("DeepSeek") ||
+                    row.feature.includes("Rolling Quota") ||
+                    row.feature.includes("Rating");
+
+                  return (
+                    <tr
+                      key={i}
+                      className={`transition-colors ${
+                        isNewFeature ? "bg-amber-500/5 hover:bg-amber-500/10" : "hover:bg-surface/40"
+                      }`}
+                    >
+                      <td className="p-4 sm:px-6 font-semibold text-foreground flex items-center gap-2">
+                        <span>{row.feature}</span>
+                        {isNewFeature && (
+                          <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[9px] px-1.5 py-0">
+                            NEW
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="p-4 text-center bg-primary/5 border-x border-primary/10 font-bold">
+                        {row.globetrek ? <Check className="size-4 text-emerald-400 mx-auto" /> : "—"}
+                      </td>
+                      <td className="p-4 text-center text-muted-foreground">
+                        {row.cloneScript ? <Check className="size-4 text-muted-foreground mx-auto" /> : "—"}
+                      </td>
+                      <td className="p-4 text-center text-muted-foreground">
+                        {row.saasPms ? <Check className="size-4 text-muted-foreground mx-auto" /> : "—"}
+                      </td>
+                      <td className="p-4 text-center text-muted-foreground">
+                        {row.wordpress ? <Check className="size-4 text-muted-foreground mx-auto" /> : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       {/* Interactive AI Itinerary Generator Demo Widget */}
       <section className="py-16 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="rounded-3xl border border-purple-500/40 bg-gradient-to-br from-purple-500/10 via-card to-card p-6 sm:p-10 shadow-card space-y-8">
@@ -499,7 +591,7 @@ function EnterpriseShowcase() {
               4 Production-Ready AI Tools
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground font-medium">
-              Powered by OpenRouter GPT-4o-mini via <code className="bg-surface px-1.5 py-0.5 rounded text-primary font-mono">@ai-sdk/openai-compatible</code> — all tools run server-side via TanStack Start, never exposing API keys to the client.
+              Powered by state-of-the-art AI models (DeepSeek V4 Flash &amp; GPT-4o) via <code className="bg-surface px-1.5 py-0.5 rounded text-primary font-mono">@ai-sdk/openai-compatible</code> — all tools run server-side via TanStack Start, never exposing API keys to the client.
             </p>
           </div>
 
@@ -558,15 +650,15 @@ function EnterpriseShowcase() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border text-foreground">
-                    <tr><td className="p-2 font-semibold">Starter</td><td className="p-2 text-center">10 / month</td><td className="p-2 text-center text-muted-foreground">—</td></tr>
-                    <tr><td className="p-2 font-semibold">Pro</td><td className="p-2 text-center text-emerald-400 font-bold">Unlimited</td><td className="p-2 text-center">50 / month</td></tr>
+                    <tr><td className="p-2 font-semibold">Starter</td><td className="p-2 text-center">10 / 30-days</td><td className="p-2 text-center text-muted-foreground">—</td></tr>
+                    <tr><td className="p-2 font-semibold">Pro</td><td className="p-2 text-center text-emerald-400 font-bold">Unlimited</td><td className="p-2 text-center font-bold">50 / 30-days</td></tr>
                     <tr><td className="p-2 font-semibold">Agency</td><td className="p-2 text-center text-emerald-400 font-bold">Unlimited</td><td className="p-2 text-center text-emerald-400 font-bold">Unlimited</td></tr>
                   </tbody>
                 </table>
               </div>
               <ul className="space-y-1.5 text-xs text-muted-foreground">
-                <li className="flex items-start gap-2"><CheckCircle2 className="size-3.5 text-emerald-400 shrink-0 mt-0.5" /> Europe auto-designs multi-country routes with border crossings</li>
-                <li className="flex items-start gap-2"><CheckCircle2 className="size-3.5 text-emerald-400 shrink-0 mt-0.5" /> Monthly quota tracked in <code className="font-mono">ai_usage_events</code> table</li>
+                <li className="flex items-start gap-2"><CheckCircle2 className="size-3.5 text-emerald-400 shrink-0 mt-0.5" /> Fair 30-Day Rolling Billing Guarantee — no loss on mid-month signups</li>
+                <li className="flex items-start gap-2"><CheckCircle2 className="size-3.5 text-emerald-400 shrink-0 mt-0.5" /> Quota usage tracked per account in <code className="font-mono">ai_usage_events</code> table</li>
               </ul>
             </Card>
 
@@ -795,50 +887,7 @@ function EnterpriseShowcase() {
         </div>
       </section>
 
-      {/* Feature Comparison Table */}
-      <section className="py-16 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
-        <div className="text-center space-y-2 max-w-2xl mx-auto">
-          <Badge variant="outline" className="border-amber-500/30 text-amber-400 font-bold">
-            Platform Benchmarks
-          </Badge>
-          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            GlobeTrek PK vs Traditional Alternatives
-          </h2>
-        </div>
 
-        <div className="overflow-x-auto rounded-3xl border border-border bg-card shadow-sm">
-          <table className="w-full text-xs text-left">
-            <thead className="bg-surface/80 border-b border-border text-muted-foreground uppercase text-[10px] font-bold">
-              <tr>
-                <th className="p-4">Feature / Architectural Capability</th>
-                <th className="p-4 text-center text-primary font-black">GlobeTrek PK</th>
-                <th className="p-4 text-center">Generic Clone Scripts</th>
-                <th className="p-4 text-center">Standard SaaS PMS</th>
-                <th className="p-4 text-center">WordPress Plugins</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {COMPARISON_DATA.map((row, i) => (
-                <tr key={i} className="hover:bg-surface/40">
-                  <td className="p-4 font-semibold text-foreground">{row.feature}</td>
-                  <td className="p-4 text-center bg-primary/5">
-                    {row.globetrek ? <Check className="size-4 text-emerald-400 mx-auto" /> : "—"}
-                  </td>
-                  <td className="p-4 text-center text-muted-foreground">
-                    {row.cloneScript ? <Check className="size-4 text-muted-foreground mx-auto" /> : "—"}
-                  </td>
-                  <td className="p-4 text-center text-muted-foreground">
-                    {row.saasPms ? <Check className="size-4 text-muted-foreground mx-auto" /> : "—"}
-                  </td>
-                  <td className="p-4 text-center text-muted-foreground">
-                    {row.wordpress ? <Check className="size-4 text-muted-foreground mx-auto" /> : "—"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
 
       {/* Enterprise FAQs Section */}
       <section className="py-16 border-t bg-surface/30">
