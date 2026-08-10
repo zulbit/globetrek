@@ -14,6 +14,10 @@ import {
   User,
   Phone,
   Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  BadgeCheck,
   MessageSquare,
   ArrowRight,
   ArrowLeft,
@@ -36,6 +40,7 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { DESTINATIONS } from "@/lib/tours";
+import { useAuth } from "@/hooks/use-auth";
 import {
   submitCustomTourLead,
   type CustomTourLeadInput,
@@ -130,6 +135,7 @@ interface FormState {
   contactName: string;
   contactEmail: string;
   contactPhone: string;
+  password: string;
   specialRequests: string;
 }
 
@@ -149,14 +155,29 @@ const INITIAL: FormState = {
   contactName: "",
   contactEmail: "",
   contactPhone: "",
+  password: "",
   specialRequests: "",
 };
 
 function CustomTourPage() {
   const navigate = useNavigate();
+  const { user, profile } = useAuth();
   const [step, setStep] = React.useState(0);
   const [form, setForm] = React.useState<FormState>(INITIAL);
+  const [showPassword, setShowPassword] = React.useState(false);
   const [submitted, setSubmitted] = React.useState(false);
+
+  // Pre-fill contact details if user is logged in
+  React.useEffect(() => {
+    if (user) {
+      setForm((prev) => ({
+        ...prev,
+        contactName: prev.contactName || profile?.full_name || user.user_metadata?.full_name || "",
+        contactEmail: prev.contactEmail || user.email || "",
+        contactPhone: prev.contactPhone || (user.user_metadata?.phone ? user.user_metadata.phone.replace(/^\+92/, "") : ""),
+      }));
+    }
+  }, [user, profile]);
 
   const set = <K extends keyof FormState>(key: K, val: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: val }));
@@ -191,7 +212,8 @@ function CustomTourPage() {
         return !!(
           form.contactName.trim() &&
           form.contactEmail.trim() &&
-          form.contactPhone.trim()
+          form.contactPhone.trim() &&
+          (user || form.password.trim().length >= 6)
         );
       default:
         return false;
@@ -217,6 +239,8 @@ function CustomTourPage() {
         contactName: form.contactName.trim(),
         contactEmail: form.contactEmail.trim(),
         contactPhone: form.contactPhone.trim(),
+        password: user ? undefined : form.password.trim(),
+        userId: user?.id,
         specialRequests: form.specialRequests.trim() || undefined,
       });
     }
@@ -225,26 +249,63 @@ function CustomTourPage() {
   if (submitted) {
     return (
       <SiteShell>
-        <section className="mx-auto flex min-h-[70vh] max-w-xl flex-col items-center justify-center px-4 py-20 text-center">
-          <div className="mb-6 grid size-20 place-items-center rounded-full bg-primary/15">
-            <PartyPopper className="size-10 text-primary" />
+        <section className="mx-auto flex min-h-[75vh] max-w-2xl flex-col items-center justify-center px-4 py-16 text-center">
+          <div className="mb-6 grid size-20 place-items-center rounded-full bg-emerald-500/15 ring-8 ring-emerald-500/10">
+            <PartyPopper className="size-10 text-emerald-500" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Your request is live!
+
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-bold text-emerald-400">
+            <BadgeCheck className="size-4" />
+            Traveler Profile Registered &amp; Request Live
+          </div>
+
+          <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl text-foreground">
+            Your custom tour is underway!
           </h1>
-          <p className="mt-4 max-w-md text-muted-foreground">
-            Pakistan's top verified travel experts are now reviewing your custom
-            tour request. Expect competitive quotes within{" "}
-            <strong className="text-foreground">24 hours</strong> via WhatsApp
-            and email.
+
+          <p className="mt-3 max-w-lg text-sm text-muted-foreground">
+            A registered traveler profile has been created for you. Verified DTS-licensed travel agencies are now preparing competitive custom quotes for your trip.
           </p>
-          <div className="mt-8 flex gap-3">
+
+          {/* Account & Notification Summary Card */}
+          <div className="mt-6 w-full max-w-md rounded-2xl border border-border bg-card/90 p-5 text-left shadow-lg backdrop-blur space-y-3.5">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Traveler Portal Access
+              </span>
+              <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-[11px] font-bold text-primary">
+                Active Account
+              </span>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Login Email:</span>
+                <span className="font-semibold text-foreground font-mono">{form.contactEmail}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Destination:</span>
+                <span className="font-semibold text-foreground">{(form.destinations || []).join(", ")}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">WhatsApp Confirmation:</span>
+                <span className="font-semibold text-emerald-400 font-mono">+92 {form.contactPhone}</span>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-[11px] text-muted-foreground leading-relaxed">
+              💬 We have dispatched an initial confirmation message with your trip summary and login details to your <strong>WhatsApp</strong>.
+            </div>
+          </div>
+
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button
               size="lg"
-              onClick={() => navigate({ to: "/" })}
-              className="shadow-glow"
+              onClick={() => navigate({ to: "/auth", search: { mode: "signin", redirect: "/customer" } as never })}
+              className="gap-2 bg-primary text-primary-foreground font-bold shadow-glow hover:bg-primary/90"
             >
-              Back to Home
+              Go to Traveler Portal &amp; Login
+              <ArrowRight className="size-4" />
             </Button>
             <Button
               size="lg"
@@ -255,7 +316,7 @@ function CustomTourPage() {
                 setForm(INITIAL);
               }}
             >
-              Submit Another
+              Submit Another Request
             </Button>
           </div>
         </section>
@@ -713,6 +774,43 @@ function CustomTourPage() {
                     className="h-11 border-border bg-surface"
                   />
                 </FormField>
+
+                {user ? (
+                  <div className="sm:col-span-2 flex items-center gap-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-400">
+                    <BadgeCheck className="size-4 shrink-0" />
+                    <span>
+                      Signed in as <strong>{user.email}</strong> — Custom quotes will be attached directly to your active Traveler Portal.
+                    </span>
+                  </div>
+                ) : (
+                  <FormField
+                    label="Create Account Password*"
+                    icon={Lock}
+                    className="sm:col-span-2"
+                    trailing={<span className="text-[10px] text-muted-foreground">Min. 6 characters</span>}
+                  >
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        value={form.password}
+                        onChange={(e) => set("password", e.target.value)}
+                        placeholder="Choose a password for your Traveler Portal (e.g. Travel@2026)"
+                        className="h-11 border-border bg-surface pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                      </button>
+                    </div>
+                    <p className="mt-1.5 text-[11px] text-muted-foreground">
+                      🛡️ Setting a password registers your <strong>Traveler Profile</strong> so you can log in, track quote status, and compare agency bids online.
+                    </p>
+                  </FormField>
+                )}
 
                 <FormField
                   label="Special Requests"
