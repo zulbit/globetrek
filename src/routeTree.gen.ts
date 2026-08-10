@@ -21,6 +21,7 @@ import { Route as DestinationsRouteImport } from './routes/destinations'
 import { Route as EnterpriseRouteImport } from './routes/enterprise'
 import { Route as InsuranceRouteImport } from './routes/insurance'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TicketsRouteImport } from './routes/tickets'
 import { Route as ToursRouteImport } from './routes/tours'
@@ -31,6 +32,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedVendorRouteImport } from './routes/_authenticated/vendor'
 import { Route as ApiAiChatRouteImport } from './routes/api/ai-chat'
+import { Route as ApiSitemapDotxmlRouteImport } from './routes/api/sitemap[.]xml'
 import { Route as CustomerQuotesRouteImport } from './routes/customer.quotes'
 import { Route as InsuranceIndexRouteImport } from './routes/insurance.index'
 import { Route as InsuranceIdRouteImport } from './routes/insurance.$id'
@@ -131,6 +133,11 @@ const PricingRoute = PricingRouteImport.update({
   path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
@@ -179,6 +186,11 @@ const AuthenticatedVendorRoute = AuthenticatedVendorRouteImport.update({
 const ApiAiChatRoute = ApiAiChatRouteImport.update({
   id: '/api/ai-chat',
   path: '/api/ai-chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSitemapDotxmlRoute = ApiSitemapDotxmlRouteImport.update({
+  id: '/api/sitemap.xml',
+  path: '/api/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CustomerQuotesRoute = CustomerQuotesRouteImport.update({
@@ -415,6 +427,7 @@ export interface FileRoutesByFullPath {
   '/enterprise': typeof EnterpriseRoute
   '/insurance': typeof InsuranceRouteWithChildren
   '/pricing': typeof PricingRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/tickets': typeof TicketsRouteWithChildren
   '/tours': typeof ToursRouteWithChildren
@@ -425,6 +438,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/vendor': typeof AuthenticatedVendorRouteWithChildren
   '/api/ai-chat': typeof ApiAiChatRoute
+  '/api/sitemap.xml': typeof ApiSitemapDotxmlRoute
   '/customer/quotes': typeof CustomerQuotesRoute
   '/insurance/$id': typeof InsuranceIdRoute
   '/tickets/$id': typeof TicketsIdRoute
@@ -477,11 +491,13 @@ export interface FileRoutesByTo {
   '/destinations': typeof DestinationsRoute
   '/enterprise': typeof EnterpriseRoute
   '/pricing': typeof PricingRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/vendor-guide': typeof VendorGuideRoute
   '/wishlist': typeof WishlistRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/api/ai-chat': typeof ApiAiChatRoute
+  '/api/sitemap.xml': typeof ApiSitemapDotxmlRoute
   '/customer/quotes': typeof CustomerQuotesRoute
   '/insurance/$id': typeof InsuranceIdRoute
   '/tickets/$id': typeof TicketsIdRoute
@@ -537,6 +553,7 @@ export interface FileRoutesById {
   '/enterprise': typeof EnterpriseRoute
   '/insurance': typeof InsuranceRouteWithChildren
   '/pricing': typeof PricingRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/tickets': typeof TicketsRouteWithChildren
   '/tours': typeof ToursRouteWithChildren
@@ -547,6 +564,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/vendor': typeof AuthenticatedVendorRouteWithChildren
   '/api/ai-chat': typeof ApiAiChatRoute
+  '/api/sitemap.xml': typeof ApiSitemapDotxmlRoute
   '/customer/quotes': typeof CustomerQuotesRoute
   '/insurance/$id': typeof InsuranceIdRoute
   '/tickets/$id': typeof TicketsIdRoute
@@ -602,6 +620,7 @@ export interface FileRouteTypes {
     | '/enterprise'
     | '/insurance'
     | '/pricing'
+    | '/sitemap.xml'
     | '/terms'
     | '/tickets'
     | '/tours'
@@ -612,6 +631,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/vendor'
     | '/api/ai-chat'
+    | '/api/sitemap.xml'
     | '/customer/quotes'
     | '/insurance/$id'
     | '/tickets/$id'
@@ -664,11 +684,13 @@ export interface FileRouteTypes {
     | '/destinations'
     | '/enterprise'
     | '/pricing'
+    | '/sitemap.xml'
     | '/terms'
     | '/vendor-guide'
     | '/wishlist'
     | '/dashboard'
     | '/api/ai-chat'
+    | '/api/sitemap.xml'
     | '/customer/quotes'
     | '/insurance/$id'
     | '/tickets/$id'
@@ -723,6 +745,7 @@ export interface FileRouteTypes {
     | '/enterprise'
     | '/insurance'
     | '/pricing'
+    | '/sitemap.xml'
     | '/terms'
     | '/tickets'
     | '/tours'
@@ -733,6 +756,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/vendor'
     | '/api/ai-chat'
+    | '/api/sitemap.xml'
     | '/customer/quotes'
     | '/insurance/$id'
     | '/tickets/$id'
@@ -788,6 +812,7 @@ export interface RootRouteChildren {
   EnterpriseRoute: typeof EnterpriseRoute
   InsuranceRoute: typeof InsuranceRouteWithChildren
   PricingRoute: typeof PricingRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   TicketsRoute: typeof TicketsRouteWithChildren
   ToursRoute: typeof ToursRouteWithChildren
@@ -795,6 +820,7 @@ export interface RootRouteChildren {
   VisaRoute: typeof VisaRouteWithChildren
   WishlistRoute: typeof WishlistRoute
   ApiAiChatRoute: typeof ApiAiChatRoute
+  ApiSitemapDotxmlRoute: typeof ApiSitemapDotxmlRoute
   CustomerQuotesRoute: typeof CustomerQuotesRoute
   ApiAuthRegisterRoute: typeof ApiAuthRegisterRoute
   ApiPublicSafepayWebhookRoute: typeof ApiPublicSafepayWebhookRoute
@@ -886,6 +912,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/terms': {
       id: '/terms'
       path: '/terms'
@@ -954,6 +987,13 @@ declare module '@tanstack/react-router' {
       path: '/api/ai-chat'
       fullPath: '/api/ai-chat'
       preLoaderRoute: typeof ApiAiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/sitemap.xml': {
+      id: '/api/sitemap.xml'
+      path: '/api/sitemap.xml'
+      fullPath: '/api/sitemap.xml'
+      preLoaderRoute: typeof ApiSitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/customer/quotes': {
@@ -1395,6 +1435,7 @@ const rootRouteChildren: RootRouteChildren = {
   EnterpriseRoute: EnterpriseRoute,
   InsuranceRoute: InsuranceRouteWithChildren,
   PricingRoute: PricingRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   TicketsRoute: TicketsRouteWithChildren,
   ToursRoute: ToursRouteWithChildren,
@@ -1402,6 +1443,7 @@ const rootRouteChildren: RootRouteChildren = {
   VisaRoute: VisaRouteWithChildren,
   WishlistRoute: WishlistRoute,
   ApiAiChatRoute: ApiAiChatRoute,
+  ApiSitemapDotxmlRoute: ApiSitemapDotxmlRoute,
   CustomerQuotesRoute: CustomerQuotesRoute,
   ApiAuthRegisterRoute: ApiAuthRegisterRoute,
   ApiPublicSafepayWebhookRoute: ApiPublicSafepayWebhookRoute,
