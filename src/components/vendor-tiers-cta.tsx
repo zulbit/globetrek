@@ -81,6 +81,7 @@ export function VendorTiersCta() {
 
               <Link
                 to="/auth"
+                search={{ mode: "signup", role: "vendor" } as never}
                 className={`mt-8 inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-bold transition-all ${
                   isFeatured
                     ? "bg-primary text-primary-foreground shadow-glow hover:brightness-110"
@@ -110,6 +111,7 @@ export function VendorTiersCta() {
           </Link>
           <Link
             to="/auth"
+            search={{ mode: "signup", role: "vendor" } as never}
             className="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground shadow-glow hover:brightness-110"
           >
             List your tours →

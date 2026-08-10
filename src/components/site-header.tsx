@@ -290,7 +290,7 @@ export function SiteHeader() {
                 <div className="grid grid-cols-2 gap-2">
                   <Link
                     to="/auth"
-                    search={{ mode: "signup" } as never}
+                    search={{ mode: "signup", role: "vendor" } as never}
                     onClick={() => setIsMobileDrawerOpen(false)}
                     className="flex items-center justify-center gap-1 rounded-lg border border-primary/40 bg-primary/10 px-2 py-2 text-xs font-bold text-primary hover:bg-primary/20 text-center"
                   >
@@ -404,7 +404,7 @@ export function SiteHeader() {
             <>
               <Link
                 to="/auth"
-                search={{ mode: "signup" } as never}
+                search={{ mode: "signup", role: "vendor" } as never}
                 className="hidden sm:inline-flex items-center rounded-md border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20"
               >
                 List your tours

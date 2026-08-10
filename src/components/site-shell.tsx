@@ -97,7 +97,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/auth" search={{ mode: "signup" } as never} className="hover:text-primary font-bold text-primary transition-colors">
+                  <Link to="/auth" search={{ mode: "signup", role: "vendor" } as never} className="hover:text-primary font-bold text-primary transition-colors">
                     Register Travel Agency
                   </Link>
                 </li>

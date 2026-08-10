@@ -16,12 +16,17 @@ import vietnam from "@/assets/tour-vietnam.jpg";
 import uk from "@/assets/tour-uk.jpg";
 import malaysia from "@/assets/tour-malaysia.jpg";
 
-type Search = { redirect?: string; mode?: "signin" | "signup" };
+type Search = {
+  redirect?: string;
+  mode?: "signin" | "signup";
+  role?: "customer" | "vendor";
+};
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>): Search => ({
     redirect: typeof s.redirect === "string" ? s.redirect : undefined,
     mode: s.mode === "signup" ? "signup" : "signin",
+    role: s.role === "vendor" ? "vendor" : "customer",
   }),
   head: () => ({
     meta: [
@@ -78,6 +83,7 @@ const SLIDES: Slide[] = [
   },
   {
     name: "Vietnam",
+    name: "Vietnam",
     image: vietnam,
     tag: "Hanoi · Ha Long",
     headline: "Vietnam eases e-visa to 90 days for Pakistani passports",
@@ -102,7 +108,7 @@ const SLIDES: Slide[] = [
 import { getStoredReferralCode } from "@/components/vendor-ref-handler";
 
 function AuthPage() {
-  const { mode = "signin", redirect } = Route.useSearch();
+  const { mode = "signin", role: initialRole = "customer", redirect } = Route.useSearch();
   const navigate = useNavigate();
   const [tab, setTab] = React.useState<"signin" | "signup">(mode);
   const [loading, setLoading] = React.useState(false);
@@ -113,11 +119,16 @@ function AuthPage() {
   const [password, setPassword] = React.useState("");
   // signup
   const [fullName, setFullName] = React.useState("");
-  const [role, setRole] = React.useState<"customer" | "vendor">("customer");
+  const [role, setRole] = React.useState<"customer" | "vendor">(initialRole);
   const [companyName, setCompanyName] = React.useState("");
   const [phone, setPhone] = React.useState("");
   const [referralCode, setReferralCode] = React.useState(() => getStoredReferralCode() || "");
   const [acceptTerms, setAcceptTerms] = React.useState(false);
+
+  React.useEffect(() => {
+    if (mode) setTab(mode);
+    if (initialRole) setRole(initialRole);
+  }, [mode, initialRole]);
 
   React.useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
