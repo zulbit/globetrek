@@ -63,7 +63,7 @@ export const Route = createFileRoute("/custom-tour")({
     links: [
       {
         rel: "canonical",
-        href: "https://globetrek.testbench.shop/custom-tour",
+        href: "https://globetrek.pk/custom-tour",
       },
     ],
   }),

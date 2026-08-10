@@ -66,7 +66,7 @@ function AffiliateDashboard() {
 
   function copyTrackableLink() {
     if (!data?.affiliate?.referral_code) return;
-    const link = `https://tour.testbench.shop/auth?mode=signup&ref=${data.affiliate.referral_code}`;
+    const link = `https://globetrek.pk/auth?mode=signup&ref=${data.affiliate.referral_code}`;
     navigator.clipboard.writeText(link);
     setCopiedLink(true);
     toast.success("Trackable Bio Link copied!");
@@ -75,7 +75,7 @@ function AffiliateDashboard() {
 
   function copyWhatsApp() {
     if (!data?.affiliate?.referral_code) return;
-    const msg = `Assalam-o-Alaikum! 🌍 Main GlobeTrek PK ka Sales Partner hun.\n\nAapki travel agency ke liye ek zabardast digital platform available hai:\n✅ Verified customer leads\n✅ Online booking & payment (PKR)\n✅ AI tour description tools\n✅ Visa, Insurance & Ticketing listings\n\nSign up link: https://tour.testbench.shop/auth?mode=signup&ref=${data.affiliate.referral_code}\nMeray referral code se register karein: *${data.affiliate.referral_code}*\n\nPehla mahina demo available hai! Aaj contact karein.`;
+    const msg = `Assalam-o-Alaikum! 🌍 Main GlobeTrek PK ka Sales Partner hun.\n\nAapki travel agency ke liye ek zabardast digital platform available hai:\n✅ Verified customer leads\n✅ Online booking & payment (PKR)\n✅ AI tour description tools\n✅ Visa, Insurance & Ticketing listings\n\nSign up link: https://globetrek.pk/auth?mode=signup&ref=${data.affiliate.referral_code}\nMeray referral code se register karein: *${data.affiliate.referral_code}*\n\nPehla mahina demo available hai! Aaj contact karein.`;
     navigator.clipboard.writeText(msg);
     setCopiedWa(true);
     toast.success("WhatsApp message copied!");
@@ -161,7 +161,7 @@ function AffiliateDashboard() {
   const totalPaid = affiliate.total_paid ?? 0;
   const balance = totalEarned - totalPaid;
 
-  const trackableBioLink = `https://tour.testbench.shop/auth?mode=signup&ref=${affiliate.referral_code}`;
+  const trackableBioLink = `https://globetrek.pk/auth?mode=signup&ref=${affiliate.referral_code}`;
 
   return (
     <div className="min-h-screen bg-background text-foreground">

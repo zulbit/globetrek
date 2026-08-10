@@ -23,7 +23,7 @@ function getOpenRouterProvider(customKey?: string) {
     baseURL: "https://openrouter.ai/api/v1",
     headers: {
       Authorization: `Bearer ${apiKey}`,
-      "HTTP-Referer": "https://tour.testbench.shop",
+      "HTTP-Referer": "https://globetrek.pk",
       "X-Title": "GlobeTrek PK",
     },
     fetch: async (url, options) => {

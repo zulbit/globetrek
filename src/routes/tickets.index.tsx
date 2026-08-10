@@ -30,7 +30,7 @@ export const Route = createFileRoute("/tickets/")({
           "@context": "https://schema.org",
           "@type": "TravelAgency",
           "name": "GlobeTrek PK Flight Ticketing Desks",
-          "url": "https://globetrek.testbench.shop/tickets",
+          "url": "https://globetrek.pk/tickets",
           "description": "Book domestic, international, Umrah and Hajj flight tickets with verified Pakistani IATA ticketing desks.",
           "provider": {
             "@type": "Organization",

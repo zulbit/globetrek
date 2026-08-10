@@ -65,7 +65,7 @@ export const changeSubscriptionTier = createServerFn({ method: "POST" })
     try {
       if (profile?.phone) {
         const { sendWhatsAppMessage } = await import("@/lib/whatsapp.functions");
-        const msg = `💳 *GlobeTrek PK — Subscription Upgraded!* 🎉\n\nDear *${profile.full_name || "Vendor"}*,\n\nYour account has been successfully upgraded to the *${(targetMeta?.name || data.tier).toUpperCase()} Plan*!\n\nYou now enjoy priority search placement, verified vendor status, and tier privileges.\n\nManage your subscription:\nhttps://tour.testbench.shop/vendor/billing`;
+        const msg = `💳 *GlobeTrek PK — Subscription Upgraded!* 🎉\n\nDear *${profile.full_name || "Vendor"}*,\n\nYour account has been successfully upgraded to the *${(targetMeta?.name || data.tier).toUpperCase()} Plan*!\n\nYou now enjoy priority search placement, verified vendor status, and tier privileges.\n\nManage your subscription:\nhttps://globetrek.pk/vendor/billing`;
         await sendWhatsAppMessage({
           data: { phone: profile.phone, message: msg, skipDeduplication: true },
         });

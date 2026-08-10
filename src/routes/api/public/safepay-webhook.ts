@@ -130,7 +130,7 @@ export const Route = createFileRoute("/api/public/safepay-webhook")({
                 // 2. Notify vendor with payment receipt & unlocked traveler details
                 if (vendorRes.data && (vendorRes.data as any).phone) {
                   const vendorPhone = (vendorRes.data as any).phone;
-                  const vendorMsg = `💳 *GlobeTrek PK — Lead Unlock Receipt* ✅\n\nDear *${vendorName}*,\n\nYour payment of *Rs 5,000 PKR* was successful!\n\nUnlocked Traveler Details:\n📍 Destination: *${lead.destination}*\n👤 Traveler: *${lead.contact_name}* (${lead.contact_phone})\n\nSubmit your online quotation directly in your dashboard:\nhttps://tour.testbench.shop/vendor/leads`;
+                  const vendorMsg = `💳 *GlobeTrek PK — Lead Unlock Receipt* ✅\n\nDear *${vendorName}*,\n\nYour payment of *Rs 5,000 PKR* was successful!\n\nUnlocked Traveler Details:\n📍 Destination: *${lead.destination}*\n👤 Traveler: *${lead.contact_name}* (${lead.contact_phone})\n\nSubmit your online quotation directly in your dashboard:\nhttps://globetrek.pk/vendor/leads`;
                   await sendWhatsAppMessage({
                     data: {
                       phone: vendorPhone,
@@ -162,7 +162,7 @@ export const Route = createFileRoute("/api/public/safepay-webhook")({
 
               if (vProfile?.phone) {
                 const { sendWhatsAppMessage } = await import("@/lib/whatsapp.functions");
-                const failMsg = `⚠️ *GlobeTrek PK — Payment Unsuccessful*\n\nDear *${vProfile.full_name || "Vendor"}*,\n\nYour payment attempt of *Rs 5,000 PKR* to unlock a custom tour lead was not completed (Status: *${state}*).\n\nNo amount was charged. You can retry unlocking the lead anytime from your dashboard:\nhttps://tour.testbench.shop/vendor/leads`;
+                const failMsg = `⚠️ *GlobeTrek PK — Payment Unsuccessful*\n\nDear *${vProfile.full_name || "Vendor"}*,\n\nYour payment attempt of *Rs 5,000 PKR* to unlock a custom tour lead was not completed (Status: *${state}*).\n\nNo amount was charged. You can retry unlocking the lead anytime from your dashboard:\nhttps://globetrek.pk/vendor/leads`;
                 await sendWhatsAppMessage({
                   data: { phone: vProfile.phone, message: failMsg, skipDeduplication: true }
                 });

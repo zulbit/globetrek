@@ -109,6 +109,57 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "TravelAgency",
+  name: "GlobeTrek PK",
+  url: "https://globetrek.pk",
+  logo: "https://globetrek.pk/favicon.png",
+  description: "Pakistan's premier B2B travel marketplace connecting tour operators, visa consultants, insurance brokers, and ticketing desks.",
+  priceRange: "₨₨",
+  currenciesAccepted: "PKR",
+  areaServed: {
+    "@type": "Country",
+    name: "Pakistan",
+  },
+  address: {
+    "@type": "PostalAddress",
+    addressCountry: "PK",
+  },
+  contactPoint: {
+    "@type": "ContactPoint",
+    contactType: "customer service",
+    telephone: "+923490386131",
+    availableLanguage: ["English", "Urdu"],
+  },
+  hasOfferCatalog: {
+    "@type": "OfferCatalog",
+    name: "Travel Marketplace Services",
+    itemListElement: [
+      {
+        "@type": "OfferCatalog",
+        name: "Tour Packages",
+        description: "Domestic and international tour packages from verified Pakistani operators.",
+      },
+      {
+        "@type": "OfferCatalog",
+        name: "Visa Consultation",
+        description: "Expert visa processing and embassy requirement consultations.",
+      },
+      {
+        "@type": "OfferCatalog",
+        name: "Travel Insurance",
+        description: "Comprehensive international travel insurance policies priced in PKR.",
+      },
+      {
+        "@type": "OfferCatalog",
+        name: "Flight & Umrah Ticketing",
+        description: "IATA ticketing desks and Umrah flight packages.",
+      },
+    ],
+  },
+};
+
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
@@ -128,9 +179,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "Verified Pakistani vendors, AI trip planner, transparent PKR pricing.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://globetrek.pk" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
+      { rel: "canonical", href: "https://globetrek.pk" },
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.png", type: "image/png" },
       { rel: "shortcut icon", href: "/favicon.ico", type: "image/x-icon" },
@@ -141,7 +194,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
       },
     ],
-    scripts: [{ children: themeInitScript }],
+    scripts: [
+      { children: themeInitScript },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify(organizationSchema),
+      },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -154,6 +213,10 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="en" className="dark">
       <head>
         <HeadContent />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
       </head>
       <body className="bg-background text-foreground">
         {children}

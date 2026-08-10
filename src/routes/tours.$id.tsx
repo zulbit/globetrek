@@ -39,24 +39,66 @@ const tourQueryOptions = (id: string) =>
 export const Route = createFileRoute("/tours/$id")({
   loader: ({ params, context }) =>
     context.queryClient.ensureQueryData(tourQueryOptions(params.id)),
-  head: ({ loaderData }) => ({
-    meta: loaderData
-      ? [
-          { title: `${loaderData.title} · GlobeTrek PK` },
-          { name: "description", content: loaderData.summary || `${loaderData.destination} tour departing from ${loaderData.departureCity}, priced in PKR.` },
-          { property: "og:title", content: loaderData.title },
-          { property: "og:description", content: loaderData.summary || `${loaderData.durationDays}-day ${loaderData.destination} package from ${formatPKR(loaderData.pricePKR)}.` },
-          { property: "og:type", content: "website" },
-          { name: "twitter:card", content: "summary_large_image" },
-          ...(loaderData.image?.startsWith("https://")
-            ? [
-                { property: "og:image", content: loaderData.image },
-                { name: "twitter:image", content: loaderData.image },
-              ]
-            : []),
-        ]
-      : [{ title: "Tour · GlobeTrek PK" }],
-  }),
+  head: ({ loaderData }) => {
+    if (!loaderData) return { meta: [{ title: "Tour · GlobeTrek PK" }] };
+
+    const schemaData = {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: loaderData.title,
+      description: loaderData.summary || `${loaderData.destination} tour departing from ${loaderData.departureCity}`,
+      image: loaderData.image || "https://globetrek.pk/favicon.png",
+      brand: {
+        "@type": "Brand",
+        name: loaderData.vendor || "GlobeTrek Verified Agency",
+      },
+      offers: {
+        "@type": "Offer",
+        url: `https://globetrek.pk/tours/${loaderData.id}`,
+        priceCurrency: "PKR",
+        price: loaderData.pricePKR,
+        priceValidUntil: "2026-12-31",
+        availability: "https://schema.org/InStock",
+        seller: {
+          "@type": "TravelAgency",
+          name: loaderData.vendor || "GlobeTrek Verified Agency",
+          url: "https://globetrek.pk",
+        },
+      },
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: loaderData.rating || 4.9,
+        reviewCount: Math.max(1, loaderData.reviews || 8),
+      },
+    };
+
+    return {
+      meta: [
+        { title: `${loaderData.title} · GlobeTrek PK` },
+        { name: "description", content: loaderData.summary || `${loaderData.destination} tour departing from ${loaderData.departureCity}, priced in PKR.` },
+        { property: "og:title", content: loaderData.title },
+        { property: "og:description", content: loaderData.summary || `${loaderData.durationDays}-day ${loaderData.destination} package from ${formatPKR(loaderData.pricePKR)}.` },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: `https://globetrek.pk/tours/${loaderData.id}` },
+        { name: "twitter:card", content: "summary_large_image" },
+        ...(loaderData.image?.startsWith("https://")
+          ? [
+              { property: "og:image", content: loaderData.image },
+              { name: "twitter:image", content: loaderData.image },
+            ]
+          : []),
+      ],
+      links: [
+        { rel: "canonical", href: `https://globetrek.pk/tours/${loaderData.id}` },
+      ],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify(schemaData),
+        },
+      ],
+    };
+  },
   notFoundComponent: () => (
     <SiteShell>
       <div className="mx-auto max-w-2xl px-6 py-24 text-center">
@@ -83,8 +125,43 @@ function TourDetail() {
   const { id } = Route.useParams();
   const { data: tour } = useSuspenseQuery(tourQueryOptions(id));
 
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: tour.title,
+    description: tour.summary || `${tour.destination} tour departing from ${tour.departureCity}`,
+    image: tour.image || "https://globetrek.pk/favicon.png",
+    brand: {
+      "@type": "Brand",
+      name: tour.vendor || "GlobeTrek Verified Agency",
+    },
+    offers: {
+      "@type": "Offer",
+      url: `https://globetrek.pk/tours/${tour.id}`,
+      priceCurrency: "PKR",
+      price: tour.pricePKR,
+      priceValidUntil: "2026-12-31",
+      availability: "https://schema.org/InStock",
+      seller: {
+        "@type": "TravelAgency",
+        name: tour.vendor || "GlobeTrek Verified Agency",
+        url: "https://globetrek.pk",
+      },
+    },
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: tour.rating || 4.9,
+      reviewCount: Math.max(1, tour.reviews || 8),
+    },
+  };
+
   return (
     <SiteShell>
+      {/* Product Schema injection for Rich Results */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+      />
       {/* Hero */}
       <section className="relative">
         <div className="relative h-[46vh] min-h-[320px] w-full overflow-hidden">

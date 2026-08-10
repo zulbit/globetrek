@@ -49,7 +49,7 @@ const SOCIAL_GUIDELINES = [
     bg: "bg-pink-500/5",
     border: "border-pink-500/20",
     action: "Post a Reel / TikTok demonstrating how Pakistani agencies list tours & collect PKR online.",
-    linkGuidance: "Put trackable bio link (tour.testbench.shop/auth?mode=signup&ref=YOUR_CODE) in Instagram bio / linktree.",
+    linkGuidance: "Put trackable bio link (globetrek.pk/auth?mode=signup&ref=YOUR_CODE) in Instagram bio / linktree.",
     vendorHook: "Add text overlay in video: 'Travel agents use code YOUR_CODE for 10% Off'.",
   },
   {
@@ -560,7 +560,7 @@ function BecomeAffiliatePage() {
             <p><span className="text-primary font-bold">YOU:</span> "Iss platform par aapki agency list hoti hai, aur verified customers seedha aapko contact kartay hain. Leads milti hain, payment online hoti hai, aur AI tools bhi hain tour descriptions likhnay ke liye."</p>
             <p><span className="text-primary font-bold">YOU:</span> "Travel Desk plan PKR 4,000/month aur Tour Operator plan PKR 7,500/month hai. Pehla mahina free demo kar saktay hain. Main aapko 5 minute mein poora platform dikha sakta hun?"</p>
             <div className="border-t border-primary/20 pt-3 mt-3">
-              <p className="text-muted-foreground text-[10px]">If they say yes → Show them: tour.testbench.shop → login demo → features tour</p>
+              <p className="text-muted-foreground text-[10px]">If they say yes → Show them: globetrek.pk → login demo → features tour</p>
               <p className="text-muted-foreground text-[10px]">If they hesitate → "No commitment. Main aapko brochure chor ta hun aur WhatsApp number de ta hun."</p>
             </div>
           </div>
@@ -748,7 +748,7 @@ function BecomeAffiliatePage() {
                         <Wrench className="size-3.5" /> Mobile Phone Demo Checklist (What to show on your phone):
                       </div>
                       <ol className="list-decimal list-inside space-y-1 text-[11px]">
-                        <li>Open <strong className="text-primary">tour.testbench.shop</strong> on your browser.</li>
+                        <li>Open <strong className="text-primary">globetrek.pk</strong> on your browser.</li>
                         <li>Show tour packages catalog &amp; visa services portal.</li>
                         <li>Show the "Get Quotes / Unlock Customer Lead" button.</li>
                         <li>Show how the vendor gets 10% OFF by entering your referral code at signup.</li>
@@ -825,7 +825,7 @@ function BecomeAffiliatePage() {
                       <Link2 className="size-4 text-violet-400" /> Step 1: Bio Link &amp; 30-Day Tracking Cookie
                     </h4>
                     <p>
-                      Your trackable bio link: <strong className="text-foreground">https://tour.testbench.shop/auth?mode=signup&amp;ref=YOUR_CODE</strong>.
+                      Your trackable bio link: <strong className="text-foreground">https://globetrek.pk/auth?mode=signup&amp;ref=YOUR_CODE</strong>.
                     </p>
                     <p className="text-[11px] text-muted-foreground">
                       When a travel agency clicks your link, your referral code is stored in their browser cookie for 30 days. Even if they sign up weeks later, you get full credit!
@@ -847,7 +847,7 @@ function BecomeAffiliatePage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => copyText(`Title: How Pakistani Travel Agencies Get More Customers in 2026 — GlobeTrek PK Review\n\n👉 Travel Agencies Sign Up Here (10% Off First Month):\nhttps://tour.testbench.shop/auth?mode=signup&ref=YOUR_CODE\n\nUse Promo Code: YOUR_CODE for 10% Discount at checkout!`, "yt-template")}
+                          onClick={() => copyText(`Title: How Pakistani Travel Agencies Get More Customers in 2026 — GlobeTrek PK Review\n\n👉 Travel Agencies Sign Up Here (10% Off First Month):\nhttps://globetrek.pk/auth?mode=signup&ref=YOUR_CODE\n\nUse Promo Code: YOUR_CODE for 10% Discount at checkout!`, "yt-template")}
                           className="text-[10px] h-7 gap-1 rounded-xl"
                         >
                           {copiedTemplate === "yt-template" ? <CheckCircle2 className="size-3 text-emerald-400" /> : <Copy className="size-3" />}
@@ -856,7 +856,7 @@ function BecomeAffiliatePage() {
                       </div>
                       <div className="font-mono text-[10px] bg-background p-2.5 rounded-lg border border-border text-foreground space-y-1">
                         <p><strong className="text-primary">Recommended Title:</strong> How Pakistani Travel Agencies Get More Customers in 2026 — GlobeTrek PK Review</p>
-                        <p><strong className="text-primary">Description Line 1:</strong> 👉 Travel Agencies Sign Up Here (10% Off): https://tour.testbench.shop/auth?mode=signup&amp;ref=YOUR_CODE</p>
+                        <p><strong className="text-primary">Description Line 1:</strong> 👉 Travel Agencies Sign Up Here (10% Off): https://globetrek.pk/auth?mode=signup&amp;ref=YOUR_CODE</p>
                         <p><strong className="text-primary">Pinned Comment:</strong> Use promo code <span className="text-amber-400 font-bold">YOUR_CODE</span> to save 10% on your agency subscription!</p>
                       </div>
                     </div>
@@ -892,7 +892,7 @@ function BecomeAffiliatePage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => copyText(`Assalam-o-Alaikum travel agency owners! If you want verified customer leads for tours, visa filing, and Umrah packages, check out GlobeTrek PK.\n\nRegister your agency here (Use code YOUR_CODE for 10% Off):\nhttps://tour.testbench.shop/auth?mode=signup&ref=YOUR_CODE`, "fb-template")}
+                          onClick={() => copyText(`Assalam-o-Alaikum travel agency owners! If you want verified customer leads for tours, visa filing, and Umrah packages, check out GlobeTrek PK.\n\nRegister your agency here (Use code YOUR_CODE for 10% Off):\nhttps://globetrek.pk/auth?mode=signup&ref=YOUR_CODE`, "fb-template")}
                           className="text-[10px] h-7 gap-1 rounded-xl"
                         >
                           {copiedTemplate === "fb-template" ? <CheckCircle2 className="size-3 text-emerald-400" /> : <Copy className="size-3" />}
@@ -900,7 +900,7 @@ function BecomeAffiliatePage() {
                         </Button>
                       </div>
                       <div className="font-mono text-[10px] bg-background p-2.5 rounded-lg border border-border text-foreground">
-                        "Assalam-o-Alaikum travel agency owners! Register your agency on GlobeTrek PK for verified traveler leads. Use code YOUR_CODE for 10% Off: https://tour.testbench.shop/auth?mode=signup&amp;ref=YOUR_CODE"
+                        "Assalam-o-Alaikum travel agency owners! Register your agency on GlobeTrek PK for verified traveler leads. Use code YOUR_CODE for 10% Off: https://globetrek.pk/auth?mode=signup&amp;ref=YOUR_CODE"
                       </div>
                     </div>
                   </div>

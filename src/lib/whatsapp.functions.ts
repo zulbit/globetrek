@@ -103,7 +103,7 @@ export const DEFAULT_GLOBETREK_TEMPLATES: Record<
     recipient: "Vendor",
     image_url: null,
     vars: ["customer_name", "phone", "tour_title"],
-    body: `*📩 New Lead for Your Tour Package!*\n\nA traveler is interested in *{tour_title}*.\n\n*Traveler details:*\n👤 Name: {customer_name}\n📞 WhatsApp: {phone}\n\nPlease reach out to the customer as soon as possible to close this booking!\n\nView leads in your vendor portal:\n👉 https://tour.testbench.shop/vendor/leads`,
+    body: `*📩 New Lead for Your Tour Package!*\n\nA traveler is interested in *{tour_title}*.\n\n*Traveler details:*\n👤 Name: {customer_name}\n📞 WhatsApp: {phone}\n\nPlease reach out to the customer as soon as possible to close this booking!\n\nView leads in your vendor portal:\n👉 https://globetrek.pk/vendor/leads`,
   },
   chatbot_lead_captured: {
     name: "AI Concierge Lead Alert (Admin)",
@@ -111,7 +111,7 @@ export const DEFAULT_GLOBETREK_TEMPLATES: Record<
     recipient: "Admin",
     image_url: null,
     vars: ["customer_name", "phone", "service_type"],
-    body: `*🤖 AI Concierge Lead Captured!*\n\nOur AI travel assistant captured a new traveler inquiry.\n\n*Lead details:*\n👤 Name: {customer_name}\n📞 Phone: {phone}\n💼 Service: {service_type}\n\nView and assign leads in admin panel:\n👉 https://tour.testbench.shop/admin/leads`,
+    body: `*🤖 AI Concierge Lead Captured!*\n\nOur AI travel assistant captured a new traveler inquiry.\n\n*Lead details:*\n👤 Name: {customer_name}\n📞 Phone: {phone}\n💼 Service: {service_type}\n\nView and assign leads in admin panel:\n👉 https://globetrek.pk/admin/leads`,
   },
   system_test_message: {
     name: "System Test Notification (Admin)",

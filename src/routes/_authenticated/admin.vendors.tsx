@@ -95,7 +95,7 @@ function AdminVendors() {
           };
 
           if (status === "approved") {
-            vars.portal_link = "https://globetrek.testbench.shop/auth";
+            vars.portal_link = "https://globetrek.pk/auth";
           } else {
             vars.rejection_reason = reason || "Submitted documents could not be verified or DTS license expired.";
           }

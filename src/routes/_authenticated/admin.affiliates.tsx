@@ -109,7 +109,7 @@ Aapki travel agency ke liye ek zabardast digital platform available hai:
 ✅ AI tour description tools & itinerary builder
 ✅ Storefront page for your agency
 
-Register on GlobeTrek PK: https://tour.testbench.shop/auth?mode=signup
+Register on GlobeTrek PK: https://globetrek.pk/auth?mode=signup
 Use my referral code: [YOUR_REFERRAL_CODE]
 
 Pehla month demo testing free hai! Aaj hi sign up karein.`;

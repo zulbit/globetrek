@@ -284,7 +284,7 @@ function VendorGuidePage() {
         <div style="text-align: center; border-bottom: 2px solid #10B981; padding-bottom: 16px; margin-bottom: 24px;">
           <h1 style="font-size: 22px; font-weight: 800; color: #047857; margin: 0 0 4px 0;">GlobeTrek PK — Partner Operating Guide</h1>
           <p style="font-size: 12px; color: #4B5563; margin: 0 0 4px 0;">Official Master Documentation for Tour Operators, Visa Desks & Travel Agencies</p>
-          <p style="font-size: 10px; color: #6B7280; margin: 0;">Updated Live on ${new Date().toLocaleDateString()} — https://tour.testbench.shop/vendor-guide</p>
+          <p style="font-size: 10px; color: #6B7280; margin: 0;">Updated Live on ${new Date().toLocaleDateString()} — https://globetrek.pk/vendor-guide</p>
         </div>
       `;
 
@@ -355,7 +355,7 @@ function VendorGuidePage() {
       <div className="hidden print:block text-center border-b pb-4 mb-6">
         <h1 className="text-3xl font-bold">GlobeTrek PK — Partner Operating Guide</h1>
         <p className="text-sm text-gray-600">Official Master Documentation for Tour Operators, Visa Desks &amp; Travel Agencies</p>
-        <p className="text-xs text-gray-500 mt-1">Exported on {new Date().toLocaleDateString()} — https://tour.testbench.shop/vendor-guide</p>
+        <p className="text-xs text-gray-500 mt-1">Exported on {new Date().toLocaleDateString()} — https://globetrek.pk/vendor-guide</p>
       </div>
 
       {/* Screen Navigation Header */}

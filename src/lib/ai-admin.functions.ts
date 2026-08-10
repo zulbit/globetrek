@@ -601,7 +601,7 @@ export const verifyAIModelServer = createServerFn({ method: "POST" })
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
-          "HTTP-Referer": "https://tour.testbench.shop",
+          "HTTP-Referer": "https://globetrek.pk",
           "X-Title": "GlobeTrek PK Admin Test",
         },
         body: JSON.stringify({

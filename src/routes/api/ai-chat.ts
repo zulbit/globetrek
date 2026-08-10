@@ -710,7 +710,7 @@ ${ticketsCatalogText}`;
                   const { dispatchWhatsAppDirect } = await import("@/lib/whatsapp.functions");
 
                   // 1. Admin Alert to +923490386131
-                  const adminAlertMsg = `*👑 Admin Alert: New AI Chat Inquiry!* 📱\n\nA new lead has been captured by the AI Concierge.\n\n*Details:*\n👤 Name: ${customer_name}\n📞 Phone: ${customer_phone}\n💼 Service: ${finalServiceType.toUpperCase()}\n💬 Message: ${notes || "Concierge Inquiry"}\n\nView details and manage leads in Admin Console:\n👉 https://tour.testbench.shop/admin/leads`;
+                  const adminAlertMsg = `*👑 Admin Alert: New AI Chat Inquiry!* 📱\n\nA new lead has been captured by the AI Concierge.\n\n*Details:*\n👤 Name: ${customer_name}\n📞 Phone: ${customer_phone}\n💼 Service: ${finalServiceType.toUpperCase()}\n💬 Message: ${notes || "Concierge Inquiry"}\n\nView details and manage leads in Admin Console:\n👉 https://globetrek.pk/admin/leads`;
                   await dispatchWhatsAppDirect({
                     phone: "+923490386131",
                     message: adminAlertMsg,
@@ -739,7 +739,7 @@ ${ticketsCatalogText}`;
                       ? `${cleanPhone.slice(0, 4)}****${cleanPhone.slice(-2)}`
                       : `${customer_phone.slice(0, 3)}****`;
 
-                    const vendorMsg = `*New Customer Lead Alert!* 🚀\n\nDear Partner,\n\nYou have received a new inquiry via GlobeTrek PK.\n\n*Inquiry Summary:*\n👤 Traveler: ${customer_name}\n📞 Phone: ${maskedPhone} (Protected)\n💼 Service: ${finalServiceType.toUpperCase()}\n\n🔒 *Contact info is protected.* Log in to your Vendor Portal to unlock full lead details:\n👉 https://tour.testbench.shop/vendor/leads\n\nBest,\n*GlobeTrek PK Team*`;
+                    const vendorMsg = `*New Customer Lead Alert!* 🚀\n\nDear Partner,\n\nYou have received a new inquiry via GlobeTrek PK.\n\n*Inquiry Summary:*\n👤 Traveler: ${customer_name}\n📞 Phone: ${maskedPhone} (Protected)\n💼 Service: ${finalServiceType.toUpperCase()}\n\n🔒 *Contact info is protected.* Log in to your Vendor Portal to unlock full lead details:\n👉 https://globetrek.pk/vendor/leads\n\nBest,\n*GlobeTrek PK Team*`;
                     await dispatchWhatsAppDirect({
                       phone: vendorPhone,
                       message: vendorMsg,
