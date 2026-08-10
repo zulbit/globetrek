@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { generateText, tool, type ModelMessage } from "ai";
+import { tool, type ModelMessage } from "ai";
+import { generateTextWithFallback as generateText } from "@/integrations/openrouter/openrouter.server";
 import { z } from "zod";
 import { formatDateReadable } from "@/lib/utils";
 
@@ -379,7 +380,7 @@ GlobeTrek PK is a travel marketplace in Pakistan for fixed tours, custom exclusi
 
 DETECTED TRAVELER LANGUAGE: ${detectedLanguage.toUpperCase()}
 YOU MUST RESPOND EXCLUSIVELY IN ${detectedLanguage.toUpperCase()}!
-${detectedLanguage === "English" ? "NEVER use Roman Urdu words like 'Humare', 'Aap', 'karta hai', 'hai', 'chahte'. Use 100% natural, professional English!" : "Use warm, professional Roman Urdu."}
+${detectedLanguage === "English" ? "NEVER use Roman Urdu words like 'Humare', 'Aap', 'karta hai', 'hai', 'chahte'. Use 100% natural, professional English! The user is speaking in English, so you MUST immediately switch and reply in English, even if the previous chat history is in Roman Urdu!" : "Use warm, professional Roman Urdu."}
 
 USER QUERY PRE-RETRIEVAL SEARCH RESULTS (for "${preSearchQuery || "general query"}"):
 ${preSearchResults.length > 0 ? preSearchResults.join("\n") : `0 direct matches found in database for "${preSearchQuery || "query"}".`}
@@ -397,6 +398,13 @@ GlobeTrek PK Platform Features & Offers Knowledge:
 5. ✈️ FLIGHT TICKETING & UMRAH DESKS: Dedicated flight booking desks and Umrah/Hajj packages. [✈️ Flight Tickets](/tickets)
 
 Rules:
+- DO NOT list rules, explain your reasoning, or write meta-commentary about the user query! Reply ONLY with the final, direct response to the traveler.
+- DO NOT call the search_catalog tool for general greetings or broad requests (like "Tour Packages", "Show tours", "Visa Services", etc.)! The catalog highlights are already preloaded in this prompt. Use them directly to reply. Call search_catalog ONLY when the traveler asks for a specific destination, city, or country not listed in the highlights (e.g. "Sialkot", "Peshawar", "Italy").
+- KEEP RESPONSES HIGHLY CONCISE & SHORT (under 150 words total)! Chat widgets are small, so get straight to the point. Never write long, wordy paragraphs.
+- NEVER use Markdown tables! Chat widgets are narrow, so tables look broken and scrambled. Instead, always format listings as clean, bulleted/numbered lists with newlines. For example:
+  1. **5 Days UAE Tour** (5 days) · from **Islamabad**
+     - Price: **₨ 250,000**
+     - Dates: Departure Date · Booking Deadline: Deadline
 - Be warm and helpful. Always show prices in bold PKR (e.g. **₨ 250,000**).
 - Match user's language (English request -> English reply, Roman Urdu request -> Roman Urdu reply).
 - MANDATORY CLICKABLE MARKDOWN LINKS RULE:

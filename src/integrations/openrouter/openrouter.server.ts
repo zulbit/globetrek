@@ -1,4 +1,5 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { generateText as originalGenerateText } from "ai";
 
 const FALLBACK_OPENROUTER_KEY = Buffer.from(
   "c2stb3ItdjEtOGZiYTYzNzE2ZWYyM2I1NGMwMmQ5MmI1YjMyOGY3NGI1MDNiMTQxMTAzNTFkODE2NjdlZDEwZWRjNTU2YWQyOA==",
@@ -29,9 +30,14 @@ function getOpenRouterProvider(customKey?: string) {
       if (options?.body && typeof options.body === "string") {
         try {
           const parsed = JSON.parse(options.body);
-          if (!parsed.max_tokens) {
-            parsed.max_tokens = 250;
+          const limit = parsed.max_tokens || parsed.maxTokens;
+          if (!limit) {
+            parsed.max_tokens = 800;
+          } else {
+            parsed.max_tokens = Number(limit);
           }
+          // Remove camelCase maxTokens if present to avoid conflicting OpenAI validation
+          delete parsed.maxTokens;
           options.body = JSON.stringify(parsed);
         } catch {}
       }
@@ -56,6 +62,37 @@ function getDeepSeekDirectProvider(customKey?: string) {
       if (options?.body && typeof options.body === "string") {
         try {
           const parsed = JSON.parse(options.body);
+          const limit = parsed.max_tokens || parsed.maxTokens;
+          if (!limit) {
+            parsed.max_tokens = 800;
+          } else {
+            parsed.max_tokens = Number(limit);
+          }
+          delete parsed.maxTokens;
+          options.body = JSON.stringify(parsed);
+        } catch {}
+      }
+      return fetch(url, options);
+    },
+  });
+}
+
+function getAgentRouterProvider(customKey?: string) {
+  const apiKey =
+    customKey ||
+    process.env.AGENTROUTER_API_KEY ||
+    "";
+
+  return createOpenAICompatible({
+    name: "agentrouter",
+    baseURL: "https://agentrouter.org/v1",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+    },
+    fetch: async (url, options) => {
+      if (options?.body && typeof options.body === "string") {
+        try {
+          const parsed = JSON.parse(options.body);
           if (!parsed.max_tokens) {
             parsed.max_tokens = 350;
           }
@@ -68,10 +105,23 @@ function getDeepSeekDirectProvider(customKey?: string) {
 }
 
 export function openRouterModel(targetModel?: string, customKey?: string) {
+  const modelId = targetModel || "openai/gpt-4o-mini";
+
+  // Check if target model is an AgentRouter model
+  const isAgentRouter =
+    modelId.includes("claude-opus-") ||
+    modelId.includes("gpt-3.6-sol") ||
+    modelId.includes("gpt-5.6-sol") ||
+    modelId.includes("agentrouter");
+
+  if (isAgentRouter) {
+    const key = customKey || process.env.AGENTROUTER_API_KEY || "";
+    return getAgentRouterProvider(key)(modelId);
+  }
+
   const isDeepSeekTarget =
-    !targetModel ||
-    targetModel.includes("deepseek") ||
-    targetModel === "deepseek-v4-flash";
+    modelId.includes("deepseek") ||
+    modelId === "deepseek-v4-flash";
 
   if (isDeepSeekTarget) {
     const deepSeekKey =
@@ -83,10 +133,44 @@ export function openRouterModel(targetModel?: string, customKey?: string) {
   }
 
   // OpenRouter fallback for non-deepseek models
-  return getOpenRouterProvider(customKey)(targetModel || "openai/gpt-4o-mini");
+  const openRouterKey =
+    customKey && customKey.startsWith("sk-or-v1-")
+      ? customKey
+      : undefined;
+
+  return getOpenRouterProvider(openRouterKey)(modelId);
 }
 
 /** Web-search grounded — real-time visa fee / embassy data lookups */
 export function openRouterOnlineModel() {
   return getOpenRouterProvider()("openai/gpt-4o-mini:online");
 }
+
+/**
+ * Executes generateText with a self-healing fallback mechanism.
+ * If the primary model fails (e.g. due to Insufficient Balance, Rate Limits, or Billing issues),
+ * it automatically retries using OpenRouter's free router model (openrouter/free).
+ */
+export async function generateTextWithFallback(
+  params: Parameters<typeof originalGenerateText>[0]
+) {
+  try {
+    return await originalGenerateText(params);
+  } catch (err: any) {
+    const errMsg = err?.message || String(err);
+    console.warn(`[AI SDK] Primary model execution failed: ${errMsg}. Attempting self-healing fallback...`);
+
+    try {
+      console.log(`[AI SDK Fallback] Retrying prompt with 'openrouter/free' model routing...`);
+      const fallbackModel = openRouterModel("openrouter/free");
+      return await originalGenerateText({
+        ...params,
+        model: fallbackModel,
+      });
+    } catch (fallbackErr: any) {
+      console.error(`[AI SDK Fallback Failed] Free fallback model also failed:`, fallbackErr);
+    }
+    throw err;
+  }
+}
+

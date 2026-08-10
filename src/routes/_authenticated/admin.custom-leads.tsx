@@ -23,6 +23,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useServerFn } from "@tanstack/react-start";
+import { updateLeadStatusServer } from "@/lib/custom-tour-leads.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/custom-leads")({
   component: AdminCustomLeads,
@@ -61,6 +63,7 @@ interface AdminLead {
 function AdminCustomLeads() {
   const qc = useQueryClient();
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const updateStatusFn = useServerFn(updateLeadStatusServer);
 
   // -------- Query Custom Leads for Admins --------
   const { data: leads = [], isLoading } = useQuery({
@@ -119,11 +122,7 @@ function AdminCustomLeads() {
   // -------- Mutation to Update Lead Status --------
   const statusMutation = useMutation({
     mutationFn: async ({ leadId, status }: { leadId: string; status: string }) => {
-      const { error } = await supabase
-        .from("custom_tour_leads")
-        .update({ status })
-        .eq("id", leadId);
-      if (error) throw error;
+      await updateStatusFn({ data: { leadId, status } });
     },
     onSuccess: () => {
       toast.success("Lead status updated successfully");
@@ -148,7 +147,6 @@ function AdminCustomLeads() {
         <div className="flex gap-2">
           {[
             { id: "all", label: "All Leads" },
-            { id: "unverified", label: "⚠️ Unverified (Action Needed)" },
             { id: "verified", label: "✅ Verified / Live" },
             { id: "accepted", label: "🎉 Accepted" },
             { id: "closed", label: "Closed" },
@@ -195,21 +193,10 @@ function AdminCustomLeads() {
 
                 <div className="flex items-center gap-3">
                   <div className="flex gap-1.5">
-                    {l.status === "unverified" && (
+                    {l.status !== "verified" && (
                       <Button
                         size="sm"
                         className="h-8 text-xs bg-emerald-500 hover:bg-emerald-600 text-black font-bold"
-                        onClick={() => statusMutation.mutate({ leadId: l.id, status: "verified" })}
-                        disabled={statusMutation.isPending}
-                      >
-                        <CheckCircle2 className="size-3.5 mr-1" /> Approve &amp; Publish to Marketplace
-                      </Button>
-                    )}
-                    {l.status !== "verified" && l.status !== "unverified" && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 text-xs border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10"
                         onClick={() => statusMutation.mutate({ leadId: l.id, status: "verified" })}
                         disabled={statusMutation.isPending}
                       >

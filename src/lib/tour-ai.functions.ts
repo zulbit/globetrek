@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { generateText, Output } from "ai";
+import { Output } from "ai";
+import { generateTextWithFallback as generateText } from "@/integrations/openrouter/openrouter.server";
 import { z } from "zod";
 
 type Mode = "description" | "plan";

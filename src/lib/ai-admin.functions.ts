@@ -404,6 +404,78 @@ export const verifyAIModelServer = createServerFn({ method: "POST" })
     const { model_id, custom_api_key } = data;
     const targetModel = model_id?.trim() || "deepseek-v4-flash";
 
+    // Agent Router testing
+    const isAgentRouter =
+      targetModel.includes("claude-opus-") ||
+      targetModel.includes("gpt-5.6-sol") ||
+      targetModel.includes("agentrouter");
+
+    if (isAgentRouter) {
+      const apiKey = custom_api_key?.trim() || process.env.AGENTROUTER_API_KEY || "";
+      const endpoint = "https://agentrouter.org/v1/chat/completions";
+      const startTime = Date.now();
+
+      try {
+        const testRes = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: targetModel,
+            messages: [{ role: "user", content: "Reply with 'OK - GlobeTrek Agent Router Online'." }],
+            max_tokens: 50,
+          }),
+        });
+
+        const latency_ms = Date.now() - startTime;
+
+        if (!testRes.ok) {
+          const errText = await testRes.text();
+          return {
+            success: false,
+            model_id: targetModel,
+            model_name: `Agent Router: ${targetModel}`,
+            is_free: false,
+            context_length: 128000,
+            prompt_price_1m_usd: 15.0,
+            completion_price_1m_usd: 75.0,
+            latency_ms,
+            error: `Agent Router API Error (${testRes.status}): ${errText}`,
+          };
+        }
+
+        const resJson = await testRes.json();
+        const output = resJson.choices?.[0]?.message?.content || "Agent Router connected successfully.";
+
+        return {
+          success: true,
+          model_id: targetModel,
+          model_name: `Agent Router: ${targetModel}`,
+          is_free: false,
+          context_length: 128000,
+          prompt_price_1m_usd: 15.0,
+          completion_price_1m_usd: 75.0,
+          latency_ms,
+          sample_output: output,
+        };
+      } catch (err: any) {
+        const latency_ms = Date.now() - startTime;
+        return {
+          success: false,
+          model_id: targetModel,
+          model_name: `Agent Router: ${targetModel}`,
+          is_free: false,
+          context_length: 128000,
+          prompt_price_1m_usd: 15.0,
+          completion_price_1m_usd: 75.0,
+          latency_ms,
+          error: err?.message || "Agent Router connection failed.",
+        };
+      }
+    }
+
     // Direct DeepSeek API vs OpenRouter Gateway testing
     if (
       targetModel === "deepseek-v4-flash" ||

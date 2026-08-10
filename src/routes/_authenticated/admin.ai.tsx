@@ -80,6 +80,9 @@ const PRESET_MODELS = [
   { id: "deepseek/deepseek-r1:free", label: "DeepSeek R1 Reasoning (100% FREE)", isFree: true },
   { id: "qwen/qwen-2.5-72b-instruct:free", label: "Qwen 2.5 72B Instruct (100% FREE)", isFree: true },
   { id: "anthropic/claude-3.5-haiku", label: "Anthropic Claude 3.5 Haiku (Paid)", isFree: false },
+  { id: "gpt-5.6-sol", label: "Agent Router: GPT 5.6 Sol (Premium)", isFree: false },
+  { id: "claude-opus-5", label: "Agent Router: Claude Opus 5 (Premium)", isFree: false },
+  { id: "claude-opus-4-8", label: "Agent Router: Claude Opus 4.8 (Premium)", isFree: false },
 ];
 
 function AdminAIPage() {

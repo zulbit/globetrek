@@ -89,7 +89,7 @@ export const submitCustomTourLead = createServerFn({ method: "POST" })
       });
 
       // 2. Send notification alert to the Admin
-      const adminPhone = "+923293089377"; // Standard system connection number
+      const adminPhone = "+923490386131"; // Updated admin connection number
       const adminMsg = `*👑 Admin Alert: New Custom Tour Request!*\n\nA traveler has submitted a custom tour request.\n\n*Request details:*\n👤 Name: ${data.contactName}\n📞 Phone: ${phone}\n✉️ Email: ${data.contactEmail}\n✈️ Trip: ${data.departureCity} → ${data.destination}\n📅 Travel Month: ${data.travelMonth} (${data.durationDays} Days)\n👨‍👩‍👧‍👦 Group: ${data.groupSize} (${data.groupType})\n\nView details and manage leads in the admin panel:\n👉 https://tour.testbench.shop/admin/custom-leads`;
 
       await dispatchWhatsAppDirect({

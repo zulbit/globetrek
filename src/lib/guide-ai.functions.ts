@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { generateText } from "ai";
-import { openRouterModel } from "@/integrations/openrouter/openrouter.server";
+import { openRouterModel, generateTextWithFallback as generateText } from "@/integrations/openrouter/openrouter.server";
 
 export type AskGuideAIInput = {
   question: string;

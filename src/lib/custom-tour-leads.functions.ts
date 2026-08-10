@@ -585,4 +585,32 @@ export const getCustomerQuotesByToken = createServerFn({ method: "GET" })
 
     return { lead, quotes: quotes ?? [] };
   });
+// -------- Update lead status by admin --------
+export const updateLeadStatusServer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: { leadId: string; status: string }) => {
+    if (!input.leadId) throw new Error("Lead ID required");
+    if (!input.status) throw new Error("Status required");
+    return input;
+  })
+  .handler(async ({ data, context }) => {
+    // Check if the user is an admin
+    const { data: userRole, error: roleErr } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .maybeSingle();
 
+    if (roleErr || userRole?.role !== "admin") {
+      throw new Error("Unauthorized: Only admins can manage lead status.");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("custom_tour_leads")
+      .update({ status: data.status })
+      .eq("id", data.leadId);
+
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
