@@ -421,6 +421,7 @@ export const verifyAIModelServer = createServerFn({ method: "POST" })
           headers: {
             Authorization: `Bearer ${apiKey}`,
             "Content-Type": "application/json",
+            "User-Agent": "Kilo-Code/5.7.0",
           },
           body: JSON.stringify({
             model: targetModel,

@@ -88,6 +88,7 @@ function getAgentRouterProvider(customKey?: string) {
     baseURL: "https://agentrouter.org/v1",
     headers: {
       Authorization: `Bearer ${apiKey}`,
+      "User-Agent": "Kilo-Code/5.7.0",
     },
     fetch: async (url, options) => {
       if (options?.body && typeof options.body === "string") {
