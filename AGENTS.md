@@ -13,9 +13,9 @@
 - **Target Server & Domain**: `globetrek.pk` (formerly `globetrek.testbench.shop` / `tour.testbench.shop`)
 - **SSH User**: `ubuntu`
 - **SSH Private Key Path (Local)**: `C:\Users\Zulqarnain\Downloads\ssh-key-2026-05-29.key`
-- **Live VPS Web Root / Project Path**: `/var/www/globetrek_te_usr/data/www/globetrek.testbench.shop/app`
+- **Live VPS Web Root / Project Path**: `/var/www/globetrek_pk_usr40/data/www/globetrek.pk/app`
 - **GitHub Repository**: `https://github.com/zulbit/globetrek.git`
-- **CI/CD Pipeline**: GitHub Actions (`.github/workflows/deploy.yml`) triggers automatically on push to `main`, SSHing as `ubuntu` to pull and build at `/var/www/globetrek_te_usr/data/www/globetrek.testbench.shop/app`.
+- **CI/CD Pipeline**: GitHub Actions (`.github/workflows/deploy.yml`) triggers automatically on push to `main`, SSHing as `ubuntu` to pull and build at `/var/www/globetrek_pk_usr40/data/www/globetrek.pk/app`.
 
 ## Project Architecture & Tech Stack Context
 - **Framework**: TanStack Start (React 19, Vite, TanStack Router, TanStack Query) with Nitro `node-server` preset.

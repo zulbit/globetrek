@@ -20,8 +20,8 @@ jobs:
           command_timeout: 15m
           script: |
             set -e
-            APP_DIR="/var/www/globetrek_pk_usr/data/www/globetrek.pk/app"
-            SITE_DIR="/var/www/globetrek_pk_usr/data/www/globetrek.pk"
+            APP_DIR="/var/www/globetrek_pk_usr40/data/www/globetrek.pk/app"
+            SITE_DIR="/var/www/globetrek_pk_usr40/data/www/globetrek.pk"
             PORT=8899
 
             echo "===> [1/6] Navigating to App Directory <==="
@@ -55,7 +55,7 @@ jobs:
             sudo rm -rf "$SITE_DIR/assets"
             sudo mkdir -p "$SITE_DIR/assets"
             sudo cp -r .output/public/* "$SITE_DIR/" 2>/dev/null || true
-            sudo chown -R globetrek_pk_usr:globetrek_pk_usr "$SITE_DIR/"
+            sudo chown -R globetrek_pk_usr40:globetrek_pk_usr40 "$SITE_DIR/"
 
             # ── Graceful restart: PM2 starts new process, then kills old ──
             echo "===> [6/6] Graceful restart & health check <==="

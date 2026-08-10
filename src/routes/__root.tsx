@@ -115,17 +115,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "theme-color", content: "#0B0F17" },
-      { title: "GlobeTrek PK · International Tour Marketplace in PKR" },
+      { title: "GlobeTrek PK — Pakistan's First AI-Driven International Travel Platform" },
       {
         name: "description",
         content:
-          "Book curated international tour packages — Turkey, Thailand, UAE, Europe and more — from verified Pakistani vendors, priced transparently in PKR.",
+          "Book curated international tour packages, visas, travel insurance, and flight tickets from verified Pakistani vendors with AI travel concierge assistance.",
       },
       { name: "author", content: "GlobeTrek PK" },
-      { property: "og:title", content: "GlobeTrek PK · International Tour Marketplace" },
+      { property: "og:title", content: "GlobeTrek PK — Pakistan's First AI-Driven International Travel Platform" },
       {
         property: "og:description",
-        content: "Verified vendors, transparent PKR pricing, zero hidden FX fees.",
+        content: "Verified Pakistani vendors, AI trip planner, transparent PKR pricing.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

@@ -12,17 +12,17 @@ export const Route = createFileRoute("/")({
   component: Home,
   head: () => ({
     meta: [
-      { title: "GlobeTrek PK — International tours from Pakistan, priced in PKR" },
+      { title: "GlobeTrek PK — Pakistan's First AI-Driven International Travel Platform" },
       {
         name: "description",
         content:
-          "Discover international tour packages, visa services, travel insurance and flight tickets — all priced in PKR by Pakistan's verified travel vendors.",
+          "Discover AI-planned international tour packages, visa services, travel insurance and flight tickets from Pakistan's verified travel vendors.",
       },
-      { property: "og:title", content: "GlobeTrek PK — The world, priced in PKR" },
+      { property: "og:title", content: "GlobeTrek PK — Pakistan's First AI-Driven International Travel Platform" },
       {
         property: "og:description",
         content:
-          "Browse curated international tours to Turkey, Thailand, UAE, Europe and beyond. Visas, insurance & tickets in one place.",
+          "Browse curated international tours to Turkey, Thailand, UAE, Europe and beyond with AI travel concierge assistance. All priced transparently in PKR.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
