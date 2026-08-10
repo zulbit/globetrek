@@ -154,7 +154,59 @@ function AdminOverview() {
 
   return (
     <div className="space-y-8 pb-10 w-full">
-      {/* Top Banner & Stats Overview */}
+      {/* 1. Primary Metrics Grid (Top) */}
+      <section className="w-full">
+        <h2 className="mb-4 text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold">Community & Membership</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 w-full">
+          <MetricCard
+            to="/admin/vendors"
+            icon={Users}
+            label="Total vendors"
+            value={data?.vendors ?? 0}
+            hint={`${data?.proVendors ?? 0} Pro · ${data?.starterVendors ?? 0} Free`}
+            tone="emerald"
+          />
+          <MetricCard
+            to="/admin/vendors"
+            icon={Crown}
+            label="Pro subscribers"
+            value={data?.proVendors ?? 0}
+            hint={`${formatPKR(PRO_MONTHLY_PKR)} / mo subscription`}
+            tone="amber"
+          />
+          <MetricCard
+            to="/admin/users"
+            icon={UserCheck}
+            label="Registered travelers"
+            value={data?.customers ?? 0}
+            hint="Verified customer accounts"
+            tone="sky"
+          />
+          <MetricCard
+            to="/admin/tours"
+            icon={Globe2}
+            label="Published tours"
+            value={data?.publishedTours ?? 0}
+            hint={`${publishedRate}% of ${data?.tours ?? 0} total`}
+            tone="violet"
+            progress={publishedRate}
+          />
+        </div>
+      </section>
+
+      {/* 2. Services Marketplace Channels */}
+      <section className="w-full">
+        <h2 className="mb-4 text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold">Marketplace Channels</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 w-full">
+          <MetricCard to="/admin/services" icon={FileCheck} label="Visa listings" value={data?.visaCount ?? 0} hint="Active visa consultants" tone="sky" />
+          <MetricCard to="/admin/services" icon={Shield} label="Insurance plans" value={data?.insuranceCount ?? 0} hint="Active travel insurance" tone="emerald" />
+          <MetricCard to="/admin/services" icon={Ticket} label="Ticketing services" value={data?.ticketCount ?? 0} hint="Active ticketing desks" tone="amber" />
+          <MetricCard to="/admin/custom-leads" icon={Compass} label="Custom tour leads" value={data?.customLeadsCount ?? 0} hint="Exclusive group builder" tone="sky" />
+          <MetricCard to="/admin/leads" icon={Inbox} label="Total leads" value={data?.totalLeads ?? 0} hint="All customer interactions" tone="violet" />
+        </div>
+      </section>
+
+      {/* 3. Revenue Banner & Quick Status Overview */}
       <div className="grid gap-6 lg:grid-cols-3 w-full">
         {/* Hero revenue card */}
         <Link
@@ -212,7 +264,7 @@ function AdminOverview() {
         </div>
       </div>
 
-      {/* Analytics & Activity Split Grid */}
+      {/* 4. Analytics & Activity Split Grid */}
       <div className="grid gap-6 lg:grid-cols-3 w-full">
         {/* Leads activity trend graph using Recharts */}
         <div className="lg:col-span-2 rounded-3xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
@@ -285,58 +337,6 @@ function AdminOverview() {
           </Link>
         </div>
       </div>
-
-      {/* Primary metrics grid */}
-      <section className="w-full">
-        <h2 className="mb-4 text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold">Community & Membership</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 w-full">
-          <MetricCard
-            to="/admin/vendors"
-            icon={Users}
-            label="Total vendors"
-            value={data?.vendors ?? 0}
-            hint={`${data?.proVendors ?? 0} Pro · ${data?.starterVendors ?? 0} Free`}
-            tone="emerald"
-          />
-          <MetricCard
-            to="/admin/vendors"
-            icon={Crown}
-            label="Pro subscribers"
-            value={data?.proVendors ?? 0}
-            hint={`${formatPKR(PRO_MONTHLY_PKR)} / mo subscription`}
-            tone="amber"
-          />
-          <MetricCard
-            to="/admin/vendors"
-            icon={UserCheck}
-            label="Registered travelers"
-            value={data?.customers ?? 0}
-            hint="Verified customer accounts"
-            tone="sky"
-          />
-          <MetricCard
-            to="/admin/tours"
-            icon={Globe2}
-            label="Published tours"
-            value={data?.publishedTours ?? 0}
-            hint={`${publishedRate}% of ${data?.tours ?? 0} total`}
-            tone="violet"
-            progress={publishedRate}
-          />
-        </div>
-      </section>
-
-      {/* Services marketplace */}
-      <section className="w-full">
-        <h2 className="mb-4 text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold">Marketplace Channels</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 w-full">
-          <MetricCard to="/admin/services" icon={FileCheck} label="Visa listings" value={data?.visaCount ?? 0} hint="Active visa consultants" tone="sky" />
-          <MetricCard to="/admin/services" icon={Shield} label="Insurance plans" value={data?.insuranceCount ?? 0} hint="Active travel insurance" tone="emerald" />
-          <MetricCard to="/admin/services" icon={Ticket} label="Ticketing services" value={data?.ticketCount ?? 0} hint="Active ticketing desks" tone="amber" />
-          <MetricCard to="/admin/custom-leads" icon={Compass} label="Custom tour leads" value={data?.customLeadsCount ?? 0} hint="Exclusive group builder" tone="sky" />
-          <MetricCard to="/admin/leads" icon={Inbox} label="Total leads" value={data?.totalLeads ?? 0} hint="All customer interactions" tone="violet" />
-        </div>
-      </section>
     </div>
   );
 }
