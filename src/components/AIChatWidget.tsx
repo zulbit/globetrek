@@ -235,6 +235,11 @@ export function AIChatWidget() {
     }
   }
 
+  // Do not render chat concierge on auth pages (sign in / sign up)
+  if (pathname.startsWith("/auth")) {
+    return null;
+  }
+
   return (
     <>
       {!open && (
