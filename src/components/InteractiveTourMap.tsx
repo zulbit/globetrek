@@ -41,11 +41,14 @@ export function InteractiveTourMap({
       if (!isMounted || !mapContainerRef.current) return;
 
       // Initialize Leaflet Map
+      const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
       const map = L.map(mapContainerRef.current, {
         center: [30.0, 50.0],
         zoom: 3,
         zoomControl: false,
         attributionControl: false,
+        scrollWheelZoom: false,
+        dragging: !isMobile,
       });
 
       L.control.zoom({ position: "topright" }).addTo(map);
@@ -271,7 +274,26 @@ export function InteractiveTourMap({
     }
   }
 
-  const [isCardExpanded, setIsCardExpanded] = React.useState<boolean>(true);
+  const [isCardExpanded, setIsCardExpanded] = React.useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth >= 768;
+    }
+    return false;
+  });
+  const [isMapInteractable, setIsMapInteractable] = React.useState<boolean>(false);
+
+  function toggleMobileMapInteraction(enable: boolean) {
+    setIsMapInteractable(enable);
+    if (mapInstanceRef.current) {
+      if (enable) {
+        mapInstanceRef.current.dragging.enable();
+        if (mapInstanceRef.current.touchZoom) mapInstanceRef.current.touchZoom.enable();
+      } else {
+        mapInstanceRef.current.dragging.disable();
+        if (mapInstanceRef.current.touchZoom) mapInstanceRef.current.touchZoom.disable();
+      }
+    }
+  }
 
   return (
     <div className="relative h-full w-full overflow-hidden rounded-2xl border border-border shadow-card bg-card">
@@ -279,11 +301,11 @@ export function InteractiveTourMap({
 
       {/* Floating Active Tour Info Badge (Top Left) */}
       {activeDetails && (
-        <div className="absolute top-3 left-3 z-[400] max-w-xs sm:max-w-sm rounded-xl border border-border/80 bg-background/95 p-3 shadow-2xl backdrop-blur-md transition-all duration-300">
+        <div className="absolute top-3 left-3 z-[400] max-w-[calc(100%-24px)] sm:max-w-sm rounded-xl border border-border/80 bg-background/95 p-2.5 sm:p-3 shadow-2xl backdrop-blur-md transition-all duration-300">
           <div className="flex items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-400">
-            <div className="flex items-center gap-1.5 line-clamp-1">
+            <div className="flex items-center gap-1.5 min-w-0">
               <Plane className="h-3.5 w-3.5 shrink-0 animate-pulse text-emerald-400" />
-              <span className="text-[11px] font-bold text-foreground line-clamp-1">
+              <span className="text-[11px] font-bold text-foreground truncate">
                 {activeDetails.tourTitle}
               </span>
             </div>
@@ -323,7 +345,7 @@ export function InteractiveTourMap({
               </div>
 
               {activeDetails.hops.length > 0 && (
-                <div className="mt-2 space-y-1.5 border-t border-border/50 pt-2">
+                <div className="mt-2 space-y-1.5 border-t border-border/50 pt-2 max-h-36 overflow-y-auto pr-1">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
                     Itinerary Schedule &amp; Hops ({activeDetails.hops.length} Stops)
                   </span>
@@ -346,6 +368,25 @@ export function InteractiveTourMap({
           )}
         </div>
       )}
+
+      {/* Mobile Map Gesture Control Pill */}
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[400] md:hidden">
+        {isMapInteractable ? (
+          <button
+            onClick={() => toggleMobileMapInteraction(false)}
+            className="flex items-center gap-1.5 rounded-full bg-emerald-500 px-3.5 py-1.5 text-xs font-bold text-black shadow-xl ring-2 ring-white/20 active:scale-95 transition-all"
+          >
+            <span>✓ Lock Map (Scroll Page)</span>
+          </button>
+        ) : (
+          <button
+            onClick={() => toggleMobileMapInteraction(true)}
+            className="flex items-center gap-1.5 rounded-full bg-slate-900/90 border border-emerald-500/50 px-3.5 py-1.5 text-xs font-bold text-emerald-400 shadow-xl backdrop-blur-md active:scale-95 transition-all hover:bg-slate-900"
+          >
+            <span>🗺️ Tap to Pan &amp; Zoom</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 }

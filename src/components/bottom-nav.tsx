@@ -22,32 +22,43 @@ export function BottomNav() {
     { to: accountTo, label: user ? "Account" : "Sign in", Icon: User },
   ];
 
-
-
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 md:hidden border-t border-border bg-background/90 backdrop-blur-md"
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-      aria-label="Primary"
+      className="fixed inset-x-0 bottom-0 z-40 md:hidden border-t border-border/80 bg-background/95 backdrop-blur-xl shadow-2xl"
+      style={{ paddingBottom: "max(env(safe-area-inset-bottom), 6px)" }}
+      aria-label="Mobile Navigation Bar"
     >
       <ul className="mx-auto grid max-w-lg grid-cols-5">
         {items.map(({ to, label, Icon, exact, badge }) => (
           <li key={label}>
             <Link
               to={to}
-              className="relative flex flex-col items-center gap-1 px-2 py-2.5 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
-              activeProps={{ className: "text-primary" }}
+              className="group relative flex flex-col items-center justify-center gap-1 py-2 px-1 text-[10px] font-semibold text-muted-foreground transition-all duration-200 hover:text-foreground active:scale-95"
+              activeProps={{ className: "!text-primary font-bold" }}
               activeOptions={{ exact: !!exact }}
             >
-              <span className="relative">
-                <Icon className="size-5" />
-                {badge && badge > 0 ? (
-                  <span className="absolute -right-2 -top-1 grid min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">
-                    {badge}
+              {({ isActive }) => (
+                <>
+                  <span className="relative flex items-center justify-center">
+                    <Icon
+                      className={`size-5 transition-transform duration-200 ${
+                        isActive
+                          ? "scale-110 text-primary drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]"
+                          : "group-hover:scale-105"
+                      }`}
+                    />
+                    {badge && badge > 0 ? (
+                      <span className="absolute -right-2 -top-1 grid min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white shadow">
+                        {badge}
+                      </span>
+                    ) : null}
                   </span>
-                ) : null}
-              </span>
-              <span>{label}</span>
+                  <span className="truncate max-w-[56px] leading-tight">{label}</span>
+                  {isActive && (
+                    <span className="absolute top-0 inset-x-4 h-0.5 rounded-full bg-primary shadow-glow" />
+                  )}
+                </>
+              )}
             </Link>
           </li>
         ))}

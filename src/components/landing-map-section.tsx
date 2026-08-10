@@ -39,7 +39,7 @@ export function LandingMapSection() {
         {/* Dreamstay Two-Column Layout: Stacked Tours Left, Map Right */}
         <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] xl:grid-cols-[420px_1fr] gap-6 items-stretch">
           {/* Left Column: Stacked Tour Cards List Container */}
-          <div className="flex flex-col rounded-2xl border border-border/70 bg-slate-900/90 p-3 shadow-2xl backdrop-blur-md h-[560px]">
+          <div className="flex flex-col rounded-2xl border border-border/70 bg-slate-900/90 p-3 shadow-2xl backdrop-blur-md h-[340px] sm:h-[440px] lg:h-[560px]">
             <div className="flex items-center justify-between px-2 py-2 border-b border-border/50 mb-2">
               <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                 <Plane className="h-3.5 w-3.5 text-emerald-400" />
@@ -105,7 +105,7 @@ export function LandingMapSection() {
           </div>
 
           {/* Right Column: Interactive OpenStreetMap */}
-          <div className="h-[560px] w-full overflow-hidden rounded-2xl border border-border/80 shadow-2xl">
+          <div className="h-[340px] sm:h-[440px] lg:h-[560px] w-full overflow-hidden rounded-2xl border border-border/80 shadow-2xl">
             <InteractiveTourMap
               tours={featuredTours}
               activeTourId={activeTourId}
