@@ -620,7 +620,6 @@ function TermsAndPoliciesPage() {
                     <ul className="list-disc pl-5 space-y-1 text-slate-300 pt-1">
                       <li><strong>Billing &amp; Payment Support:</strong> <code>billing@globetrek.pk</code></li>
                       <li><strong>General Customer Inquiries:</strong> <code>support@globetrek.pk</code></li>
-                      <li><strong>WhatsApp Support Helpline:</strong> +92 300 0000000</li>
                       <li><strong>Acknowledgment Timeline:</strong> All billing inquiries are formally acknowledged within <strong>24 business hours</strong>.</li>
                       <li><strong>Resolution Timeline:</strong> Investigation, billing reconciliation, and formal dispute solutions are provided within <strong>3 to 5 business days</strong>.</li>
                     </ul>
@@ -628,15 +627,11 @@ function TermsAndPoliciesPage() {
 
                   <div className="space-y-1.5 pt-2 border-t border-border/60">
                     <span className="inline-flex items-center gap-1.5 rounded-lg bg-teal-500/15 border border-teal-500/30 px-2.5 py-1 font-bold text-teal-300 text-xs">
-                      9.5 Official Merchant Legal Entity &amp; Operating Domicile
+                      9.5 Regulatory E-Commerce Compliance
                     </span>
                     <p className="pt-1 text-slate-300 leading-relaxed">
-                      GlobeTrek PK is a Pakistani technology enterprise. All e-commerce operations, digital contracts, and electronic payments are governed under the Electronic Transactions Ordinance 2002 and State Bank of Pakistan Payment Systems Regulations.
+                      GlobeTrek PK is an independent travel technology platform. All electronic payment transactions, contracts, and digital services are governed in accordance with the Electronic Transactions Ordinance 2002 and State Bank of Pakistan Payment Systems Regulations.
                     </p>
-                    <div className="pt-2 text-xs text-muted-foreground grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <div>🏢 <strong>Operating Entity:</strong> GlobeTrek PK (Pvt.) Ltd.</div>
-                      <div>📍 <strong>Registered Office:</strong> Islamabad Capital Territory, Pakistan</div>
-                    </div>
                   </div>
                 </div>
               </div>

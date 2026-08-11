@@ -369,13 +369,12 @@ function PrivacyPolicyPage() {
 
               <div className="space-y-4 text-xs text-muted-foreground leading-relaxed">
                 <p className="text-slate-300 leading-relaxed">
-                  If you have questions regarding this Privacy Policy, SafePay security practices, or data handling protocols, please reach out to our Compliance Officer:
+                  If you have questions regarding this Privacy Policy, SafePay security practices, or data handling protocols, please reach out to our Compliance Desk:
                 </p>
                 <div className="rounded-2xl border border-emerald-500/30 bg-card p-4 text-slate-300 space-y-2">
-                  <div>📧 <strong>Privacy &amp; Compliance Email:</strong> <code>privacy@globetrek.pk</code></div>
-                  <div>🏢 <strong>Legal Entity:</strong> GlobeTrek PK (Pvt.) Ltd.</div>
-                  <div>📍 <strong>Address:</strong> Islamabad Capital Territory, Pakistan</div>
-                  <div>💬 <strong>WhatsApp Partner Desk:</strong> +92 300 0000000</div>
+                  <div>📧 <strong>Privacy &amp; Data Protection:</strong> <code>privacy@globetrek.pk</code></div>
+                  <div>💳 <strong>Billing &amp; Payment Support:</strong> <code>billing@globetrek.pk</code></div>
+                  <div>🌐 <strong>Official Portal:</strong> <code>https://globetrek.pk</code></div>
                 </div>
               </div>
             </section>
