@@ -30,11 +30,12 @@ import { Card } from "@/components/ui/card";
 import { formatPKR } from "@/lib/tours";
 
 import { getCustomerCustomRequestsWithQuotes } from "@/lib/custom-tour-leads.functions";
+import { getCustomerCustomVisaRequestsWithQuotes } from "@/lib/custom-visa-leads.functions";
 
 const CUSTOMER_NAV = [
   { to: "/customer", label: "My Travel Hub", icon: Compass },
   { to: "/tours", label: "Explore Tours", icon: Plane },
-  { to: "/visa", label: "Visa Services", icon: FileCheck },
+  { to: "/custom-visa", label: "Visa Consultation", icon: FileCheck },
   { to: "/insurance", label: "Travel Insurance", icon: Shield },
   { to: "/tickets", label: "Flight Desks", icon: Ticket },
 ];
@@ -72,7 +73,15 @@ function CustomerDashboard() {
     refetchInterval: 5000,
   });
 
-  const loadingInquiries = loadingCatalog || loadingCustom;
+  // Fetch custom visa requests with live consultant proposals
+  const { data: customVisaRequests = [], isLoading: loadingCustomVisa } = useQuery({
+    queryKey: ["customer-custom-visa-requests", user?.id],
+    enabled: Boolean(user?.id),
+    queryFn: () => getCustomerCustomVisaRequestsWithQuotes(),
+    refetchInterval: 5000,
+  });
+
+  const loadingInquiries = loadingCatalog || loadingCustom || loadingCustomVisa;
 
   return (
     <RoleGuard allow={["customer", "vendor", "admin"]}>
@@ -171,9 +180,100 @@ function CustomerDashboard() {
 
           {/* Main Content Grid: Inquiries & Wishlist */}
           <div className="grid gap-6 lg:grid-cols-3">
-            {/* Left: Custom Tour Requests & Vendor Proposals (Primary Top Section) */}
+            {/* Left: Custom Tour & Visa Requests & Vendor Proposals */}
             <div className="lg:col-span-2 space-y-6">
               <div className="space-y-6">
+                {/* 0. Custom Visa Consultation Requests & Live Proposals (HIGH PRIORITY) */}
+                <Card className="p-6 space-y-5 border-border bg-card shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
+                    <div>
+                      <h2 className="text-lg font-extrabold text-foreground flex items-center gap-2">
+                        <FileCheck className="size-5 text-rose-400" /> My Custom Visa Requests &amp; Expert Bids
+                      </h2>
+                      <p className="text-xs text-muted-foreground">
+                        File preparation quotes, refusal case solutions, and embassy appointment assistance from top consultants.
+                      </p>
+                    </div>
+                    <Button asChild size="sm" variant="outline" className="gap-1.5 text-xs font-semibold rounded-xl border-rose-500/30 text-rose-400 shrink-0">
+                      <Link to="/custom-visa">
+                        + New Visa Request
+                      </Link>
+                    </Button>
+                  </div>
+
+                  {loadingCustomVisa ? (
+                    <div className="py-12 text-center text-xs text-muted-foreground">
+                      Loading your visa consultation proposals...
+                    </div>
+                  ) : customVisaRequests.length > 0 ? (
+                    <div className="space-y-5">
+                      {customVisaRequests.map((vReq: any) => (
+                        <div
+                          key={vReq.id}
+                          className={`rounded-2xl border p-5 space-y-4 transition bg-surface/50 ${
+                            vReq.quote_count > 0
+                              ? "border-rose-500/40 shadow-sm shadow-rose-500/5 bg-rose-500/[0.02]"
+                              : "border-border"
+                          }`}
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                            <div className="space-y-1.5">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/10 border border-rose-500/20 px-2.5 py-0.5 text-[10px] font-bold text-rose-400 uppercase tracking-wider">
+                                  🛂 {vReq.destination_country} · {vReq.visa_category}
+                                </span>
+                                {vReq.has_prior_rejection ? (
+                                  <Badge variant="destructive" className="text-[10px] font-bold">
+                                    🚨 Refusal Case
+                                  </Badge>
+                                ) : (
+                                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] uppercase font-bold">
+                                    🟢 Fresh Applicant
+                                  </Badge>
+                                )}
+                                {vReq.quote_count > 0 ? (
+                                  <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px] uppercase font-bold">
+                                    🎉 {vReq.quote_count} {vReq.quote_count === 1 ? "Proposal" : "Proposals"} Received
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                                    ⏳ Bidding Open (Up to 5 Consultants)
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground leading-relaxed">
+                                🏢 <strong>{vReq.submission_office}</strong> · 📍 Resident: {vReq.customer_city} · 👥 {vReq.applicant_count || 1} Applicant(s) · 💼 Profile: {vReq.applicant_profile}
+                              </p>
+                              {vReq.has_prior_rejection && vReq.rejection_details && (
+                                <p className="text-[11px] text-rose-300 italic bg-rose-500/10 px-2.5 py-1 rounded-lg border border-rose-500/30">
+                                  Refusal details: "{vReq.rejection_details}"
+                                </p>
+                              )}
+                            </div>
+
+                            <Button asChild size="sm" className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground shrink-0 shadow-sm">
+                              <Link to="/customer/visa-quotes" search={{ token: vReq.id } as any}>
+                                View Proposals ({vReq.quote_count}) <ArrowRight className="size-3.5" />
+                              </Link>
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-8 text-center space-y-3">
+                      <p className="text-xs text-muted-foreground">
+                        You have not submitted any custom visa inquiries yet. Need help with a refusal, appointment slot, or document checklist?
+                      </p>
+                      <Button asChild size="sm" className="gap-2 bg-gradient-to-r from-rose-600 to-amber-600 text-white font-bold text-xs">
+                        <Link to="/custom-visa">
+                          <FileCheck className="size-4" /> Request Custom Visa Consultation
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
+                </Card>
+
                 {/* 1. Custom Group Tour Requests & Live Agency Quotes (TOP POSITION) */}
                 <Card className="p-6 space-y-5 border-border bg-card shadow-sm">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">

@@ -83,6 +83,8 @@ export const submitCustomVisaLead = createServerFn({ method: "POST" })
       target_travel_date?: string;
       applicant_count?: number;
       special_notes?: string;
+      password?: string;
+      userId?: string;
     }) => {
       if (!input.contact_name?.trim()) throw new Error("Contact name is required");
       if (!input.contact_phone?.trim()) throw new Error("Phone number is required");
@@ -94,20 +96,88 @@ export const submitCustomVisaLead = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Optional: resolve logged-in customer ID if available
-    let customerId: string | null = null;
-    try {
-      const { data: u } = await supabaseAdmin.auth.getUser();
-      if (u.user) customerId = u.user.id;
-    } catch {}
+    // Clean phone → +92
+    const digits = data.contact_phone.replace(/\D/g, "").replace(/^0+/, "");
+    const phone = digits.startsWith("92") ? `+${digits}` : `+92${digits}`;
+
+    let registeredUserId: string | null = data.userId || null;
+    let accountCreated = false;
+
+    // 1. If password provided, register/ensure customer account in Supabase
+    if (data.password && data.password.trim().length >= 6) {
+      try {
+        const { data: newUser, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+          email: data.contact_email,
+          password: data.password.trim(),
+          email_confirm: true,
+          user_metadata: {
+            full_name: data.contact_name,
+            role: "customer",
+            phone: phone,
+          },
+        });
+
+        if (newUser?.user) {
+          registeredUserId = newUser.user.id;
+          accountCreated = true;
+
+          // Create/update profiles entry
+          await supabaseAdmin.from("profiles").upsert({
+            id: registeredUserId,
+            email: data.contact_email,
+            full_name: data.contact_name || null,
+            vendor_status: "approved",
+            subscription_tier: "free",
+            city: data.customer_city,
+          });
+
+          // Create user_roles entry
+          await supabaseAdmin.from("user_roles").upsert({
+            user_id: registeredUserId,
+            role: "customer",
+          });
+        } else if (createErr) {
+          // If user already exists in auth, update their password so they can log in
+          const { data: userList } = await supabaseAdmin.auth.admin.listUsers();
+          const existing = userList?.users?.find(
+            (u) => u.email?.toLowerCase() === data.contact_email.toLowerCase()
+          );
+
+          if (existing) {
+            registeredUserId = existing.id;
+            accountCreated = true;
+
+            await supabaseAdmin.auth.admin.updateUserById(existing.id, {
+              password: data.password.trim(),
+              email_confirm: true,
+              user_metadata: {
+                full_name: data.contact_name,
+                role: "customer",
+                phone: phone,
+              },
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("Auth user creation error (non-fatal):", err);
+      }
+    }
+
+    // If still no registered user, check current auth session
+    if (!registeredUserId) {
+      try {
+        const { data: u } = await supabaseAdmin.auth.getUser();
+        if (u.user) registeredUserId = u.user.id;
+      } catch {}
+    }
 
     const leadId = crypto.randomUUID();
     const newLead: CustomVisaLeadItem = {
       id: leadId,
       created_at: new Date().toISOString(),
-      customer_id: customerId,
+      customer_id: registeredUserId,
       contact_name: data.contact_name.trim(),
-      contact_phone: data.contact_phone.trim(),
+      contact_phone: phone,
       contact_email: (data.contact_email || "traveler@globetrek.pk").trim().toLowerCase(),
       customer_city: data.customer_city.trim(),
       destination_country: data.destination_country.trim(),
@@ -660,4 +730,45 @@ export const acceptVisaLeadQuote = createServerFn({ method: "POST" })
       ok: true,
       message: `Proposal by ${targetQuote.vendor_name} accepted! You can now chat directly on WhatsApp.`,
     };
+  });
+
+// -------- 8. Get Logged-In Customer's Custom Visa Requests with Proposals --------
+export const getCustomerCustomVisaRequestsWithQuotes = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const userId = context.user.id;
+    const userEmail = context.user.email?.toLowerCase() || "";
+
+    // Load leads
+    const { data: leadsRow } = await supabaseAdmin
+      .from("payment_gateway_settings")
+      .select("config")
+      .eq("provider", "custom_visa_leads")
+      .maybeSingle();
+
+    const allLeads: CustomVisaLeadItem[] = leadsRow?.config?.leads || [];
+
+    // Filter leads belonging to this customer by ID or Email
+    const userLeads = allLeads.filter(
+      (l) => (l.customer_id && l.customer_id === userId) || (l.contact_email && l.contact_email.toLowerCase() === userEmail)
+    );
+
+    // Load quotes
+    const { data: quotesRow } = await supabaseAdmin
+      .from("payment_gateway_settings")
+      .select("config")
+      .eq("provider", "visa_lead_quotes")
+      .maybeSingle();
+
+    const allQuotes: VisaLeadQuoteItem[] = quotesRow?.config?.quotes || [];
+
+    return userLeads.map((lead) => {
+      const leadQuotes = allQuotes.filter((q) => q.lead_id === lead.id);
+      return {
+        ...lead,
+        quotes: leadQuotes,
+        quote_count: leadQuotes.length,
+      };
+    });
   });

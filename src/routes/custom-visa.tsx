@@ -23,6 +23,9 @@ import {
   Plane,
   HeartHandshake,
   MessageCircle,
+  Lock,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { SiteShell } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
@@ -155,6 +158,9 @@ function CustomVisaPage() {
   const [contactPhone, setContactPhone] = React.useState("");
   const [contactEmail, setContactEmail] = React.useState("");
   const [customerCity, setCustomerCity] = React.useState("Islamabad");
+  const [password, setPassword] = React.useState("");
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
 
   // Auto-Prefill Contact for Logged-In Users
   React.useEffect(() => {
@@ -169,6 +175,7 @@ function CustomVisaPage() {
       try {
         const { data: u } = await supabase.auth.getUser();
         if (!u.user) return;
+        setIsLoggedIn(true);
 
         const { data: profile } = await supabase
           .from("profiles")
@@ -224,12 +231,25 @@ function CustomVisaPage() {
           target_travel_date: targetTravelDate || undefined,
           applicant_count: applicantCount,
           special_notes: specialNotes || undefined,
+          password: password.trim().length >= 6 ? password.trim() : undefined,
         },
       });
     },
-    onSuccess: (res) => {
+    onSuccess: async (res) => {
+      // Auto login if new account password was provided
+      if (password && password.trim().length >= 6 && contactEmail) {
+        try {
+          await supabase.auth.signInWithPassword({
+            email: contactEmail.trim(),
+            password: password.trim(),
+          });
+        } catch (authErr) {
+          console.warn("Auto login notice:", authErr);
+        }
+      }
+
       toast.success("🎉 Visa Consultation Request Submitted!", {
-        description: "Up to 5 verified consultants are reviewing your case file. Redirecting to your live proposal portal...",
+        description: "Your case file is active in your Traveler Hub! Up to 5 verified consultants are preparing bids.",
         duration: 6000,
       });
       navigate({
@@ -685,6 +705,37 @@ function CustomVisaPage() {
                     </Select>
                   </div>
                 </div>
+
+                {/* Account Password for Guest Users */}
+                {!isLoggedIn && (
+                  <div className="space-y-1.5 rounded-2xl border border-primary/20 bg-primary/5 p-3.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                        <Lock className="size-3.5 text-primary" /> Create Account Password
+                      </label>
+                      <span className="text-[10px] text-muted-foreground">Min 6 characters</span>
+                    </div>
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Set a password to manage bids in your Traveler Hub"
+                        className="bg-surface border-border text-sm pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      Creates your free <strong>Traveler Hub</strong> account so you can log in, track incoming visa proposals, and chat directly with bidding consultants.
+                    </p>
+                  </div>
+                )}
 
                 {/* Trust notice */}
                 <div className="flex items-start gap-2.5 rounded-xl border border-border bg-surface/50 p-3.5 text-xs text-muted-foreground">
