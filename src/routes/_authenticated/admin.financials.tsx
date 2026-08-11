@@ -62,9 +62,11 @@ export function AdminFinancials() {
       let leadPurchases: any[] = [];
       try {
         const { data: lp } = await supabase
-          .from("leads")
-          .select("id, customer_name, service_type, service_id, status, created_at, vendor_id, notes")
-          .eq("status", "accepted");
+          .from("lead_unlock_payments")
+          .select("id, lead_id, vendor_id, amount, created_at, status, profiles(full_name, company_name, email)")
+          .eq("status", "completed")
+          .order("created_at", { ascending: false });
+
         leadPurchases = lp ?? [];
       } catch (err) {
         console.error("Lead purchases query error:", err);
@@ -92,7 +94,10 @@ export function AdminFinancials() {
 
       // 4. Compute Custom Lead Unlocks collections
       const totalLeadUnlocks = leadPurchases.length;
-      const totalLeadUnlockRevenue = totalLeadUnlocks * LEAD_UNLOCK_FEE_PKR;
+      const totalLeadUnlockRevenue = leadPurchases.reduce(
+        (acc: number, item: any) => acc + (item.amount || LEAD_UNLOCK_FEE_PKR),
+        0
+      );
 
       // Total gross collections
       const totalGrossCollections = mrrSubscriptions + totalLeadUnlockRevenue;
@@ -115,9 +120,10 @@ export function AdminFinancials() {
 
       leadPurchases.forEach((lp) => {
         const dateKey = new Date(lp.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        const unlockAmt = lp.amount || LEAD_UNLOCK_FEE_PKR;
         if (dailyMap[dateKey]) {
-          dailyMap[dateKey].leadUnlocks += LEAD_UNLOCK_FEE_PKR;
-          dailyMap[dateKey].total += LEAD_UNLOCK_FEE_PKR;
+          dailyMap[dateKey].leadUnlocks += unlockAmt;
+          dailyMap[dateKey].total += unlockAmt;
         }
       });
 
@@ -150,12 +156,12 @@ export function AdminFinancials() {
         }))
         .concat(
           leadPurchases.map((lp) => ({
-            id: `lead-${lp.id}`,
+            id: `unlock-${lp.id.slice(0, 8)}`,
             type: "Lead Unlock Fee",
-            vendorName: "Custom Lead Bidding Desk",
-            email: `Customer: ${lp.customer_name}`,
+            vendorName: lp.profiles?.company_name || lp.profiles?.full_name || "Travel Partner",
+            email: lp.profiles?.email || "vendor@globetrek.pk",
             tier: "LEAD UNLOCK",
-            amount: LEAD_UNLOCK_FEE_PKR,
+            amount: lp.amount || LEAD_UNLOCK_FEE_PKR,
             date: lp.created_at,
             status: "Settled (SafePay)",
           }))

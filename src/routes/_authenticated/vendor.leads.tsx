@@ -142,21 +142,23 @@ function VendorLeads() {
     },
   });
 
-  // -------- Verify Custom Lead Payment Mutation --------
-  const verifyPaymentMutation = useMutation({
-    mutationFn: (leadId: string) => verifyLeadUnlockPayment({ data: { leadId } }),
-    onSuccess: (res) => {
-      if (res.unlocked) {
-        toast.success(res.message || "Payment verified and lead unlocked successfully!");
-        qc.invalidateQueries({ queryKey: ["vendor-leads-marketplace"] });
-      } else {
-        toast.warning(res.message || "Payment status not yet complete.");
-      }
-    },
-    onError: (err: any) => {
-      toast.error(err.message || "Could not verify payment.");
-    },
-  });
+  // -------- Auto-verify pending lead unlock payments in background --------
+  useEffect(() => {
+    if (mode !== "marketplace" || !marketplaceLeads.length) return;
+    const pendingLeads = marketplaceLeads.filter((l) => l.has_pending_payment);
+    if (!pendingLeads.length) return;
+
+    pendingLeads.forEach((pl) => {
+      verifyLeadUnlockPayment({ data: { leadId: pl.id } })
+        .then((res) => {
+          if (res.unlocked) {
+            toast.success("SafePay payment verified! Lead unlocked successfully.");
+            qc.invalidateQueries({ queryKey: ["vendor-leads-marketplace"] });
+          }
+        })
+        .catch(() => {});
+    });
+  }, [marketplaceLeads, mode, qc]);
 
   // -------- Detailed Quotation Modal State & Mutation --------
   const [quoteModalOpen, setQuoteModalOpen] = useState(false);
