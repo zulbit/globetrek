@@ -29,6 +29,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { formatPKR } from "@/lib/tours";
 
+import { getCustomerCustomRequestsWithQuotes } from "@/lib/custom-tour-leads.functions";
+
 const CUSTOMER_NAV = [
   { to: "/customer", label: "My Travel Hub", icon: Compass },
   { to: "/tours", label: "Explore Tours", icon: Plane },
@@ -45,42 +47,32 @@ function CustomerDashboard() {
   const { user } = useAuth();
   const { items: wishlistItems } = useWishlist();
 
-  // Fetch traveler's custom tour requests & inquiries
-  const { data: myInquiries, isLoading: loadingInquiries } = useQuery({
-    queryKey: ["customer-my-inquiries", user?.id],
+  // Fetch standard catalog inquiries
+  const { data: catalogLeads = [], isLoading: loadingCatalog } = useQuery({
+    queryKey: ["customer-catalog-leads", user?.id],
     enabled: Boolean(user?.id),
     queryFn: async () => {
-      // 1. Fetch standard catalog inquiries
-      let leads: any[] = [];
       try {
-        const { data: lData } = await supabase
+        const { data } = await supabase
           .from("leads")
           .select("*")
           .order("created_at", { ascending: false });
-        leads = lData ?? [];
+        return data ?? [];
       } catch {
-        /* grace */
+        return [];
       }
-
-      // 2. Fetch custom tour lead requests for this traveler
-      let customRequests: any[] = [];
-      try {
-        let q = supabase.from("custom_tour_leads").select("*").order("created_at", { ascending: false });
-        if (user?.email) {
-          q = q.ilike("contact_email", user.email);
-        }
-        const { data: cr } = await q;
-        customRequests = cr ?? [];
-      } catch {
-        /* grace for missing table */
-      }
-
-      return {
-        leads: leads ?? [],
-        customRequests,
-      };
     },
   });
+
+  // Fetch custom tour requests with live vendor proposals
+  const { data: customRequests = [], isLoading: loadingCustom } = useQuery({
+    queryKey: ["customer-custom-requests-quotes", user?.id],
+    enabled: Boolean(user?.id),
+    queryFn: () => getCustomerCustomRequestsWithQuotes(),
+    refetchInterval: 5000,
+  });
+
+  const loadingInquiries = loadingCatalog || loadingCustom;
 
   return (
     <RoleGuard allow={["customer", "vendor", "admin"]}>
@@ -145,7 +137,7 @@ function CustomerDashboard() {
                 </div>
               </div>
               <div className="text-3xl font-black text-foreground font-mono">
-                {myInquiries?.customRequests.length ?? 0}
+                {customRequests.length}
               </div>
               <p className="text-xs text-muted-foreground">Submitted group tour requests</p>
             </Card>
@@ -158,7 +150,7 @@ function CustomerDashboard() {
                 </div>
               </div>
               <div className="text-3xl font-black text-foreground font-mono">
-                {myInquiries?.leads.length ?? 0}
+                {catalogLeads.length}
               </div>
               <p className="text-xs text-muted-foreground">Direct vendor inquiries sent</p>
             </Card>
@@ -200,13 +192,13 @@ function CustomerDashboard() {
                     </Button>
                   </div>
 
-                  {loadingInquiries ? (
+                  {loadingCatalog ? (
                     <div className="py-8 text-center text-xs text-muted-foreground">
                       Loading catalog package inquiries...
                     </div>
-                  ) : myInquiries?.leads && myInquiries.leads.length > 0 ? (
+                  ) : catalogLeads.length > 0 ? (
                     <div className="space-y-3">
-                      {myInquiries.leads.map((inq: any) => (
+                      {catalogLeads.map((inq: any) => (
                         <div key={inq.id} className="rounded-2xl border border-border/80 bg-surface/50 p-4 space-y-2">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                             <div>
@@ -244,7 +236,7 @@ function CustomerDashboard() {
                   )}
                 </Card>
 
-                {/* 2. Custom Group Tour Requests & Bids */}
+                {/* 2. Custom Group Tour Requests & Live Agency Quotes */}
                 <Card className="p-6 space-y-4 border-border bg-card shadow-sm">
                   <div className="flex items-center justify-between border-b border-border pb-4">
                     <div>
@@ -252,7 +244,7 @@ function CustomerDashboard() {
                         <Compass className="size-5 text-primary" /> My Custom Tour Requests &amp; Bids
                       </h2>
                       <p className="text-xs text-muted-foreground">
-                        Quotations and proposals submitted by verified Pakistani vendors for your custom group requests.
+                        Live quotations and customized itineraries submitted by verified Pakistani travel agencies.
                       </p>
                     </div>
                     <Button asChild size="sm" variant="outline" className="gap-1.5 text-xs font-semibold rounded-xl border-primary/30 text-primary">
@@ -262,26 +254,43 @@ function CustomerDashboard() {
                     </Button>
                   </div>
 
-                  {loadingInquiries ? (
+                  {loadingCustom ? (
                     <div className="py-12 text-center text-xs text-muted-foreground">
-                      Loading your custom proposals...
+                      Loading your custom trip proposals...
                     </div>
-                  ) : myInquiries?.customRequests && myInquiries.customRequests.length > 0 ? (
+                  ) : customRequests.length > 0 ? (
                     <div className="space-y-4">
-                      {myInquiries.customRequests.map((req: any) => (
-                        <div key={req.id} className="rounded-2xl border border-border bg-surface/50 p-4 space-y-3">
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-bold text-foreground text-sm">
+                      {customRequests.map((req) => (
+                        <div
+                          key={req.id}
+                          className={`rounded-2xl border p-5 space-y-4 transition bg-surface/50 ${
+                            req.quotes_count > 0
+                              ? "border-emerald-500/40 shadow-sm shadow-emerald-500/5 bg-emerald-500/[0.02]"
+                              : "border-border"
+                          }`}
+                        >
+                          {/* Header */}
+                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                            <div className="space-y-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h3 className="font-extrabold text-foreground text-base capitalize">
                                   {req.destination ? `${req.destination} Trip` : "Custom Tour Request"}
                                 </h3>
                                 <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] uppercase font-bold">
-                                  {req.status || "Pending Quotes"}
+                                  {req.status || "verified"}
                                 </Badge>
+                                {req.quotes_count > 0 ? (
+                                  <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px] uppercase font-bold">
+                                    🎉 {req.quotes_count} {req.quotes_count === 1 ? "Quote" : "Quotes"} Received
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                                    ⏳ Bids Open
+                                  </Badge>
+                                )}
                               </div>
-                              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                                📅 <strong>{req.travel_month || "Upcoming"}</strong> · ⏳ {req.duration_days ?? 7} Days · 👨‍👩‍👧‍👦 {req.group_size ?? 1} Travelers ({req.group_type || "Family"}) · ✈️ From {req.departure_city || "Pakistan"}
+                              <p className="text-xs text-muted-foreground leading-relaxed">
+                                📅 <strong>{req.travel_month || "Upcoming"}</strong> · ⏳ {req.duration_days ?? 7} Days · 👥 {req.group_size ?? 1} Travelers ({req.group_type || "Family"}) · ✈️ From {req.departure_city || "Pakistan"}
                               </p>
                               {req.special_requests && (
                                 <p className="text-[11px] text-muted-foreground/80 italic mt-1 bg-surface/80 px-2.5 py-1 rounded-lg border border-border/50">
@@ -289,14 +298,66 @@ function CustomerDashboard() {
                                 </p>
                               )}
                             </div>
-                            {req.access_token && (
-                              <Button asChild size="sm" className="gap-1.5 font-bold text-xs bg-primary text-primary-foreground rounded-xl shrink-0">
-                                <Link to={`/customer/quotes?token=${req.access_token}`}>
-                                  View Proposals <ExternalLink className="size-3.5" />
-                                </Link>
-                              </Button>
-                            )}
+
+                            {/* Main CTA to Open Proposal Desk */}
+                            <Button asChild size="sm" className={`gap-1.5 font-bold text-xs rounded-xl shrink-0 ${
+                              req.quotes_count > 0
+                                ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-black shadow-md hover:opacity-95"
+                                : "bg-primary text-primary-foreground"
+                            }`}>
+                              <Link to={`/customer/quotes?token=${req.id}`}>
+                                {req.quotes_count > 0 ? (
+                                  <>
+                                    <Sparkles className="size-3.5" /> View &amp; Compare Proposals ({req.quotes_count}) <ArrowRight className="size-3.5" />
+                                  </>
+                                ) : (
+                                  <>
+                                    <Compass className="size-3.5" /> View Quotation Desk <ExternalLink className="size-3.5" />
+                                  </>
+                                )}
+                              </Link>
+                            </Button>
                           </div>
+
+                          {/* Quotes Preview Banner if quotes exist */}
+                          {req.quotes_count > 0 && req.quotes && req.quotes.length > 0 && (
+                            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 space-y-2">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="font-bold text-emerald-400 flex items-center gap-1.5">
+                                  <Sparkles className="size-3.5 text-amber-400" /> Active Agency Proposal:
+                                </span>
+                                <span className="font-mono font-bold text-foreground text-sm">
+                                  Rs {req.lowest_quote_amount ? req.lowest_quote_amount.toLocaleString() : ""}
+                                </span>
+                              </div>
+                              <div className="text-xs text-foreground/90 space-y-1">
+                                <p className="font-semibold text-emerald-300">
+                                  🏢 {req.quotes[0].vendor_company || req.quotes[0].vendor_name}
+                                </p>
+                                {req.quotes[0].hotel_details && (
+                                  <p className="text-[11px] text-muted-foreground">
+                                    🏨 {req.quotes[0].hotel_details}
+                                  </p>
+                                )}
+                                {req.quotes[0].flight_details && (
+                                  <p className="text-[11px] text-muted-foreground">
+                                    ✈️ {req.quotes[0].flight_details}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="pt-1 flex items-center justify-between border-t border-emerald-500/20 text-[11px]">
+                                <span className="text-muted-foreground">
+                                  Includes: {(req.quotes[0].inclusions || []).slice(0, 3).join(", ")}
+                                </span>
+                                <Link
+                                  to={`/customer/quotes?token=${req.id}`}
+                                  className="text-primary font-bold hover:underline inline-flex items-center gap-1"
+                                >
+                                  Review Full Package →
+                                </Link>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
