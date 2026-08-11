@@ -94,6 +94,7 @@ export const submitCustomTourLead = createServerFn({ method: "POST" })
     const { data: lead, error } = await supabaseAdmin
       .from("custom_tour_leads")
       .insert({
+        traveler_id: registeredUserId || null,
         departure_city: data.departureCity,
         destination: data.destination,
         travel_month: data.travelMonth,
@@ -115,7 +116,7 @@ export const submitCustomTourLead = createServerFn({ method: "POST" })
 
     if (error) {
       console.error("[CustomTourLead] Insert error:", error);
-      throw new Error("Failed to submit your request. Please try again.");
+      throw new Error(error.message || "Failed to submit your request. Please try again.");
     }
 
     // 3. Try sending WhatsApp alerts asynchronously (non-blocking)
