@@ -83,7 +83,39 @@ export const submitCustomTourLead = createServerFn({ method: "POST" })
             role: "customer",
           });
         } else if (createErr) {
-          console.log("[CustomTourLead] User might already exist in auth:", createErr.message);
+          // If user already exists in auth, update their password so they can log in with what they just typed
+          const { data: userList } = await supabaseAdmin.auth.admin.listUsers();
+          const existing = userList?.users?.find(
+            (u) => u.email?.toLowerCase() === data.contactEmail.toLowerCase()
+          );
+
+          if (existing) {
+            registeredUserId = existing.id;
+            accountCreated = true;
+
+            await supabaseAdmin.auth.admin.updateUserById(existing.id, {
+              password: data.password.trim(),
+              email_confirm: true,
+              user_metadata: {
+                full_name: data.contactName,
+                role: "customer",
+                phone: phone,
+              },
+            });
+
+            await supabaseAdmin.from("profiles").upsert({
+              id: existing.id,
+              email: data.contactEmail,
+              full_name: data.contactName || null,
+              vendor_status: "approved",
+              subscription_tier: "free",
+            });
+
+            await supabaseAdmin.from("user_roles").upsert({
+              user_id: existing.id,
+              role: "customer",
+            });
+          }
         }
       } catch (authErr) {
         console.warn("[CustomTourLead] Account creation caught:", authErr);
