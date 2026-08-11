@@ -255,6 +255,7 @@ function VendorLeads() {
   // -------- Quotation Template Functions --------
   const applyQuoteTemplate = (type: "deluxe" | "vip" | "budget" | "umrah") => {
     if (type === "deluxe") {
+      setQuoteAmount("350000");
       setValidityDays("7");
       setAdvanceDepositPercent("30");
       setHotelDetails("4★ City Center Hotel (Double Sharing with Daily Breakfast)");
@@ -264,8 +265,9 @@ function VendorLeads() {
       setExclusionsInput("Personal Expenses, Driver Gratuities / Tips, Extra Unspecified Meals");
       setPerksInput("Free Tourist eSIM Card, Complimentary Airport Lounge Access");
       setTermsAndConditions("1. 30% advance deposit required to confirm booking.\n2. Balance payment due 7 days prior to departure.\n3. E-Visa approval is subject to official embassy clearance.\n4. 90% refund if cancelled 14+ days prior to travel.");
-      toast.success("Loaded Deluxe 4★ Family Tour Template!");
+      toast.success("Loaded Deluxe 4★ Family Tour Template with ₨ 350,000 package price!");
     } else if (type === "vip") {
+      setQuoteAmount("650000");
       setValidityDays("5");
       setAdvanceDepositPercent("40");
       setHotelDetails("5★ Grand Luxury Hotel (Executive Suite with Breakfast & Dinner)");
@@ -275,8 +277,9 @@ function VendorLeads() {
       setExclusionsInput("Personal Shopping, Alcoholic Beverages");
       setPerksInput("VIP Airport Lounge, Dinner Cruise Ticket, Free Tourist eSIM");
       setTermsAndConditions("1. 40% advance deposit required.\n2. Remaining balance due 5 days prior to departure.\n3. Non-refundable within 48 hours of travel.");
-      toast.success("Loaded VIP 5★ Luxury Package Template!");
+      toast.success("Loaded VIP 5★ Luxury Package Template with ₨ 650,000 package price!");
     } else if (type === "umrah") {
+      setQuoteAmount("195000");
       setValidityDays("7");
       setAdvanceDepositPercent("35");
       setHotelDetails("4★ Makkah Hotel (400m Clock Tower) & 4★ Madinah Hotel (Markaziah)");
@@ -286,8 +289,9 @@ function VendorLeads() {
       setExclusionsInput("Personal Laundry, Extra Food outside Buffet");
       setPerksInput("Free Zamzam Water 5L, Complimentary Ihram / Prayer Mat");
       setTermsAndConditions("1. 35% advance deposit required.\n2. Passport valid for at least 6 months required.\n3. Umrah visa clearance subject to Saudi Ministry rules.");
-      toast.success("Loaded Umrah Package Template!");
+      toast.success("Loaded Umrah Package Template with ₨ 195,000 package price!");
     } else {
+      setQuoteAmount("220000");
       setValidityDays("10");
       setAdvanceDepositPercent("25");
       setHotelDetails("3★ Standard Hotel (Triple / Quad Sharing with Breakfast)");
@@ -297,7 +301,7 @@ function VendorLeads() {
       setExclusionsInput("Personal Shopping, Lunch & Dinner, Driver Tips");
       setPerksInput("Free Group SIM Card");
       setTermsAndConditions("1. 25% advance deposit required.\n2. Balance due 10 days prior to departure.\n3. 80% refund if cancelled 14+ days prior.");
-      toast.success("Loaded Budget Group Package Template!");
+      toast.success("Loaded Budget Group Package Template with ₨ 220,000 package price!");
     }
   };
 
@@ -706,6 +710,8 @@ function VendorLeads() {
                             className="w-full gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold hover:from-amber-600 hover:to-yellow-600 shadow"
                             onClick={() => {
                               setSelectedLeadForQuote(l);
+                              if (!quoteAmount) setQuoteAmount("350000");
+                              if (!itinerarySummary) applyQuoteTemplate("deluxe");
                               setQuoteModalOpen(true);
                             }}
                           >
@@ -854,12 +860,15 @@ function VendorLeads() {
             {/* 1. Price, Validity & Advance Deposit */}
             <div className="grid gap-3 sm:grid-cols-3 bg-surface/50 p-3.5 rounded-2xl border border-border/80">
               <div>
-                <label className="text-xs font-semibold text-foreground mb-1 block">Total Package Price (PKR)*</label>
+                <label className="text-xs font-semibold text-foreground mb-1 flex items-center justify-between">
+                  <span>Total Package Price (PKR)*</span>
+                  {!quoteAmount && <span className="text-[10px] text-amber-400 font-normal">Required</span>}
+                </label>
                 <Input
                   placeholder="e.g. 350000"
                   value={quoteAmount}
                   onChange={(e) => setQuoteAmount(e.target.value)}
-                  className="font-mono text-xs rounded-xl bg-card"
+                  className="font-mono text-xs rounded-xl bg-card font-bold text-amber-400"
                 />
               </div>
 
