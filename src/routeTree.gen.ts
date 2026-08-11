@@ -17,6 +17,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BecomeAffiliateRouteImport } from './routes/become-affiliate'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as CustomTourRouteImport } from './routes/custom-tour'
+import { Route as CustomVisaRouteImport } from './routes/custom-visa'
 import { Route as DestinationsRouteImport } from './routes/destinations'
 import { Route as EnterpriseRouteImport } from './routes/enterprise'
 import { Route as InsuranceRouteImport } from './routes/insurance'
@@ -34,6 +35,7 @@ import { Route as AuthenticatedVendorRouteImport } from './routes/_authenticated
 import { Route as ApiAiChatRouteImport } from './routes/api/ai-chat'
 import { Route as ApiSitemapDotxmlRouteImport } from './routes/api/sitemap[.]xml'
 import { Route as CustomerQuotesRouteImport } from './routes/customer.quotes'
+import { Route as CustomerVisaQuotesRouteImport } from './routes/customer.visa-quotes'
 import { Route as InsuranceIndexRouteImport } from './routes/insurance.index'
 import { Route as InsuranceIdRouteImport } from './routes/insurance.$id'
 import { Route as TicketsIndexRouteImport } from './routes/tickets.index'
@@ -63,6 +65,8 @@ import { Route as AuthenticatedAdminWhatsappRouteImport } from './routes/_authen
 import { Route as AuthenticatedCustomerIndexRouteImport } from './routes/_authenticated/customer.index'
 import { Route as AuthenticatedVendorIndexRouteImport } from './routes/_authenticated/vendor.index'
 import { Route as AuthenticatedVendorBillingRouteImport } from './routes/_authenticated/vendor.billing'
+import { Route as AuthenticatedVendorCustomLeadsRouteImport } from './routes/_authenticated/vendor.custom-leads'
+import { Route as AuthenticatedVendorCustomVisaLeadsRouteImport } from './routes/_authenticated/vendor.custom-visa-leads'
 import { Route as AuthenticatedVendorInsuranceRouteImport } from './routes/_authenticated/vendor.insurance'
 import { Route as AuthenticatedVendorInvoicesRouteImport } from './routes/_authenticated/vendor.invoices'
 import { Route as AuthenticatedVendorKycRouteImport } from './routes/_authenticated/vendor.kyc'
@@ -111,6 +115,11 @@ const CompareRoute = CompareRouteImport.update({
 const CustomTourRoute = CustomTourRouteImport.update({
   id: '/custom-tour',
   path: '/custom-tour',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CustomVisaRoute = CustomVisaRouteImport.update({
+  id: '/custom-visa',
+  path: '/custom-visa',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DestinationsRoute = DestinationsRouteImport.update({
@@ -196,6 +205,11 @@ const ApiSitemapDotxmlRoute = ApiSitemapDotxmlRouteImport.update({
 const CustomerQuotesRoute = CustomerQuotesRouteImport.update({
   id: '/customer/quotes',
   path: '/customer/quotes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CustomerVisaQuotesRoute = CustomerVisaQuotesRouteImport.update({
+  id: '/customer/visa-quotes',
+  path: '/customer/visa-quotes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InsuranceIndexRoute = InsuranceIndexRouteImport.update({
@@ -358,6 +372,18 @@ const AuthenticatedVendorBillingRoute =
     path: '/billing',
     getParentRoute: () => AuthenticatedVendorRoute,
   } as any)
+const AuthenticatedVendorCustomLeadsRoute =
+  AuthenticatedVendorCustomLeadsRouteImport.update({
+    id: '/custom-leads',
+    path: '/custom-leads',
+    getParentRoute: () => AuthenticatedVendorRoute,
+  } as any)
+const AuthenticatedVendorCustomVisaLeadsRoute =
+  AuthenticatedVendorCustomVisaLeadsRouteImport.update({
+    id: '/custom-visa-leads',
+    path: '/custom-visa-leads',
+    getParentRoute: () => AuthenticatedVendorRoute,
+  } as any)
 const AuthenticatedVendorInsuranceRoute =
   AuthenticatedVendorInsuranceRouteImport.update({
     id: '/insurance',
@@ -423,6 +449,7 @@ export interface FileRoutesByFullPath {
   '/become-affiliate': typeof BecomeAffiliateRoute
   '/compare': typeof CompareRoute
   '/custom-tour': typeof CustomTourRoute
+  '/custom-visa': typeof CustomVisaRoute
   '/destinations': typeof DestinationsRoute
   '/enterprise': typeof EnterpriseRoute
   '/insurance': typeof InsuranceRouteWithChildren
@@ -440,6 +467,7 @@ export interface FileRoutesByFullPath {
   '/api/ai-chat': typeof ApiAiChatRoute
   '/api/sitemap.xml': typeof ApiSitemapDotxmlRoute
   '/customer/quotes': typeof CustomerQuotesRoute
+  '/customer/visa-quotes': typeof CustomerVisaQuotesRoute
   '/insurance/$id': typeof InsuranceIdRoute
   '/tickets/$id': typeof TicketsIdRoute
   '/tours/$id': typeof ToursIdRoute
@@ -466,6 +494,8 @@ export interface FileRoutesByFullPath {
   '/admin/vendors': typeof AuthenticatedAdminVendorsRoute
   '/admin/whatsapp': typeof AuthenticatedAdminWhatsappRoute
   '/vendor/billing': typeof AuthenticatedVendorBillingRoute
+  '/vendor/custom-leads': typeof AuthenticatedVendorCustomLeadsRoute
+  '/vendor/custom-visa-leads': typeof AuthenticatedVendorCustomVisaLeadsRoute
   '/vendor/insurance': typeof AuthenticatedVendorInsuranceRoute
   '/vendor/invoices': typeof AuthenticatedVendorInvoicesRoute
   '/vendor/kyc': typeof AuthenticatedVendorKycRoute
@@ -488,6 +518,7 @@ export interface FileRoutesByTo {
   '/become-affiliate': typeof BecomeAffiliateRoute
   '/compare': typeof CompareRoute
   '/custom-tour': typeof CustomTourRoute
+  '/custom-visa': typeof CustomVisaRoute
   '/destinations': typeof DestinationsRoute
   '/enterprise': typeof EnterpriseRoute
   '/pricing': typeof PricingRoute
@@ -499,6 +530,7 @@ export interface FileRoutesByTo {
   '/api/ai-chat': typeof ApiAiChatRoute
   '/api/sitemap.xml': typeof ApiSitemapDotxmlRoute
   '/customer/quotes': typeof CustomerQuotesRoute
+  '/customer/visa-quotes': typeof CustomerVisaQuotesRoute
   '/insurance/$id': typeof InsuranceIdRoute
   '/tickets/$id': typeof TicketsIdRoute
   '/tours/$id': typeof ToursIdRoute
@@ -525,6 +557,8 @@ export interface FileRoutesByTo {
   '/admin/vendors': typeof AuthenticatedAdminVendorsRoute
   '/admin/whatsapp': typeof AuthenticatedAdminWhatsappRoute
   '/vendor/billing': typeof AuthenticatedVendorBillingRoute
+  '/vendor/custom-leads': typeof AuthenticatedVendorCustomLeadsRoute
+  '/vendor/custom-visa-leads': typeof AuthenticatedVendorCustomVisaLeadsRoute
   '/vendor/insurance': typeof AuthenticatedVendorInsuranceRoute
   '/vendor/invoices': typeof AuthenticatedVendorInvoicesRoute
   '/vendor/kyc': typeof AuthenticatedVendorKycRoute
@@ -549,6 +583,7 @@ export interface FileRoutesById {
   '/become-affiliate': typeof BecomeAffiliateRoute
   '/compare': typeof CompareRoute
   '/custom-tour': typeof CustomTourRoute
+  '/custom-visa': typeof CustomVisaRoute
   '/destinations': typeof DestinationsRoute
   '/enterprise': typeof EnterpriseRoute
   '/insurance': typeof InsuranceRouteWithChildren
@@ -566,6 +601,7 @@ export interface FileRoutesById {
   '/api/ai-chat': typeof ApiAiChatRoute
   '/api/sitemap.xml': typeof ApiSitemapDotxmlRoute
   '/customer/quotes': typeof CustomerQuotesRoute
+  '/customer/visa-quotes': typeof CustomerVisaQuotesRoute
   '/insurance/$id': typeof InsuranceIdRoute
   '/tickets/$id': typeof TicketsIdRoute
   '/tours/$id': typeof ToursIdRoute
@@ -592,6 +628,8 @@ export interface FileRoutesById {
   '/_authenticated/admin/vendors': typeof AuthenticatedAdminVendorsRoute
   '/_authenticated/admin/whatsapp': typeof AuthenticatedAdminWhatsappRoute
   '/_authenticated/vendor/billing': typeof AuthenticatedVendorBillingRoute
+  '/_authenticated/vendor/custom-leads': typeof AuthenticatedVendorCustomLeadsRoute
+  '/_authenticated/vendor/custom-visa-leads': typeof AuthenticatedVendorCustomVisaLeadsRoute
   '/_authenticated/vendor/insurance': typeof AuthenticatedVendorInsuranceRoute
   '/_authenticated/vendor/invoices': typeof AuthenticatedVendorInvoicesRoute
   '/_authenticated/vendor/kyc': typeof AuthenticatedVendorKycRoute
@@ -616,6 +654,7 @@ export interface FileRouteTypes {
     | '/become-affiliate'
     | '/compare'
     | '/custom-tour'
+    | '/custom-visa'
     | '/destinations'
     | '/enterprise'
     | '/insurance'
@@ -633,6 +672,7 @@ export interface FileRouteTypes {
     | '/api/ai-chat'
     | '/api/sitemap.xml'
     | '/customer/quotes'
+    | '/customer/visa-quotes'
     | '/insurance/$id'
     | '/tickets/$id'
     | '/tours/$id'
@@ -659,6 +699,8 @@ export interface FileRouteTypes {
     | '/admin/vendors'
     | '/admin/whatsapp'
     | '/vendor/billing'
+    | '/vendor/custom-leads'
+    | '/vendor/custom-visa-leads'
     | '/vendor/insurance'
     | '/vendor/invoices'
     | '/vendor/kyc'
@@ -681,6 +723,7 @@ export interface FileRouteTypes {
     | '/become-affiliate'
     | '/compare'
     | '/custom-tour'
+    | '/custom-visa'
     | '/destinations'
     | '/enterprise'
     | '/pricing'
@@ -692,6 +735,7 @@ export interface FileRouteTypes {
     | '/api/ai-chat'
     | '/api/sitemap.xml'
     | '/customer/quotes'
+    | '/customer/visa-quotes'
     | '/insurance/$id'
     | '/tickets/$id'
     | '/tours/$id'
@@ -718,6 +762,8 @@ export interface FileRouteTypes {
     | '/admin/vendors'
     | '/admin/whatsapp'
     | '/vendor/billing'
+    | '/vendor/custom-leads'
+    | '/vendor/custom-visa-leads'
     | '/vendor/insurance'
     | '/vendor/invoices'
     | '/vendor/kyc'
@@ -741,6 +787,7 @@ export interface FileRouteTypes {
     | '/become-affiliate'
     | '/compare'
     | '/custom-tour'
+    | '/custom-visa'
     | '/destinations'
     | '/enterprise'
     | '/insurance'
@@ -758,6 +805,7 @@ export interface FileRouteTypes {
     | '/api/ai-chat'
     | '/api/sitemap.xml'
     | '/customer/quotes'
+    | '/customer/visa-quotes'
     | '/insurance/$id'
     | '/tickets/$id'
     | '/tours/$id'
@@ -784,6 +832,8 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/vendors'
     | '/_authenticated/admin/whatsapp'
     | '/_authenticated/vendor/billing'
+    | '/_authenticated/vendor/custom-leads'
+    | '/_authenticated/vendor/custom-visa-leads'
     | '/_authenticated/vendor/insurance'
     | '/_authenticated/vendor/invoices'
     | '/_authenticated/vendor/kyc'
@@ -808,6 +858,7 @@ export interface RootRouteChildren {
   BecomeAffiliateRoute: typeof BecomeAffiliateRoute
   CompareRoute: typeof CompareRoute
   CustomTourRoute: typeof CustomTourRoute
+  CustomVisaRoute: typeof CustomVisaRoute
   DestinationsRoute: typeof DestinationsRoute
   EnterpriseRoute: typeof EnterpriseRoute
   InsuranceRoute: typeof InsuranceRouteWithChildren
@@ -822,6 +873,7 @@ export interface RootRouteChildren {
   ApiAiChatRoute: typeof ApiAiChatRoute
   ApiSitemapDotxmlRoute: typeof ApiSitemapDotxmlRoute
   CustomerQuotesRoute: typeof CustomerQuotesRoute
+  CustomerVisaQuotesRoute: typeof CustomerVisaQuotesRoute
   ApiAuthRegisterRoute: typeof ApiAuthRegisterRoute
   ApiPublicSafepayWebhookRoute: typeof ApiPublicSafepayWebhookRoute
 }
@@ -882,6 +934,13 @@ declare module '@tanstack/react-router' {
       path: '/custom-tour'
       fullPath: '/custom-tour'
       preLoaderRoute: typeof CustomTourRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/custom-visa': {
+      id: '/custom-visa'
+      path: '/custom-visa'
+      fullPath: '/custom-visa'
+      preLoaderRoute: typeof CustomVisaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/destinations': {
@@ -1001,6 +1060,13 @@ declare module '@tanstack/react-router' {
       path: '/customer/quotes'
       fullPath: '/customer/quotes'
       preLoaderRoute: typeof CustomerQuotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/customer/visa-quotes': {
+      id: '/customer/visa-quotes'
+      path: '/customer/visa-quotes'
+      fullPath: '/customer/visa-quotes'
+      preLoaderRoute: typeof CustomerVisaQuotesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/insurance/': {
@@ -1206,6 +1272,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedVendorBillingRouteImport
       parentRoute: typeof AuthenticatedVendorRoute
     }
+    '/_authenticated/vendor/custom-leads': {
+      id: '/_authenticated/vendor/custom-leads'
+      path: '/custom-leads'
+      fullPath: '/vendor/custom-leads'
+      preLoaderRoute: typeof AuthenticatedVendorCustomLeadsRouteImport
+      parentRoute: typeof AuthenticatedVendorRoute
+    }
+    '/_authenticated/vendor/custom-visa-leads': {
+      id: '/_authenticated/vendor/custom-visa-leads'
+      path: '/custom-visa-leads'
+      fullPath: '/vendor/custom-visa-leads'
+      preLoaderRoute: typeof AuthenticatedVendorCustomVisaLeadsRouteImport
+      parentRoute: typeof AuthenticatedVendorRoute
+    }
     '/_authenticated/vendor/insurance': {
       id: '/_authenticated/vendor/insurance'
       path: '/insurance'
@@ -1327,6 +1407,8 @@ const AuthenticatedAdminRouteWithChildren =
 
 interface AuthenticatedVendorRouteChildren {
   AuthenticatedVendorBillingRoute: typeof AuthenticatedVendorBillingRoute
+  AuthenticatedVendorCustomLeadsRoute: typeof AuthenticatedVendorCustomLeadsRoute
+  AuthenticatedVendorCustomVisaLeadsRoute: typeof AuthenticatedVendorCustomVisaLeadsRoute
   AuthenticatedVendorInsuranceRoute: typeof AuthenticatedVendorInsuranceRoute
   AuthenticatedVendorInvoicesRoute: typeof AuthenticatedVendorInvoicesRoute
   AuthenticatedVendorKycRoute: typeof AuthenticatedVendorKycRoute
@@ -1340,6 +1422,9 @@ interface AuthenticatedVendorRouteChildren {
 
 const AuthenticatedVendorRouteChildren: AuthenticatedVendorRouteChildren = {
   AuthenticatedVendorBillingRoute: AuthenticatedVendorBillingRoute,
+  AuthenticatedVendorCustomLeadsRoute: AuthenticatedVendorCustomLeadsRoute,
+  AuthenticatedVendorCustomVisaLeadsRoute:
+    AuthenticatedVendorCustomVisaLeadsRoute,
   AuthenticatedVendorInsuranceRoute: AuthenticatedVendorInsuranceRoute,
   AuthenticatedVendorInvoicesRoute: AuthenticatedVendorInvoicesRoute,
   AuthenticatedVendorKycRoute: AuthenticatedVendorKycRoute,
@@ -1431,6 +1516,7 @@ const rootRouteChildren: RootRouteChildren = {
   BecomeAffiliateRoute: BecomeAffiliateRoute,
   CompareRoute: CompareRoute,
   CustomTourRoute: CustomTourRoute,
+  CustomVisaRoute: CustomVisaRoute,
   DestinationsRoute: DestinationsRoute,
   EnterpriseRoute: EnterpriseRoute,
   InsuranceRoute: InsuranceRouteWithChildren,
@@ -1445,6 +1531,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAiChatRoute: ApiAiChatRoute,
   ApiSitemapDotxmlRoute: ApiSitemapDotxmlRoute,
   CustomerQuotesRoute: CustomerQuotesRoute,
+  CustomerVisaQuotesRoute: CustomerVisaQuotesRoute,
   ApiAuthRegisterRoute: ApiAuthRegisterRoute,
   ApiPublicSafepayWebhookRoute: ApiPublicSafepayWebhookRoute,
 }
