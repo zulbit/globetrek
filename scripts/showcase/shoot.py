@@ -39,6 +39,21 @@ PAGES = [
         "title": "Vendor Master Operating Guide",
     },
     {
+        "url": f"{BASE_URL}/custom-visa",
+        "output": f"{OUTPUT_GUIDE_DIR}/custom-visa-intake.png",
+        "title": "Custom Visa Consultation Intake Form",
+    },
+    {
+        "url": f"{BASE_URL}/vendor/custom-visa-leads",
+        "output": f"{OUTPUT_GUIDE_DIR}/vendor-custom-visa-leads.png",
+        "title": "B2B Custom Visa Leads Marketplace",
+    },
+    {
+        "url": f"{BASE_URL}/customer",
+        "output": f"{OUTPUT_GUIDE_DIR}/customer-traveler-hub.png",
+        "title": "Traveler Hub & Visa Proposal Tracker",
+    },
+    {
         "url": f"{BASE_URL}/enterprise",
         "output": f"{OUTPUT_WHITEPAPER_DIR}/enterprise-page.png",
         "title": "Enterprise Showcase Page",

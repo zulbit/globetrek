@@ -29,6 +29,7 @@ import {
   Bot,
   HelpCircle,
   ChevronDown,
+  FileCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -40,7 +41,7 @@ export const Route = createFileRoute("/vendor-guide")({
       {
         name: "description",
         content:
-          "Official partner operating guide for tour operators, visa consultants, insurance brokers, and ticketing desks on GlobeTrek PK. Onboarding, KYC, custom lead bidding, SafePay payouts, AI tools, and ROI calculator.",
+          "Official partner operating guide for tour operators, visa consultants, insurance brokers, and ticketing desks on GlobeTrek PK. Onboarding, KYC, custom tour & visa lead bidding, SafePay payouts, AI tools, and ROI calculator.",
       },
     ],
   }),
@@ -56,16 +57,20 @@ const ICON_MAP: Record<string, any> = {
   Compass,
   Sparkles,
   BookOpen,
+  FileCheck,
 };
 
 const SUGGESTED_AI_PROMPTS = [
+  "Custom Visa Leads unlock karne ki fee kitni hai (₨ 750) aur max kitne vendors unlock kar sakte hain?",
+  "Refusal case visa leads mein applicant ki rejection details kaise milti hain?",
+  "Gerry's aur VFS drop-box submission center leads par local client match badge kaise milta hai?",
   "Interactive OpenStreetMap placement tour packages par kaise milti hai?",
   "WhatsApp lead alerts mein traveler phone number obfuscated kyun hota hai?",
   "Pro Tour Operator plan mein OpenStreetMap placement ke kya fayde hain?",
   "Plan expiry notice kaise milta hai aur non-renewal par kya hoga?",
   "What happens to my tour listings if my subscription plan expires?",
   "What documents are required for vendor KYC verification?",
-  "How does the Max 3 lead unlock cap work?",
+  "How does the Max 5 lead unlock cap work for custom visa leads?",
   "SafePay payment lead unlock procedure kitna time leta hai?",
   "How can I generate AI itineraries for my tour packages?",
   "Pro plan mein kitne AI itinerary plans milte hain per month?",

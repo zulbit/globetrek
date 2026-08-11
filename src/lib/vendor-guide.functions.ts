@@ -213,13 +213,68 @@ Custom Tour Leads are high-intent traveler requests for group itineraries (famil
    - When the traveler selects your quote, you receive an immediate WhatsApp notification with full traveler contact details, and the lead status updates to **Accepted**.`
   },
   {
+    id: "fallback-2b",
+    slug: "custom-visa-leads-marketplace",
+    title: "Custom Visa Leads & Refusal Rectification Engine",
+    category: "Lead Generation",
+    description: "High-converting B2B visa consultation leads, ₨ 750 SafePay unlock fee, 5-quotation cap, refusal case appeals, and Gerry's/VFS biometric drop-box handling.",
+    icon_name: "FileCheck",
+    display_order: 5,
+    is_published: true,
+    content: `# Custom Visa Leads & Refusal Rectification Engine
+
+In the Pakistani travel market, visa inquiries and refusal rectifications (particularly for **Schengen**, **United Kingdom**, **United States**, **Canada**, and **Turkey**) represent the highest-intent, highest-margin commercial opportunity. 
+
+GlobeTrek PK operates a specialized **Custom Visa Intake & Lead Bidding Engine** connecting applicants directly with verified Pakistani visa consultants, immigration lawyers, and former embassy officers.
+
+![Custom Visa Leads Marketplace](/images/guide/vendor-custom-visa-leads.png)
+
+---
+
+### Key Operating Principles & Architecture
+
+#### 1. Instant Auto-Verification (Zero Admin Bottleneck)
+Unlike tour leads, visa inquiries are **auto-verified and published instantly** to the B2B marketplace upon applicant submission. This ensures vendors can contact anxious travelers within minutes of inquiry generation.
+
+#### 2. Accessible ₨ 750 Lead Unlock Fee
+Any verified visa consultant on GlobeTrek PK can unlock full applicant contact details (Name, WhatsApp Number, Email, Submission Office, Resident City, Bank Statement Status, and Refusal Clauses) for **₨ 750** via integrated SafePay QuickLink V2.
+
+#### 3. Competitive 5-Quotation Limit per Lead
+To ensure healthy competition without overwhelming the traveler, each custom visa lead is strictly capped at **5 vendor unlocks**:
+- The card displays a live counter (e.g. \`2/5 Agencies Unlocked · 3 Slots Left\`).
+- Once 5 agencies unlock the lead, it transitions to \`🔒 Sold Out\` and prevents further payments.
+
+#### 4. Refusal Case Categorization & Re-Application File Preparation
+Leads are clearly tagged with applicant case profiles:
+- 🚨 **Prior Refusal Case**: Includes specific refusal clauses (e.g. *Paragraph V4.2(a)/(c)*, *214(b)*, or justification of purpose/finances).
+- 🟢 **Fresh Passport / First-Time Traveler**: Applicants needing complete file compilation and tie-back documentation.
+- 🔵 **Embassy Interview & Slot Assistance**: Mock coaching and biometric appointment booking.
+
+#### 5. Local City Match Badging
+When an applicant's resident city matches your agency's verified branch city (e.g. Islamabad, Lahore, Karachi, Rawalpindi, Peshawar, Faisalabad, Sialkot), the card displays a highlighted **📍 Local Client** badge, giving you an advantage for in-person office visits.
+
+---
+
+### Structured Proposal Builder & Traveler Delivery
+
+Once unlocked, vendors use the built-in **Proposal Submission Modal** to enter:
+1. **Agency Service / Consultancy Fee (PKR)**
+2. **Estimated Embassy / Drop-Box Fee (PKR)**
+3. **Turnaround Timeline (e.g. 5-7 Business Days)**
+4. **Consultation Mode Offered**: 🏢 *In-Person Office Visit* or 🌐 *100% Online Remote E-Filing*
+5. **Standard Inclusions**: *Complete Document Audit, Cover Letter Drafting, Appointment Slot Booking, Mock Interview Coaching, Tax/FBR Verification, Bank Statement Tie-Back Review*.
+
+> [!TIP]
+> **Instant WhatsApp Traveler Notification**: When you submit or revise a proposal, GlobeTrek PK automatically dispatches a formatted WhatsApp alert to the traveler with a secure link to your live proposal page (\`/customer/visa-quotes?token=...\`) and direct one-click WhatsApp chat button.`
+  },
+  {
     id: "fallback-3",
     slug: "vendor-dashboard-overview",
     title: "Vendor Console Navigation & 30-Day Activity Analytics",
     category: "Dashboard & Controls",
     description: "Navigating your vendor overview, tracking 30-day service-filtered lead activity line charts, and managing active listings.",
     icon_name: "LayoutDashboard",
-    display_order: 3,
+    display_order: 6,
     is_published: true,
     content: `# Vendor Console Navigation & 30-Day Activity Analytics
 
@@ -237,8 +292,9 @@ Your **Vendor Console** ('/vendor') provides real-time operational visibility ov
     - 🩵 **Sky Blue Line**: Visa Application Inquiries
     - 🟣 **Violet Line**: Travel Insurance Inquiries
     - 🟡 **Amber Line**: Flight & Umrah Ticket Inquiries
-- **Custom Lead Teaser Banner**:
-  - Live notification banner alerting you to available verified custom tour leads currently open for bidding.
+    - 🌹 **Coral Rose Line (#f43f5e)**: Purchased Custom Tour & Visa Leads
+- **Custom Lead Teaser Banners**:
+  - Live notification cards alerting you to newly submitted Custom Tour & Visa inquiries open for bidding in real-time.
 - **Direct Leads Inbox**:
   - Real-time list of direct customer calls, WhatsApp chats, and catalog inquiries.`
   },

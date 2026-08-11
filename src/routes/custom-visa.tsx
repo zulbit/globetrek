@@ -763,6 +763,64 @@ function CustomVisaPage() {
               </div>
             )}
           </div>
+
+          {/* Frequently Asked Questions (Custom Visa & Refusal Handling) */}
+          <div className="mt-16 space-y-6 max-w-3xl mx-auto">
+            <div className="text-center space-y-2">
+              <Badge className="bg-rose-500/10 text-rose-400 border-rose-500/20 text-xs font-bold">
+                💡 Traveler Assistance
+              </Badge>
+              <h2 className="text-2xl font-extrabold text-foreground tracking-tight">
+                Frequently Asked Questions About Custom Visa Filing &amp; Refusals
+              </h2>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Everything you need to know about refusal appeals, drop-box submission centers, and verified consultant proposals.
+              </p>
+            </div>
+
+            <div className="grid gap-3.5 pt-2">
+              {[
+                {
+                  q: "My visa was previously refused (UK, Schengen, US, Canada). Can I get approved on re-applying?",
+                  a: "Yes! A majority of visa refusals occur due to ambiguous cover letters, unexplained bulk bank deposits, or weak home-country tie-backs. Verified appeal specialists on GlobeTrek PK analyze your exact refusal letter (e.g. Paragraph V4.2(a)/(c) for UK, INA 214(b) for US, or Schengen Purpose of Stay), address the visa officer's specific objections with documentary proof, and restructure your application to maximize approval chances.",
+                },
+                {
+                  q: "How does the 5-Proposal Limit protect me as an applicant?",
+                  a: "To protect your privacy and prevent unsolicited spam, GlobeTrek PK strictly caps each case to a maximum of 5 unlocking agencies. This gives you enough competitive quotes and strategy options to make an informed decision without your WhatsApp being flooded by dozens of agents.",
+                },
+                {
+                  q: "I live in Islamabad / Lahore / Karachi. Can I visit the consultant's office in-person?",
+                  a: "Absolutely. In Step 2 of the form, you can select 'In-Person Office Visit in My City'. Consultants located in your city will see a '📍 Local Client' priority badge and will welcome you to their physical office for document file audits and biometric slot coordination.",
+                },
+                {
+                  q: "What services are included in the consultant proposals?",
+                  a: "Proposals typically cover: Complete Document File Audit, Embassy Cover Letter Drafting, Gerry's / VFS Global / Anatolia Appointment Slot Booking, Bank Statement Tie-Back Review, FBR Tax Return Verification, Schengen Travel Insurance, Hotel/Flight Reservations, and 1-on-1 Mock Interview Preparation.",
+                },
+                {
+                  q: "Is there any upfront fee for me to submit a consultation request?",
+                  a: "No! Submitting your case request on GlobeTrek PK is 100% Free and Zero Obligation. You receive up to 5 competitive proposals in your Traveler Hub and on WhatsApp, and you only pay the service fee agreed with your chosen agency.",
+                },
+              ].map((faq, idx) => (
+                <details
+                  key={idx}
+                  className="group rounded-2xl border border-border bg-card/80 p-4 transition-all duration-200 hover:border-primary/40 open:border-primary/40 open:bg-surface/60"
+                >
+                  <summary className="flex cursor-pointer items-center justify-between font-bold text-xs sm:text-sm text-foreground list-none select-none">
+                    <span className="flex items-center gap-2">
+                      <HelpCircle className="size-4 text-primary shrink-0" />
+                      {faq.q}
+                    </span>
+                    <span className="ml-2 size-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold transition-transform group-open:rotate-180 shrink-0">
+                      ▾
+                    </span>
+                  </summary>
+                  <div className="mt-3 border-t border-border/60 pt-3 text-xs leading-relaxed text-muted-foreground pl-6">
+                    {faq.a}
+                  </div>
+                </details>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </SiteShell>

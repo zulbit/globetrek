@@ -74,6 +74,11 @@ const SCREENSHOTS = [
     caption: "Verified custom lead bidding with Max 3 unlock limits, safe payment unlocks, and online proposal builder.",
   },
   {
+    src: "/images/guide/vendor-custom-visa-leads.png",
+    title: "B2B Custom Visa Consultation & Refusal Handling Marketplace",
+    caption: "Real-time custom visa inquiries, refusal rectification cases, ₨ 750 SafePay unlocks, 5-bid competitive cap, and proposal builder.",
+  },
+  {
     src: "/images/guide/vendor-guide-page.png",
     title: "Vendor Operating Guide & ROI Simulator",
     caption: "Master operating manual with category search, markdown chapters, print-to-PDF, and ROI calculator.",
@@ -101,7 +106,21 @@ const COMPARISON_DATA = [
     wordpress: false,
   },
   {
-    feature: "Custom Lead Bidding with Max 3 Unlock Cap",
+    feature: "Custom Tour Lead Bidding with Max 3 Unlock Cap",
+    globetrek: true,
+    cloneScript: false,
+    saasPms: false,
+    wordpress: false,
+  },
+  {
+    feature: "Custom Visa Leads & Refusal Rectification Engine (₨ 750 / Max 5 Bids)",
+    globetrek: true,
+    cloneScript: false,
+    saasPms: false,
+    wordpress: false,
+  },
+  {
+    feature: "Automatic Customer Account Registration & Traveler Hub Proposals Portal",
     globetrek: true,
     cloneScript: false,
     saasPms: false,
@@ -270,6 +289,10 @@ const FAQS = [
   {
     q: "How does the Custom Lead Bidding & SafePay Integration operate?",
     a: "Custom lead submissions start in an unverified status. Admin calls to verify traveler budget before publishing. Vendors unlock contact details via SafePay PKR payment (capped at 3 vendors max), then submit online quotations which send automated WhatsApp alerts to the traveler.",
+  },
+  {
+    q: "How does the Custom Visa Consultation & Refusal Rectification Engine operate?",
+    a: "Travelers facing complex visa requirements, drop-box submissions (Gerry's, VFS, Anatolia), or previous visa rejections (UK, Schengen, US, Canada) submit their case details and intended travel dates at /custom-visa. The engine auto-registers a free Traveler Hub account and broadcasts the verified inquiry to the B2B marketplace. Verified Pakistani visa consultants unlock applicant contact details for ₨ 750 via SafePay (capped at 5 unlocking agencies to preserve lead quality). Unlocked agencies submit structured proposals with fee breakdowns and consultation modes (in-person vs remote e-filing), triggering automated WhatsApp notifications and online comparison links for the traveler.",
   },
 ];
 
