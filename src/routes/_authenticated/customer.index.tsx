@@ -171,10 +171,208 @@ function CustomerDashboard() {
 
           {/* Main Content Grid: Inquiries & Wishlist */}
           <div className="grid gap-6 lg:grid-cols-3">
-            {/* Left: Custom Tour Requests & Vendor Proposals */}
+            {/* Left: Custom Tour Requests & Vendor Proposals (Primary Top Section) */}
             <div className="lg:col-span-2 space-y-6">
               <div className="space-y-6">
-                {/* 1. Standard Catalog Tour Inquiries & Bookings */}
+                {/* 1. Custom Group Tour Requests & Live Agency Quotes (TOP POSITION) */}
+                <Card className="p-6 space-y-5 border-border bg-card shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
+                    <div>
+                      <h2 className="text-lg font-extrabold text-foreground flex items-center gap-2">
+                        <Compass className="size-5 text-primary" /> My Custom Tour Requests &amp; Bids
+                      </h2>
+                      <p className="text-xs text-muted-foreground">
+                        Live quotations, customized itineraries, and bids submitted by verified Pakistani travel agencies.
+                      </p>
+                    </div>
+                    <Button asChild size="sm" variant="outline" className="gap-1.5 text-xs font-semibold rounded-xl border-primary/30 text-primary shrink-0">
+                      <Link to="/custom-tour">
+                        + New Request
+                      </Link>
+                    </Button>
+                  </div>
+
+                  {loadingCustom ? (
+                    <div className="py-12 text-center text-xs text-muted-foreground">
+                      Loading your custom trip proposals...
+                    </div>
+                  ) : customRequests.length > 0 ? (
+                    <div className="space-y-6">
+                      {customRequests.map((req) => (
+                        <div
+                          key={req.id}
+                          className={`rounded-2xl border p-5 space-y-4 transition bg-surface/50 ${
+                            req.quotes_count > 0
+                              ? "border-emerald-500/40 shadow-sm shadow-emerald-500/5 bg-emerald-500/[0.02]"
+                              : "border-border"
+                          }`}
+                        >
+                          {/* Header */}
+                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                            <div className="space-y-1.5">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[10px] font-bold text-primary uppercase tracking-wider">
+                                  ✈️ {req.departure_city || "Pakistan"} → {req.destination}
+                                </span>
+                                <h3 className="font-extrabold text-foreground text-base capitalize">
+                                  {req.destination ? `${req.destination} Trip` : "Custom Tour Request"}
+                                </h3>
+                                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] uppercase font-bold">
+                                  {req.status || "verified"}
+                                </Badge>
+                                {req.quotes_count > 0 ? (
+                                  <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px] uppercase font-bold">
+                                    🎉 {req.quotes_count} {req.quotes_count === 1 ? "Quotation" : "Quotations"} Ready
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                                    ⏳ Bids Open in Marketplace
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground leading-relaxed">
+                                📅 <strong>{req.travel_month || "Upcoming"}</strong> · ⏳ {req.duration_days ?? 7} Days · 👥 {req.group_size ?? 1} Travelers ({req.group_type || "Family"}) · 🏨 Hotel: <strong className="text-foreground capitalize">{(req.hotel_tier || "3star").replace("star", " ★")}</strong>
+                              </p>
+                              {req.special_requests && (
+                                <p className="text-[11px] text-muted-foreground/80 italic mt-1 bg-surface/80 px-2.5 py-1 rounded-lg border border-border/50">
+                                  "{req.special_requests}"
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Main CTA to Open Proposal Desk */}
+                            <Button asChild size="sm" className={`gap-1.5 font-bold text-xs rounded-xl shrink-0 ${
+                              req.quotes_count > 0
+                                ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-black shadow-md hover:opacity-95"
+                                : "bg-primary text-primary-foreground"
+                            }`}>
+                              <Link to={`/customer/quotes?token=${req.id}`}>
+                                {req.quotes_count > 0 ? (
+                                  <>
+                                    <Sparkles className="size-3.5" /> View &amp; Compare ({req.quotes_count}) <ArrowRight className="size-3.5" />
+                                  </>
+                                ) : (
+                                  <>
+                                    <Compass className="size-3.5" /> Open Quotation Desk <ExternalLink className="size-3.5" />
+                                  </>
+                                )}
+                              </Link>
+                            </Button>
+                          </div>
+
+                          {/* CLICKABLE QUOTATION CARDS */}
+                          {req.quotes && req.quotes.length > 0 && (
+                            <div className="space-y-2.5 pt-2">
+                              <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                                <Sparkles className="size-3.5 text-amber-400" /> Submitted Agency Proposals (Click to Review &amp; Book):
+                              </h4>
+
+                              <div className="grid gap-3">
+                                {req.quotes.map((q) => (
+                                  <Link
+                                    key={q.id}
+                                    to={`/customer/quotes?token=${req.id}`}
+                                    className="group/quote relative block rounded-2xl border border-emerald-500/30 bg-card p-4 hover:border-emerald-500 hover:bg-emerald-500/[0.04] transition-all duration-300 shadow-sm cursor-pointer hover:shadow-md"
+                                  >
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-2.5 mb-2.5">
+                                      <div className="flex items-center gap-2">
+                                        <div className="size-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
+                                          🏢
+                                        </div>
+                                        <div>
+                                          <h5 className="font-bold text-sm text-foreground group-hover/quote:text-primary transition flex items-center gap-1.5">
+                                            {q.vendor_company || q.vendor_name}
+                                            <span className="text-[10px] font-normal px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                              Verified Agency
+                                            </span>
+                                          </h5>
+                                          <p className="text-[11px] text-muted-foreground">
+                                            Submitted {new Date(q.created_at).toLocaleDateString()}
+                                          </p>
+                                        </div>
+                                      </div>
+
+                                      <div className="text-right">
+                                        <span className="text-[10px] font-bold text-muted-foreground uppercase">Total Package Price</span>
+                                        <div className="text-base sm:text-lg font-black text-emerald-400 font-mono">
+                                          Rs {q.quote_amount.toLocaleString()}
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Quote Details Snippet */}
+                                    <div className="grid sm:grid-cols-2 gap-2 text-xs mb-3">
+                                      {q.hotel_details && (
+                                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                                          <Building className="size-3.5 text-amber-400 shrink-0" />
+                                          <span className="truncate">{q.hotel_details}</span>
+                                        </div>
+                                      )}
+                                      {q.flight_details && (
+                                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                                          <Plane className="size-3.5 text-sky-400 shrink-0" />
+                                          <span className="truncate">{q.flight_details}</span>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Inclusions tags */}
+                                    {q.inclusions && q.inclusions.length > 0 && (
+                                      <div className="flex flex-wrap gap-1.5 mb-3">
+                                        {q.inclusions.slice(0, 4).map((inc, i) => (
+                                          <span
+                                            key={i}
+                                            className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400"
+                                          >
+                                            <CheckCircle2 className="size-2.5" /> {inc}
+                                          </span>
+                                        ))}
+                                        {q.inclusions.length > 4 && (
+                                          <span className="text-[10px] text-muted-foreground self-center">
+                                            +{q.inclusions.length - 4} more
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+
+                                    {/* Card Footer Bar */}
+                                    <div className="flex items-center justify-between pt-2.5 border-t border-border/50 text-xs font-semibold text-primary group-hover/quote:text-emerald-400 transition">
+                                      <span className="text-[11px] text-muted-foreground">
+                                        {q.perks && q.perks.length > 0 ? `🎁 ${q.perks[0]}` : "⚡ Instant Booking Available"}
+                                      </span>
+                                      <span className="inline-flex items-center gap-1">
+                                        Review &amp; Accept Proposal <ArrowRight className="size-3.5 group-hover/quote:translate-x-1 transition-transform" />
+                                      </span>
+                                    </div>
+                                  </Link>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-12 text-center space-y-3 rounded-2xl border border-dashed border-border/80 p-6">
+                      <div className="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
+                        <Sparkles className="size-6" />
+                      </div>
+                      <div className="space-y-1">
+                        <h3 className="text-sm font-bold text-foreground">No Custom Tour Requests Yet</h3>
+                        <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                          Planning a group trip? Submit your budget and dates, and top Pakistani agencies will bid with customized proposals.
+                        </p>
+                      </div>
+                      <Button asChild size="sm" className="gap-1.5 font-bold text-xs bg-primary text-primary-foreground rounded-xl mt-2">
+                        <Link to="/custom-tour">
+                          Create Custom Trip Request
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
+                </Card>
+
+                {/* 2. Standard Catalog Tour Inquiries & Bookings (SWAPPED TO BOTTOM) */}
                 <Card className="p-6 space-y-4 border-border bg-card shadow-sm">
                   <div className="flex items-center justify-between border-b border-border pb-4">
                     <div>
@@ -235,151 +433,6 @@ function CustomerDashboard() {
                     </div>
                   )}
                 </Card>
-
-                {/* 2. Custom Group Tour Requests & Live Agency Quotes */}
-                <Card className="p-6 space-y-4 border-border bg-card shadow-sm">
-                  <div className="flex items-center justify-between border-b border-border pb-4">
-                    <div>
-                      <h2 className="text-lg font-extrabold text-foreground flex items-center gap-2">
-                        <Compass className="size-5 text-primary" /> My Custom Tour Requests &amp; Bids
-                      </h2>
-                      <p className="text-xs text-muted-foreground">
-                        Live quotations and customized itineraries submitted by verified Pakistani travel agencies.
-                      </p>
-                    </div>
-                    <Button asChild size="sm" variant="outline" className="gap-1.5 text-xs font-semibold rounded-xl border-primary/30 text-primary">
-                      <Link to="/custom-tour">
-                        + New Request
-                      </Link>
-                    </Button>
-                  </div>
-
-                  {loadingCustom ? (
-                    <div className="py-12 text-center text-xs text-muted-foreground">
-                      Loading your custom trip proposals...
-                    </div>
-                  ) : customRequests.length > 0 ? (
-                    <div className="space-y-4">
-                      {customRequests.map((req) => (
-                        <div
-                          key={req.id}
-                          className={`rounded-2xl border p-5 space-y-4 transition bg-surface/50 ${
-                            req.quotes_count > 0
-                              ? "border-emerald-500/40 shadow-sm shadow-emerald-500/5 bg-emerald-500/[0.02]"
-                              : "border-border"
-                          }`}
-                        >
-                          {/* Header */}
-                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                            <div className="space-y-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <h3 className="font-extrabold text-foreground text-base capitalize">
-                                  {req.destination ? `${req.destination} Trip` : "Custom Tour Request"}
-                                </h3>
-                                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] uppercase font-bold">
-                                  {req.status || "verified"}
-                                </Badge>
-                                {req.quotes_count > 0 ? (
-                                  <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px] uppercase font-bold">
-                                    🎉 {req.quotes_count} {req.quotes_count === 1 ? "Quote" : "Quotes"} Received
-                                  </Badge>
-                                ) : (
-                                  <Badge variant="outline" className="text-[10px] text-muted-foreground">
-                                    ⏳ Bids Open
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-xs text-muted-foreground leading-relaxed">
-                                📅 <strong>{req.travel_month || "Upcoming"}</strong> · ⏳ {req.duration_days ?? 7} Days · 👥 {req.group_size ?? 1} Travelers ({req.group_type || "Family"}) · ✈️ From {req.departure_city || "Pakistan"}
-                              </p>
-                              {req.special_requests && (
-                                <p className="text-[11px] text-muted-foreground/80 italic mt-1 bg-surface/80 px-2.5 py-1 rounded-lg border border-border/50">
-                                  "{req.special_requests}"
-                                </p>
-                              )}
-                            </div>
-
-                            {/* Main CTA to Open Proposal Desk */}
-                            <Button asChild size="sm" className={`gap-1.5 font-bold text-xs rounded-xl shrink-0 ${
-                              req.quotes_count > 0
-                                ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-black shadow-md hover:opacity-95"
-                                : "bg-primary text-primary-foreground"
-                            }`}>
-                              <Link to={`/customer/quotes?token=${req.id}`}>
-                                {req.quotes_count > 0 ? (
-                                  <>
-                                    <Sparkles className="size-3.5" /> View &amp; Compare Proposals ({req.quotes_count}) <ArrowRight className="size-3.5" />
-                                  </>
-                                ) : (
-                                  <>
-                                    <Compass className="size-3.5" /> View Quotation Desk <ExternalLink className="size-3.5" />
-                                  </>
-                                )}
-                              </Link>
-                            </Button>
-                          </div>
-
-                          {/* Quotes Preview Banner if quotes exist */}
-                          {req.quotes_count > 0 && req.quotes && req.quotes.length > 0 && (
-                            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 space-y-2">
-                              <div className="flex items-center justify-between text-xs">
-                                <span className="font-bold text-emerald-400 flex items-center gap-1.5">
-                                  <Sparkles className="size-3.5 text-amber-400" /> Active Agency Proposal:
-                                </span>
-                                <span className="font-mono font-bold text-foreground text-sm">
-                                  Rs {req.lowest_quote_amount ? req.lowest_quote_amount.toLocaleString() : ""}
-                                </span>
-                              </div>
-                              <div className="text-xs text-foreground/90 space-y-1">
-                                <p className="font-semibold text-emerald-300">
-                                  🏢 {req.quotes[0].vendor_company || req.quotes[0].vendor_name}
-                                </p>
-                                {req.quotes[0].hotel_details && (
-                                  <p className="text-[11px] text-muted-foreground">
-                                    🏨 {req.quotes[0].hotel_details}
-                                  </p>
-                                )}
-                                {req.quotes[0].flight_details && (
-                                  <p className="text-[11px] text-muted-foreground">
-                                    ✈️ {req.quotes[0].flight_details}
-                                  </p>
-                                )}
-                              </div>
-                              <div className="pt-1 flex items-center justify-between border-t border-emerald-500/20 text-[11px]">
-                                <span className="text-muted-foreground">
-                                  Includes: {(req.quotes[0].inclusions || []).slice(0, 3).join(", ")}
-                                </span>
-                                <Link
-                                  to={`/customer/quotes?token=${req.id}`}
-                                  className="text-primary font-bold hover:underline inline-flex items-center gap-1"
-                                >
-                                  Review Full Package →
-                                </Link>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="py-12 text-center space-y-3 rounded-2xl border border-dashed border-border/80 p-6">
-                      <div className="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
-                        <Sparkles className="size-6" />
-                      </div>
-                      <div className="space-y-1">
-                        <h3 className="text-sm font-bold text-foreground">No Custom Tour Requests Yet</h3>
-                        <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                          Planning a group trip? Submit your budget and dates, and top Pakistani agencies will bid with customized proposals.
-                        </p>
-                      </div>
-                      <Button asChild size="sm" className="gap-1.5 font-bold text-xs bg-primary text-primary-foreground rounded-xl mt-2">
-                        <Link to="/custom-tour">
-                          Create Custom Trip Request
-                        </Link>
-                      </Button>
-                    </div>
-                  )}
-                </Card>
               </div>
             </div>
 
@@ -414,9 +467,9 @@ function CustomerDashboard() {
                     ))}
                   </div>
                 ) : (
-                  <div className="py-8 text-center space-y-2 text-muted-foreground">
+                  <div className="py-8 text-center space-y-2 rounded-2xl border border-dashed border-border/80 p-6">
                     <Heart className="size-8 mx-auto text-muted-foreground/40" />
-                    <p className="text-xs">No saved tour packages in your wishlist.</p>
+                    <p className="text-xs text-muted-foreground">No saved tour packages in your wishlist.</p>
                     <Button asChild size="sm" variant="ghost" className="text-xs font-bold text-primary">
                       <Link to="/tours">Browse Tours Catalog</Link>
                     </Button>
