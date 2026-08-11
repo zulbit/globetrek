@@ -125,7 +125,16 @@ export const createSafepayCheckout = createServerFn({ method: "POST" })
     url.searchParams.set("email", data.guestEmail);
     url.searchParams.set("first_name", firstName);
     url.searchParams.set("last_name", lastName);
+    url.searchParams.set("name", `${firstName} ${lastName}`);
     url.searchParams.set("phone", phone);
+    url.searchParams.set("phone_number", phone);
+    url.searchParams.set("city", "Karachi");
+    url.searchParams.set("street", "Shahrah-e-Faisal");
+    url.searchParams.set("street_address", "Shahrah-e-Faisal");
+    url.searchParams.set("address", "Shahrah-e-Faisal");
+    url.searchParams.set("country", "Pakistan");
+    url.searchParams.set("country_code", "PK");
+    url.searchParams.set("postal_code", "74000");
     const checkoutUrl = url.toString();
 
     // Create pending booking + payment record

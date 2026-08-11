@@ -167,49 +167,50 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
       ? "https://api.getsafepay.com"
       : "https://sandbox.api.getsafepay.com";
 
-    if (pendingRows?.[0]?.payment_intent_id) {
-      const existingUrl = `${baseUrl}/io/quick-link?ql=${pendingRows[0].payment_intent_id}`;
-      return { ok: true, checkoutUrl: existingUrl, trackerToken: pendingRows[0].payment_intent_id };
-    }
-
-    // 3. Get lead details (destination and status only)
-    const { data: lead, error: leadErr } = await supabaseAdmin
-      .from("custom_tour_leads")
-      .select("id, destination, status")
-      .eq("id", data.leadId)
-      .maybeSingle();
-
-    if (leadErr || !lead) {
-      console.error("[createLeadUnlockCheckout] Lead query error:", leadErr);
-      throw new Error("Lead not found");
-    }
-
-    if (lead.status !== "verified") {
-      throw new Error("This lead is pending verification by GlobeTrek admin and will be open for vendor quotes shortly.");
-    }
-
-    // Check unlocks count in vendor_lead_purchases
-    const { count: unlockCount } = await supabaseAdmin
-      .from("vendor_lead_purchases")
-      .select("*", { count: "exact", head: true })
-      .eq("lead_id", data.leadId);
-
-    if ((unlockCount ?? 0) >= 3) {
-      throw new Error("This lead has already reached its maximum of 3 vendor unlocks.");
-    }
-
     // Get vendor details for customer billing
     const { data: vendorProfile } = await supabaseAdmin
       .from("profiles")
-      .select("full_name, email, phone")
+      .select("full_name, company_name, email, phone, city")
       .eq("id", vendorId)
       .maybeSingle();
 
-    const [firstName, ...rest] = (vendorProfile?.full_name || "Travel Partner").trim().split(/\s+/);
-    const lastName = rest.join(" ") || "Vendor";
+    const [firstName, ...rest] = (vendorProfile?.full_name || vendorProfile?.company_name || "Travel Partner").trim().split(/\s+/);
+    const lastName = rest.join(" ") || (vendorProfile?.company_name ? "Agency" : "Vendor");
     const vendorEmail = vendorProfile?.email || "vendor@globetrek.pk";
     const rawPhone = (vendorProfile?.phone || "+923001234567").replace(/\D/g, "").replace(/^0+/, "");
     const vendorPhone = rawPhone.startsWith("92") ? `+${rawPhone}` : `+92${rawPhone}`;
+    const vendorCity = vendorProfile?.city || "Karachi";
+    const streetAddress = vendorProfile?.company_name
+      ? `${vendorProfile.company_name} Commercial Office`
+      : "Main Commercial Boulevard, Shahrah-e-Faisal";
+
+    // Helper to format full pre-filled SafePay QuickLink URL with all query parameters
+    const formatSafePayUrl = (baseUrlStr: string) => {
+      try {
+        const url = new URL(baseUrlStr);
+        url.searchParams.set("first_name", firstName);
+        url.searchParams.set("last_name", lastName);
+        url.searchParams.set("name", `${firstName} ${lastName}`);
+        url.searchParams.set("email", vendorEmail);
+        url.searchParams.set("phone", vendorPhone);
+        url.searchParams.set("phone_number", vendorPhone);
+        url.searchParams.set("city", vendorCity);
+        url.searchParams.set("street", streetAddress);
+        url.searchParams.set("street_address", streetAddress);
+        url.searchParams.set("address", streetAddress);
+        url.searchParams.set("country", "Pakistan");
+        url.searchParams.set("country_code", "PK");
+        url.searchParams.set("postal_code", "74000");
+        return url.toString();
+      } catch {
+        return baseUrlStr;
+      }
+    };
+
+    if (pendingRows?.[0]?.payment_intent_id) {
+      const existingUrl = formatSafePayUrl(`${baseUrl}/io/quick-link?ql=${pendingRows[0].payment_intent_id}`);
+      return { ok: true, checkoutUrl: existingUrl, trackerToken: pendingRows[0].payment_intent_id };
+    }
 
     // 4. Create SafePay QuickLink v2
     const secretKey = process.env.SAFEPAY_SECRET_KEY || "c3487d289512e74681b031cd3cf5d6a8d73a22b3c709bd939c3f833e95b7c27a";
@@ -230,6 +231,14 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
           last_name: lastName,
           email: vendorEmail,
           phone_number: vendorPhone,
+          city: vendorCity,
+          address: streetAddress,
+          country: "PK",
+        },
+        billing_address: {
+          city: vendorCity,
+          street: streetAddress,
+          country: "PK",
         },
       }),
     });
@@ -248,11 +257,13 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
     };
 
     const trackerId = qlJson.data?.id;
-    const recipientUrl = qlJson.data?.metadata?.[0]?.recipient_view_url || `${baseUrl}/io/quick-link?ql=${trackerId}`;
+    const rawRecipientUrl = qlJson.data?.metadata?.[0]?.recipient_view_url || `${baseUrl}/io/quick-link?ql=${trackerId}`;
 
     if (!trackerId) {
       throw new Error("Invalid SafePay QuickLink response");
     }
+
+    const checkoutUrl = formatSafePayUrl(rawRecipientUrl);
 
     // 5. Record pending payment in DB
     await supabaseAdmin.from("lead_unlock_payments").insert({
@@ -266,7 +277,7 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
 
     return {
       ok: true,
-      checkoutUrl: recipientUrl,
+      checkoutUrl: checkoutUrl,
       trackerToken: trackerId,
     };
   });
