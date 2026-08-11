@@ -34,6 +34,81 @@ export function ServiceInquiryModal({
   const [message, setMessage] = React.useState("");
   const [busy, setBusy] = React.useState(false);
 
+  // Auto-prefill name and phone when modal opens for logged in customers
+  React.useEffect(() => {
+    if (!open) return;
+
+    if (typeof window !== "undefined") {
+      const cachedName = localStorage.getItem("globetrek_contact_name");
+      const cachedPhone = localStorage.getItem("globetrek_contact_phone");
+      if (cachedName) setName((prev) => prev || cachedName);
+      if (cachedPhone) setPhone((prev) => prev || cachedPhone);
+    }
+
+    async function loadUserData() {
+      try {
+        const { data: u } = await supabase.auth.getUser();
+        if (!u.user) return;
+
+        // 1. Profile lookup
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name, email")
+          .eq("id", u.user.id)
+          .maybeSingle();
+
+        const userFullName =
+          profile?.full_name ||
+          (u.user.user_metadata?.full_name as string) ||
+          (u.user.user_metadata?.name as string) ||
+          "";
+
+        if (userFullName) {
+          setName((prev) => prev || userFullName);
+        }
+
+        // 2. Query custom tour lead contact phone
+        const userEmail = profile?.email || u.user.email;
+        if (userEmail) {
+          const { data: leadData } = await supabase
+            .from("custom_tour_leads")
+            .select("contact_name, contact_phone")
+            .ilike("contact_email", userEmail)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (leadData?.contact_phone) {
+            setPhone((prev) => prev || leadData.contact_phone);
+          }
+          if (leadData?.contact_name && !userFullName) {
+            setName((prev) => prev || leadData.contact_name);
+          }
+        }
+
+        // 3. Query previous catalog inquiry
+        const { data: prevLead } = await supabase
+          .from("leads")
+          .select("customer_name, customer_phone")
+          .eq("customer_id", u.user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (prevLead?.customer_phone) {
+          setPhone((prev) => prev || prevLead.customer_phone);
+        }
+        if (prevLead?.customer_name) {
+          setName((prev) => prev || prevLead.customer_name);
+        }
+      } catch (err) {
+        console.warn("Could not auto-prefill user contact info:", err);
+      }
+    }
+
+    loadUserData();
+  }, [open]);
+
   async function submit() {
     if (!name.trim()) {
       toast.error("Please enter your name");
@@ -46,6 +121,11 @@ export function ServiceInquiryModal({
       return;
     }
     const cleanPhone = phoneValidation.formatted;
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem("globetrek_contact_name", name.trim());
+      localStorage.setItem("globetrek_contact_phone", cleanPhone);
+    }
 
     setBusy(true);
     try {
@@ -68,7 +148,7 @@ export function ServiceInquiryModal({
           : "Callback requested — the provider will call you shortly",
       );
       setOpen(false);
-      setName(""); setPhone(""); setMessage("");
+      setMessage("");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not send inquiry");
     } finally {
