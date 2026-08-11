@@ -289,25 +289,42 @@ function CustomerQuotesPortal() {
                       )}
                     </div>
 
-                    {/* Action Button */}
-                    <div className="pt-6 border-t border-border mt-4">
+                    {/* Action Button & Negotiation Options */}
+                    <div className="pt-5 border-t border-border mt-4 space-y-2">
                       {isSelected ? (
                         <Button className="w-full bg-emerald-500 text-black font-bold cursor-default rounded-xl">
-                          <CheckCircle2 className="size-4 mr-1.5" /> Selected Proposal
+                          <CheckCircle2 className="size-4 mr-1.5" /> Selected &amp; Confirmed Proposal
                         </Button>
                       ) : (
-                        <Button
-                          className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold hover:from-amber-600 hover:to-yellow-600 shadow rounded-xl"
-                          disabled={isAccepted || acceptMutation.isPending}
-                          onClick={() => acceptMutation.mutate(q.id)}
-                        >
-                          {acceptMutation.isPending ? (
-                            <Loader2 className="size-4 animate-spin" />
-                          ) : (
-                            <CheckCircle2 className="size-4 mr-1.5" />
+                        <>
+                          <Button
+                            className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold hover:from-amber-600 hover:to-yellow-600 shadow rounded-xl"
+                            disabled={isAccepted || acceptMutation.isPending}
+                            onClick={() => acceptMutation.mutate(q.id)}
+                          >
+                            {acceptMutation.isPending ? (
+                              <Loader2 className="size-4 animate-spin mr-1.5" />
+                            ) : (
+                              <CheckCircle2 className="size-4 mr-1.5" />
+                            )}
+                            Accept This Quotation
+                          </Button>
+
+                          {!isAccepted && (
+                            <div className="flex gap-2 pt-1">
+                              <a
+                                href={`https://wa.me/923000000000?text=${encodeURIComponent(
+                                  `Hi ${q.vendor_company || q.vendor_name}! I reviewed your quotation of PKR ${q.quote_amount.toLocaleString()} for custom tour to ${lead.destination} on GlobeTrek PK. Can we discuss/customize the pricing or itinerary?`
+                                )}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="flex-1 inline-flex justify-center items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 py-2 text-xs font-semibold hover:bg-emerald-500/20 transition"
+                              >
+                                <MessageCircle className="size-3.5" /> Chat / Request Adjustment
+                              </a>
+                            </div>
                           )}
-                          Accept This Quotation
-                        </Button>
+                        </>
                       )}
                     </div>
                   </div>

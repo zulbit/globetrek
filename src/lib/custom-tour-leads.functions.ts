@@ -21,6 +21,7 @@ export interface CustomTourLead {
   contact_name?: string;
   contact_email?: string;
   contact_phone?: string;
+  my_quote?: LeadQuoteItem;
 }
 
 export interface LeadQuoteItem {
@@ -71,7 +72,22 @@ export const getMarketplaceLeads = createServerFn({ method: "GET" })
     const purchasedIds = new Set((purchased ?? []).map((p) => p.lead_id));
     const pendingIds = new Set((pendingPayments ?? []).map((p) => p.lead_id));
 
-    // 3. Fetch ONLY verified leads from custom_tour_leads table (admin approved)
+    // 3. Fetch quote store to attach my_quote if this vendor already submitted a proposal
+    const { data: settingRow } = await context.supabase
+      .from("payment_gateway_settings")
+      .select("config")
+      .eq("provider", "lead_quotes")
+      .maybeSingle();
+
+    const allQuotes: LeadQuoteItem[] = settingRow?.config?.quotes || [];
+    const myQuotesMap = new Map<string, LeadQuoteItem>();
+    allQuotes.forEach((q) => {
+      if (q.vendor_id === vendorId) {
+        myQuotesMap.set(q.lead_id, q);
+      }
+    });
+
+    // 4. Fetch ONLY verified leads from custom_tour_leads table (admin approved)
     const { data: verifiedLeads, error: leadsErr } = await context.supabase
       .from("custom_tour_leads")
       .select("id, departure_city, destination, travel_month, duration_days, group_size, group_type, hotel_tier, visa_needed, insurance_needed, flight_class, special_requests, status, created_at")
@@ -118,6 +134,7 @@ export const getMarketplaceLeads = createServerFn({ method: "GET" })
         created_at: lead.created_at,
         is_unlocked: isUnlocked,
         has_pending_payment: !isUnlocked && pendingIds.has(lead.id),
+        my_quote: myQuotesMap.get(lead.id),
         ...(isUnlocked
           ? {
               contact_name: lead.contact_name,
@@ -683,7 +700,7 @@ export const getAdminCustomLeads = createServerFn({ method: "GET" })
     // Fetch unlock purchases using supabaseAdmin (bypasses RLS)
     const { data: unlocks, error: unlockErr } = await supabaseAdmin
       .from("vendor_lead_purchases")
-      .select("lead_id, vendor_id, purchased_at, profiles(full_name, company_name, email, phone)")
+      .select("lead_id, vendor_id, purchased_at, profiles(full_name, company_name, email)")
       .in("lead_id", leadIds);
 
     if (unlockErr) {
@@ -699,7 +716,6 @@ export const getAdminCustomLeads = createServerFn({ method: "GET" })
         profiles: {
           full_name: u.profiles?.company_name || u.profiles?.full_name || "Travel Partner",
           email: u.profiles?.email || "",
-          phone: u.profiles?.phone || "",
         },
       });
     });

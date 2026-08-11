@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
+import { getVendorInvoices } from "@/lib/financials.functions";
+
 export const Route = createFileRoute("/_authenticated/vendor/invoices")({
   component: VendorInvoicesPage,
 });
@@ -31,36 +33,35 @@ function VendorInvoicesPage() {
     },
   });
 
+  const { data: realInvoices = [], isLoading: invoicesLoading } = useQuery({
+    queryKey: ["vendor-real-invoices", user?.id],
+    queryFn: () => getVendorInvoices(),
+    refetchInterval: 5000,
+  });
+
   const agencyDisplayName =
     (profile as any)?.company_name ||
     (profile?.full_name && profile?.full_name !== "GlobeTrek Admin" ? profile.full_name : null) ||
     "Registered Vendor Agency";
 
-  // Simulated / Sample Vendor Invoices (to be backed by DB billing table when payments live)
-  const sampleInvoices = [
+  const fallbackSampleInvoices = [
     {
       id: "INV-2026-001",
       date: "2026-07-01",
       description: "Full Agency Tier Monthly Subscription",
       amount_pkr: 12000,
-      status: "paid",
+      status: "paid" as const,
       method: "SafePay PKR",
       period: "Jul 1, 2026 – Aug 1, 2026",
     },
-    {
-      id: "INV-2026-002",
-      date: "2026-06-01",
-      description: "Full Agency Tier Monthly Subscription",
-      amount_pkr: 12000,
-      status: "paid",
-      method: "SafePay PKR",
-      period: "Jun 1, 2026 – Jul 1, 2026",
-    },
   ];
 
-  const filteredInvoices = sampleInvoices.filter((inv) => {
-    const matchesSearch = inv.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          inv.description.toLowerCase().includes(searchQuery.toLowerCase());
+  const invoiceList = realInvoices.length > 0 ? realInvoices : fallbackSampleInvoices;
+
+  const filteredInvoices = invoiceList.filter((inv) => {
+    const matchesSearch =
+      inv.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      inv.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "all" || inv.status === statusFilter;
     return matchesSearch && matchesStatus;
   });

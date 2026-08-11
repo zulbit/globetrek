@@ -379,17 +379,52 @@ export function VendorCustomLeadsPage() {
                       </a>
                     </div>
 
+                    {l.my_quote && (
+                      <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 p-2.5 text-xs text-amber-300 flex items-center justify-between">
+                        <span className="font-semibold flex items-center gap-1.5">
+                          <CheckCircle2 className="size-3.5 text-emerald-400" /> Proposal Active
+                        </span>
+                        <span className="font-mono font-bold text-foreground">
+                          {formatPKR(l.my_quote.quote_amount)}
+                        </span>
+                      </div>
+                    )}
+
                     <Button
                       size="sm"
-                      className="w-full gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold hover:from-amber-600 hover:to-yellow-600 shadow rounded-xl"
+                      className={`w-full gap-1.5 font-bold shadow rounded-xl ${
+                        l.my_quote
+                          ? "bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border"
+                          : "bg-gradient-to-r from-amber-500 to-yellow-500 text-black hover:from-amber-600 hover:to-yellow-600"
+                      }`}
                       onClick={() => {
                         setSelectedLeadForQuote(l);
-                        if (!quoteAmount) setQuoteAmount("350000");
-                        if (!itinerarySummary) applyQuoteTemplate("deluxe");
+                        if (l.my_quote) {
+                          setQuoteAmount(String(l.my_quote.quote_amount));
+                          setAdvanceDepositPercent(String(l.my_quote.advance_deposit_percent || "30"));
+                          setHotelDetails(l.my_quote.hotel_details || "4★ City Center Hotel");
+                          setFlightDetails(l.my_quote.flight_details || "Direct Flight");
+                          setItinerarySummary(l.my_quote.itinerary_summary || "");
+                          setInclusionsInput((l.my_quote.inclusions || []).join(", "));
+                          setExclusionsInput((l.my_quote.exclusions || []).join(", "));
+                          setPerksInput((l.my_quote.perks || []).join(", "));
+                          if (l.my_quote.terms_and_conditions) setTermsAndConditions(l.my_quote.terms_and_conditions);
+                        } else {
+                          if (!quoteAmount) setQuoteAmount("350000");
+                          if (!itinerarySummary) applyQuoteTemplate("deluxe");
+                        }
                         setQuoteModalOpen(true);
                       }}
                     >
-                      <Send className="size-3.5" /> Submit Online Quotation
+                      {l.my_quote ? (
+                        <>
+                          <FileText className="size-3.5" /> Update / Revise Quotation
+                        </>
+                      ) : (
+                        <>
+                          <Send className="size-3.5" /> Submit Online Quotation
+                        </>
+                      )}
                     </Button>
                   </div>
                 ) : (
