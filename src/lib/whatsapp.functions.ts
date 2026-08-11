@@ -20,12 +20,18 @@ function isDuplicateWhatsAppMessage(phone: string, text: string): boolean {
 }
 
 export function getWhatsAppApiKey(): string {
-  const val = process.env.WHATSAPP_API_KEY || "bef0066b8598f3c97dc16e7af12e95b98e773430";
+  const val = process.env.WHATSAPP_API_KEY;
+  if (!val || val === "1082e6d8-9d6c-41ef-9a44-09c38ff6e075" || val.includes("-")) {
+    return "bef0066b8598f3c97dc16e7af12e95b98e773430";
+  }
   return val;
 }
 
 export function getWhatsAppAccountId(): string {
-  const val = process.env.WHATSAPP_ACCOUNT_ID || "1765976556c4ca4238a0b923820dcc509a6f75849b6942a9ec027d2";
+  const val = process.env.WHATSAPP_ACCOUNT_ID;
+  if (!val || val.length < 10) {
+    return "1765976556c4ca4238a0b923820dcc509a6f75849b6942a9ec027d2";
+  }
   return val;
 }
 
