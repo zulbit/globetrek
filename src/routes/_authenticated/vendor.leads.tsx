@@ -405,9 +405,9 @@ function VendorLeads() {
     return c;
   }, [directLeads]);
 
-  function waLink(phone: string, subject: string) {
-    const digits = phone.replace(/\D/g, "");
-    const msg = encodeURIComponent(`Hi! Following up about your GlobeTrek inquiry regarding ${subject}.`);
+  function waLink(phone?: string | null, subject?: string | null) {
+    const digits = (phone || "").replace(/\D/g, "");
+    const msg = encodeURIComponent(`Hi! Following up about your GlobeTrek inquiry regarding ${subject || "your trip"}.`);
     return `https://wa.me/${digits}?text=${msg}`;
   }
 

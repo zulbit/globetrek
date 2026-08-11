@@ -36,7 +36,8 @@ function VendorLayout() {
   const nav: NavItem[] = [
     { to: "/vendor", label: "Overview", icon: LayoutDashboard },
     { to: "/vendor/kyc", label: "Agency Verification (KYC)", icon: ShieldCheck, badge: isPending ? "Action Required" : undefined },
-    { to: "/vendor/leads", label: "Leads inbox", icon: Inbox },
+    { to: "/vendor/leads", label: "Direct Inquiries", icon: Inbox },
+    { to: "/vendor/custom-leads", label: "Custom Tour Leads", icon: Sparkles, badge: "HOT" },
     ...(has("tours")     ? [{ to: "/vendor/tours",     label: "Tour packages", icon: Package    }] : []),
     ...(has("visa")      ? [{ to: "/vendor/visa",      label: "Visa services", icon: FileCheck  }] : []),
     ...(has("insurance") ? [{ to: "/vendor/insurance", label: "Insurance",     icon: Shield     }] : []),
