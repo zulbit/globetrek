@@ -266,76 +266,20 @@ function VendorGuidePage() {
   // Real-time Dynamic PDF Download Handler (Generated from Live Supabase CMS Data)
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
 
+  // Download Executive Vendor Manual PDF
   const handleDownloadPDF = async () => {
     setIsDownloadingPDF(true);
-    const toastId = toast.loading("Generating latest Vendor Guide PDF...");
-
+    const toastId = toast.loading("Downloading GlobeTrek Vendor Operating Manual PDF...");
     try {
-      // Import bundled html2pdf package (no CDN required, immune to adblockers)
-      const html2pdfModule = await import("html2pdf.js");
-      const html2pdf = (html2pdfModule as any).default || html2pdfModule;
-
-      const pdfWrapper = document.createElement("div");
-      pdfWrapper.style.position = "absolute";
-      pdfWrapper.style.left = "-9999px";
-      pdfWrapper.style.top = "0";
-      pdfWrapper.style.width = "750px";
-      pdfWrapper.style.padding = "30px";
-      pdfWrapper.style.backgroundColor = "#ffffff";
-      pdfWrapper.style.color = "#111827";
-      pdfWrapper.style.fontFamily = "system-ui, -apple-system, sans-serif";
-
-      const pdfHeader = `
-        <div style="text-align: center; border-bottom: 2px solid #10B981; padding-bottom: 16px; margin-bottom: 24px;">
-          <h1 style="font-size: 22px; font-weight: 800; color: #047857; margin: 0 0 4px 0;">GlobeTrek PK — Partner Operating Guide</h1>
-          <p style="font-size: 12px; color: #4B5563; margin: 0 0 4px 0;">Official Master Documentation for Tour Operators, Visa Desks & Travel Agencies</p>
-          <p style="font-size: 10px; color: #6B7280; margin: 0;">Updated Live on ${new Date().toLocaleDateString()} — https://globetrek.pk/vendor-guide</p>
-        </div>
-      `;
-
-      let chaptersHtml = "";
-      sections.forEach((sec) => {
-        chaptersHtml += `
-          <div style="margin-bottom: 28px; page-break-inside: avoid;">
-            <div style="border-bottom: 1px solid #E5E7EB; padding-bottom: 6px; margin-bottom: 10px;">
-              <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #059669;">${sec.category} · Chapter #${sec.display_order}</span>
-              <h2 style="font-size: 16px; font-weight: 700; color: #111827; margin: 4px 0 2px 0;">${sec.title}</h2>
-              <p style="font-size: 11px; color: #4B5563; margin: 0;">${sec.description}</p>
-            </div>
-            <div style="font-size: 11px; line-height: 1.6; color: #374151;">
-              ${sec.content
-                .replace(/^# (.*$)/gim, '<h3 style="font-size:14px;color:#047857;margin-top:10px;">$1</h3>')
-                .replace(/^## (.*$)/gim, '<h4 style="font-size:12px;color:#111827;margin-top:8px;">$1</h4>')
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\n/g, '<br/>')}
-            </div>
-          </div>
-        `;
-      });
-
-      pdfWrapper.innerHTML = pdfHeader + chaptersHtml;
-      document.body.appendChild(pdfWrapper);
-
-      const opt = {
-        margin: [12, 12, 12, 12],
-        filename: "GlobeTrek-Vendor-Operating-Guide.pdf",
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
-      };
-
-      await html2pdf().set(opt).from(pdfWrapper).save();
-      document.body.removeChild(pdfWrapper);
-      toast.success("Latest Vendor Guide PDF downloaded!", { id: toastId });
-    } catch (err: any) {
-      console.error("Dynamic PDF export fallback to static PDF asset:", err);
       const link = document.createElement("a");
-      link.href = "/vendor-guide.pdf";
-      link.download = "GlobeTrek-Vendor-Guide.pdf";
+      link.href = "/vendor-agency-manual.pdf";
+      link.download = "GlobeTrek-Vendor-Operating-Manual-2026.pdf";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      toast.success("Vendor Guide PDF downloaded!", { id: toastId });
+      toast.success("Executive Vendor Operating Manual downloaded!", { id: toastId });
+    } catch (err: any) {
+      toast.error("Failed to download PDF", { id: toastId });
     } finally {
       setIsDownloadingPDF(false);
     }
@@ -355,12 +299,16 @@ function VendorGuidePage() {
   const estimatedProfitMarginPKR = grossMonthlyRevenuePKR * 0.15 - totalUnlockCostPKR; // Assuming 15% agency margin
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      {/* Print-Only Header */}
-      <div className="hidden print:block text-center border-b pb-4 mb-6">
-        <h1 className="text-3xl font-bold">GlobeTrek PK — Partner Operating Guide</h1>
-        <p className="text-sm text-gray-600">Official Master Documentation for Tour Operators, Visa Desks &amp; Travel Agencies</p>
-        <p className="text-xs text-gray-500 mt-1">Exported on {new Date().toLocaleDateString()} — https://globetrek.pk/vendor-guide</p>
+    <div className="min-h-screen bg-background text-foreground flex flex-col print:bg-white print:text-slate-900">
+      {/* Print-Only Executive Header */}
+      <div className="hidden print:block text-left border-b-2 border-emerald-700 pb-4 mb-6">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-2xl font-black text-emerald-800">GlobeTrek PK</span>
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Official Partner Manual · 2026 Edition</span>
+        </div>
+        <h1 className="text-2xl font-extrabold text-slate-900">Vendor &amp; Agency Operating Manual</h1>
+        <p className="text-xs text-slate-600">Official Operational &amp; Commercial Standards for Pakistani Tour Operators, Visa Desks &amp; Travel Agencies</p>
+        <p className="text-[10px] text-slate-400 mt-1">Exported from https://globetrek.pk/vendor-guide · Confidential</p>
       </div>
 
       {/* Screen Navigation Header */}
