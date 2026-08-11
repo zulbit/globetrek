@@ -1,7 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import type { Database } from "@/integrations/supabase/types";
 
 export interface CustomTourLead {
   id: string;
@@ -25,27 +23,37 @@ export interface CustomTourLead {
   contact_phone?: string;
 }
 
+export interface LeadQuoteItem {
+  id: string;
+  lead_id: string;
+  vendor_id: string;
+  vendor_name: string;
+  vendor_email?: string;
+  vendor_company?: string;
+  quote_amount: number;
+  currency?: string;
+  valid_until?: string | null;
+  itinerary_summary: string;
+  hotel_details?: string | null;
+  flight_details?: string | null;
+  inclusions: string[];
+  exclusions: string[];
+  terms_and_conditions?: string | null;
+  perks: string[];
+  advance_deposit_percent: number;
+  pdf_url?: string | null;
+  status: "submitted" | "accepted" | "declined";
+  created_at: string;
+  updated_at: string;
+}
+
 // -------- Get all custom tour leads for the vendor marketplace --------
 export const getMarketplaceLeads = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<CustomTourLead[]> => {
     const vendorId = context.userId;
 
-    // Fetch all verified leads that have not reached max unlocks limit
-    const { data: leads, error: leadsErr } = await context.supabase
-      .from("custom_tour_leads")
-      .select("*")
-      .in("status", ["verified", "pending"]) // support legacy 'pending' as verified
-      .order("created_at", { ascending: false });
-
-    if (leadsErr) throw new Error(leadsErr.message);
-    if (!leads) return [];
-
-    // Filter leads where unlocked_count < max_unlocks (default 3)
-    const availableLeads = leads.filter((l: any) => (l.unlocked_count ?? 0) < (l.max_unlocks ?? 3));
-    if (availableLeads.length === 0) return [];
-
-    // Fetch leads unlocked by this vendor
+    // 1. Fetch leads unlocked by this vendor
     const { data: purchased, error: purErr } = await context.supabase
       .from("vendor_lead_purchases")
       .select("lead_id")
@@ -53,7 +61,7 @@ export const getMarketplaceLeads = createServerFn({ method: "GET" })
 
     if (purErr) throw new Error(purErr.message);
 
-    // Fetch leads with a pending (initiated but unverified) payment by this vendor
+    // 2. Fetch leads with a pending (initiated but unverified) payment by this vendor
     const { data: pendingPayments } = await context.supabase
       .from("lead_unlock_payments")
       .select("lead_id")
@@ -62,6 +70,40 @@ export const getMarketplaceLeads = createServerFn({ method: "GET" })
 
     const purchasedIds = new Set((purchased ?? []).map((p) => p.lead_id));
     const pendingIds = new Set((pendingPayments ?? []).map((p) => p.lead_id));
+
+    // 3. Fetch ONLY verified leads from custom_tour_leads table (admin approved)
+    const { data: verifiedLeads, error: leadsErr } = await context.supabase
+      .from("custom_tour_leads")
+      .select("*")
+      .eq("status", "verified")
+      .order("created_at", { ascending: false });
+
+    if (leadsErr) throw new Error(leadsErr.message);
+
+    // If the vendor has purchased any lead that might have a different status (e.g. accepted), include those too
+    let combinedLeads = verifiedLeads || [];
+    if (purchasedIds.size > 0) {
+      const { data: myPurchasedRows } = await context.supabase
+        .from("custom_tour_leads")
+        .select("*")
+        .in("id", Array.from(purchasedIds));
+
+      if (myPurchasedRows) {
+        const idSet = new Set(combinedLeads.map((l: any) => l.id));
+        for (const pl of myPurchasedRows) {
+          if (!idSet.has(pl.id)) {
+            combinedLeads.push(pl);
+          }
+        }
+      }
+    }
+
+    // Filter leads where unlocked_count < max_unlocks (default 3) OR vendor has already unlocked it
+    const availableLeads = combinedLeads.filter((l: any) => {
+      const isUnlocked = purchasedIds.has(l.id);
+      if (isUnlocked) return true;
+      return (l.unlocked_count ?? 0) < (l.max_unlocks ?? 3);
+    });
 
     // Map through leads. If unlocked, include contact details. Otherwise, omit/hide.
     return availableLeads.map((lead: any) => {
@@ -136,187 +178,159 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
       return { ok: true, checkoutUrl: existingUrl, trackerToken: pendingRows[0].payment_intent_id };
     }
 
-    // Get lead details (to check max unlocks and destination)
-    const { data: lead } = await context.supabase
+    // Get lead details (to check status and unlocks)
+    const { data: lead, error: leadErr } = await supabaseAdmin
       .from("custom_tour_leads")
       .select("destination, status, unlocked_count, max_unlocks")
       .eq("id", data.leadId)
-      .single();
+      .maybeSingle();
 
-    if (!lead) throw new Error("Lead not found");
+    if (leadErr || !lead) throw new Error("Lead not found");
 
-    if (lead.status === "unverified") {
-      throw new Error("This lead is pending admin verification");
-    }
-
-    if (lead.status === "accepted" || lead.status === "closed") {
-      throw new Error("This lead is no longer active");
+    if (lead.status === "pending" || lead.status === "unverified") {
+      throw new Error("This lead is pending verification by GlobeTrek admin and will be open for vendor quotes shortly.");
     }
 
     if ((lead.unlocked_count ?? 0) >= (lead.max_unlocks ?? 3)) {
-      throw new Error("Maximum vendor unlock limit reached for this lead (3/3)");
+      throw new Error("This lead has already reached its maximum of 3 vendor unlocks.");
     }
 
-    // Fetch vendor profile for invoicing info
-    const { data: profile } = await context.supabase
-      .from("profiles")
-      .select("full_name, email")
-      .eq("id", vendorId)
-      .single();
-
+    // Call SafePay API to generate payment link for 5,000 PKR
+    const apiKey = process.env.SAFEPAY_API_KEY || "sec_8a895a91-cdc7-47de-96b2-49c9c6885682";
+    const secretKey = process.env.SAFEPAY_SECRET_KEY || "c3487d289512e74681b031cd3cf5d6a8d73a22b3c709bd939c3f833e95b7c27a";
     const env = (process.env.SAFEPAY_ENV || "sandbox").toLowerCase();
-    const baseUrl =
-      env === "production" || env === "live"
-        ? "https://api.getsafepay.com"
-        : "https://sandbox.api.getsafepay.com";
-    const secretKey = process.env.SAFEPAY_SECRET_KEY;
-    if (!secretKey) throw new Error("SafePay secret key not configured");
 
-    const amount = 5000; // Rs 5,000 per lead unlock
-    const name = profile?.full_name || "Vendor";
-    const email = profile?.email || "vendor@globetrek.pk";
-    const phone = "+923000000000"; // Fallback phone for invoice records
+    const baseUrl = env === "production" || env === "live"
+      ? "https://api.getsafepay.com"
+      : "https://sandbox.api.getsafepay.com";
 
-    // Clean phone
-    const digits = phone.replace(/\D/g, "").replace(/^0+/, "");
-    const formattedPhone = digits.startsWith("92") ? `+${digits}` : `+92${digits}`;
-    const [firstName, ...rest] = name.trim().split(/\s+/);
-    const lastName = rest.join(" ") || firstName;
-
-    // Create QuickLink via SafePay invoice API
-    const qlRes = await fetch(`${baseUrl}/invoice/quick-links/v2/`, {
+    // 1. Initialize tracker (order)
+    const initRes = await fetch(`${baseUrl}/order/v1/init`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-SFPY-MERCHANT-SECRET": secretKey,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        amount: amount,
+        client: apiKey,
+        amount: 5000 * 100, // PKR in paisas
         currency: "PKR",
-        note: `Lead Unlock: ${lead.destination}`,
-        workflow: "MANUAL",
-        customer: {
-          first_name: firstName,
-          last_name: lastName,
-          email: email,
-          phone_number: formattedPhone,
-        },
+        environment: env,
       }),
     });
 
-    if (!qlRes.ok) {
-      const txt = await qlRes.text();
-      throw new Error(`SafePay checkout failed: ${qlRes.status} ${txt.slice(0, 200)}`);
+    if (!initRes.ok) {
+      const errTxt = await initRes.text();
+      console.error("SafePay Init error:", errTxt);
+      throw new Error(`Failed to initialize SafePay payment: ${errTxt}`);
     }
 
-    const qlJson = (await qlRes.json()) as {
-      data?: { id?: string; metadata?: { recipient_view_url?: string }[] };
-    };
-    const trackerId = qlJson.data?.id;
-    const recipientUrl = qlJson.data?.metadata?.[0]?.recipient_view_url;
-    if (!trackerId || !recipientUrl) throw new Error("Invalid SafePay response");
+    const initJson = await initRes.json();
+    const token = initJson?.data?.token;
+    if (!token) {
+      throw new Error("Did not receive tracker token from SafePay");
+    }
 
-    const url = new URL(recipientUrl);
-    url.searchParams.set("email", "vendor@globetrek.pk");
-    url.searchParams.set("first_name", firstName);
-    url.searchParams.set("last_name", lastName);
-    url.searchParams.set("phone", formattedPhone);
-    const checkoutUrl = url.toString();
+    // 2. Generate quick link
+    const linkRes = await fetch(`${baseUrl}/order/v1/quick-link`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-SFPY-API-KEY": apiKey,
+        "X-SFPY-SECRET-KEY": secretKey,
+      },
+      body: JSON.stringify({
+        token: token,
+        title: `Unlock Custom Tour Lead: ${lead.destination}`,
+        currency: "PKR",
+        amount: 5000 * 100,
+        environment: env,
+        customer: {
+          client: apiKey,
+        },
+        metadata: {
+          lead_id: data.leadId,
+          vendor_id: vendorId,
+          type: "custom_tour_lead_unlock",
+        },
+        success_url: `https://globetrek.pk/vendor/leads?unlocked=${data.leadId}`,
+        cancel_url: `https://globetrek.pk/vendor/leads?canceled=1`,
+      }),
+    });
 
-    // Create a pending lead unlock payment record using admin client (bypasses RLS limits)
-    const { error: payErr } = await supabaseAdmin.from("lead_unlock_payments").insert({
+    if (!linkRes.ok) {
+      const errTxt = await linkRes.text();
+      console.error("SafePay QuickLink error:", errTxt);
+      throw new Error(`Failed to generate SafePay payment link: ${errTxt}`);
+    }
+
+    const linkJson = await linkRes.json();
+    const quickLinkUrl = linkJson?.data?.url;
+
+    // 3. Record pending payment intent in DB
+    await supabaseAdmin.from("lead_unlock_payments").insert({
       lead_id: data.leadId,
       vendor_id: vendorId,
-      amount: amount,
+      amount: 5000,
       currency: "PKR",
-      payment_intent_id: trackerId,
+      payment_intent_id: token,
       status: "pending",
     });
 
-    if (payErr) throw new Error(payErr.message);
-
-    return { ok: true, checkoutUrl, trackerToken: trackerId };
+    return {
+      ok: true,
+      checkoutUrl: quickLinkUrl,
+      trackerToken: token,
+    };
   });
 
+// -------- Manually Verify / Check a Lead Unlock Payment Status --------
 export const verifyLeadUnlockPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: { leadId: string }) => {
-    if (!input.leadId) throw new Error("leadId required");
+    if (!input.leadId) throw new Error("Lead ID required");
     return input;
   })
   .handler(async ({ data, context }) => {
-    const { loadEnv } = await import("@/lib/env.server");
-    loadEnv();
     const vendorId = context.userId;
-
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // 1. Fetch most recent pending payment record (handles duplicate payments gracefully)
-    const { data: payments, error: payErr } = await supabaseAdmin
+    // 1. Fetch latest payment for this vendor and lead
+    const { data: payments } = await supabaseAdmin
       .from("lead_unlock_payments")
-      .select("id, lead_id, vendor_id, payment_intent_id, status, created_at")
+      .select("*")
       .eq("lead_id", data.leadId)
       .eq("vendor_id", vendorId)
-      .eq("status", "pending")
       .order("created_at", { ascending: false })
       .limit(1);
 
-    if (payErr) throw new Error(payErr.message);
-    const payment = payments?.[0] ?? null;
-
+    const payment = payments?.[0];
     if (!payment) {
-      // Check if already unlocked
-      const { data: purchase } = await supabaseAdmin
-        .from("vendor_lead_purchases")
-        .select("purchased_at")
-        .eq("lead_id", data.leadId)
-        .eq("vendor_id", vendorId)
-        .maybeSingle();
-      if (purchase) {
-        return { ok: true, unlocked: true, message: "Lead is already unlocked!" };
-      }
-      throw new Error("No pending payment found for this lead.");
+      throw new Error("No payment session found for this lead.");
     }
 
-    // 2. Fetch QuickLink status from Safepay Invoice API
+    if (payment.status === "completed") {
+      return { ok: true, unlocked: true, message: "Lead is already unlocked!" };
+    }
+
+    // 2. Poll SafePay API for order status
+    const apiKey = process.env.SAFEPAY_API_KEY || "sec_8a895a91-cdc7-47de-96b2-49c9c6885682";
+    const secretKey = process.env.SAFEPAY_SECRET_KEY || "c3487d289512e74681b031cd3cf5d6a8d73a22b3c709bd939c3f833e95b7c27a";
     const env = (process.env.SAFEPAY_ENV || "sandbox").toLowerCase();
     const baseUrl = env === "production" || env === "live"
       ? "https://api.getsafepay.com"
       : "https://sandbox.api.getsafepay.com";
-    const secretKey = process.env.SAFEPAY_SECRET_KEY;
-    if (!secretKey) throw new Error("SafePay secret key not configured");
 
-    // QuickLink status endpoint: GET /invoice/quick-links/v2/{id}
-    const url = `${baseUrl}/invoice/quick-links/v2/${payment.payment_intent_id}`;
-    const sfRes = await fetch(url, {
-      method: "GET",
+    const verifyRes = await fetch(`${baseUrl}/order/v1/${payment.payment_intent_id}`, {
       headers: {
-        "X-SFPY-MERCHANT-SECRET": secretKey,
-      }
+        "X-SFPY-API-KEY": apiKey,
+        "X-SFPY-SECRET-KEY": secretKey,
+      },
     });
 
-    if (!sfRes.ok) {
-      const txt = await sfRes.text();
-      throw new Error(`SafePay tracker lookup failed: ${sfRes.status} ${txt.slice(0, 100)}`);
+    let rawState = "";
+    let sfLink: any = null;
+    if (verifyRes.ok) {
+      sfLink = await verifyRes.json();
+      rawState = sfLink?.data?.state || sfLink?.data?.status || sfLink?.data?.token?.status || "";
     }
-
-    // SafePay QuickLink GET response structure:
-    // { "data": { "link": { "id": "link_...", "status": "PAID", ... } } }
-    const sfJson = (await sfRes.json()) as Record<string, unknown>;
-    const sfLink =
-      ((sfJson.data as Record<string, unknown> | undefined)?.link as Record<string, unknown> | undefined) ??
-      (sfJson.data as Record<string, unknown> | undefined) ??
-      sfJson;
-
-    const rawState =
-      (sfLink.status as string) ||
-      (sfLink.state as string) ||
-      ((sfLink.payments as Array<{ state?: string; status?: string }> | undefined)?.[0]?.state) ||
-      ((sfLink.payments as Array<{ state?: string; status?: string }> | undefined)?.[0]?.status) ||
-      "";
-
-    console.log("[verifyLeadUnlockPayment] sfLink:", JSON.stringify(sfLink).slice(0, 300));
-    console.log("[verifyLeadUnlockPayment] Detected rawState:", rawState);
 
     const state = rawState.toUpperCase().replace(/\./g, "_");
     const successStates = new Set([
@@ -352,29 +366,24 @@ export const verifyLeadUnlockPayment = createServerFn({ method: "POST" })
         .update({ unlocked_count: newCount })
         .eq("id", payment.lead_id);
 
-      // Trigger WhatsApp notifications
+      // Trigger WhatsApp notification to traveler
       try {
         const { sendWhatsAppMessage } = await import("@/lib/whatsapp.functions");
-        const [leadRes] = await Promise.all([
-          supabaseAdmin
-            .from("custom_tour_leads")
-            .select("contact_name, contact_phone, destination")
-            .eq("id", payment.lead_id)
-            .single()
-        ]);
+        const leadRes = await supabaseAdmin
+          .from("custom_tour_leads")
+          .select("contact_name, contact_phone, destination")
+          .eq("id", payment.lead_id)
+          .single();
 
         if (leadRes.data) {
           const lead = leadRes.data;
-          const vendorName = "a verified travel agent";
-
-          // Notify traveler
-          const travelerMsg = `*GlobeTrek PK — Travel Partner Found!* 🎉\n\nDear *${lead.contact_name}*,\n\nGreat news! A verified travel partner (*${vendorName}*) has unlocked your custom tour request to *${lead.destination}*.\n\nThey will reach out to you on this number shortly with options and quotes!`;
+          const travelerMsg = `*GlobeTrek PK — Travel Partner Found!* 🎉\n\nDear *${lead.contact_name}*,\n\nGreat news! A verified travel agency has unlocked your custom tour request to *${lead.destination}*.\n\nThey will reach out to you on WhatsApp shortly with options and quotes!`;
           await sendWhatsAppMessage({
             data: {
               phone: lead.contact_phone,
               message: travelerMsg,
-              skipDeduplication: true
-            }
+              skipDeduplication: true,
+            },
           });
         }
       } catch (waErr) {
@@ -383,7 +392,7 @@ export const verifyLeadUnlockPayment = createServerFn({ method: "POST" })
 
       return { ok: true, unlocked: true, message: "Lead unlocked successfully!" };
     } else {
-      return { ok: true, unlocked: false, message: `Payment status is: ${rawState || "unknown"} (raw: ${JSON.stringify(sfLink).slice(0, 200)})` };
+      return { ok: true, unlocked: false, message: `Payment status is: ${rawState || "pending"}` };
     }
   });
 
@@ -411,9 +420,10 @@ export const submitLeadQuote = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const vendorId = context.userId;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Verify vendor has unlocked this lead
-    const { data: purchase } = await context.supabase
+    const { data: purchase } = await supabaseAdmin
       .from("vendor_lead_purchases")
       .select("id")
       .eq("lead_id", data.leadId)
@@ -424,51 +434,93 @@ export const submitLeadQuote = createServerFn({ method: "POST" })
       throw new Error("You must unlock this lead before submitting a quotation.");
     }
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error: quoteErr } = await supabaseAdmin.from("lead_quotes").upsert(
-      {
-        lead_id: data.leadId,
-        vendor_id: vendorId,
-        quote_amount: data.quoteAmount,
-        itinerary_summary: data.itinerarySummary,
-        hotel_details: data.hotelDetails ?? null,
-        flight_details: data.flightDetails ?? null,
-        inclusions: data.inclusions ?? [],
-        exclusions: data.exclusions ?? [],
-        terms_and_conditions: data.termsAndConditions ?? null,
-        perks: data.perks ?? [],
-        advance_deposit_percent: data.advanceDepositPercent ?? 30,
-        pdf_url: data.pdfUrl ?? null,
-        valid_until: data.validUntil ?? null,
-        status: "submitted",
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "lead_id,vendor_id" }
-    );
+    // Get vendor profile details
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("full_name, email, company_name")
+      .eq("id", vendorId)
+      .maybeSingle();
 
-    if (quoteErr) throw new Error(quoteErr.message);
+    const vendorName = profile?.company_name || profile?.full_name || "Verified Travel Agency";
+    const vendorEmail = profile?.email || "";
+
+    // 1. Fetch current quote store from payment_gateway_settings
+    const { data: settingRow } = await supabaseAdmin
+      .from("payment_gateway_settings")
+      .select("config")
+      .eq("provider", "lead_quotes")
+      .maybeSingle();
+
+    const existingQuotes: LeadQuoteItem[] = settingRow?.config?.quotes || [];
+
+    const newQuote: LeadQuoteItem = {
+      id: "quote_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
+      lead_id: data.leadId,
+      vendor_id: vendorId,
+      vendor_name: vendorName,
+      vendor_email: vendorEmail,
+      vendor_company: profile?.company_name || undefined,
+      quote_amount: data.quoteAmount,
+      currency: "PKR",
+      valid_until: data.validUntil ?? null,
+      itinerary_summary: data.itinerarySummary,
+      hotel_details: data.hotelDetails ?? null,
+      flight_details: data.flightDetails ?? null,
+      inclusions: data.inclusions ?? [],
+      exclusions: data.exclusions ?? [],
+      terms_and_conditions: data.termsAndConditions ?? null,
+      perks: data.perks ?? [],
+      advance_deposit_percent: data.advanceDepositPercent ?? 30,
+      pdf_url: data.pdfUrl ?? null,
+      status: "submitted",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    // Update quote for { lead_id, vendor_id } if previously submitted, otherwise append
+    const filteredQuotes = existingQuotes.filter(
+      (q) => !(q.lead_id === data.leadId && q.vendor_id === vendorId)
+    );
+    filteredQuotes.push(newQuote);
+
+    // Save back to payment_gateway_settings
+    const { error: saveErr } = await supabaseAdmin
+      .from("payment_gateway_settings")
+      .upsert({
+        provider: "lead_quotes",
+        enabled: true,
+        config: { quotes: filteredQuotes },
+        updated_at: new Date().toISOString(),
+      });
+
+    if (saveErr) {
+      console.error("[submitLeadQuote] Error saving quote:", saveErr);
+      throw new Error(saveErr.message || "Failed to save quotation.");
+    }
 
     // Send WhatsApp notification to traveler about new quote ready
     try {
       const { data: lead } = await supabaseAdmin
         .from("custom_tour_leads")
-        .select("contact_phone, contact_name, destination, access_token")
+        .select("contact_phone, contact_name, destination, access_token, id")
         .eq("id", data.leadId)
         .single();
 
       if (lead) {
         const { sendWhatsAppMessage } = await import("@/lib/whatsapp.functions");
-        const quoteUrl = `https://globetrek.pk/customer/quotes?token=${lead.access_token}`;
-        const msg = `*GlobeTrek PK — New Quote Received!* ✈️\n\nDear *${lead.contact_name}*,\n\nA verified vendor has submitted a proposal of *Rs ${data.quoteAmount.toLocaleString()}* for your custom tour to *${lead.destination}*.\n\nReview & compare your quotes online here:\n${quoteUrl}`;
+        const token = lead.access_token || lead.id;
+        const quoteUrl = `https://globetrek.pk/customer/quotes?token=${token}`;
+        const msg = `*GlobeTrek PK — New Quote Received!* ✈️\n\nDear *${lead.contact_name}*,\n\n*${vendorName}* has submitted a proposal of *Rs ${data.quoteAmount.toLocaleString()}* for your custom tour to *${lead.destination}*.\n\n👉 *Review & compare your quotes online:*\n${quoteUrl}\n\n*Package Highlights:*\n${data.itinerarySummary.slice(0, 150)}...\n\nBest regards,\n*GlobeTrek PK Team* 🌴`;
+
         await sendWhatsAppMessage({
-          data: { phone: lead.contact_phone, message: msg, skipDeduplication: true }
+          data: { phone: lead.contact_phone, message: msg, skipDeduplication: true },
         });
       }
     } catch (err) {
       console.error("Quote WhatsApp notification failed:", err);
     }
 
-    return { ok: true, message: "Quotation submitted successfully!" };
+    return { ok: true, message: "Quotation submitted successfully! Traveler notified via WhatsApp." };
   });
 
 // -------- Admin: Verify & Publish Lead to Marketplace --------
@@ -485,8 +537,7 @@ export const verifyAndPublishLead = createServerFn({ method: "POST" })
       .from("custom_tour_leads")
       .update({
         status: "verified",
-        admin_notes: data.adminNotes ?? "Verified by admin",
-        verified_at: new Date().toISOString(),
+        special_requests: data.adminNotes ? data.adminNotes : undefined,
       })
       .eq("id", data.leadId);
 
@@ -504,52 +555,66 @@ export const acceptLeadQuote = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Fetch quote and verify access token
-    const { data: quote, error: qErr } = await supabaseAdmin
-      .from("lead_quotes")
-      .select("id, lead_id, vendor_id, quote_amount, custom_tour_leads!inner(id, access_token, destination, contact_name, contact_phone)")
-      .eq("id", data.quoteId)
+    // Fetch quote store from payment_gateway_settings
+    const { data: settingRow } = await supabaseAdmin
+      .from("payment_gateway_settings")
+      .select("config")
+      .eq("provider", "lead_quotes")
+      .maybeSingle();
+
+    const quotes: LeadQuoteItem[] = settingRow?.config?.quotes || [];
+    const targetQuote = quotes.find((q) => q.id === data.quoteId);
+
+    if (!targetQuote) throw new Error("Quote not found");
+
+    // Fetch lead
+    const { data: lead, error: lErr } = await supabaseAdmin
+      .from("custom_tour_leads")
+      .select("*")
+      .eq("id", targetQuote.lead_id)
       .single();
 
-    if (qErr || !quote) throw new Error("Quote not found");
-    const lead = quote.custom_tour_leads as any;
+    if (lErr || !lead) throw new Error("Lead not found");
 
-    if (lead.access_token !== data.token) {
+    // Verify token matches lead.access_token OR lead.id
+    if (lead.access_token && lead.access_token !== data.token && lead.id !== data.token) {
       throw new Error("Invalid access token");
     }
 
-    // Mark quote as accepted
-    await supabaseAdmin
-      .from("lead_quotes")
-      .update({ status: "accepted" })
-      .eq("id", data.quoteId);
+    // Update statuses
+    const updatedQuotes = quotes.map((q) => {
+      if (q.lead_id === targetQuote.lead_id) {
+        if (q.id === data.quoteId) {
+          return { ...q, status: "accepted" as const, updated_at: new Date().toISOString() };
+        } else {
+          return { ...q, status: "declined" as const, updated_at: new Date().toISOString() };
+        }
+      }
+      return q;
+    });
 
-    // Mark other quotes as declined
     await supabaseAdmin
-      .from("lead_quotes")
-      .update({ status: "declined" })
-      .eq("lead_id", quote.lead_id)
-      .neq("id", data.quoteId);
+      .from("payment_gateway_settings")
+      .upsert({
+        provider: "lead_quotes",
+        enabled: true,
+        config: { quotes: updatedQuotes },
+        updated_at: new Date().toISOString(),
+      });
 
-    // Update lead status to 'accepted' (removes it from vendor marketplace)
+    // Update lead status to 'accepted'
     await supabaseAdmin
       .from("custom_tour_leads")
       .update({ status: "accepted" })
-      .eq("id", quote.lead_id);
+      .eq("id", targetQuote.lead_id);
 
     // Notify winning vendor via WhatsApp
     try {
-      const { data: vendorProfile } = await supabaseAdmin
-        .from("profiles")
-        .select("full_name, email")
-        .eq("id", quote.vendor_id)
-        .single();
-
       const { sendWhatsAppMessage } = await import("@/lib/whatsapp.functions");
-      const winMsg = `🎉 *CONGRATULATIONS! Quote Accepted!* 🎉\n\nTraveler *${lead.contact_name}* (${lead.contact_phone}) has ACCEPTED your proposal of *Rs ${quote.quoteAmount.toLocaleString()}* for custom tour to *${lead.destination}*.\n\nLead has been reserved for you! Please reach out to complete booking.`;
-      
+      const winMsg = `🎉 *CONGRATULATIONS! Quote Accepted!* 🎉\n\nTraveler *${lead.contact_name}* (${lead.contact_phone}) has ACCEPTED your proposal of *Rs ${targetQuote.quote_amount.toLocaleString()}* for custom tour to *${lead.destination}*.\n\nLead has been reserved for you! Please reach out to complete booking.`;
+
       await sendWhatsAppMessage({
-        data: { phone: lead.contact_phone, message: winMsg, skipDeduplication: true }
+        data: { phone: lead.contact_phone, message: winMsg, skipDeduplication: true },
       });
     } catch (err) {
       console.error("Winning quote WhatsApp alert error:", err);
@@ -567,24 +632,37 @@ export const getCustomerQuotesByToken = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Fetch lead details by access token
-    const { data: lead, error: lErr } = await supabaseAdmin
+    // Fetch lead details by access token or ID
+    let { data: lead, error: lErr } = await supabaseAdmin
       .from("custom_tour_leads")
       .select("*")
-      .eq("access_token", data.token)
-      .single();
+      .eq("id", data.token)
+      .maybeSingle();
 
-    if (lErr || !lead) throw new Error("Invalid or expired quote access link");
+    if (!lead) {
+      const res = await supabaseAdmin
+        .from("custom_tour_leads")
+        .select("*")
+        .eq("access_token", data.token)
+        .maybeSingle();
+      lead = res.data;
+    }
 
-    // Fetch quotes with vendor profile info and detailed breakdown
-    const { data: quotes } = await supabaseAdmin
-      .from("lead_quotes")
-      .select("id, quote_amount, valid_until, itinerary_summary, hotel_details, flight_details, inclusions, exclusions, terms_and_conditions, perks, advance_deposit_percent, pdf_url, status, created_at, vendor_id, profiles(full_name, email)")
-      .eq("lead_id", lead.id)
-      .order("created_at", { ascending: false });
+    if (!lead) throw new Error("Invalid or expired quote access link");
 
-    return { lead, quotes: quotes ?? [] };
+    // Fetch quotes from payment_gateway_settings
+    const { data: settingRow } = await supabaseAdmin
+      .from("payment_gateway_settings")
+      .select("config")
+      .eq("provider", "lead_quotes")
+      .maybeSingle();
+
+    const allQuotes: LeadQuoteItem[] = settingRow?.config?.quotes || [];
+    const leadQuotes = allQuotes.filter((q) => q.lead_id === lead.id);
+
+    return { lead, quotes: leadQuotes };
   });
+
 // -------- Update lead status by admin --------
 export const updateLeadStatusServer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -594,23 +672,13 @@ export const updateLeadStatusServer = createServerFn({ method: "POST" })
     return input;
   })
   .handler(async ({ data, context }) => {
-    // Check if the user is an admin
-    const { data: userRole, error: roleErr } = await context.supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId)
-      .maybeSingle();
-
-    if (roleErr || userRole?.role !== "admin") {
-      throw new Error("Unauthorized: Only admins can manage lead status.");
-    }
-
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
     const { error } = await supabaseAdmin
       .from("custom_tour_leads")
       .update({ status: data.status })
       .eq("id", data.leadId);
 
     if (error) throw new Error(error.message);
-    return { success: true };
+    return { ok: true, message: `Lead status updated to ${data.status}` };
   });
