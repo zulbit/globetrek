@@ -59,6 +59,19 @@ export const Route = createFileRoute("/custom-tour")({
         content:
           "Plan an exclusive group or custom tour for family & friends. Get AI-generated itineraries and competitive quotes from Pakistan's top verified travel vendors.",
       },
+      { property: "og:title", content: "Custom Group Tour & Itinerary Planner — GlobeTrek PK" },
+      {
+        property: "og:description",
+        content:
+          "Plan an exclusive group or custom tour for family & friends. Get AI-generated itineraries and competitive quotes from Pakistan's top verified travel vendors.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://globetrek.pk/custom-tour" },
+      { property: "og:image", content: "https://globetrek.pk/og-image.jpg" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: "https://globetrek.pk/og-image.jpg" },
     ],
     links: [
       {

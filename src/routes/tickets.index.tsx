@@ -21,7 +21,15 @@ export const Route = createFileRoute("/tickets/")({
       { property: "og:title", content: "Flight Ticketing Desks & Umrah Packages · GlobeTrek PK" },
       { property: "og:description", content: "Ticketing agents from Pakistan for every route, priced in PKR." },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://globetrek.pk/tickets" },
+      { property: "og:image", content: "https://globetrek.pk/og-image.jpg" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: "https://globetrek.pk/og-image.jpg" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://globetrek.pk/tickets" },
     ],
     scripts: [
       {
