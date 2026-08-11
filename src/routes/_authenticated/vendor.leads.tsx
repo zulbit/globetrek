@@ -658,7 +658,7 @@ function VendorLeads() {
                     </div>
                     <div className="flex items-center gap-1.5 text-muted-foreground">
                       <Briefcase className="size-3.5 text-primary" />
-                      <span>Hotel Tier: <strong className="text-foreground capitalize">{l.hotel_tier.replace("star", " ★")}</strong></span>
+                      <span>Hotel Tier: <strong className="text-foreground capitalize">{(l.hotel_tier || "3star").replace("star", " ★")}</strong></span>
                     </div>
                     <div className="flex items-center gap-1.5 text-muted-foreground col-span-2">
                       <Layers className="size-3.5 text-primary" />

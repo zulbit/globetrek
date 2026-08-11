@@ -858,7 +858,7 @@ function CustomTourPage() {
                     label="Group"
                     value={`${form.groupSize} · ${form.groupType}`}
                   />
-                  <SummaryItem label="Hotel" value={form.hotelTier.replace("star", "★")} />
+                  <SummaryItem label="Hotel" value={(form.hotelTier || "3star").replace("star", "★")} />
                   <SummaryItem label="Flight" value={form.flightClass} />
                   <SummaryItem
                     label="Visa"

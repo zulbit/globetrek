@@ -123,7 +123,7 @@ function CustomerQuotesPortal() {
               </span>
               <span className="flex items-center gap-1.5 rounded-xl bg-surface/80 px-3 py-1.5 border border-border">
                 <Building className="size-3.5 text-amber-400" />
-                <span>Hotel: <strong className="capitalize">{lead.hotel_tier.replace("star", " ★")}</strong></span>
+                <span>Hotel: <strong className="capitalize">{(lead.hotel_tier || "3star").replace("star", " ★")}</strong></span>
               </span>
               <span className="flex items-center gap-1.5 rounded-xl bg-surface/80 px-3 py-1.5 border border-border">
                 <Plane className="size-3.5 text-amber-400" />
