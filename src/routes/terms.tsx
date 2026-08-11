@@ -125,28 +125,56 @@ function TermsAndPoliciesPage() {
               <div className="space-y-4 text-xs text-muted-foreground leading-relaxed">
                 <div className="space-y-1.5">
                   <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-1 font-bold text-emerald-300 text-xs">
-                    1.1 Marketplace Model
+                    1.1 Intermediary Technology &amp; Discovery Marketplace Model
                   </span>
-                  <p className="pt-1">
-                    GlobeTrek PK is an open travel discovery platform connecting travelers with verified Pakistani travel agencies, tour operators, visa consultants, insurance brokers, and flight desks. GlobeTrek PK charges <strong>0% commission on traveler bookings</strong>.
+                  <p className="pt-1 text-slate-300 leading-relaxed">
+                    GlobeTrek PK is an independent, neutral <strong>travel discovery technology platform and marketplace directory</strong> designed to connect travelers with verified third-party Pakistani travel businesses, tour operators, visa consultants, insurance brokers, and ticketing desks. GlobeTrek PK charges <strong>0% booking commission</strong> to travelers.
                   </p>
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="rounded-2xl border border-emerald-500/30 bg-card p-4 space-y-3">
+                  <h4 className="font-bold text-emerald-300 text-xs uppercase tracking-wider flex items-center gap-2">
+                    <ShieldAlert className="size-4 text-emerald-400" /> Explicit Non-Agency Disclaimers (What GlobeTrek PK is NOT):
+                  </h4>
+                  <ul className="space-y-2.5 text-xs text-slate-300">
+                    <li className="flex items-start gap-2.5">
+                      <span className="inline-flex items-center gap-1 rounded bg-red-500/15 text-red-400 px-2 py-0.5 font-bold text-[10px] shrink-0 mt-0.5">NOT A TOUR OPERATOR</span>
+                      <span><strong>Not a Tour Organizer or Transporter:</strong> GlobeTrek PK does not own vehicles, arrange transportation, hire tour guides, book hotel rooms directly, or organize tour departures. All tours are operated independently by licensed third-party agencies.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="inline-flex items-center gap-1 rounded bg-amber-500/15 text-amber-300 px-2 py-0.5 font-bold text-[10px] shrink-0 mt-0.5">NOT A VISA AUTHORITY</span>
+                      <span><strong>Not a Visa Filing Authority or Embassy Representative:</strong> GlobeTrek PK does not review, issue, stamp, guarantee, or process visas. Visa guidance, document compilation, and drop-box appointments (e.g. Gerry's/VFS) are provided solely by independent consultants. Sovereign embassies and consulates retain 100% exclusive authority over visa issuance or refusal.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="inline-flex items-center gap-1 rounded bg-sky-500/15 text-sky-300 px-2 py-0.5 font-bold text-[10px] shrink-0 mt-0.5">NOT A CARRIER</span>
+                      <span><strong>Not an Airline or Carrier:</strong> GlobeTrek PK does not operate aircraft, set airfares, or issue airline tickets directly. Flight ticketing desks and IATA agents listed on the platform operate independently.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="inline-flex items-center gap-1 rounded bg-purple-500/15 text-purple-300 px-2 py-0.5 font-bold text-[10px] shrink-0 mt-0.5">NOT AN INSURER</span>
+                      <span><strong>Not an Insurance Underwriter:</strong> Travel insurance policies displayed on the platform are underwritten and issued directly by authorized insurance companies.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="inline-flex items-center gap-1 rounded bg-teal-500/15 text-teal-300 px-2 py-0.5 font-bold text-[10px] shrink-0 mt-0.5">NO ESCROW</span>
+                      <span><strong>Not a Payment Escrow for Bookings:</strong> GlobeTrek PK does not collect, hold in escrow, or manage traveler holiday deposits. All booking payments, advances, and contracts are concluded directly between the traveler and the agency.</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="space-y-1.5 pt-2">
                   <span className="inline-flex items-center gap-1.5 rounded-lg bg-teal-500/15 border border-teal-500/30 px-2.5 py-1 font-bold text-teal-300 text-xs">
-                    1.2 Direct Agency Fulfillment
+                    1.2 Direct Bilateral Fulfillment &amp; Agreement
                   </span>
-                  <p className="pt-1">
-                    All tour packages, visa filings, travel insurance policies, and flight tickets are directly fulfilled and executed by the respective travel vendor. Travelers communicate and transact directly with the agency.
+                  <p className="pt-1 text-slate-300 leading-relaxed">
+                    All tour itineraries, visa filing services, insurance plans, and flight tickets are directly fulfilled by the respective travel vendor. Travelers negotiate, pay, and execute all arrangements directly with the service vendor under the agency's private terms and conditions.
                   </p>
                 </div>
 
                 <div className="space-y-1.5">
                   <span className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-500/15 border border-cyan-500/30 px-2.5 py-1 font-bold text-cyan-300 text-xs">
-                    1.3 SafePay Payment Gateway
+                    1.3 SafePay Payment Gateway for Platform Subscriptions
                   </span>
-                  <p className="pt-1">
-                    All online subscription and lead credit transactions on GlobeTrek PK are processed securely in Pakistani Rupees (PKR) through SafePay Gateway under 256-bit SSL encryption.
+                  <p className="pt-1 text-slate-300 leading-relaxed">
+                    SafePay Gateway integration on GlobeTrek PK is used strictly for platform vendor subscription fees and B2B custom lead unlock credits in Pakistani Rupees (PKR) with 256-bit SSL encryption.
                   </p>
                 </div>
               </div>
