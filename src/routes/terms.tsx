@@ -31,6 +31,7 @@ const SECTIONS = [
   { id: "leads", label: "6. Custom Tour & Visa Leads", icon: Sparkles, color: "text-rose-400" },
   { id: "liability", label: "7. Platform & Vendor Liability", icon: ShieldAlert, color: "text-red-400" },
   { id: "arbitration", label: "8. Arbitration & Pakistani Law", icon: Gavel, color: "text-amber-400" },
+  { id: "safepay", label: "9. SafePay Security & Chargebacks", icon: CreditCard, color: "text-emerald-400" },
 ];
 
 function TermsAndPoliciesPage() {
@@ -68,7 +69,7 @@ function TermsAndPoliciesPage() {
             </Button>
           </div>
           <div className="pt-3 text-[11px] text-muted-foreground flex items-center gap-2 border-t border-border/40">
-            <Clock className="size-3.5 text-primary" /> Last Updated: <span className="font-semibold text-foreground font-mono">July 30, 2026</span> · Version 2.4 (Active)
+            <Clock className="size-3.5 text-primary" /> Last Updated: <span className="font-semibold text-foreground font-mono">August 2026</span> · Version 2.6 (Active)
           </div>
         </div>
       </header>
@@ -132,32 +133,72 @@ function TermsAndPoliciesPage() {
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-emerald-500/30 bg-card p-4 space-y-3">
+                <div className="rounded-2xl border border-emerald-500/30 bg-card p-5 space-y-4">
                   <h4 className="font-bold text-emerald-300 text-xs uppercase tracking-wider flex items-center gap-2">
                     <ShieldAlert className="size-4 text-emerald-400" /> Explicit Non-Agency Disclaimers (What GlobeTrek PK is NOT):
                   </h4>
-                  <ul className="space-y-2.5 text-xs text-slate-300">
-                    <li className="flex items-start gap-2.5">
-                      <span className="inline-flex items-center gap-1 rounded bg-red-500/15 text-red-400 px-2 py-0.5 font-bold text-[10px] shrink-0 mt-0.5">NOT A TOUR OPERATOR</span>
-                      <span><strong>Not a Tour Organizer or Transporter:</strong> GlobeTrek PK does not own vehicles, arrange transportation, hire tour guides, book hotel rooms directly, or organize tour departures. All tours are operated independently by licensed third-party agencies.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="inline-flex items-center gap-1 rounded bg-amber-500/15 text-amber-300 px-2 py-0.5 font-bold text-[10px] shrink-0 mt-0.5">NOT A VISA AUTHORITY</span>
-                      <span><strong>Not a Visa Filing Authority or Embassy Representative:</strong> GlobeTrek PK does not review, issue, stamp, guarantee, or process visas. Visa guidance, document compilation, and drop-box appointments (e.g. Gerry's/VFS) are provided solely by independent consultants. Sovereign embassies and consulates retain 100% exclusive authority over visa issuance or refusal.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="inline-flex items-center gap-1 rounded bg-sky-500/15 text-sky-300 px-2 py-0.5 font-bold text-[10px] shrink-0 mt-0.5">NOT A CARRIER</span>
-                      <span><strong>Not an Airline or Carrier:</strong> GlobeTrek PK does not operate aircraft, set airfares, or issue airline tickets directly. Flight ticketing desks and IATA agents listed on the platform operate independently.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="inline-flex items-center gap-1 rounded bg-purple-500/15 text-purple-300 px-2 py-0.5 font-bold text-[10px] shrink-0 mt-0.5">NOT AN INSURER</span>
-                      <span><strong>Not an Insurance Underwriter:</strong> Travel insurance policies displayed on the platform are underwritten and issued directly by authorized insurance companies.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="inline-flex items-center gap-1 rounded bg-teal-500/15 text-teal-300 px-2 py-0.5 font-bold text-[10px] shrink-0 mt-0.5">NO ESCROW</span>
-                      <span><strong>Not a Payment Escrow for Bookings:</strong> GlobeTrek PK does not collect, hold in escrow, or manage traveler holiday deposits. All booking payments, advances, and contracts are concluded directly between the traveler and the agency.</span>
-                    </li>
-                  </ul>
+
+                  <div className="space-y-3 pt-1">
+                    {/* Item 1 */}
+                    <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3.5 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-block px-2.5 py-0.5 rounded-md bg-red-500/20 border border-red-500/40 text-red-300 font-extrabold text-[11px] uppercase tracking-wider">
+                          1. NOT A TOUR OPERATOR OR TRANSPORTER
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-300 pl-1 leading-relaxed">
+                        GlobeTrek PK does not own vehicles, arrange transportation, hire tour guides, book hotel rooms directly, or organize tour departures. All tours are operated independently by licensed third-party agencies.
+                      </p>
+                    </div>
+
+                    {/* Item 2 */}
+                    <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3.5 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-block px-2.5 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300 font-extrabold text-[11px] uppercase tracking-wider">
+                          2. NOT A VISA FILING AUTHORITY OR EMBASSY AGENT
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-300 pl-1 leading-relaxed">
+                        GlobeTrek PK does not review, issue, stamp, guarantee, or process visas. Visa guidance, document compilation, and drop-box appointments (e.g. Gerry's/VFS/Anatolia) are provided solely by independent consultants. Sovereign embassies and consulates retain 100% exclusive authority over visa issuance or refusal.
+                      </p>
+                    </div>
+
+                    {/* Item 3 */}
+                    <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 p-3.5 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-block px-2.5 py-0.5 rounded-md bg-sky-500/20 border border-sky-500/40 text-sky-300 font-extrabold text-[11px] uppercase tracking-wider">
+                          3. NOT AN AIRLINE OR CARRIER
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-300 pl-1 leading-relaxed">
+                        GlobeTrek PK does not operate aircraft, set airfares, or issue airline tickets directly. Flight ticketing desks and IATA agents listed on the platform operate independently.
+                      </p>
+                    </div>
+
+                    {/* Item 4 */}
+                    <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-3.5 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-block px-2.5 py-0.5 rounded-md bg-purple-500/20 border border-purple-500/40 text-purple-300 font-extrabold text-[11px] uppercase tracking-wider">
+                          4. NOT AN INSURANCE UNDERWRITER
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-300 pl-1 leading-relaxed">
+                        Travel insurance policies displayed on the platform are underwritten and issued directly by authorized insurance companies.
+                      </p>
+                    </div>
+
+                    {/* Item 5 */}
+                    <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 p-3.5 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-block px-2.5 py-0.5 rounded-md bg-teal-500/20 border border-teal-500/40 text-teal-300 font-extrabold text-[11px] uppercase tracking-wider">
+                          5. NOT A PAYMENT ESCROW FOR BOOKINGS
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-300 pl-1 leading-relaxed">
+                        GlobeTrek PK does not collect, hold in escrow, or manage traveler holiday deposits. All booking payments, advances, and contracts are concluded directly between the traveler and the agency.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-1.5 pt-2">
@@ -518,6 +559,85 @@ function TermsAndPoliciesPage() {
                   <p className="pt-1">
                     Any suit, legal proceeding, or judicial dispute instituted against GlobeTrek PK shall be subject to the exclusive territorial and subject-matter jurisdiction of the competent <strong>Civil Courts located in Islamabad Capital Territory (ICT), Pakistan</strong>, to the exclusion of all other provincial courts, forums, or tribunals.
                   </p>
+                </div>
+              </div>
+            </section>
+
+            {/* Section 9: SafePay Payment Security, Digital Delivery, Chargebacks & Complaints Handling */}
+            <section id="safepay" className="rounded-3xl border border-emerald-500/40 bg-emerald-500/5 p-6 sm:p-8 space-y-5 shadow-card relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-bl-full pointer-events-none" />
+              <div className="border-b border-emerald-500/20 pb-4 flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 flex items-center gap-3">
+                  <span className="grid size-9 place-items-center rounded-xl bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40 shrink-0">
+                    <CreditCard className="size-5" />
+                  </span>
+                  9. SafePay Payment Security, Digital Fulfillment &amp; Chargebacks Policy
+                </h2>
+                <Badge variant="outline" className="border-emerald-500/50 bg-emerald-500/15 text-emerald-300 text-[10px] font-extrabold uppercase tracking-wider">
+                  SafePay &amp; SBP Compliance
+                </Badge>
+              </div>
+
+              <div className="space-y-4 text-xs text-muted-foreground leading-relaxed">
+                <div className="rounded-2xl border border-emerald-500/30 bg-card p-5 space-y-3">
+                  <div className="space-y-1.5">
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-1 font-bold text-emerald-300 text-xs">
+                      9.1 PCI-DSS Security &amp; Zero Raw Card Storage
+                    </span>
+                    <p className="pt-1 text-slate-300 leading-relaxed">
+                      All online payment transactions for vendor subscriptions, lead credits, and platform upgrades are processed securely via <strong>SafePay Gateway</strong> under 256-bit SSL encryption. GlobeTrek PK does <strong>NOT</strong> collect, store, or process raw card numbers, CVVs, or bank login credentials on its servers. All cardholder data is tokenized and handled strictly within SafePay's Level-1 PCI-DSS compliant infrastructure.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5 pt-2 border-t border-border/60">
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-500/15 border border-cyan-500/30 px-2.5 py-1 font-bold text-cyan-300 text-xs">
+                      9.2 Instantaneous Digital Service Delivery &amp; Fulfillment
+                    </span>
+                    <p className="pt-1 text-slate-300 leading-relaxed">
+                      GlobeTrek PK provides purely digital SaaS services and B2B marketplace matchmaking. All purchases (including vendor plan upgrades, AI tool quotas, and Custom Tour/Visa Lead unlock credits) are <strong>delivered instantaneously upon SafePay transaction confirmation</strong> with real-time database unmasking, portal activation, and automated WhatsApp payment receipts.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5 pt-2 border-t border-border/60">
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/15 border border-amber-500/30 px-2.5 py-1 font-bold text-amber-300 text-xs">
+                      9.3 Chargeback Inquiries, Prevention &amp; Bad-Faith Disputes
+                    </span>
+                    <p className="pt-1 text-slate-300 leading-relaxed">
+                      Prior to initiating any chargeback, retrieval request, or payment dispute with your issuing bank or card scheme (Visa/Mastercard/PayPak), you agree to first contact the GlobeTrek Billing Team at <strong>billing@globetrek.pk</strong> to seek direct resolution.
+                    </p>
+                    <p className="pt-1 text-slate-300 leading-relaxed">
+                      Initiating an unauthorized or fraudulent chargeback after digital services have been unlocked or subscription access utilized is a material breach of these Terms. In such events, GlobeTrek PK reserves the right to immediately suspend vendor access, blacklist the business entity from universal search, and submit server transaction logs, SafePay payment tokens, and digital delivery timestamps to the relevant financial institution and legal authorities.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5 pt-2 border-t border-border/60">
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-purple-500/15 border border-purple-500/30 px-2.5 py-1 font-bold text-purple-300 text-xs">
+                      9.4 Complaints Handling Mechanism &amp; Resolution Timelines
+                    </span>
+                    <p className="pt-1 text-slate-300 leading-relaxed">
+                      For any billing queries, duplicate charge inquiries, or payment assistance, users may submit formal tickets:
+                    </p>
+                    <ul className="list-disc pl-5 space-y-1 text-slate-300 pt-1">
+                      <li><strong>Billing &amp; Payment Support:</strong> <code>billing@globetrek.pk</code></li>
+                      <li><strong>General Customer Inquiries:</strong> <code>support@globetrek.pk</code></li>
+                      <li><strong>WhatsApp Support Helpline:</strong> +92 300 0000000</li>
+                      <li><strong>Acknowledgment Timeline:</strong> All billing inquiries are formally acknowledged within <strong>24 business hours</strong>.</li>
+                      <li><strong>Resolution Timeline:</strong> Investigation, billing reconciliation, and formal dispute solutions are provided within <strong>3 to 5 business days</strong>.</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-1.5 pt-2 border-t border-border/60">
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-teal-500/15 border border-teal-500/30 px-2.5 py-1 font-bold text-teal-300 text-xs">
+                      9.5 Official Merchant Legal Entity &amp; Operating Domicile
+                    </span>
+                    <p className="pt-1 text-slate-300 leading-relaxed">
+                      GlobeTrek PK is a Pakistani technology enterprise. All e-commerce operations, digital contracts, and electronic payments are governed under the Electronic Transactions Ordinance 2002 and State Bank of Pakistan Payment Systems Regulations.
+                    </p>
+                    <div className="pt-2 text-xs text-muted-foreground grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>🏢 <strong>Operating Entity:</strong> GlobeTrek PK (Pvt.) Ltd.</div>
+                      <div>📍 <strong>Registered Office:</strong> Islamabad Capital Territory, Pakistan</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>

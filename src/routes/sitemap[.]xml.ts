@@ -36,8 +36,8 @@ export const Route = createFileRoute("/sitemap.xml")({
           { path: "/pricing", priority: "0.7", changefreq: "monthly" },
           { path: "/vendor-guide", priority: "0.6", changefreq: "monthly" },
           { path: "/become-affiliate", priority: "0.7", changefreq: "monthly" },
-          { path: "/about", priority: "0.5", changefreq: "monthly" },
           { path: "/terms", priority: "0.3", changefreq: "yearly" },
+          { path: "/privacy", priority: "0.3", changefreq: "yearly" },
         ];
 
         // 3. Construct XML urlset

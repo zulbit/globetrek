@@ -22,6 +22,7 @@ import { Route as DestinationsRouteImport } from './routes/destinations'
 import { Route as EnterpriseRouteImport } from './routes/enterprise'
 import { Route as InsuranceRouteImport } from './routes/insurance'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TicketsRouteImport } from './routes/tickets'
@@ -140,6 +141,11 @@ const InsuranceRoute = InsuranceRouteImport.update({
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -454,6 +460,7 @@ export interface FileRoutesByFullPath {
   '/enterprise': typeof EnterpriseRoute
   '/insurance': typeof InsuranceRouteWithChildren
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/tickets': typeof TicketsRouteWithChildren
@@ -522,6 +529,7 @@ export interface FileRoutesByTo {
   '/destinations': typeof DestinationsRoute
   '/enterprise': typeof EnterpriseRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/vendor-guide': typeof VendorGuideRoute
@@ -588,6 +596,7 @@ export interface FileRoutesById {
   '/enterprise': typeof EnterpriseRoute
   '/insurance': typeof InsuranceRouteWithChildren
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/tickets': typeof TicketsRouteWithChildren
@@ -659,6 +668,7 @@ export interface FileRouteTypes {
     | '/enterprise'
     | '/insurance'
     | '/pricing'
+    | '/privacy'
     | '/sitemap.xml'
     | '/terms'
     | '/tickets'
@@ -727,6 +737,7 @@ export interface FileRouteTypes {
     | '/destinations'
     | '/enterprise'
     | '/pricing'
+    | '/privacy'
     | '/sitemap.xml'
     | '/terms'
     | '/vendor-guide'
@@ -792,6 +803,7 @@ export interface FileRouteTypes {
     | '/enterprise'
     | '/insurance'
     | '/pricing'
+    | '/privacy'
     | '/sitemap.xml'
     | '/terms'
     | '/tickets'
@@ -863,6 +875,7 @@ export interface RootRouteChildren {
   EnterpriseRoute: typeof EnterpriseRoute
   InsuranceRoute: typeof InsuranceRouteWithChildren
   PricingRoute: typeof PricingRoute
+  PrivacyRoute: typeof PrivacyRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   TicketsRoute: typeof TicketsRouteWithChildren
@@ -969,6 +982,13 @@ declare module '@tanstack/react-router' {
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -1521,6 +1541,7 @@ const rootRouteChildren: RootRouteChildren = {
   EnterpriseRoute: EnterpriseRoute,
   InsuranceRoute: InsuranceRouteWithChildren,
   PricingRoute: PricingRoute,
+  PrivacyRoute: PrivacyRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   TicketsRoute: TicketsRouteWithChildren,

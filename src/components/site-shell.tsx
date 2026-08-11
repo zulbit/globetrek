@@ -116,8 +116,8 @@ export function SiteShell({ children }: { children: ReactNode }) {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/terms" className="hover:text-primary transition-colors">
-                    Agency KYC &amp; Verification
+                  <Link to="/privacy" className="hover:text-primary transition-colors">
+                    Privacy &amp; Data Protection
                   </Link>
                 </li>
                 <li>

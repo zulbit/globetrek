@@ -411,7 +411,11 @@ function AuthPage() {
                     <span className="leading-snug">
                       I have read and agree to the{" "}
                       <Link to="/terms" target="_blank" className="text-primary font-bold underline hover:text-primary/80">
-                        Terms of Service &amp; Ecosystem Policies
+                        Terms of Service
+                      </Link>{" "}
+                      and{" "}
+                      <Link to="/privacy" target="_blank" className="text-primary font-bold underline hover:text-primary/80">
+                        Privacy Policy
                       </Link>.
                     </span>
                   </label>

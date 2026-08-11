@@ -28,6 +28,7 @@ export const Route = createFileRoute("/api/sitemap.xml")({
           { path: "/tours", priority: "0.9", changefreq: "daily" },
           { path: "/custom-tour", priority: "0.9", changefreq: "weekly" },
           { path: "/visa", priority: "0.9", changefreq: "weekly" },
+          { path: "/custom-visa", priority: "0.9", changefreq: "daily" },
           { path: "/insurance", priority: "0.8", changefreq: "weekly" },
           { path: "/tickets", priority: "0.8", changefreq: "daily" },
           { path: "/pricing", priority: "0.7", changefreq: "monthly" },
@@ -35,6 +36,7 @@ export const Route = createFileRoute("/api/sitemap.xml")({
           { path: "/become-affiliate", priority: "0.7", changefreq: "monthly" },
           { path: "/about", priority: "0.5", changefreq: "monthly" },
           { path: "/terms", priority: "0.3", changefreq: "yearly" },
+          { path: "/privacy", priority: "0.3", changefreq: "yearly" },
         ];
 
         let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
