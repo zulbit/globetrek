@@ -24,7 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useServerFn } from "@tanstack/react-start";
-import { updateLeadStatusServer } from "@/lib/custom-tour-leads.functions";
+import { updateLeadStatusServer, getAdminCustomLeads } from "@/lib/custom-tour-leads.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/custom-leads")({
   component: AdminCustomLeads,
@@ -36,6 +36,7 @@ interface UnlockedVendor {
   profiles: {
     full_name: string;
     email: string;
+    phone?: string;
   };
 }
 
@@ -55,7 +56,7 @@ interface AdminLead {
   contact_email: string;
   contact_phone: string;
   special_requests: string | null;
-  status: string;
+  status: "pending" | "verified" | "rejected" | "accepted";
   created_at: string;
   unlocked_vendors?: UnlockedVendor[];
 }
@@ -68,54 +69,7 @@ function AdminCustomLeads() {
   // -------- Query Custom Leads for Admins --------
   const { data: leads = [], isLoading } = useQuery({
     queryKey: ["admin-custom-leads", filterStatus],
-    queryFn: async () => {
-      // 1. Fetch leads
-      let query = supabase
-        .from("custom_tour_leads")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (filterStatus !== "all") {
-        query = query.eq("status", filterStatus);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      const leadsList = data as AdminLead[];
-
-      if (leadsList.length === 0) return [];
-
-      // 2. Fetch unlock info
-      const leadIds = leadsList.map((l) => l.id);
-      const { data: unlocks, error: unlockErr } = await supabase
-        .from("vendor_lead_purchases")
-        .select("lead_id, vendor_id, purchased_at, profiles(full_name, email)")
-        .in("lead_id", leadIds);
-
-      if (unlockErr) {
-        console.error("Failed to load unlock list:", unlockErr);
-        return leadsList;
-      }
-
-      // Map unlocks into leads
-      const unlockMap: Record<string, UnlockedVendor[]> = {};
-      (unlocks ?? []).forEach((u: any) => {
-        if (!unlockMap[u.lead_id]) unlockMap[u.lead_id] = [];
-        unlockMap[u.lead_id].push({
-          vendor_id: u.vendor_id,
-          purchased_at: u.purchased_at,
-          profiles: {
-            full_name: u.profiles?.full_name || "Unknown",
-            email: u.profiles?.email || "",
-          },
-        });
-      });
-
-      return leadsList.map((l) => ({
-        ...l,
-        unlocked_vendors: unlockMap[l.id] || [],
-      }));
-    },
+    queryFn: () => getAdminCustomLeads({ data: { filterStatus } }) as Promise<AdminLead[]>,
     refetchInterval: 5000,
   });
 

@@ -655,3 +655,57 @@ export const updateLeadStatusServer = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true, message: `Lead status updated to ${data.status}` };
   });
+
+// -------- Admin: Get all custom tour leads with full unlocked vendor history --------
+export const getAdminCustomLeads = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: { filterStatus?: string }) => input)
+  .handler(async ({ data: inputData }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    let query = supabaseAdmin
+      .from("custom_tour_leads")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (inputData?.filterStatus && inputData.filterStatus !== "all") {
+      query = query.eq("status", inputData.filterStatus);
+    }
+
+    const { data: leads, error: leadErr } = await query;
+    if (leadErr) throw new Error(leadErr.message);
+
+    const leadList = leads || [];
+    if (leadList.length === 0) return [];
+
+    const leadIds = leadList.map((l) => l.id);
+
+    // Fetch unlock purchases using supabaseAdmin (bypasses RLS)
+    const { data: unlocks, error: unlockErr } = await supabaseAdmin
+      .from("vendor_lead_purchases")
+      .select("lead_id, vendor_id, purchased_at, profiles(full_name, company_name, email, phone)")
+      .in("lead_id", leadIds);
+
+    if (unlockErr) {
+      console.error("[getAdminCustomLeads] unlock query error:", unlockErr);
+    }
+
+    const unlockMap: Record<string, any[]> = {};
+    (unlocks ?? []).forEach((u: any) => {
+      if (!unlockMap[u.lead_id]) unlockMap[u.lead_id] = [];
+      unlockMap[u.lead_id].push({
+        vendor_id: u.vendor_id,
+        purchased_at: u.purchased_at,
+        profiles: {
+          full_name: u.profiles?.company_name || u.profiles?.full_name || "Travel Partner",
+          email: u.profiles?.email || "",
+          phone: u.profiles?.phone || "",
+        },
+      });
+    });
+
+    return leadList.map((l: any) => ({
+      ...l,
+      unlocked_vendors: unlockMap[l.id] || [],
+    }));
+  });

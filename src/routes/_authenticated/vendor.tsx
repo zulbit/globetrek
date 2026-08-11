@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard, Package, Inbox, CreditCard, Settings2,
-  FileCheck, Shield, Ticket, BookOpen, Receipt, Clock, CheckCircle2, AlertCircle, ArrowRight, ShieldCheck,
+  FileCheck, Shield, Ticket, BookOpen, Receipt, Clock, CheckCircle2, AlertCircle, ArrowRight, ShieldCheck, Sparkles,
 } from "lucide-react";
 import { DashboardShell, type NavItem } from "@/components/dashboard-shell";
 import { RoleGuard } from "@/components/role-guard";
