@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   FileText, ShieldCheck, CreditCard, Sparkles, Building2,
-  Users, AlertCircle, CheckCircle2, Clock, Scale, HelpCircle, Printer, ArrowRight, Zap, Check
+  Users, AlertCircle, CheckCircle2, Clock, Scale, HelpCircle, Printer, ArrowRight, Zap, Check,
+  ShieldAlert, Gavel, AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/terms")({
       {
         name: "description",
         content:
-          "Official terms of service, vendor subscription rules, non-refund policy, agency KYC verification, affiliate partner terms, and traveler booking policies for GlobeTrek PK.",
+          "Official terms of service, vendor liability disclaimer, non-refund policy, agency KYC verification, arbitration under Pakistani law, and traveler booking policies for GlobeTrek PK.",
       },
     ],
   }),
@@ -27,7 +28,9 @@ const SECTIONS = [
   { id: "downgrades", label: "3. Downgrades & Refund Policy", icon: Scale, color: "text-amber-400" },
   { id: "kyc", label: "4. Agency KYC & Verification", icon: Building2, color: "text-teal-400" },
   { id: "affiliates", label: "5. Affiliate & Sales Partners", icon: Users, color: "text-purple-400" },
-  { id: "leads", label: "6. Custom Tour Leads & Bidding", icon: Sparkles, color: "text-rose-400" },
+  { id: "leads", label: "6. Custom Tour & Visa Leads", icon: Sparkles, color: "text-rose-400" },
+  { id: "liability", label: "7. Platform & Vendor Liability", icon: ShieldAlert, color: "text-red-400" },
+  { id: "arbitration", label: "8. Arbitration & Pakistani Law", icon: Gavel, color: "text-amber-400" },
 ];
 
 function TermsAndPoliciesPage() {
@@ -335,7 +338,7 @@ function TermsAndPoliciesPage() {
               </div>
             </section>
 
-            {/* Section 6: Custom Tour Leads */}
+            {/* Section 6: Custom Tour & Visa Leads */}
             <section id="leads" className="rounded-3xl border border-rose-500/30 bg-card p-6 sm:p-8 space-y-5 shadow-card relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-bl-full pointer-events-none" />
               <div className="border-b border-rose-500/20 pb-4 flex flex-wrap items-center justify-between gap-2">
@@ -343,29 +346,149 @@ function TermsAndPoliciesPage() {
                   <span className="grid size-9 place-items-center rounded-xl bg-rose-500/15 text-rose-400 ring-1 ring-rose-500/30 shrink-0">
                     <Sparkles className="size-5" />
                   </span>
-                  6. Custom Tour Leads &amp; Bidding Cap
+                  6. Custom Tour &amp; Custom Visa Leads Engine
                 </h2>
                 <Badge variant="outline" className="border-rose-500/40 bg-rose-500/10 text-rose-300 text-[10px] font-bold">
-                  Leads Engine
+                  B2B Leads Engine
                 </Badge>
               </div>
 
               <div className="space-y-4 text-xs text-muted-foreground leading-relaxed">
                 <div className="space-y-1.5">
                   <span className="inline-flex items-center gap-1.5 rounded-lg bg-rose-500/15 border border-rose-500/30 px-2.5 py-1 font-bold text-rose-300 text-xs">
-                    6.1 Max 3 Unlock Cap
+                    6.1 Custom Tour Lead Bidding (Max 3 Cap)
                   </span>
                   <p className="pt-1">
-                    Each custom tour request submitted by a traveler can be unlocked by a <strong>maximum of 3 verified travel agencies</strong> to prevent traveler spam and maintain high bidding conversion quality.
+                    Each bespoke group tour request submitted by a traveler undergoes admin intent verification and can be unlocked by a <strong>maximum of 3 verified travel agencies</strong> (for ₨ 5,000 via SafePay) to prevent traveler spam and maintain high bidding conversion quality.
                   </p>
                 </div>
 
                 <div className="space-y-1.5">
                   <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/15 border border-amber-500/30 px-2.5 py-1 font-bold text-amber-300 text-xs">
-                    6.2 Direct WhatsApp Inquiry
+                    6.2 Custom Visa &amp; Refusal Consultation Bidding (Max 5 Cap)
                   </span>
                   <p className="pt-1">
-                    Once unlocked using lead credits, the vendor gains instant access to the traveler's verified phone number and inquiry specs.
+                    Custom visa consultation requests and refusal rectification cases are published in real-time and strictly capped at <strong>5 unlocking agencies</strong> (for ₨ 750 via SafePay QuickLink V2). Once 5 agencies unlock the case, the listing automatically closes to prevent lead dilution.
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-1 font-bold text-emerald-300 text-xs">
+                    6.3 Online Quotation Transmission &amp; Traveler WhatsApp Alerts
+                  </span>
+                  <p className="pt-1">
+                    When an unlocked vendor submits an online proposal, GlobeTrek PK automatically dispatches a secure link to the traveler on WhatsApp. Vendors and travelers communicate directly regarding trip specifics, hotel inclusions, document collection, and payment arrangements.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* Section 7: Platform Intermediary & Vendor Liability Disclaimer */}
+            <section id="liability" className="rounded-3xl border border-red-500/40 bg-red-500/5 p-6 sm:p-8 space-y-5 shadow-card relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-bl-full pointer-events-none" />
+              <div className="border-b border-red-500/20 pb-4 flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-rose-300 to-amber-400 flex items-center gap-3">
+                  <span className="grid size-9 place-items-center rounded-xl bg-red-500/20 text-red-400 ring-1 ring-red-500/40 shrink-0">
+                    <ShieldAlert className="size-5" />
+                  </span>
+                  7. Platform Intermediary Model &amp; Vendor Liability Disclaimer
+                </h2>
+                <Badge variant="outline" className="border-red-500/50 bg-red-500/15 text-red-300 text-[10px] font-extrabold uppercase tracking-wider">
+                  Crucial Legal Notice
+                </Badge>
+              </div>
+
+              <div className="space-y-4 text-xs text-muted-foreground leading-relaxed">
+                <div className="rounded-2xl border border-red-500/30 bg-card p-5 space-y-3">
+                  <div className="space-y-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-red-500/15 border border-red-500/30 px-2.5 py-1 font-bold text-red-300 text-xs">
+                      7.1 Pure Technology Intermediary &amp; Disintermediation
+                    </span>
+                    <p className="pt-1 text-slate-300 leading-relaxed">
+                      <strong>GlobeTrek PK</strong> (including its owners, developers, operators, and corporate officers) operates strictly and solely as an <strong>online technology marketplace and discovery intermediary</strong> connecting independent travelers with independent third-party travel agencies, tour operators, visa consultants, insurance brokers, and ticketing desks. <strong>GlobeTrek PK is NOT a travel agency, tour organizer, visa filing authority, or carrier.</strong>
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 pt-2 border-t border-border/60">
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/15 border border-amber-500/30 px-2.5 py-1 font-bold text-amber-300 text-xs">
+                      7.2 Custom Tours &amp; Visa Quotation Disclaimers
+                    </span>
+                    <p className="pt-1 text-slate-300 leading-relaxed">
+                      GlobeTrek PK plays no role in authoring, verifying the commercial correctness of, underwriting, or guaranteeing any custom tour quotation, itinerary schedule, hotel classification, transport standard, flight ticket, or visa filing advice submitted by vendors. 
+                      <strong> GlobeTrek PK explicitly takes NO RESPONSIBILITY OR LIABILITY for the accuracy, legality, fulfillment, quality, safety, or correctness of vendor quotations, nor for any promises made during offline or direct WhatsApp conversations.</strong>
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 pt-2 border-t border-border/60">
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-rose-500/15 border border-rose-500/30 px-2.5 py-1 font-bold text-rose-300 text-xs">
+                      7.3 Independent Dealings &amp; Privity of Contract
+                    </span>
+                    <p className="pt-1 text-slate-300 leading-relaxed">
+                      Any commercial booking, money advance, cash deposit, contract, passport handover, or service engagement agreed between a traveler and an agency constitutes a <strong>strictly private, bilateral transaction between the traveler and that agency</strong>. GlobeTrek PK is not a party to, beneficiary of, or guarantor in any user-agency transaction.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 pt-2 border-t border-border/60">
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-sky-500/15 border border-sky-500/30 px-2.5 py-1 font-bold text-sky-300 text-xs">
+                      7.4 Comprehensive Limitation of Platform Liability
+                    </span>
+                    <p className="pt-1 text-slate-300 leading-relaxed">
+                      Under no circumstances shall GlobeTrek PK be liable for any direct, indirect, incidental, punitive, consequential, or exemplary damages, financial losses, trip cancellations, visa rejections, flight delays, medical emergencies, theft, accident, or loss of documentation arising out of dealings with any partner agency or traveler.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Section 8: Dispute Resolution, Arbitration & Pakistani Law */}
+            <section id="arbitration" className="rounded-3xl border border-amber-500/30 bg-card p-6 sm:p-8 space-y-5 shadow-card relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-bl-full pointer-events-none" />
+              <div className="border-b border-amber-500/20 pb-4 flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-orange-400 flex items-center gap-3">
+                  <span className="grid size-9 place-items-center rounded-xl bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/30 shrink-0">
+                    <Gavel className="size-5" />
+                  </span>
+                  8. Dispute Resolution, Arbitration &amp; Governing Pakistani Law
+                </h2>
+                <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-300 text-[10px] font-bold">
+                  Legal Jurisdiction
+                </Badge>
+              </div>
+
+              <div className="space-y-4 text-xs text-muted-foreground leading-relaxed">
+                <div className="space-y-1.5">
+                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/15 border border-amber-500/30 px-2.5 py-1 font-bold text-amber-300 text-xs">
+                    8.1 Non-Involvement in User-Vendor Settlements &amp; Arbitrations
+                  </span>
+                  <p className="pt-1">
+                    GlobeTrek PK <strong>shall NOT act as an arbitrator, mediator, stakeholder, or adjudicator</strong> in any disputes, refund claims, or service deficiency allegations between travelers and agencies. GlobeTrek PK will not participate in, fund, or be bound by any third-party arbitration, consumer settlement, or compensation awards agreed between users and vendors.
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-rose-500/15 border border-rose-500/30 px-2.5 py-1 font-bold text-rose-300 text-xs">
+                    8.2 Mandatory Non-Joinder of GlobeTrek PK
+                  </span>
+                  <p className="pt-1">
+                    Both travelers and partner agencies agree that GlobeTrek PK shall not be impleaded or joined as a co-defendant, respondent, or necessary party in any legal, consumer court, civil litigation, or arbitration proceedings resulting from agency services or user dealings.
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-1 font-bold text-emerald-300 text-xs">
+                    8.3 Governing Law of the Islamic Republic of Pakistan
+                  </span>
+                  <p className="pt-1">
+                    These Terms, Policies, and any direct platform dispute involving GlobeTrek PK shall be exclusively governed by, construed, and enforced in accordance with the substantive and procedural <strong>Laws of the Islamic Republic of Pakistan</strong> (including the Arbitration Act 1940, Contract Act 1872, and Electronic Transactions Ordinance 2002).
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-teal-500/15 border border-teal-500/30 px-2.5 py-1 font-bold text-teal-300 text-xs">
+                    8.4 Exclusive Legal Jurisdiction of Islamabad Courts
+                  </span>
+                  <p className="pt-1">
+                    Any suit, legal proceeding, or judicial dispute instituted against GlobeTrek PK shall be subject to the exclusive territorial and subject-matter jurisdiction of the competent <strong>Civil Courts located in Islamabad Capital Territory (ICT), Pakistan</strong>, to the exclusion of all other provincial courts, forums, or tribunals.
                   </p>
                 </div>
               </div>
