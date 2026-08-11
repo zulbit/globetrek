@@ -66,22 +66,26 @@ function CustomerDashboard() {
   });
 
   // Fetch custom tour requests with live vendor proposals
-  const { data: customRequests = [], isLoading: loadingCustom } = useQuery({
+  const { data: customRequests = [], isPending: loadingCustom } = useQuery({
     queryKey: ["customer-custom-requests-quotes", user?.id],
     enabled: Boolean(user?.id),
     queryFn: () => getCustomerCustomRequestsWithQuotes(),
-    refetchInterval: 5000,
+    placeholderData: (prev) => prev,
+    staleTime: 10000,
+    refetchInterval: 15000,
   });
 
   // Fetch custom visa requests with live consultant proposals
-  const { data: customVisaRequests = [], isLoading: loadingCustomVisa } = useQuery({
+  const { data: customVisaRequests = [], isPending: loadingCustomVisa } = useQuery({
     queryKey: ["customer-custom-visa-requests", user?.id],
     enabled: Boolean(user?.id),
     queryFn: () => getCustomerCustomVisaRequestsWithQuotes(),
-    refetchInterval: 5000,
+    placeholderData: (prev) => prev,
+    staleTime: 10000,
+    refetchInterval: 15000,
   });
 
-  const loadingInquiries = loadingCatalog || loadingCustom || loadingCustomVisa;
+  const loadingInquiries = loadingCatalog || (loadingCustom && !customRequests.length) || (loadingCustomVisa && !customVisaRequests.length);
 
   return (
     <RoleGuard allow={["customer", "vendor", "admin"]}>

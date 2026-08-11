@@ -241,7 +241,7 @@ export const getMarketplaceVisaLeads = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const vendorId = context.user.id;
+    const vendorId = context.userId;
 
     // Load leads
     const { data: leadsRow } = await supabaseAdmin
@@ -332,7 +332,7 @@ export const createVisaLeadUnlockCheckout = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const vendorId = context.user.id;
+    const vendorId = context.userId;
 
     // Load lead
     const { data: leadsRow } = await supabaseAdmin
@@ -371,7 +371,7 @@ export const createVisaLeadUnlockCheckout = createServerFn({ method: "POST" })
     const unlockFee = targetLead.unlock_fee_pkr || 750;
     const [firstName, ...rest] = (profile?.full_name || profile?.company_name || "Travel Partner").trim().split(/\s+/);
     const lastName = rest.join(" ") || (profile?.company_name ? "Agency" : "Vendor");
-    const vendorEmail = profile?.email || context.user.email || "vendor@globetrek.pk";
+    const vendorEmail = profile?.email || "vendor@globetrek.pk";
     const vendorCity = profile?.city || "Islamabad";
     const streetAddress = profile?.company_name
       ? `${profile.company_name} Commercial Office`
@@ -492,7 +492,7 @@ export const verifyVisaLeadUnlockPayment = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const vendorId = context.user.id;
+    const vendorId = context.userId;
 
     // Record purchase in visa_lead_purchases
     const { data: purchasesRow } = await supabaseAdmin
@@ -563,7 +563,7 @@ export const submitVisaLeadQuote = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const vendorId = context.user.id;
+    const vendorId = context.userId;
 
     // Load vendor details
     const { data: vendorProfile } = await supabaseAdmin
@@ -736,39 +736,54 @@ export const acceptVisaLeadQuote = createServerFn({ method: "POST" })
 export const getCustomerCustomVisaRequestsWithQuotes = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const userId = context.user.id;
-    const userEmail = context.user.email?.toLowerCase() || "";
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const userId = context.userId;
 
-    // Load leads
-    const { data: leadsRow } = await supabaseAdmin
-      .from("payment_gateway_settings")
-      .select("config")
-      .eq("provider", "custom_visa_leads")
-      .maybeSingle();
+      // Get profile email
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("email")
+        .eq("id", userId)
+        .maybeSingle();
 
-    const allLeads: CustomVisaLeadItem[] = leadsRow?.config?.leads || [];
+      const userEmail = profile?.email?.toLowerCase() || "";
 
-    // Filter leads belonging to this customer by ID or Email
-    const userLeads = allLeads.filter(
-      (l) => (l.customer_id && l.customer_id === userId) || (l.contact_email && l.contact_email.toLowerCase() === userEmail)
-    );
+      // Load leads
+      const { data: leadsRow } = await supabaseAdmin
+        .from("payment_gateway_settings")
+        .select("config")
+        .eq("provider", "custom_visa_leads")
+        .maybeSingle();
 
-    // Load quotes
-    const { data: quotesRow } = await supabaseAdmin
-      .from("payment_gateway_settings")
-      .select("config")
-      .eq("provider", "visa_lead_quotes")
-      .maybeSingle();
+      const allLeads: CustomVisaLeadItem[] = leadsRow?.config?.leads || [];
 
-    const allQuotes: VisaLeadQuoteItem[] = quotesRow?.config?.quotes || [];
+      // Filter leads belonging to this customer by ID or Email
+      const userLeads = allLeads.filter(
+        (l) =>
+          (l.customer_id && l.customer_id === userId) ||
+          (userEmail && l.contact_email && l.contact_email.toLowerCase() === userEmail)
+      );
 
-    return userLeads.map((lead) => {
-      const leadQuotes = allQuotes.filter((q) => q.lead_id === lead.id);
-      return {
-        ...lead,
-        quotes: leadQuotes,
-        quote_count: leadQuotes.length,
-      };
-    });
+      // Load quotes
+      const { data: quotesRow } = await supabaseAdmin
+        .from("payment_gateway_settings")
+        .select("config")
+        .eq("provider", "visa_lead_quotes")
+        .maybeSingle();
+
+      const allQuotes: VisaLeadQuoteItem[] = quotesRow?.config?.quotes || [];
+
+      return userLeads.map((lead) => {
+        const leadQuotes = allQuotes.filter((q) => q.lead_id === lead.id);
+        return {
+          ...lead,
+          quotes: leadQuotes,
+          quote_count: leadQuotes.length,
+        };
+      });
+    } catch (err) {
+      console.error("[getCustomerCustomVisaRequestsWithQuotes] Error:", err);
+      return [];
+    }
   });
