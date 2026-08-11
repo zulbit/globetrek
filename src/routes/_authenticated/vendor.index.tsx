@@ -102,7 +102,7 @@ function VendorOverview() {
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
       thirtyDaysAgo.setHours(0, 0, 0, 0);
 
-      const [tours, visas, insurance, tickets, leads, profile, usage, chartLeadsRes] = await Promise.all([
+      const [tours, visas, insurance, tickets, leads, profile, usage, chartLeadsRes, customPurchasesRes] = await Promise.all([
         supabase.from("tours").select("id,is_active").eq("vendor_id", uid),
         supabase.from("visa_services").select("id,is_active").eq("vendor_id", uid),
         supabase.from("insurance_plans").select("id,is_active").eq("vendor_id", uid),
@@ -111,10 +111,14 @@ function VendorOverview() {
         supabase.from("profiles").select("lead_credits_balance,subscription_tier").eq("id", uid).maybeSingle(),
         supabase.from("ai_usage_events").select("kind").eq("user_id", uid).gte("created_at", monthStart.toISOString()),
         supabase.from("leads").select("service_type,created_at").eq("vendor_id", uid).gte("created_at", thirtyDaysAgo.toISOString()),
+        supabase.from("vendor_lead_purchases").select("purchased_at").eq("vendor_id", uid).gte("purchased_at", thirtyDaysAgo.toISOString()),
       ]);
 
       const allLeads = leads.data ?? [];
-      const leadsByType: Record<string, number> = { tours: 0, visa: 0, insurance: 0, tickets: 0 };
+      const customPurchases = customPurchasesRes.data ?? [];
+      const totalCustomLeads = customPurchases.length;
+
+      const leadsByType: Record<string, number> = { tours: 0, visa: 0, insurance: 0, tickets: 0, customLeads: totalCustomLeads };
       allLeads.forEach((l) => { leadsByType[l.service_type ?? "tours"] = (leadsByType[l.service_type ?? "tours"] ?? 0) + 1; });
 
       // Build 30-day chart data
@@ -124,7 +128,7 @@ function VendorOverview() {
         const d = new Date();
         d.setDate(d.getDate() - i);
         const key = d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
-        dayMap[key] = { tours: 0, visa: 0, insurance: 0, tickets: 0 };
+        dayMap[key] = { tours: 0, visa: 0, insurance: 0, tickets: 0, customLeads: 0 };
       }
       chartRaw.forEach((l: any) => {
         const key = new Date(l.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
@@ -132,6 +136,14 @@ function VendorOverview() {
           dayMap[key][l.service_type] = (dayMap[key][l.service_type] ?? 0) + 1;
         }
       });
+      // Map purchased custom leads onto chart dates
+      customPurchases.forEach((cp: any) => {
+        const key = new Date(cp.purchased_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+        if (dayMap[key]) {
+          dayMap[key].customLeads = (dayMap[key].customLeads ?? 0) + 1;
+        }
+      });
+
       const chartData = Object.entries(dayMap).map(([date, counts]) => ({ date, ...counts }));
 
       const events = (usage.data ?? []) as { kind: "description" | "plan" }[];
@@ -143,8 +155,9 @@ function VendorOverview() {
           insurance: { active: (insurance.data ?? []).filter((t) => t.is_active).length, total: insurance.data?.length ?? 0 },
           tickets: { active: (tickets.data ?? []).filter((t) => t.is_active).length, total: tickets.data?.length ?? 0 },
         },
-        totalLeads: allLeads.length,
-        unlockedLeads: allLeads.filter((l) => l.is_unlocked).length,
+        totalCustomLeads,
+        totalLeads: allLeads.length + totalCustomLeads,
+        unlockedLeads: allLeads.filter((l) => l.is_unlocked).length + totalCustomLeads,
         leadsByType,
         recentLeads: allLeads.slice(0, 5) as RecentLead[],
         credits: profile.data?.lead_credits_balance ?? 0,
@@ -443,15 +456,19 @@ function VendorOverview() {
       {/* ── Lead Activity Chart ── */}
       {(() => {
         const SERVICE_LINES = [
-          { key: "tours",     label: "Tour Packages", color: "#10b981" },
-          { key: "visa",      label: "Visa Services",  color: "#0ea5e9" },
-          { key: "insurance", label: "Insurance",      color: "#8b5cf6" },
-          { key: "tickets",   label: "Ticketing",      color: "#f59e0b" },
+          { key: "tours",       label: "Tour Packages",          color: "#10b981" },
+          { key: "customLeads", label: "Purchased Custom Leads", color: "#f43f5e" },
+          { key: "visa",        label: "Visa Services",          color: "#0ea5e9" },
+          { key: "insurance",   label: "Insurance",              color: "#8b5cf6" },
+          { key: "tickets",     label: "Ticketing",              color: "#f59e0b" },
         ] as const;
-        // Only show lines for services the vendor actually has configured
-        const activeLines = SERVICE_LINES.filter(
-          (s) => (data?.services[s.key]?.total ?? 0) > 0
-        );
+        // Only show lines for services the vendor actually has configured or custom leads purchased
+        const activeLines = SERVICE_LINES.filter((s) => {
+          if (s.key === "customLeads") {
+            return (data?.totalCustomLeads ?? 0) > 0;
+          }
+          return (data?.services[s.key]?.total ?? 0) > 0;
+        });
         if (!data?.chartData || activeLines.length === 0) return null;
         return (
           <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
