@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ServiceListCard } from "@/components/service-list-card";
 import { ServicePreviewModal } from "@/components/service-preview-modal";
+import { VisaConsultationSection } from "@/components/visa-consultation-section";
 import { POPULAR_VISA_COUNTRIES, PAKISTAN_CITIES, formatPKR, formatEmbassyFee, isEmbassyFeeTBC, getServiceImage, type VisaService } from "@/lib/services";
 
 type VendorInfo = { city: string | null; company_name: string | null; full_name: string | null } | null;
@@ -198,6 +199,9 @@ function VisaMarketplace() {
           </div>
         )}
       </section>
+
+      {/* ── High-Impact Custom Visa Consultation & Refusal Handling Banner ── */}
+      <VisaConsultationSection />
     </SiteShell>
   );
 }

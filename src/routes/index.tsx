@@ -6,6 +6,7 @@ import { LandingMapSection } from "@/components/landing-map-section";
 import { ServicesStrip } from "@/components/services-strip";
 import { Testimonials } from "@/components/testimonials";
 import { ExclusiveSection } from "@/components/exclusive-section";
+import { VisaConsultationSection } from "@/components/visa-consultation-section";
 import { AffiliateCTASection } from "@/components/affiliate-cta";
 
 export const Route = createFileRoute("/")({
@@ -48,6 +49,7 @@ function Home() {
       <Hero />
       <FeaturedTours />
       <LandingMapSection />
+      <VisaConsultationSection />
       <ExclusiveSection />
       <ServicesStrip />
       <AffiliateCTASection />
