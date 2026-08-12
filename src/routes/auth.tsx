@@ -463,7 +463,7 @@ function AuthPage() {
                     className="inline-flex items-center gap-1.5 text-xs text-white/60 hover:text-emerald-400 transition-colors"
                   >
                     <MessageCircle className="size-3.5 text-emerald-400" />
-                    <span>Need help logging in? <strong>WhatsApp Support (+92 349 0386131)</strong></span>
+                    <span>Need help logging in? <strong>WhatsApp Support</strong></span>
                   </button>
                 </div>
               </form>
@@ -689,14 +689,28 @@ function AuthPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-3">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const target = resetEmail.trim();
+              if (!target) {
+                toast.error("Please enter your registered email address or WhatsApp number.");
+                return;
+              }
+              const msg = `Assalam-o-Alaikum GlobeTrek PK Support,\n\nI need help resetting my password / recovering access to my account.\n\nAccount Email/Phone: ${target}\nPlatform: GlobeTrek PK`;
+              window.open(`https://wa.me/923490386131?text=${encodeURIComponent(msg)}`, "_blank");
+              setForgotOpen(false);
+            }}
+            className="space-y-4 py-3"
+          >
             <div className="space-y-1.5">
               <Label htmlFor="recovery-email" className="text-xs text-white/80 font-medium">
-                Registered Email or WhatsApp Number
+                Registered Email or WhatsApp Number*
               </Label>
               <Input
                 id="recovery-email"
                 type="text"
+                required
                 value={resetEmail}
                 onChange={(e) => setResetEmail(e.target.value)}
                 placeholder="e.g. yourname@gmail.com or 0300-1234567"
@@ -714,18 +728,13 @@ function AuthPage() {
               </p>
             </div>
 
-            <a
-              href={`https://wa.me/923490386131?text=${encodeURIComponent(
-                `Assalam-o-Alaikum GlobeTrek PK Support,\n\nI need help resetting my password / recovering access to my account.\n\nAccount Email/Phone: ${resetEmail.trim() || email.trim() || "[Not specified]"}\nRole: Traveler / Vendor`
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setForgotOpen(false)}
-              className="flex items-center justify-center gap-2.5 w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-lg shadow-emerald-950/50 transition-all active:scale-[0.99]"
+            <Button
+              type="submit"
+              className="flex items-center justify-center gap-2.5 w-full py-3 h-12 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-lg shadow-emerald-950/50 transition-all active:scale-[0.99]"
             >
               <MessageCircle className="size-5" />
-              <span>Reset via WhatsApp Support (+92 349 0386131)</span>
-            </a>
+              <span>Reset via WhatsApp Support</span>
+            </Button>
 
             <Button
               type="button"
@@ -736,7 +745,7 @@ function AuthPage() {
             >
               Cancel & Return to Sign In
             </Button>
-          </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
