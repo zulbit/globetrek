@@ -117,6 +117,7 @@ function AuthPage() {
   // shared
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [showPassword, setShowPassword] = React.useState(false);
   // signup
   const [fullName, setFullName] = React.useState("");
   const [role, setRole] = React.useState<"customer" | "vendor">(initialRole);
