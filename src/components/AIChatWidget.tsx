@@ -280,15 +280,12 @@ export function AIChatWidget() {
         <button
           onClick={() => setOpen(true)}
           aria-label="Open AI Travel Concierge"
-          className="fixed bottom-20 right-3.5 z-50 flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 text-white px-3.5 py-2.5 md:h-14 md:w-14 md:p-0 md:justify-center shadow-2xl shadow-emerald-950/80 ring-2 ring-emerald-400/50 transition duration-300 hover:scale-105 active:scale-95 md:bottom-6"
+          className="fixed bottom-20 right-4 z-50 flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-gradient-to-tr from-emerald-600 via-teal-600 to-emerald-500 text-white shadow-2xl shadow-emerald-950/80 ring-2 ring-emerald-400/50 transition-transform duration-200 hover:scale-105 active:scale-95 md:bottom-6"
         >
-          <Bot className="h-5 w-5 md:h-7 md:w-7 text-emerald-100" />
-          <span className="text-xs font-bold tracking-tight text-white md:hidden flex items-center gap-1">
-            <Sparkles className="size-3 text-emerald-300 animate-pulse" /> AI Concierge
-          </span>
-          <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+          <Bot className="h-6 w-6 sm:h-7 sm:w-7 text-emerald-100" />
+          <span className="absolute top-0 right-0 flex h-3 w-3 sm:h-3.5 sm:w-3.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex h-3.5 w-3.5 rounded-full bg-emerald-400 ring-2 ring-background" />
+            <span className="relative inline-flex h-3 w-3 sm:h-3.5 sm:w-3.5 rounded-full bg-emerald-400 ring-2 ring-background" />
           </span>
         </button>
       )}

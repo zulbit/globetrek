@@ -152,21 +152,20 @@ export function Hero() {
             </div>
 
             {/* AI Travel Concierge Mobile & Desktop Quick Launch Bar */}
-            <div className="mt-3.5 flex items-center justify-between gap-3 rounded-xl border border-emerald-500/30 bg-emerald-950/40 px-3.5 py-2 text-xs text-emerald-200 backdrop-blur-md">
-              <div className="flex items-center gap-2">
+            <div className="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-emerald-500/30 bg-emerald-950/50 px-3.5 py-2.5 text-xs text-emerald-200 backdrop-blur-md max-w-full overflow-hidden">
+              <div className="flex items-center gap-2 min-w-0">
                 <Sparkles className="size-4 text-emerald-400 shrink-0 animate-pulse" />
-                <span>
-                  Need personalized advice or visa guidance?{" "}
-                  <strong className="text-emerald-300">Ask our 24/7 AI Concierge</strong>
+                <span className="truncate">
+                  Need personalized advice? <strong className="text-emerald-300">Ask 24/7 AI Concierge</strong>
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => window.dispatchEvent(new CustomEvent("open-ai-concierge"))}
-                className="inline-flex items-center gap-1 shrink-0 rounded-lg bg-emerald-500/20 border border-emerald-400/40 px-2.5 py-1 text-[11px] font-bold text-emerald-300 hover:bg-emerald-500/30 transition shadow-xs"
+                className="inline-flex items-center justify-center gap-1.5 shrink-0 rounded-lg bg-emerald-500/20 border border-emerald-400/40 px-3 py-1 text-xs font-bold text-emerald-300 hover:bg-emerald-500/30 transition shadow-xs active:scale-95"
               >
                 <Bot className="size-3.5" />
-                <span>Chat AI</span>
+                <span>Chat AI →</span>
               </button>
             </div>
           </div>
