@@ -865,11 +865,13 @@ ${ticketsCatalogText}`;
           const result = await Promise.race([aiPromise, timeoutPromise]);
 
           if (result) {
-            // Log real-time AI invocation event to database
+            // Log real-time AI invocation event to database with exact provider tokens
             try {
               const elapsedMs = Date.now() - (reqStartTime || Date.now());
-              const promptTokens = Math.max(25, Math.round((systemPrompt.length + JSON.stringify(modelMessages).length) / 4));
-              const completionTokens = Math.max(15, Math.round((result.text || "").length / 4));
+              const usage = (result as any)?.usage;
+              const promptTokens = usage?.promptTokens ?? usage?.prompt_tokens ?? Math.max(25, Math.round((systemPrompt.length + JSON.stringify(modelMessages).length) / 3.2));
+              const completionTokens = usage?.completionTokens ?? usage?.completion_tokens ?? Math.max(15, Math.round((result.text || "").length / 3.2));
+              const totalTokens = usage?.totalTokens ?? usage?.total_tokens ?? (promptTokens + completionTokens);
               const isFree = activeModel.startsWith("qwen") || activeModel.includes("free") || activeModel.startsWith("deepseek-v4");
 
               await recordAIInvocationServer({
@@ -878,9 +880,9 @@ ${ticketsCatalogText}`;
                 model: activeModel,
                 prompt_tokens: promptTokens,
                 completion_tokens: completionTokens,
-                total_tokens: promptTokens + completionTokens,
+                total_tokens: totalTokens,
                 estimated_cost_usd: isFree ? 0 : 0.000045,
-                latency_ms: Math.min(elapsedMs, 3500),
+                latency_ms: elapsedMs,
                 status: "success",
               });
             } catch (e) {
