@@ -1,6 +1,6 @@
 import * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   UserCheck,
   Search,
@@ -11,11 +11,30 @@ import {
   Loader2,
   Users,
   Crown,
+  KeyRound,
+  Eye,
+  EyeOff,
+  Lock,
+  CheckCircle2,
+  MessageCircle,
+  Sparkles,
+  Phone,
 } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { adminResetUserPassword } from "@/lib/vendors.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/users")({
   component: AdminUsersPage,
@@ -36,6 +55,37 @@ interface UserProfile {
 function AdminUsersPage() {
   const [search, setSearch] = React.useState("");
   const [roleFilter, setRoleFilter] = React.useState<"all" | "customer" | "admin" | "vendor">("all");
+
+  // Reset Password Modal State
+  const [resetModalOpen, setResetModalOpen] = React.useState(false);
+  const [selectedUser, setSelectedUser] = React.useState<UserProfile | null>(null);
+  const [newPassword, setNewPassword] = React.useState("");
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [resetSuccess, setResetSuccess] = React.useState(false);
+  const [lastResetPassword, setLastResetPassword] = React.useState("");
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ userId, newPassword }: { userId: string; newPassword: string }) => {
+      return adminResetUserPassword({ data: { userId, newPassword } });
+    },
+    onSuccess: () => {
+      toast.success(`Password reset successfully for ${selectedUser?.email || "user"}!`);
+      setResetSuccess(true);
+      setLastResetPassword(newPassword);
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to reset password.");
+    },
+  });
+
+  function generateRandomPassword() {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$";
+    let pass = "Gpk@";
+    for (let i = 0; i < 6; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setNewPassword(pass);
+  }
 
   const { data: users, isLoading, refetch } = useQuery({
     queryKey: ["admin-all-users"],
@@ -311,6 +361,34 @@ function AdminUsersPage() {
                       {/* Actions */}
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedUser(u);
+                              setNewPassword("");
+                              setResetSuccess(false);
+                              setLastResetPassword("");
+                              setResetModalOpen(true);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 text-xs font-semibold transition shadow-xs"
+                            title="Reset Account Password"
+                          >
+                            <KeyRound className="size-3.5" />
+                            <span>Reset Pass</span>
+                          </button>
+
+                          <a
+                            href={`https://wa.me/?text=${encodeURIComponent(
+                              `Assalam-o-Alaikum ${u.full_name || "Traveler"},\n\nThis is the GlobeTrek PK Platform Admin reaching out regarding your account (${u.email}).`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-2 text-emerald-400 hover:bg-emerald-500/20 transition"
+                            title="WhatsApp Message"
+                          >
+                            <MessageCircle className="size-4" />
+                          </a>
+
                           <a
                             href={`mailto:${u.email}`}
                             className="rounded-lg border border-border p-2 text-muted-foreground hover:border-primary hover:text-primary transition"
@@ -328,6 +406,152 @@ function AdminUsersPage() {
           </div>
         )}
       </div>
+
+      {/* Admin Password Reset Dialog */}
+      <Dialog open={resetModalOpen} onOpenChange={setResetModalOpen}>
+        <DialogContent className="max-w-md bg-card border border-border text-foreground p-6 sm:p-7 shadow-2xl rounded-2xl">
+          <DialogHeader className="text-left">
+            <div className="size-11 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-3">
+              <KeyRound className="size-5" />
+            </div>
+            <DialogTitle className="text-lg font-bold text-foreground">
+              Reset Account Password
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground pt-1">
+              Directly update the Supabase Auth password for this user without requiring email confirmations or token links.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedUser && (
+            <div className="space-y-4 py-2">
+              <div className="rounded-xl border border-border bg-surface p-3.5 text-xs space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-foreground">{selectedUser.full_name || "User"}</span>
+                  <Badge variant="outline" className="text-[10px] uppercase">
+                    {selectedUser.role}
+                  </Badge>
+                </div>
+                <div className="text-muted-foreground font-mono">{selectedUser.email}</div>
+              </div>
+
+              {resetSuccess ? (
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-xs text-emerald-300 space-y-2">
+                    <div className="flex items-center gap-2 font-bold text-emerald-200">
+                      <CheckCircle2 className="size-4 text-emerald-400" />
+                      <span>Password Updated Successfully!</span>
+                    </div>
+                    <p className="text-[11px] text-emerald-300/80">
+                      The password for <strong>{selectedUser.email}</strong> is now set to:
+                    </p>
+                    <div className="bg-black/40 border border-emerald-500/30 rounded-lg p-2.5 font-mono text-sm text-emerald-200 tracking-wider text-center select-all">
+                      {lastResetPassword}
+                    </div>
+                  </div>
+
+                  <a
+                    href={`https://wa.me/?text=${encodeURIComponent(
+                      `Assalam-o-Alaikum ${selectedUser.full_name || "Traveler"},\n\nYour GlobeTrek PK password has been reset by the platform administrator.\n\n📧 Login Email: ${selectedUser.email}\n🔑 New Password: ${lastResetPassword}\n🌐 Login URL: https://globetrek.pk/auth\n\nBest regards,\nGlobeTrek PK Admin Desk`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-lg transition"
+                  >
+                    <MessageCircle className="size-4" />
+                    <span>Send New Password via WhatsApp</span>
+                  </a>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setResetModalOpen(false)}
+                    className="w-full text-xs h-9"
+                  >
+                    Close
+                  </Button>
+                </div>
+              ) : (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!newPassword || newPassword.length < 6) {
+                      toast.error("Password must be at least 6 characters.");
+                      return;
+                    }
+                    resetPasswordMutation.mutate({
+                      userId: selectedUser.id,
+                      newPassword: newPassword.trim(),
+                    });
+                  }}
+                  className="space-y-4"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="admin-new-password" className="text-xs font-semibold">
+                        Set New Password*
+                      </Label>
+                      <button
+                        type="button"
+                        onClick={generateRandomPassword}
+                        className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline font-medium"
+                      >
+                        <Sparkles className="size-3" /> Auto-generate
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <Input
+                        id="admin-new-password"
+                        type={showPassword ? "text" : "password"}
+                        required
+                        minLength={6}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="Enter at least 6 characters (e.g. Travel@2026)"
+                        className="pr-10 text-xs font-mono"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <DialogFooter className="gap-2 sm:gap-0 pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setResetModalOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      size="sm"
+                      disabled={resetPasswordMutation.isPending}
+                      className="bg-amber-600 hover:bg-amber-500 text-white font-bold"
+                    >
+                      {resetPasswordMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 size-4 animate-spin" /> Saving…
+                        </>
+                      ) : (
+                        <>
+                          <KeyRound className="mr-1.5 size-4" /> Save New Password
+                        </>
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

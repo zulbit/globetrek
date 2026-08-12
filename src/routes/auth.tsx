@@ -1,12 +1,33 @@
 import * as React from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Mountain, Loader2, Newspaper, MapPin, Eye, EyeOff } from "lucide-react";
+import {
+  Mountain,
+  Loader2,
+  Newspaper,
+  MapPin,
+  Eye,
+  EyeOff,
+  KeyRound,
+  MessageCircle,
+  CheckCircle2,
+  ArrowLeft,
+  Mail,
+  ShieldCheck,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import turkey from "@/assets/tour-turkey.jpg";
 import thailand from "@/assets/tour-thailand.jpg";
 import europe from "@/assets/tour-europe.jpg";
@@ -18,14 +39,14 @@ import malaysia from "@/assets/tour-malaysia.jpg";
 
 type Search = {
   redirect?: string;
-  mode?: "signin" | "signup";
+  mode?: "signin" | "signup" | "reset";
   role?: "customer" | "vendor";
 };
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>): Search => ({
     redirect: typeof s.redirect === "string" ? s.redirect : undefined,
-    mode: s.mode === "signup" ? "signup" : "signin",
+    mode: s.mode === "signup" ? "signup" : s.mode === "reset" ? "reset" : "signin",
     role: s.role === "vendor" ? "vendor" : "customer",
   }),
   head: () => ({
@@ -110,7 +131,7 @@ import { getStoredReferralCode } from "@/components/vendor-ref-handler";
 function AuthPage() {
   const { mode = "signin", role: initialRole = "customer", redirect } = Route.useSearch();
   const navigate = useNavigate();
-  const [tab, setTab] = React.useState<"signin" | "signup">(mode);
+  const [tab, setTab] = React.useState<"signin" | "signup" | "reset">(mode);
   const [loading, setLoading] = React.useState(false);
   const [slide, setSlide] = React.useState(0);
 
@@ -118,6 +139,19 @@ function AuthPage() {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
+
+  // reset password modal state
+  const [forgotOpen, setForgotOpen] = React.useState(false);
+  const [resetEmail, setResetEmail] = React.useState("");
+  const [resetLoading, setResetLoading] = React.useState(false);
+  const [resetSent, setResetSent] = React.useState(false);
+
+  // update new password state (for reset mode)
+  const [newPassword, setNewPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
+  const [showNewPassword, setShowNewPassword] = React.useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+
   // signup
   const [fullName, setFullName] = React.useState("");
   const [role, setRole] = React.useState<"customer" | "vendor">(initialRole);
@@ -131,11 +165,22 @@ function AuthPage() {
     if (initialRole) setRole(initialRole);
   }, [mode, initialRole]);
 
+  // Listen for Supabase password recovery event from email reset links
+  React.useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setTab("reset");
+        toast.info("Please choose your new password.");
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
   React.useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: (redirect as never) ?? "/dashboard" });
+      if (data.session && tab !== "reset") navigate({ to: (redirect as never) ?? "/dashboard" });
     });
-  }, [navigate, redirect]);
+  }, [navigate, redirect, tab]);
 
   React.useEffect(() => {
     const id = window.setInterval(() => {
@@ -154,6 +199,46 @@ function AuthPage() {
       return;
     }
     toast.success("Welcome back");
+    navigate({ to: (redirect as never) ?? "/dashboard" });
+  }
+
+  async function handleRequestReset(e: React.FormEvent) {
+    e.preventDefault();
+    if (!resetEmail.trim()) {
+      toast.error("Please enter your registered email address.");
+      return;
+    }
+    setResetLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
+      redirectTo: `${window.location.origin}/auth?mode=reset`,
+    });
+    setResetLoading(false);
+    if (error) {
+      toast.error(error.message || "Failed to send reset email.");
+      return;
+    }
+    setResetSent(true);
+    toast.success("Password reset link sent! Please check your inbox and spam folder.");
+  }
+
+  async function handleUpdateNewPassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setLoading(false);
+    if (error) {
+      toast.error(error.message || "Failed to update password.");
+      return;
+    }
+    toast.success("Password updated successfully! Welcome back.");
     navigate({ to: (redirect as never) ?? "/dashboard" });
   }
 
@@ -330,7 +415,19 @@ function AuthPage() {
                   <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="bg-white/5 text-white placeholder:text-white/40" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-white/80">Password</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password" className="text-white/80">Password</Label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setResetEmail(email);
+                        setForgotOpen(true);
+                      }}
+                      className="text-xs text-primary hover:underline font-medium transition-colors"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
                   <div className="relative">
                     <Input
                       id="password"
@@ -354,6 +451,77 @@ function AuthPage() {
                 <Button disabled={loading} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
                   {loading && <Loader2 className="mr-2 size-4 animate-spin" />} Sign in
                 </Button>
+              </form>
+            ) : tab === "reset" ? (
+              <form onSubmit={handleUpdateNewPassword} className="space-y-4">
+                <div>
+                  <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary font-medium mb-3">
+                    <KeyRound className="size-3.5" />
+                    <span>Password Recovery</span>
+                  </div>
+                  <h1 className="text-2xl font-semibold tracking-tight text-white">Choose New Password</h1>
+                  <p className="mt-1 text-sm text-white/60">Enter your new secure password below to regain full access.</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="new-pass" className="text-white/80">New Password (min 6 chars)</Label>
+                  <div className="relative">
+                    <Input
+                      id="new-pass"
+                      type={showNewPassword ? "text" : "password"}
+                      required
+                      minLength={6}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="bg-white/5 text-white placeholder:text-white/40 pr-10"
+                      placeholder="Enter your new password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors focus:outline-hidden"
+                      tabIndex={-1}
+                    >
+                      {showNewPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="conf-pass" className="text-white/80">Confirm New Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="conf-pass"
+                      type={showConfirmPassword ? "text" : "password"}
+                      required
+                      minLength={6}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="bg-white/5 text-white placeholder:text-white/40 pr-10"
+                      placeholder="Re-enter your new password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors focus:outline-hidden"
+                      tabIndex={-1}
+                    >
+                      {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <Button disabled={loading} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+                  {loading && <Loader2 className="mr-2 size-4 animate-spin" />} Save & Sign In
+                </Button>
+
+                <button
+                  type="button"
+                  onClick={() => setTab("signin")}
+                  className="flex items-center justify-center gap-1.5 w-full text-xs text-white/60 hover:text-white transition-colors pt-2"
+                >
+                  <ArrowLeft className="size-3.5" /> Back to Sign In
+                </button>
               </form>
             ) : (
               <form onSubmit={handleSignUp} className="space-y-4">
@@ -490,6 +658,72 @@ function AuthPage() {
           </Link>
         </div>
       </div>
+
+      {/* WhatsApp Instant Account Recovery Dialog */}
+      <Dialog open={forgotOpen} onOpenChange={setForgotOpen}>
+        <DialogContent className="max-w-md bg-neutral-950/95 border border-white/10 text-white backdrop-blur-2xl p-6 sm:p-7 shadow-2xl rounded-2xl">
+          <DialogHeader className="text-left">
+            <div className="size-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-3 shadow-inner">
+              <MessageCircle className="size-6" />
+            </div>
+            <DialogTitle className="text-xl font-bold text-white tracking-tight">
+              Instant Account Recovery
+            </DialogTitle>
+            <DialogDescription className="text-xs text-white/70 leading-relaxed pt-1">
+              For immediate assistance and identity verification, password resets for travelers and agency vendors are processed directly via the <strong>GlobeTrek WhatsApp Desk</strong>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="recovery-email" className="text-xs text-white/80 font-medium">
+                Registered Email or WhatsApp Number
+              </Label>
+              <Input
+                id="recovery-email"
+                type="text"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                placeholder="e.g. yourname@gmail.com or 0300-1234567"
+                className="bg-white/5 border-white/15 text-white placeholder:text-white/40 h-10 text-sm"
+              />
+            </div>
+
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/40 p-3.5 text-xs text-emerald-300/90 space-y-1.5">
+              <div className="flex items-center gap-2 font-semibold text-emerald-200">
+                <ShieldCheck className="size-4 shrink-0 text-emerald-400" />
+                <span>24/7 Verified Support Desk</span>
+              </div>
+              <p className="text-[11px] text-emerald-300/80 leading-normal pl-6">
+                Our support team verifies your account and provides instant access within minutes without email delay or spam filter issues.
+              </p>
+            </div>
+
+            <a
+              href={`https://wa.me/923490386131?text=${encodeURIComponent(
+                `Assalam-o-Alaikum GlobeTrek PK Support,\n\nI need help resetting my password / recovering access to my account.\n\nAccount Email/Phone: ${resetEmail.trim() || email.trim() || "[Not specified]"}\nRole: Traveler / Vendor`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setForgotOpen(false)}
+              className="flex items-center justify-center gap-2.5 w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-lg shadow-emerald-950/50 transition-all active:scale-[0.99]"
+            >
+              <MessageCircle className="size-5" />
+              <span>Reset via WhatsApp Support (+92 349 0386131)</span>
+            </a>
+
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setForgotOpen(false)}
+              className="w-full text-xs text-white/50 hover:text-white hover:bg-white/5 h-8"
+            >
+              Cancel & Return to Sign In
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

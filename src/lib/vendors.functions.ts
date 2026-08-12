@@ -104,6 +104,19 @@ export const updateAdminVendorCredits = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+export const adminResetUserPassword = createServerFn({ method: "POST" })
+  .validator((data: { userId: string; newPassword: string }) => data)
+  .handler(async ({ data }) => {
+    if (!data.newPassword || data.newPassword.trim().length < 6) {
+      throw new Error("Password must be at least 6 characters.");
+    }
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
+      password: data.newPassword.trim(),
+    });
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
 export const updateAdminVendorTier = createServerFn({ method: "POST" })
   .validator((data: { id: string; tier: "free" | "starter" | "pro" | "agency" }) => data)
   .handler(async ({ data }) => {
