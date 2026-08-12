@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Mountain, LogOut, ShieldCheck, User, KeyRound, Loader2, Lock, type LucideIcon } from "lucide-react";
+import { Mountain, LogOut, ShieldCheck, User, KeyRound, Loader2, Lock, Eye, EyeOff, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -49,6 +49,8 @@ export function DashboardShell({
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const { data: userProfile } = useQuery({
     enabled: !!user?.id,
@@ -250,14 +252,23 @@ export function DashboardShell({
                 <div className="relative">
                   <Lock className="absolute left-3 top-2.5 size-3.5 text-muted-foreground" />
                   <Input
-                    type="password"
+                    type={showNewPassword ? "text" : "password"}
                     placeholder="Enter at least 6 characters"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     required
                     minLength={6}
-                    className="pl-9 text-xs rounded-xl"
+                    className="pl-9 pr-9 text-xs rounded-xl"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
+                    tabIndex={-1}
+                    aria-label={showNewPassword ? "Hide password" : "Show password"}
+                  >
+                    {showNewPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                  </button>
                 </div>
               </div>
 
@@ -266,14 +277,23 @@ export function DashboardShell({
                 <div className="relative">
                   <Lock className="absolute left-3 top-2.5 size-3.5 text-muted-foreground" />
                   <Input
-                    type="password"
+                    type={showConfirmPassword ? "text" : "password"}
                     placeholder="Re-enter new password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                     minLength={6}
-                    className="pl-9 text-xs rounded-xl"
+                    className="pl-9 pr-9 text-xs rounded-xl"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
+                    tabIndex={-1}
+                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  >
+                    {showConfirmPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                  </button>
                 </div>
               </div>
             </div>
