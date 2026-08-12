@@ -164,8 +164,9 @@ export async function generateTextWithFallback(
     try {
       console.log(`[AI SDK Fallback] Retrying prompt with 'openrouter/free' model routing...`);
       const fallbackModel = openRouterModel("openrouter/free");
+      const { tools, maxSteps, ...restParams } = params as any;
       return await originalGenerateText({
-        ...params,
+        ...restParams,
         model: fallbackModel,
       });
     } catch (fallbackErr: any) {

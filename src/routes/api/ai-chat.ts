@@ -319,9 +319,15 @@ export const Route = createFileRoute("/api/ai-chat")({
         let preSearchQuery = "";
         let preSearchResults: string[] = [];
 
+        const lowerPrompt = lastUserPrompt.toLowerCase();
+        const isGenericTourQuery = /\b(tour|tours|package|packages|trip|trips)\b/i.test(lowerPrompt);
+        const isGenericVisaQuery = /\b(visa|visas|embassy|file|filing)\b/i.test(lowerPrompt);
+        const isGenericInsuranceQuery = /\b(insurance|policy|cover|shield)\b/i.test(lowerPrompt);
+        const isGenericFlightQuery = /\b(flight|flights|ticket|tickets|airline|umrah)\b/i.test(lowerPrompt);
+
         // Match 2+ letter words so 2-letter countries ("UK", "US", "EU", "PK") are captured
         const locWords = lastUserPrompt.match(/\b[A-Za-z]{2,}\b/g) || [];
-        const ignoreWords = new Set(["you", "have", "any", "listing", "tour", "tours", "package", "packages", "trip", "trips", "from", "with", "about", "show", "tell", "what", "there", "here", "want", "like", "need", "book", "good", "best", "some", "details", "please", "the", "for", "and", "are", "near", "future"]);
+        const ignoreWords = new Set(["you", "have", "any", "listing", "tour", "tours", "package", "packages", "trip", "trips", "from", "with", "about", "show", "tell", "what", "there", "here", "want", "like", "need", "book", "good", "best", "some", "details", "please", "the", "for", "and", "are", "near", "future", "services", "service"]);
         const targetKeywords = locWords.filter((w) => !ignoreWords.has(w.toLowerCase()));
 
         if (targetKeywords.length > 0) {
@@ -341,6 +347,25 @@ export const Route = createFileRoute("/api/ai-chat")({
               return `- MATCHED TOUR: ${t.title} (${t.duration_days}d) · from ${t.departure_city} · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")}${dateStr}${deadlineStr} · id=${t.id}`;
             });
           }
+        } else if (isGenericTourQuery && catalogList.length > 0) {
+          preSearchQuery = "Tour Packages";
+          preSearchResults = catalogList.slice(0, 3).map((t) => {
+            const item = t as any;
+            const formattedDate = formatDateReadable(item.departure_date);
+            const formattedDeadline = formatDateReadable(item.booking_deadline);
+            const dateStr = formattedDate ? ` · Departs: ${formattedDate}` : "";
+            const deadlineStr = formattedDeadline ? ` · Booking Deadline: ${formattedDeadline}` : "";
+            return `- FEATURED TOUR: ${t.title} (${t.duration_days}d) · from ${t.departure_city} · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")}${dateStr}${deadlineStr} · id=${t.id}`;
+          });
+        } else if (isGenericVisaQuery && visaList.length > 0) {
+          preSearchQuery = "Visa Services";
+          preSearchResults = visaList.slice(0, 3).map((v) => `- FEATURED VISA: ${v.country} ${v.visa_type} by ${v.vendor} · Total ₨ ${(v.price_pkr + v.service_fee_pkr).toLocaleString("en-PK")} · ~${v.processing_days} days · id=${v.id}`);
+        } else if (isGenericInsuranceQuery && insuranceList.length > 0) {
+          preSearchQuery = "Travel Insurance";
+          preSearchResults = insuranceList.slice(0, 3).map((i) => `- FEATURED INSURANCE: ${i.plan_name} (${i.coverage_type}) · ₨ ${i.price_pkr.toLocaleString("en-PK")} · id=${i.id}`);
+        } else if (isGenericFlightQuery && ticketsList.length > 0) {
+          preSearchQuery = "Flight Tickets";
+          preSearchResults = ticketsList.slice(0, 3).map((tk) => `- FEATURED FLIGHT: ${tk.service_name} (${tk.route_type}) · Fee ₨ ${tk.service_fee_pkr.toLocaleString("en-PK")} · id=${tk.id}`);
         }
 
         const catalogText = catalogList
@@ -418,15 +443,21 @@ ${ticketsCatalogText}`;
             }),
             execute: async ({ query, service_type = "all", max_price_pkr }) => {
               try {
-                const searchStr = `%${query.trim().toLowerCase()}%`;
+                const cleanQuery = query.trim().toLowerCase();
+                const searchStr = `%${cleanQuery}%`;
+                const isGenericTour = /^(tour|tours|package|packages|trip|trips|all|popular|featured)$/i.test(cleanQuery);
+                const isGenericVisa = /^(visa|visas|embassy|file|filing)$/i.test(cleanQuery);
                 const results: string[] = [];
 
                 if (service_type === "all" || service_type === "tours") {
                   let tourQuery = supabaseAdmin
                     .from("tours")
                     .select("id, title, destination_country, departure_city, duration_days, price_pkr, accommodation")
-                    .eq("is_active", true)
-                    .or(`title.ilike.${searchStr},destination_country.ilike.${searchStr},departure_city.ilike.${searchStr}`);
+                    .eq("is_active", true);
+
+                  if (!isGenericTour) {
+                    tourQuery = tourQuery.or(`title.ilike.${searchStr},destination_country.ilike.${searchStr},departure_city.ilike.${searchStr}`);
+                  }
 
                   if (max_price_pkr) {
                     tourQuery = tourQuery.lte("price_pkr", max_price_pkr);
@@ -446,12 +477,16 @@ ${ticketsCatalogText}`;
                 }
 
                 if (service_type === "all" || service_type === "visa") {
-                  const { data: dbVisas } = await supabaseAdmin
+                  let visaQuery = supabaseAdmin
                     .from("visa_services")
                     .select("id, country, visa_type, price_pkr, service_fee_pkr, processing_days")
-                    .eq("is_active", true)
-                    .or(`country.ilike.${searchStr},visa_type.ilike.${searchStr}`)
-                    .limit(3);
+                    .eq("is_active", true);
+
+                  if (!isGenericVisa) {
+                    visaQuery = visaQuery.or(`country.ilike.${searchStr},visa_type.ilike.${searchStr}`);
+                  }
+
+                  const { data: dbVisas } = await visaQuery.limit(3);
 
                   if (dbVisas && dbVisas.length > 0) {
                     dbVisas.forEach((v) => {
@@ -868,13 +903,15 @@ ${ticketsCatalogText}`;
           // Comprehensive multi-layer cleaner:
           // 1. Remove XML think tags (<think>...</think>)
           // 2. Remove Thought:/Reasoning: blocks
-          // 3. Remove "User wants... According to rules..." meta commentary
+          // 3. Remove "Here's a thinking process..." and "User wants... According to rules..." meta commentary
           // 4. Remove "Let me check..." preambles
+          // 5. Remove "User Safety: safe" moderation classifiers
           fullText = rawText
             .replace(/<think>[\s\S]*?<\/think>/gi, "")
             .replace(/^(Thought|Reasoning|Thinking):[\s\S]*?\n/gi, "")
-            .replace(/^(User wants|According to rules|Let's see the catalog|We need to show|We have catalog highlights)[\s\S]*?(?=\n\n|\n[A-Z]|\n•|\n\d|\n-)/gi, "")
+            .replace(/^(Here's a thinking process|User wants|According to rules|Let's see the catalog|We need to show|We have catalog highlights|We need to respond)[\s\S]*?(?=\n\n|\n[A-Z]|\n•|\n\d|\n-|$)/gi, "")
             .replace(/^\s*(let me (check|search|look)|checking live database|searching database)[^.\n]*[.!]?\s*/gim, "")
+            .replace(/^User Safety: safe\s*/gim, "")
             .trim();
 
           // Detect if capture_lead tool was called in any step
@@ -900,7 +937,27 @@ ${ticketsCatalogText}`;
           const lastUserMsg = (messages[messages.length - 1]?.content || "").trim();
           const isEnglish = !/hai|hain|karo|batao|apna|chahta|shukriya|shamil|kardein|pasand|din/i.test(lastUserMsg);
 
-          if (isEnglish) {
+          if (isGenericTourQuery && catalogList.length > 0) {
+            const toursList = catalogList.slice(0, 3).map(t => `• **${t.title}** (${t.duration_days}d) · from **${t.departure_city}** · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")}`).join("\n");
+            fullText = isEnglish
+              ? `🌴 **Explore Our Featured Tour Packages:**\n\n${toursList}\n\n🛤️ Need a private group or family trip? [🌴 Build Your Custom Tour](/custom-tour)\n🎟️ [Browse All Tours](/tours)\n\n[[choose: 🇦🇪 Dubai | 🇹🇷 Turkey | 🇪🇺 Europe | 🌴 Build Custom Tour]]`
+              : `🌴 **Humare Top Featured Tour Packages:**\n\n${toursList}\n\n🛤️ Agar private family trip chahiye toh: [🌴 Build Your Custom Tour](/custom-tour)\n🎟️ [Tamam Tours Dekhein](/tours)\n\n[[choose: 🇦🇪 Dubai | 🇹🇷 Turkey | 🇪🇺 Europe | 🌴 Build Custom Tour]]`;
+          } else if (isGenericVisaQuery && visaList.length > 0) {
+            const visas = visaList.slice(0, 3).map(v => `• **${v.country} ${v.visa_type}** · Total ₨ ${(v.price_pkr + v.service_fee_pkr).toLocaleString("en-PK")} · ~${v.processing_days} days`).join("\n");
+            fullText = isEnglish
+              ? `📄 **Featured Visa Filing Services:**\n\n${visas}\n\n🛂 Complex case, bank statements, or prior refusals? [📄 Request Custom Visa Consultation](/custom-visa)\n📄 [Browse All Visas](/visa)\n\n[[choose: 🇺🇸 USA | 🇹🇷 Turkey | 🇸🇬 Singapore | 📄 Request Visa Consultation]]`
+              : `📄 **Featured Visa Services:**\n\n${visas}\n\n🛂 Bank statement ya refusal guidance ke liye: [📄 Request Custom Visa Consultation](/custom-visa)\n\n[[choose: 🇺🇸 USA | 🇹🇷 Turkey | 🇸🇬 Singapore | 📄 Request Visa Consultation]]`;
+          } else if (isGenericInsuranceQuery && insuranceList.length > 0) {
+            const ins = insuranceList.slice(0, 3).map(i => `• **${i.plan_name}** (${i.coverage_type}) · ₨ ${i.price_pkr.toLocaleString("en-PK")}`).join("\n");
+            fullText = isEnglish
+              ? `🛡️ **Travel Insurance Plans:**\n\n${ins}\n\n🛡️ [Explore All Insurance Plans](/insurance)\n\n[[choose: 🇪🇺 Schengen Shield | 🌍 Worldwide Cover | 🌴 Build Custom Tour]]`
+              : `🛡️ **Travel Insurance Plans:**\n\n${ins}\n\n🛡️ [Tamam Plans Dekhein](/insurance)\n\n[[choose: 🇪🇺 Schengen Shield | 🌍 Worldwide Cover | 🌴 Build Custom Tour]]`;
+          } else if (isGenericFlightQuery && ticketsList.length > 0) {
+            const tk = ticketsList.slice(0, 3).map(t => `• **${t.service_name}** (${t.route_type}) · Service Fee: ₨ ${t.service_fee_pkr.toLocaleString("en-PK")}`).join("\n");
+            fullText = isEnglish
+              ? `✈️ **Flight Ticketing Desks:**\n\n${tk}\n\n✈️ [Browse Flight Services](/tickets)\n\n[[choose: ✈️ International Flight | 🕋 Umrah Flight | 🌴 Build Custom Tour]]`
+              : `✈️ **Flight Booking Desks:**\n\n${tk}\n\n✈️ [Tamam Flight Services](/tickets)\n\n[[choose: ✈️ International Flight | 🕋 Umrah Flight | 🌴 Build Custom Tour]]`;
+          } else if (isEnglish) {
             fullText = "I'm sorry, I couldn't find an active fixed package matching your query. However, you can explore our featured travel packages (Turkey 🇹🇷, Dubai 🇦🇪, Europe 🇪🇺) or click **[🌴 Build Your Custom Tour](/custom-tour)** for a private itinerary!\n\n[[choose: 🌴 Build Custom Tour | 🇪🇺 Europe | 🇹🇷 Turkey | 🇦🇪 Dubai]]";
           } else {
             fullText = "Maafi chahta hoon, mujhe is waqt koi matching package nahi mila. Aap humare top packages (Turkey 🇹🇷, Dubai 🇦🇪, Europe 🇪🇺) explore kar sakte hain ya **[🌴 Build Your Custom Tour](/custom-tour)** par click karke custom trip plan request kar sakte hain!\n\n[[choose: 🌴 Build Custom Tour | 🇪🇺 Europe | 🇹🇷 Turkey | 🇦🇪 Dubai]]";
