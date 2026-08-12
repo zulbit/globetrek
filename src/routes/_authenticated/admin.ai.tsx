@@ -73,11 +73,11 @@ export const Route = createFileRoute("/_authenticated/admin/ai")({
 
 const PRESET_MODELS = [
   { id: "openai/gpt-4o-mini", label: "OpenAI GPT-4o Mini (Fast & Recommended · Paid)", isFree: false },
+  { id: "google/gemma-4-26b-a4b-it:free", label: "Google Gemma 4 26B (100% FREE · Zero Balance)", isFree: true },
+  { id: "openrouter/free", label: "OpenRouter Free Router (100% FREE · Auto-Routing)", isFree: true },
+  { id: "poolside/laguna-xs-2.1:free", label: "Poolside Laguna XS 2.1 (100% FREE · Zero Balance)", isFree: true },
+  { id: "nvidia/nemotron-3.5-lightning:free", label: "NVIDIA Nemotron 3.5 Lightning (100% FREE)", isFree: true },
   { id: "deepseek/deepseek-chat", label: "DeepSeek V3 / Chat (OpenRouter Gateway · Paid)", isFree: false },
-  { id: "google/gemini-2.0-flash-exp:free", label: "Google Gemini 2.0 Flash (100% FREE)", isFree: true },
-  { id: "meta-llama/llama-3.3-70b-instruct:free", label: "Meta Llama 3.3 70B (100% FREE)", isFree: true },
-  { id: "deepseek/deepseek-r1:free", label: "DeepSeek R1 Reasoning (100% FREE)", isFree: true },
-  { id: "qwen/qwen-2.5-72b-instruct:free", label: "Qwen 2.5 72B Instruct (100% FREE)", isFree: true },
   { id: "anthropic/claude-3.5-haiku", label: "Anthropic Claude 3.5 Haiku (Paid)", isFree: false },
 ];
 
