@@ -431,17 +431,27 @@ EVERY response presenting a destination, package, or service MUST follow this 3-
 RULE 2: MANDATORY INTERACTIVE ACTION CHIPS (ZERO EXCEPTIONS)
 You MUST ALWAYS end EVERY single response with a line of interactive double-bracket action chips: [[choose: Option 1 | Option 2 | Option 3]].
 Keep traveler typing to the absolute minimum by providing the most logical next 3-4 steps:
-- For Insurance inquiries: [[choose: 🛡️ Schengen Silver | 🌍 Worldwide Cover | 📄 Insurance FAQs | 🌴 Build Custom Tour]]
-- For Dubai inquiries: [[choose: 💳 Reserve Slots | 📄 Dubai Visa Info | 🌴 Custom Dubai Trip]]
-- For Turkey inquiries: [[choose: 💳 Reserve Slots | 📄 Turkey Visa Info | 🌴 Custom Turkey Trip]]
-- For Europe inquiries: [[choose: 💳 Reserve Slots | 📄 Schengen Visa Info | 🌴 Custom Europe Trip]]
-- For Visa inquiries: [[choose: 📄 Request Visa Consultation | 📋 Document Checklist | 💰 Embassy Fees | 🌴 Custom Tour]]
+- For Insurance inquiries: [[choose: 🛡️ Schengen Silver | 🌍 Worldwide Cover | 📄 Policy Details | 🌴 Build Custom Tour]]
+- For Dubai inquiries: [[choose: 🎟️ View Dubai Packages | 📄 Dubai Visa Info | 🌴 Custom Dubai Trip]]
+- For Turkey inquiries: [[choose: 🎟️ View Turkey Packages | 📄 Turkey Visa Info | 🌴 Custom Turkey Trip]]
+- For Europe inquiries: [[choose: 🎟️ View Europe Packages | 📄 Schengen Visa Info | 🌴 Custom Europe Trip]]
+- For Visa inquiries: [[choose: 📄 Submit Visa Request | 📋 Document Checklist | 💰 Embassy Fees | 🌴 Custom Tour]]
 - For Flight inquiries: [[choose: ✈️ Request Ticket Quote | 🕋 Umrah Flight Desk | 🌴 Custom Trip]]
 - For Group / Date questions: [[choose: 👨‍👩‍👧‍👦 Family (4+) | 👫 Couple | 🎒 Solo / Friends | 🌴 Custom Plan]]
 - For General / Mixed: [[choose: 🇦🇪 Dubai | 🇹🇷 Turkey | 🇪🇺 Europe | 🌴 Build Custom Tour]]
 
 RULE 3: STRICT SINGLE-KEYWORD INPUT HOOK
 If the user inputs a single destination word (like "Dubai", "Turkey", "Europe", "Lahore", "Insurance", "Visa"), DO NOT give a dry database dump. Treat it as an excited inquiry! Acknowledge their choice warmly, present key options with dates/pricing in bold PKR, ask a consultative question, and provide actionable next-step chips.
+
+RULE 4: STRICT PLATFORM CAPABILITIES & NEGATIVE CONSTRAINTS (CRITICAL)
+1. NO PHONE CALL / CALENDAR / TIME-SLOT SCHEDULING:
+   - GlobeTrek PK is an ONLINE TRAVEL MARKETPLACE, NOT a call center.
+   - We DO NOT offer telephone call bookings, calendar invites, or morning/afternoon time slots (e.g. NEVER ask "Morning Slot (9 AM - 12 PM)", "Afternoon Slot", "Zoom call", "Google Meet invite").
+   - NEVER promise a calendar invite or phone callback.
+2. ACTUAL HOW IT WORKS ON GLOBETREK PK:
+   - For Custom Tours: Travelers submit requirements at [🌴 Build Your Custom Tour](/custom-tour) to get custom quotes from verified agencies.
+   - For Custom Visas: Travelers submit details at [📄 Submit Visa Request](/custom-visa) where expert visa consultants review the case.
+   - For Direct Inquiries: Travelers can browse [🎟️ Browse Tours](/tours), [📄 Visa Services](/visa), [🛡️ Travel Insurance](/insurance), [✈️ Flight Tickets](/tickets), or reach verified agencies directly.
 
 CRITICAL CONSTRAINTS:
 1. NO INTERNAL MONOLOGUE / THOUGHTS: Never output reasoning steps, chain-of-thought, or meta commentary. Output ONLY the final message for the traveler.
@@ -451,7 +461,7 @@ CRITICAL CONSTRAINTS:
    - [🌴 Build Your Custom Tour](/custom-tour)
    - [🎟️ Browse Tours](/tours)
    - [📄 Visa Services](/visa)
-   - [📄 Request Custom Visa Consultation](/custom-visa)
+   - [📄 Submit Visa Request](/custom-visa)
    - [🛡️ Travel Insurance](/insurance)
    - [✈️ Flight Tickets](/tickets)
 
@@ -969,9 +979,9 @@ ${ticketsCatalogText}`;
           const isEurope = /\beurope\b|\bparis\b|\bswitzerland\b|\bschengen\b/i.test(lastUserMsg);
 
           let actionChips = "[[choose: 🇦🇪 Dubai | 🇹🇷 Turkey | 🇪🇺 Europe | 🌴 Build Custom Tour]]";
-          if (isDubai) actionChips = "[[choose: 💳 Reserve Slots | 📄 Dubai Visa Info | 🌴 Custom Dubai Trip]]";
-          else if (isTurkey) actionChips = "[[choose: 💳 Reserve Slots | 📄 Turkey Visa Info | 🌴 Custom Turkey Trip]]";
-          else if (isEurope) actionChips = "[[choose: 💳 Reserve Slots | 📄 Schengen Visa Info | 🌴 Custom Europe Trip]]";
+          if (isDubai) actionChips = "[[choose: 🎟️ Dubai Packages | 📄 Dubai Visa Info | 🌴 Custom Dubai Trip]]";
+          else if (isTurkey) actionChips = "[[choose: 🎟️ Turkey Packages | 📄 Turkey Visa Info | 🌴 Custom Turkey Trip]]";
+          else if (isEurope) actionChips = "[[choose: 🎟️ Europe Packages | 📄 Schengen Visa Info | 🌴 Custom Europe Trip]]";
 
           if (preSearchResults.length > 0) {
             const formattedMatches = preSearchResults.map(m => m.replace(/^[-\s]*MATCHED TOUR:\s*/i, "• ").replace(/·\s*id=[\w-]+/i, "")).join("\n");
@@ -986,8 +996,8 @@ ${ticketsCatalogText}`;
           } else if (isGenericVisaQuery && visaList.length > 0) {
             const visas = visaList.slice(0, 3).map(v => `• **${v.country} ${v.visa_type}** · Total **₨ ${(v.price_pkr + v.service_fee_pkr).toLocaleString("en-PK")}** · ~${v.processing_days} days`).join("\n");
             fullText = isEnglish
-              ? `Planning an international trip? 📄 Here are our featured visa filing services:\n\n${visas}\n\nDo you have a complex case, bank statement question, or previous refusal? [📄 Request Custom Visa Consultation](/custom-visa)\n\n[[choose: 🇺🇸 USA | 🇹🇷 Turkey | 🇸🇬 Singapore | 📄 Request Visa Consultation]]`
-              : `Visa filing ke liye GlobeTrek PK par khushamdeed! 📄 Featured visa services:\n\n${visas}\n\nKya aapko bank statement guidance ya refusal support chahiye? [📄 Request Custom Visa Consultation](/custom-visa)\n\n[[choose: 🇺🇸 USA | 🇹🇷 Turkey | 🇸🇬 Singapore | 📄 Request Visa Consultation]]`;
+              ? `Planning an international trip? 📄 Here are our featured visa filing services:\n\n${visas}\n\nDo you have a complex case, bank statement question, or previous refusal? [📄 Submit Custom Visa Request](/custom-visa)\n\n[[choose: 🇺🇸 USA | 🇹🇷 Turkey | 🇸🇬 Singapore | 📄 Submit Visa Request]]`
+              : `Visa filing ke liye GlobeTrek PK par khushamdeed! 📄 Featured visa services:\n\n${visas}\n\nKya aapko bank statement guidance ya refusal support chahiye? [📄 Submit Custom Visa Request](/custom-visa)\n\n[[choose: 🇺🇸 USA | 🇹🇷 Turkey | 🇸🇬 Singapore | 📄 Submit Visa Request]]`;
           } else if (isGenericInsuranceQuery && insuranceList.length > 0) {
             const ins = insuranceList.slice(0, 3).map(i => `• **${i.plan_name}** (${i.coverage_type}) · **₨ ${i.price_pkr.toLocaleString("en-PK")}**`).join("\n");
             fullText = isEnglish
@@ -1011,17 +1021,17 @@ ${ticketsCatalogText}`;
           let guaranteedChips = "[[choose: 🇦🇪 Dubai | 🇹🇷 Turkey | 🇪🇺 Europe | 🌴 Build Custom Tour]]";
 
           if (combined.includes("insurance") || combined.includes("schengen") || combined.includes("coverage") || combined.includes("medical")) {
-            guaranteedChips = "[[choose: 🛡️ Schengen Silver | 🌍 Worldwide Cover | 📄 Insurance FAQs | 🌴 Build Custom Tour]]";
+            guaranteedChips = "[[choose: 🛡️ Schengen Silver | 🌍 Worldwide Cover | 📄 Policy Details | 🌴 Build Custom Tour]]";
           } else if (combined.includes("visa") || combined.includes("embassy") || combined.includes("refusal") || combined.includes("passport")) {
-            guaranteedChips = "[[choose: 📄 Request Visa Consultation | 📋 Document Checklist | 🇹🇷 Turkey Visa | 🌴 Custom Trip]]";
+            guaranteedChips = "[[choose: 📄 Submit Visa Request | 📋 Document Checklist | 🇹🇷 Turkey Visa | 🌴 Custom Trip]]";
           } else if (combined.includes("flight") || combined.includes("ticket") || combined.includes("airline") || combined.includes("umrah")) {
             guaranteedChips = "[[choose: ✈️ Request Ticket Quote | 🕋 Umrah Flights | 🌴 Custom Trip]]";
           } else if (combined.includes("dubai") || combined.includes("uae") || combined.includes("burj")) {
-            guaranteedChips = "[[choose: 💳 Reserve Slots | 📄 Dubai Visa Info | 🌴 Custom Dubai Trip]]";
+            guaranteedChips = "[[choose: 🎟️ Dubai Packages | 📄 Dubai Visa Info | 🌴 Custom Dubai Trip]]";
           } else if (combined.includes("turkey") || combined.includes("türkiye") || combined.includes("istanbul") || combined.includes("cappadocia")) {
-            guaranteedChips = "[[choose: 💳 Reserve Slots | 📄 Turkey Visa Info | 🌴 Custom Turkey Trip]]";
+            guaranteedChips = "[[choose: 🎟️ Turkey Packages | 📄 Turkey Visa Info | 🌴 Custom Turkey Trip]]";
           } else if (combined.includes("europe") || combined.includes("paris") || combined.includes("switzerland") || combined.includes("italy")) {
-            guaranteedChips = "[[choose: 💳 Reserve Slots | 📄 Schengen Visa Info | 🌴 Custom Europe Trip]]";
+            guaranteedChips = "[[choose: 🎟️ Europe Packages | 📄 Schengen Visa Info | 🌴 Custom Europe Trip]]";
           } else if (combined.includes("family") || combined.includes("couple") || combined.includes("solo") || combined.includes("group")) {
             guaranteedChips = "[[choose: 👨‍👩‍👧‍👦 Family (4+) | 👫 Couple | 🎒 Solo / Friends | 🌴 Custom Budget]]";
           }

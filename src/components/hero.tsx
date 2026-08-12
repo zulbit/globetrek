@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { MapPin, Compass, Search, ShieldCheck } from "lucide-react";
+import { MapPin, Compass, Search, ShieldCheck, Sparkles, Bot } from "lucide-react";
 import heroCappadocia from "@/assets/hero-cappadocia.jpg";
 import heroWorld from "@/assets/hero-world.jpg";
 import tourDubai from "@/assets/tour-dubai.jpg";
@@ -149,6 +149,25 @@ export function Hero() {
                 <Search className="size-4" />
                 Search tours
               </Button>
+            </div>
+
+            {/* AI Travel Concierge Mobile & Desktop Quick Launch Bar */}
+            <div className="mt-3.5 flex items-center justify-between gap-3 rounded-xl border border-emerald-500/30 bg-emerald-950/40 px-3.5 py-2 text-xs text-emerald-200 backdrop-blur-md">
+              <div className="flex items-center gap-2">
+                <Sparkles className="size-4 text-emerald-400 shrink-0 animate-pulse" />
+                <span>
+                  Need personalized advice or visa guidance?{" "}
+                  <strong className="text-emerald-300">Ask our 24/7 AI Concierge</strong>
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent("open-ai-concierge"))}
+                className="inline-flex items-center gap-1 shrink-0 rounded-lg bg-emerald-500/20 border border-emerald-400/40 px-2.5 py-1 text-[11px] font-bold text-emerald-300 hover:bg-emerald-500/30 transition shadow-xs"
+              >
+                <Bot className="size-3.5" />
+                <span>Chat AI</span>
+              </button>
             </div>
           </div>
 

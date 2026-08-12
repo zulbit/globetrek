@@ -197,10 +197,16 @@ export function AIChatWidget() {
     }
   }, [open, messages, sending]);
 
-  // Do not render the customer AI chat widget in vendor or admin dashboard routes
-  if (pathname.startsWith("/vendor") || pathname.startsWith("/admin")) {
-    return null;
-  }
+  useEffect(() => {
+    const handleOpenConcierge = (e: any) => {
+      setOpen(true);
+      if (e?.detail?.message) {
+        sendMessage(e.detail.message);
+      }
+    };
+    window.addEventListener("open-ai-concierge", handleOpenConcierge);
+    return () => window.removeEventListener("open-ai-concierge", handleOpenConcierge);
+  }, []);
 
   async function sendMessage(textToSend?: string) {
     const text = (textToSend ?? input).trim();
@@ -209,7 +215,7 @@ export function AIChatWidget() {
     const userMsg: ChatMessage = { role: "user", content: text };
     const nextMsgs = [...messages, userMsg];
     setMessages(nextMsgs);
-    setInput("");  // always clear input immediately on send
+    setInput("");
     setSending(true);
 
     try {
@@ -258,6 +264,11 @@ export function AIChatWidget() {
     }
   }
 
+  // Do not render the customer AI chat widget in vendor or admin dashboard routes
+  if (pathname.startsWith("/vendor") || pathname.startsWith("/admin")) {
+    return null;
+  }
+
   // Do not render chat concierge on auth pages (sign in / sign up)
   if (pathname.startsWith("/auth")) {
     return null;
@@ -268,13 +279,16 @@ export function AIChatWidget() {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          aria-label="Open travel concierge"
-          className="fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-tr from-purple-600 via-indigo-600 to-violet-500 text-white shadow-2xl shadow-purple-950/60 ring-2 ring-purple-400/50 transition duration-300 hover:scale-110 hover:shadow-purple-500/50 md:bottom-6"
+          aria-label="Open AI Travel Concierge"
+          className="fixed bottom-20 right-3.5 z-50 flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 text-white px-3.5 py-2.5 md:h-14 md:w-14 md:p-0 md:justify-center shadow-2xl shadow-emerald-950/80 ring-2 ring-emerald-400/50 transition duration-300 hover:scale-105 active:scale-95 md:bottom-6"
         >
-          <Bot className="h-7 w-7 text-purple-100" />
-          <span className="absolute -top-1 -right-1 flex h-4 w-4">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-purple-400 opacity-75" />
-            <span className="relative inline-flex h-4 w-4 rounded-full bg-purple-500 ring-2 ring-background" />
+          <Bot className="h-5 w-5 md:h-7 md:w-7 text-emerald-100" />
+          <span className="text-xs font-bold tracking-tight text-white md:hidden flex items-center gap-1">
+            <Sparkles className="size-3 text-emerald-300 animate-pulse" /> AI Concierge
+          </span>
+          <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex h-3.5 w-3.5 rounded-full bg-emerald-400 ring-2 ring-background" />
           </span>
         </button>
       )}
