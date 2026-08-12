@@ -123,6 +123,23 @@ function VendorLeads() {
     },
   });
 
+  // -------- Verify Custom Lead Payment Mutation --------
+  const verifyPaymentMutation = useMutation({
+    mutationFn: (leadId: string) => verifyLeadUnlockPayment({ data: { leadId } }),
+    onSuccess: (res) => {
+      if (res.unlocked) {
+        toast.success(res.message || "Payment verified and lead unlocked successfully!");
+        qc.invalidateQueries({ queryKey: ["vendor-leads-marketplace"] });
+        qc.invalidateQueries({ queryKey: ["vendor-leads-poly"] });
+      } else {
+        toast.warning(res.message || "Payment status not yet complete.");
+      }
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Could not verify payment.");
+    },
+  });
+
   // -------- Unlock Direct Lead Mutation (Consumes 1 Credit) --------
   const unlockDirectMutation = useMutation({
     mutationFn: async (leadId: string) => {
