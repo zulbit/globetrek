@@ -813,131 +813,148 @@ ${ticketsCatalogText}`;
           console.warn("[AI Chat Config Fetch Warning]:", err);
         }
 
-        // Use generateText (non-streaming) — fully awaits all tool-call steps
-        // and returns the complete text once all maxSteps are resolved.
-        // The widget collects bytes anyway, so streaming gives no UX benefit.
-        let fullText: string;
+        // Detect if the user is providing contact info / phone / email to capture a lead
+        const hasContactInfo = /(?:\+?92|0)?3\d{2}[- ]?\d{7}\b|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/i.test(lastUserPrompt);
+        const activeTools = hasContactInfo ? { capture_lead: tools.capture_lead } : undefined;
+        const activeMaxSteps = hasContactInfo ? 2 : 1;
+
+        // Use generateText with a bounded timeout race (4.5s max) to prevent free-tier queue stalling
+        let fullText: string = "";
         let leadCaptured = false;
         try {
-          const result = await generateText({
+          const timeoutPromise = new Promise<null>((resolve) =>
+            setTimeout(() => resolve(null), 4500)
+          );
+
+          const aiPromise = generateText({
             model: openRouterModel(activeModel, customApiKey),
             system: systemPrompt,
             messages: modelMessages,
-            tools,
-            maxSteps: 2,
+            tools: activeTools,
+            maxSteps: activeMaxSteps,
             maxTokens: activeMaxTokens,
           });
 
-          // Log AI usage event to database
-          try {
-            let userId: string | null = null;
-            const authHeader = request.headers.get("authorization");
-            if (authHeader?.startsWith("Bearer ")) {
-              try {
-                const token = authHeader.substring(7);
-                const { data: claimsData } = await supabaseAdmin.auth.getClaims(token);
-                if (claimsData?.claims?.sub) {
-                  userId = claimsData.claims.sub as string;
+          const result = await Promise.race([aiPromise, timeoutPromise]);
+
+          if (result) {
+            // Log AI usage event to database
+            try {
+              let userId: string | null = null;
+              const authHeader = request.headers.get("authorization");
+              if (authHeader?.startsWith("Bearer ")) {
+                try {
+                  const token = authHeader.substring(7);
+                  const { data: claimsData } = await supabaseAdmin.auth.getClaims(token);
+                  if (claimsData?.claims?.sub) {
+                    userId = claimsData.claims.sub as string;
+                  }
+                } catch {
+                  // Token parsing failed, fall through to admin lookup
                 }
-              } catch {
-                // Token parsing failed, fall through to admin lookup
+              }
+
+              if (!userId) {
+                const { data: adminRole } = await supabaseAdmin
+                  .from("user_roles")
+                  .select("user_id")
+                  .eq("role", "admin")
+                  .limit(1)
+                  .maybeSingle();
+                if (adminRole?.user_id) {
+                  userId = adminRole.user_id;
+                }
+              }
+
+              // Hardcoded fallback: GlobeTrek Admin user
+              if (!userId) {
+                userId = "ce083b9c-d6d3-46b4-827a-2bd3a569e978";
+              }
+
+              const { error: insertErr } = await supabaseAdmin.from("ai_usage_events").insert({
+                user_id: userId,
+                kind: "description",
+              });
+
+              if (insertErr) {
+                console.error("[ai-chat logging error]:", insertErr.message);
+              } else {
+                console.log("[ai-chat] AI usage event logged for user:", userId);
+              }
+            } catch (e) {
+              console.warn("[ai-chat logging warning]:", e);
+            }
+
+            // Collect text from steps — prefer final step text (after tool resolution)
+            // over pre-tool filler statements or scratchpad reasoning
+            let finalAnswer = "";
+
+            if (result.steps && result.steps.length > 0) {
+              for (let i = result.steps.length - 1; i >= 0; i--) {
+                const step = result.steps[i];
+                if (step.text && step.text.trim().length > 0) {
+                  let cleanStepText = step.text
+                    .replace(/<think>[\s\S]*?<\/think>/gi, "")
+                    .replace(/^(Thought|Reasoning|Thinking):[\s\S]*?\n/gi, "")
+                    .trim();
+                  
+                  if (cleanStepText && (!step.toolCalls || step.toolCalls.length === 0)) {
+                    finalAnswer = cleanStepText;
+                    break;
+                  }
+                  if (!finalAnswer && cleanStepText) {
+                    finalAnswer = cleanStepText;
+                  }
+                }
               }
             }
 
-            if (!userId) {
-              const { data: adminRole } = await supabaseAdmin
-                .from("user_roles")
-                .select("user_id")
-                .eq("role", "admin")
-                .limit(1)
-                .maybeSingle();
-              if (adminRole?.user_id) {
-                userId = adminRole.user_id;
+            const rawText = finalAnswer || result.text?.trim() || "";
+
+            // Comprehensive multi-layer cleaner:
+            // 1. Remove XML think tags (<think>...</think>)
+            // 2. Remove Thought:/Reasoning: blocks
+            // 3. Remove "Here's a thinking process..." and "User wants... According to rules..." meta commentary
+            // 4. Remove "Let me check..." preambles
+            // 5. Remove "User Safety: safe" moderation classifiers
+            fullText = rawText
+              .replace(/<think>[\s\S]*?<\/think>/gi, "")
+              .replace(/^(Thought|Reasoning|Thinking):[\s\S]*?\n/gi, "")
+              .replace(/^(Here's a thinking process|User wants|According to rules|Let's see the catalog|We need to show|We have catalog highlights|We need to respond)[\s\S]*?(?=\n\n|\n[A-Z]|\n•|\n\d|\n-|$)/gi, "")
+              .replace(/^\s*(let me (check|search|look)|checking live database|searching database)[^.\n]*[.!]?\s*/gim, "")
+              .replace(/^User Safety: safe\s*/gim, "")
+              .trim();
+
+            // Detect if capture_lead tool was called in any step
+            const hasCaptureLeadCall = result.steps.some((step) =>
+              step.toolCalls?.some((tc) => tc.toolName === "capture_lead"),
+            );
+
+            if (hasCaptureLeadCall) {
+              leadCaptured = true;
+              if (!fullText?.trim()) {
+                fullText =
+                  "✅ **Shukriya! Aapki inquiry kamyabi k saath record ho gayi hai!** 🎉\n\n" +
+                  "Hamara numainda bahut jald — usually **24 ghante ke andar** — aap se phone par contact karega. Shukriya!\n\n" +
+                  "[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]";
               }
-            }
-
-            // Hardcoded fallback: GlobeTrek Admin user
-            if (!userId) {
-              userId = "ce083b9c-d6d3-46b4-827a-2bd3a569e978";
-            }
-
-            const { error: insertErr } = await supabaseAdmin.from("ai_usage_events").insert({
-              user_id: userId,
-              kind: "description",
-            });
-
-            if (insertErr) {
-              console.error("[ai-chat logging error]:", insertErr.message);
-            } else {
-              console.log("[ai-chat] AI usage event logged for user:", userId);
-            }
-          } catch (e) {
-            console.warn("[ai-chat logging warning]:", e);
-          }
-          // Collect text from steps — prefer final step text (after tool resolution)
-          // over pre-tool filler statements or scratchpad reasoning
-          let finalAnswer = "";
-
-          if (result.steps && result.steps.length > 0) {
-            for (let i = result.steps.length - 1; i >= 0; i--) {
-              const step = result.steps[i];
-              if (step.text && step.text.trim().length > 0) {
-                let cleanStepText = step.text
-                  .replace(/<think>[\s\S]*?<\/think>/gi, "")
-                  .replace(/^(Thought|Reasoning|Thinking):[\s\S]*?\n/gi, "")
-                  .trim();
-                
-                if (cleanStepText && (!step.toolCalls || step.toolCalls.length === 0)) {
-                  finalAnswer = cleanStepText;
-                  break;
-                }
-                if (!finalAnswer && cleanStepText) {
-                  finalAnswer = cleanStepText;
-                }
-              }
-            }
-          }
-
-          const rawText = finalAnswer || result.text?.trim() || "";
-
-          // Comprehensive multi-layer cleaner:
-          // 1. Remove XML think tags (<think>...</think>)
-          // 2. Remove Thought:/Reasoning: blocks
-          // 3. Remove "Here's a thinking process..." and "User wants... According to rules..." meta commentary
-          // 4. Remove "Let me check..." preambles
-          // 5. Remove "User Safety: safe" moderation classifiers
-          fullText = rawText
-            .replace(/<think>[\s\S]*?<\/think>/gi, "")
-            .replace(/^(Thought|Reasoning|Thinking):[\s\S]*?\n/gi, "")
-            .replace(/^(Here's a thinking process|User wants|According to rules|Let's see the catalog|We need to show|We have catalog highlights|We need to respond)[\s\S]*?(?=\n\n|\n[A-Z]|\n•|\n\d|\n-|$)/gi, "")
-            .replace(/^\s*(let me (check|search|look)|checking live database|searching database)[^.\n]*[.!]?\s*/gim, "")
-            .replace(/^User Safety: safe\s*/gim, "")
-            .trim();
-
-          // Detect if capture_lead tool was called in any step
-          const hasCaptureLeadCall = result.steps.some((step) =>
-            step.toolCalls?.some((tc) => tc.toolName === "capture_lead"),
-          );
-
-          if (hasCaptureLeadCall) {
-            leadCaptured = true;
-            if (!fullText?.trim()) {
-              fullText =
-                "✅ **Shukriya! Aapki inquiry kamyabi k saath record ho gayi hai!** 🎉\n\n" +
-                "Hamara numainda bahut jald — usually **24 ghante ke andar** — aap se phone par contact karega. Shukriya!\n\n" +
-                "[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]";
             }
           }
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          fullText = `Sorry, a server error occurred: ${msg}`;
+          console.warn("[ai-chat execution warning]:", msg);
         }
 
         if (!leadCaptured && !fullText?.trim()) {
           const lastUserMsg = (messages[messages.length - 1]?.content || "").trim();
           const isEnglish = !/hai|hain|karo|batao|apna|chahta|shukriya|shamil|kardein|pasand|din/i.test(lastUserMsg);
 
-          if (isGenericTourQuery && catalogList.length > 0) {
+          if (preSearchResults.length > 0) {
+            const formattedMatches = preSearchResults.map(m => m.replace(/^[-\s]*MATCHED TOUR:\s*/i, "• ").replace(/·\s*id=[\w-]+/i, "")).join("\n");
+            fullText = isEnglish
+              ? `🌍 **Here is what we have available for your destination:**\n\n${formattedMatches}\n\n🛤️ Want a custom private group or family trip? [🌴 Build Your Custom Tour](/custom-tour)\n🎟️ [Browse All Tours](/tours)\n\n[[choose: 🇦🇪 Dubai | 🇹🇷 Turkey | 🇪🇺 Europe | 🌴 Build Custom Tour]]`
+              : `🌍 **Aapki request ke mutabiq humare paas yeh options available hain:**\n\n${formattedMatches}\n\n🛤️ Private customized trip ke liye: [🌴 Build Your Custom Tour](/custom-tour)\n🎟️ [Tamam Packages Dekhein](/tours)\n\n[[choose: 🇦🇪 Dubai | 🇹🇷 Turkey | 🇪🇺 Europe | 🌴 Build Custom Tour]]`;
+          } else if (isGenericTourQuery && catalogList.length > 0) {
             const toursList = catalogList.slice(0, 3).map(t => `• **${t.title}** (${t.duration_days}d) · from **${t.departure_city}** · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")}`).join("\n");
             fullText = isEnglish
               ? `🌴 **Explore Our Featured Tour Packages:**\n\n${toursList}\n\n🛤️ Need a private group or family trip? [🌴 Build Your Custom Tour](/custom-tour)\n🎟️ [Browse All Tours](/tours)\n\n[[choose: 🇦🇪 Dubai | 🇹🇷 Turkey | 🇪🇺 Europe | 🌴 Build Custom Tour]]`
