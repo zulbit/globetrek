@@ -155,6 +155,22 @@ export const getAIAnalyticsServer = createServerFn({ method: "GET" })
     const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
     let logs: AIEventLog[] = [];
+    let currentConfiguredModel = "openrouter/free";
+
+    try {
+      const { data: aiSetting } = await supabaseAdmin
+        .from("payment_gateway_settings")
+        .select("config")
+        .eq("provider", "openrouter_config")
+        .maybeSingle();
+
+      if (aiSetting?.config) {
+        const parsed = typeof aiSetting.config === "string" ? JSON.parse(aiSetting.config) : (aiSetting.config as any);
+        if (parsed.active_model) {
+          currentConfiguredModel = String(parsed.active_model);
+        }
+      }
+    } catch {}
 
     try {
       const { data: dbData, error } = await supabaseAdmin
@@ -176,15 +192,16 @@ export const getAIAnalyticsServer = createServerFn({ method: "GET" })
         logs = dbData.map((r: any) => {
           const rawFeature = r.kind || r.feature || "ai_chat";
           const featureName = FEATURE_NAME_MAP[rawFeature] || rawFeature;
+          const isFree = currentConfiguredModel.includes("free") || currentConfiguredModel.includes("gemma");
           return {
             id: r.id,
             created_at: r.created_at,
             feature: featureName,
-            model: r.model || "openai/gpt-4o-mini",
+            model: r.model || currentConfiguredModel,
             prompt_tokens: r.prompt_tokens || 120,
             completion_tokens: r.completion_tokens || 180,
             total_tokens: r.total_tokens || (r.prompt_tokens || 120) + (r.completion_tokens || 180),
-            estimated_cost_usd: r.cost_usd || 0.000045,
+            estimated_cost_usd: isFree ? 0 : (r.cost_usd || 0.000045),
             latency_ms: r.latency_ms || 420,
             status: r.status === "error" ? "error" : "success",
           };
@@ -198,15 +215,17 @@ export const getAIAnalyticsServer = createServerFn({ method: "GET" })
     // Generate fallback demo metrics if DB table empty
     if (logs.length === 0) {
       isDemoMode = true;
+      const isFree = currentConfiguredModel.includes("free") || currentConfiguredModel.includes("gemma");
+      const cost = isFree ? 0 : 0.000045;
       logs = [
-        { id: "evt-01", created_at: new Date().toISOString(), feature: "AI Concierge Chat", model: "openai/gpt-4o-mini", prompt_tokens: 140, completion_tokens: 220, total_tokens: 360, estimated_cost_usd: 0.000054, latency_ms: 380, status: "success" },
-        { id: "evt-02", created_at: new Date(now.getTime() - 40 * 60 * 1000).toISOString(), feature: "Tour AI Generator", model: "openai/gpt-4o-mini", prompt_tokens: 180, completion_tokens: 190, total_tokens: 370, estimated_cost_usd: 0.000056, latency_ms: 450, status: "success" },
-        { id: "evt-03", created_at: new Date(now.getTime() - 2 * 3600 * 1000).toISOString(), feature: "Visa Lookup AI", model: "openai/gpt-4o-mini", prompt_tokens: 95, completion_tokens: 140, total_tokens: 235, estimated_cost_usd: 0.000035, latency_ms: 310, status: "success" },
-        { id: "evt-04", created_at: new Date(now.getTime() - 6 * 3600 * 1000).toISOString(), feature: "Vendor Guide AI", model: "openai/gpt-4o-mini", prompt_tokens: 210, completion_tokens: 160, total_tokens: 370, estimated_cost_usd: 0.000055, latency_ms: 520, status: "success" },
-        { id: "evt-05", created_at: new Date(now.getTime() - 14 * 3600 * 1000).toISOString(), feature: "AI Concierge Chat", model: "openai/gpt-4o-mini", prompt_tokens: 130, completion_tokens: 240, total_tokens: 370, estimated_cost_usd: 0.000056, latency_ms: 390, status: "success" },
-        { id: "evt-06", created_at: new Date(now.getTime() - 26 * 3600 * 1000).toISOString(), feature: "AI Concierge Chat", model: "openai/gpt-4o-mini", prompt_tokens: 150, completion_tokens: 210, total_tokens: 360, estimated_cost_usd: 0.000054, latency_ms: 410, status: "success" },
-        { id: "evt-07", created_at: new Date(now.getTime() - 3 * 86400 * 1000).toISOString(), feature: "Tour AI Generator", model: "openai/gpt-4o-mini", prompt_tokens: 190, completion_tokens: 200, total_tokens: 390, estimated_cost_usd: 0.000059, latency_ms: 480, status: "success" },
-        { id: "evt-08", created_at: new Date(now.getTime() - 5 * 86400 * 1000).toISOString(), feature: "AI Concierge Chat", model: "openai/gpt-4o-mini", prompt_tokens: 120, completion_tokens: 180, total_tokens: 300, estimated_cost_usd: 0.000045, latency_ms: 360, status: "success" },
+        { id: "evt-01", created_at: new Date().toISOString(), feature: "AI Concierge Chat", model: currentConfiguredModel, prompt_tokens: 140, completion_tokens: 220, total_tokens: 360, estimated_cost_usd: cost, latency_ms: 380, status: "success" },
+        { id: "evt-02", created_at: new Date(now.getTime() - 40 * 60 * 1000).toISOString(), feature: "Tour AI Generator", model: currentConfiguredModel, prompt_tokens: 180, completion_tokens: 190, total_tokens: 370, estimated_cost_usd: cost, latency_ms: 450, status: "success" },
+        { id: "evt-03", created_at: new Date(now.getTime() - 2 * 3600 * 1000).toISOString(), feature: "Visa Lookup AI", model: currentConfiguredModel, prompt_tokens: 95, completion_tokens: 140, total_tokens: 235, estimated_cost_usd: cost, latency_ms: 310, status: "success" },
+        { id: "evt-04", created_at: new Date(now.getTime() - 6 * 3600 * 1000).toISOString(), feature: "Vendor Guide AI", model: currentConfiguredModel, prompt_tokens: 210, completion_tokens: 160, total_tokens: 370, estimated_cost_usd: cost, latency_ms: 520, status: "success" },
+        { id: "evt-05", created_at: new Date(now.getTime() - 14 * 3600 * 1000).toISOString(), feature: "AI Concierge Chat", model: currentConfiguredModel, prompt_tokens: 130, completion_tokens: 240, total_tokens: 370, estimated_cost_usd: cost, latency_ms: 390, status: "success" },
+        { id: "evt-06", created_at: new Date(now.getTime() - 26 * 3600 * 1000).toISOString(), feature: "AI Concierge Chat", model: currentConfiguredModel, prompt_tokens: 150, completion_tokens: 210, total_tokens: 360, estimated_cost_usd: cost, latency_ms: 410, status: "success" },
+        { id: "evt-07", created_at: new Date(now.getTime() - 3 * 86400 * 1000).toISOString(), feature: "Tour AI Generator", model: currentConfiguredModel, prompt_tokens: 190, completion_tokens: 200, total_tokens: 390, estimated_cost_usd: cost, latency_ms: 480, status: "success" },
+        { id: "evt-08", created_at: new Date(now.getTime() - 5 * 86400 * 1000).toISOString(), feature: "AI Concierge Chat", model: currentConfiguredModel, prompt_tokens: 120, completion_tokens: 180, total_tokens: 300, estimated_cost_usd: cost, latency_ms: 360, status: "success" },
       ];
     }
 
