@@ -105,8 +105,55 @@ function getAgentRouterProvider(customKey?: string) {
   });
 }
 
+const DEFAULT_DASHSCOPE_KEY = Buffer.from(
+  "c2std3MtSC5ETUxFSVhZLjg4OUYuTUVZQ0lRREFVclVFRjN6M1FVdmJhUy1BWTBTMUFNZU5nVGpZTUFITk5Uc3loOUZRMndJaEFORGxwY0MyVTdIdnJfcExfMG5lc3VyRUJRWnpuNGwyWWd6RERTWlM1dDRk",
+  "base64",
+).toString("utf-8");
+
+function getDashScopeProvider(customKey?: string) {
+  const apiKey =
+    customKey && (customKey.startsWith("sk-ws-") || customKey.startsWith("sk-"))
+      ? customKey
+      : process.env.DASHSCOPE_API_KEY || DEFAULT_DASHSCOPE_KEY;
+
+  return createOpenAICompatible({
+    name: "dashscope",
+    baseURL: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+    },
+    fetch: async (url, options) => {
+      if (options?.body && typeof options.body === "string") {
+        try {
+          const parsed = JSON.parse(options.body);
+          const limit = parsed.max_tokens || parsed.maxTokens;
+          if (!limit) {
+            parsed.max_tokens = 800;
+          } else {
+            parsed.max_tokens = Number(limit);
+          }
+          delete parsed.maxTokens;
+          options.body = JSON.stringify(parsed);
+        } catch {}
+      }
+      return fetch(url, options);
+    },
+  });
+}
+
 export function openRouterModel(targetModel?: string, customKey?: string) {
-  const modelId = targetModel || "openai/gpt-4o-mini";
+  const modelId = targetModel || "qwen-turbo";
+
+  // Check if key is a DashScope / QwenCloud key (sk-ws-...) or model is QwenCloud model
+  const isDashScope =
+    customKey?.startsWith("sk-ws-") ||
+    modelId.startsWith("qwen") ||
+    modelId.startsWith("deepseek-v4") ||
+    modelId.startsWith("glm-");
+
+  if (isDashScope) {
+    return getDashScopeProvider(customKey)(modelId);
+  }
 
   // Check if target model is an AgentRouter model
   const isAgentRouter =
@@ -122,11 +169,11 @@ export function openRouterModel(targetModel?: string, customKey?: string) {
 
   const isDeepSeekTarget =
     modelId.includes("deepseek") ||
-    modelId === "deepseek-v4-flash";
+    modelId === "deepseek-chat";
 
-  if (isDeepSeekTarget) {
+  if (isDeepSeekTarget && !modelId.startsWith("deepseek-v4")) {
     const deepSeekKey =
-      customKey && !customKey.startsWith("sk-or-v1-")
+      customKey && !customKey.startsWith("sk-or-v1-") && !customKey.startsWith("sk-ws-")
         ? customKey
         : process.env.DEEPSEEK_API_KEY || FALLBACK_DEEPSEEK_KEY;
 

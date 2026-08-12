@@ -72,12 +72,16 @@ export const Route = createFileRoute("/_authenticated/admin/ai")({
 });
 
 const PRESET_MODELS = [
-  { id: "openai/gpt-4o-mini", label: "OpenAI GPT-4o Mini (Fast & Recommended · Paid)", isFree: false },
-  { id: "google/gemma-4-26b-a4b-it:free", label: "Google Gemma 4 26B (100% FREE · Zero Balance)", isFree: true },
+  { id: "qwen-turbo", label: "Qwen Turbo (⚡ Ultra-Fast 400ms · 1M Free Tokens · QwenCloud)", isFree: true },
+  { id: "qwen-plus", label: "Qwen Plus (✨ High Accuracy · 1M Free Tokens · QwenCloud)", isFree: true },
+  { id: "qwen-flash", label: "Qwen Flash (⚡ High-Speed · 1M Free Tokens · QwenCloud)", isFree: true },
+  { id: "qwen3.8-max", label: "Qwen 3.8 Max (👑 2.4T MoE Flagship · 1M Free Tokens · QwenCloud)", isFree: true },
+  { id: "qwen3.7-flash", label: "Qwen 3.7 Flash (⚡ Multilingual Flash · 1M Free Tokens · QwenCloud)", isFree: true },
+  { id: "deepseek-v4-flash", label: "DeepSeek V4 Flash (⚡ DeepSeek on QwenCloud · 1M Free Tokens)", isFree: true },
   { id: "openrouter/free", label: "OpenRouter Free Router (100% FREE · Auto-Routing)", isFree: true },
-  { id: "poolside/laguna-xs-2.1:free", label: "Poolside Laguna XS 2.1 (100% FREE · Zero Balance)", isFree: true },
-  { id: "nvidia/nemotron-3.5-lightning:free", label: "NVIDIA Nemotron 3.5 Lightning (100% FREE)", isFree: true },
-  { id: "deepseek/deepseek-chat", label: "DeepSeek V3 / Chat (OpenRouter Gateway · Paid)", isFree: false },
+  { id: "google/gemma-4-26b-a4b-it:free", label: "Google Gemma 4 26B (OpenRouter · 100% FREE)", isFree: true },
+  { id: "openai/gpt-4o-mini", label: "OpenAI GPT-4o Mini (Paid · OpenAI Fast)", isFree: false },
+  { id: "deepseek/deepseek-chat", label: "DeepSeek V3 / Chat (Paid OpenRouter Gateway)", isFree: false },
   { id: "anthropic/claude-3.5-haiku", label: "Anthropic Claude 3.5 Haiku (Paid)", isFree: false },
 ];
 

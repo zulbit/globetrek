@@ -582,6 +582,80 @@ export const verifyAIModelServer = createServerFn({ method: "POST" })
       }
     }
 
+    const isDashScope =
+      custom_api_key?.startsWith("sk-ws-") ||
+      targetModel.startsWith("qwen") ||
+      targetModel.startsWith("deepseek-v4") ||
+      targetModel.startsWith("glm-");
+
+    if (isDashScope) {
+      const startTime = Date.now();
+      const dashKey =
+        custom_api_key && (custom_api_key.startsWith("sk-ws-") || custom_api_key.startsWith("sk-"))
+          ? custom_api_key
+          : process.env.DASHSCOPE_API_KEY || "sk-ws-H.DMLEIXY.889F.MEYCIQDAOrUEF3z3QUvbaS-AY0S5AMeNgTjYMAHNNTsyh9FQ2wIhAODlpcC2U7Hvr_pL_0nesurEBQZzn4l2YgzDDSZS5t4d";
+
+      try {
+        const testRes = await fetch("https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${dashKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: targetModel,
+            messages: [{ role: "user", content: "Reply with 'OK - GlobeTrek AI Online' and 1 travel tip for Pakistan." }],
+            max_tokens: 150,
+          }),
+        });
+
+        const latency_ms = Date.now() - startTime;
+
+        if (!testRes.ok) {
+          const errText = await testRes.text();
+          return {
+            success: false,
+            model_id: targetModel,
+            model_name: `${targetModel} (QwenCloud / DashScope)`,
+            is_free: true,
+            context_length: 131072,
+            prompt_price_1m_usd: 0,
+            completion_price_1m_usd: 0,
+            latency_ms,
+            error: `QwenCloud / DashScope API Error (${testRes.status}): ${errText}`,
+          };
+        }
+
+        const resJson = await testRes.json();
+        const output = resJson.choices?.[0]?.message?.content || "Model connected successfully.";
+
+        return {
+          success: true,
+          model_id: targetModel,
+          model_name: `${targetModel} (QwenCloud · 1M Free Tokens Plan)`,
+          is_free: true,
+          context_length: 131072,
+          prompt_price_1m_usd: 0,
+          completion_price_1m_usd: 0,
+          latency_ms,
+          sample_output: output,
+        };
+      } catch (err: any) {
+        const latency_ms = Date.now() - startTime;
+        return {
+          success: false,
+          model_id: targetModel,
+          model_name: `${targetModel} (QwenCloud)`,
+          is_free: true,
+          context_length: 131072,
+          prompt_price_1m_usd: 0,
+          completion_price_1m_usd: 0,
+          latency_ms,
+          error: err?.message || "QwenCloud connection failed.",
+        };
+      }
+    }
+
     const apiKey = custom_api_key?.trim() || process.env.OPENROUTER_API_KEY || process.env.LOVABLE_API_KEY || FALLBACK_KEY;
 
     let is_free = targetModel.endsWith(":free");
