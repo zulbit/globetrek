@@ -423,9 +423,10 @@ function AuthPage() {
                         setResetEmail(email);
                         setForgotOpen(true);
                       }}
-                      className="text-xs text-primary hover:underline font-medium transition-colors"
+                      className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 hover:underline font-semibold transition-colors"
                     >
-                      Forgot password?
+                      <KeyRound className="size-3" />
+                      <span>Forgot password?</span>
                     </button>
                   </div>
                   <div className="relative">
@@ -448,9 +449,23 @@ function AuthPage() {
                     </button>
                   </div>
                 </div>
-                <Button disabled={loading} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+                <Button disabled={loading} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold">
                   {loading && <Loader2 className="mr-2 size-4 animate-spin" />} Sign in
                 </Button>
+
+                <div className="text-center pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setResetEmail(email);
+                      setForgotOpen(true);
+                    }}
+                    className="inline-flex items-center gap-1.5 text-xs text-white/60 hover:text-emerald-400 transition-colors"
+                  >
+                    <MessageCircle className="size-3.5 text-emerald-400" />
+                    <span>Need help logging in? <strong>WhatsApp Support (+92 349 0386131)</strong></span>
+                  </button>
+                </div>
               </form>
             ) : tab === "reset" ? (
               <form onSubmit={handleUpdateNewPassword} className="space-y-4">
