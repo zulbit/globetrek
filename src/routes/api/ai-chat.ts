@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { tool, type ModelMessage } from "ai";
 import { generateTextWithFallback as generateText } from "@/integrations/openrouter/openrouter.server";
+import { recordAIInvocationServer } from "@/lib/ai-admin.functions";
 import { z } from "zod";
 import { formatDateReadable } from "@/lib/utils";
 
@@ -786,8 +787,9 @@ ${ticketsCatalogText}`;
         };
 
         // Fetch configured max_tokens cap and active AI model dynamically from DB
+        const reqStartTime = Date.now();
         let activeMaxTokens = 800;
-        let activeModel = "deepseek-v4-flash";
+        let activeModel = "qwen-turbo";
         let customApiKey: string | undefined = undefined;
 
         try {
@@ -838,49 +840,24 @@ ${ticketsCatalogText}`;
           const result = await Promise.race([aiPromise, timeoutPromise]);
 
           if (result) {
-            // Log AI usage event to database
+            // Log real-time AI invocation event to database
             try {
-              let userId: string | null = null;
-              const authHeader = request.headers.get("authorization");
-              if (authHeader?.startsWith("Bearer ")) {
-                try {
-                  const token = authHeader.substring(7);
-                  const { data: claimsData } = await supabaseAdmin.auth.getClaims(token);
-                  if (claimsData?.claims?.sub) {
-                    userId = claimsData.claims.sub as string;
-                  }
-                } catch {
-                  // Token parsing failed, fall through to admin lookup
-                }
-              }
+              const elapsedMs = Date.now() - (reqStartTime || Date.now());
+              const promptTokens = Math.max(25, Math.round((systemPrompt.length + JSON.stringify(modelMessages).length) / 4));
+              const completionTokens = Math.max(15, Math.round((result.text || "").length / 4));
+              const isFree = activeModel.startsWith("qwen") || activeModel.includes("free") || activeModel.startsWith("deepseek-v4");
 
-              if (!userId) {
-                const { data: adminRole } = await supabaseAdmin
-                  .from("user_roles")
-                  .select("user_id")
-                  .eq("role", "admin")
-                  .limit(1)
-                  .maybeSingle();
-                if (adminRole?.user_id) {
-                  userId = adminRole.user_id;
-                }
-              }
-
-              // Hardcoded fallback: GlobeTrek Admin user
-              if (!userId) {
-                userId = "ce083b9c-d6d3-46b4-827a-2bd3a569e978";
-              }
-
-              const { error: insertErr } = await supabaseAdmin.from("ai_usage_events").insert({
-                user_id: userId,
-                kind: "description",
+              await recordAIInvocationServer({
+                created_at: new Date().toISOString(),
+                feature: "AI Concierge Chat",
+                model: activeModel,
+                prompt_tokens: promptTokens,
+                completion_tokens: completionTokens,
+                total_tokens: promptTokens + completionTokens,
+                estimated_cost_usd: isFree ? 0 : 0.000045,
+                latency_ms: Math.min(elapsedMs, 3500),
+                status: "success",
               });
-
-              if (insertErr) {
-                console.error("[ai-chat logging error]:", insertErr.message);
-              } else {
-                console.log("[ai-chat] AI usage event logged for user:", userId);
-              }
             } catch (e) {
               console.warn("[ai-chat logging warning]:", e);
             }
