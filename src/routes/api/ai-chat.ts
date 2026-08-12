@@ -843,8 +843,7 @@ ${ticketsCatalogText}`;
           if (aiSetting?.config) {
             const parsed = typeof aiSetting.config === "string" ? JSON.parse(aiSetting.config) : (aiSetting.config as any);
             if (parsed.max_tokens) {
-              // Ensure chat completion token limit is at least 800 so responses are never truncated mid-sentence
-              activeMaxTokens = Math.max(Number(parsed.max_tokens), 800);
+              activeMaxTokens = Math.max(50, Math.min(4000, Number(parsed.max_tokens)));
             }
             if (parsed.active_model) {
               activeModel = String(parsed.active_model);
