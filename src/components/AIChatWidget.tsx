@@ -27,26 +27,40 @@ function parseChips(content: string): { text: string; chips: string[] } {
     chips.push(...explicit);
   }
 
-  // If no explicit [[choose:]] tag was provided, automatically extract numbered headers / package titles
+  // If no explicit [[choose:]] tag was provided, automatically extract numbered headers or infer smart context
   if (chips.length === 0) {
     const lines = content.split("\n");
     for (const line of lines) {
-      // Match headers like "1. 🇦🇪 UAE Tour" or "3. 🇲🇾 Malaysia - Vietnam - Thailand"
-      const match = line.match(/^\s*\d+\.\s*([^\n—•\–\:]+)/i);
+      const match = line.match(/^\s*(?:\d+\.|\-|\•)\s*([^\n—•\–\:]+)/i);
       if (match) {
         const title = match[1].replace(/[*_#]/g, "").trim();
         if (
           title &&
-          title.length < 40 &&
-          !/special tip|aap humara|note|fixed vendor|visa filing|travel insurance|flight ticketing|exclusive & custom/i.test(title)
+          title.length < 35 &&
+          !/special tip|aap humara|note|fixed vendor|visa filing|travel insurance|flight ticketing|exclusive & custom|medical emergency|trip cancellation|lost luggage|24\/7 assistance/i.test(title)
         ) {
           chips.push(title);
         }
       }
     }
 
-    if (chips.length > 0 && /custom|exclusive|private/i.test(content) && !chips.some((c) => /custom/i.test(c))) {
-      chips.push("🌴 Build Custom Tour");
+    if (chips.length === 0) {
+      const lower = content.toLowerCase();
+      if (lower.includes("insurance") || lower.includes("coverage") || lower.includes("schengen") || lower.includes("medical")) {
+        chips.push("🛡️ Schengen Silver", "🌍 Worldwide Cover", "📄 Insurance FAQs", "🌴 Build Custom Tour");
+      } else if (lower.includes("visa") || lower.includes("embassy") || lower.includes("refusal")) {
+        chips.push("📄 Request Visa Consultation", "📋 Document Checklist", "🇹🇷 Turkey Visa", "🌴 Custom Trip");
+      } else if (lower.includes("flight") || lower.includes("ticket") || lower.includes("umrah")) {
+        chips.push("✈️ Request Ticket Quote", "🕋 Umrah Flight Desk", "🌴 Custom Trip");
+      } else if (lower.includes("dubai") || lower.includes("uae")) {
+        chips.push("💳 Reserve Slots", "📄 Dubai Visa Info", "🌴 Custom Dubai Trip");
+      } else if (lower.includes("turkey") || lower.includes("istanbul")) {
+        chips.push("💳 Reserve Slots", "📄 Turkey Visa Info", "🌴 Custom Turkey Trip");
+      } else if (lower.includes("europe") || lower.includes("paris") || lower.includes("switzerland")) {
+        chips.push("💳 Reserve Slots", "📄 Schengen Visa Info", "🌴 Custom Europe Trip");
+      } else {
+        chips.push("🇦🇪 Dubai", "🇹🇷 Turkey", "🇪🇺 Europe", "🌴 Build Custom Tour");
+      }
     }
   }
 
@@ -72,6 +86,22 @@ const COUNTRY_FLAGS: Record<string, string> = {
 function getChipStyle(chipText: string): { label: string; className: string } {
   const lower = chipText.toLowerCase().trim();
 
+  if (lower.includes("reserve slot") || lower.includes("book now") || lower.includes("book slot")) {
+    return {
+      label: chipText.includes("💳") ? chipText : `💳 ${chipText}`,
+      className:
+        "border-emerald-400 bg-emerald-500/25 text-emerald-200 font-semibold hover:bg-emerald-500/40 hover:border-emerald-300 shadow-sm shadow-emerald-950/50 ring-1 ring-emerald-500/30",
+    };
+  }
+
+  if (lower.includes("custom") || lower.includes("build")) {
+    return {
+      label: chipText.includes("🌴") ? chipText : `🌴 ${chipText}`,
+      className:
+        "border-amber-500/50 bg-amber-500/15 text-amber-200 hover:bg-amber-500/30 hover:border-amber-400 shadow-xs shadow-amber-950/40",
+    };
+  }
+
   if (lower.includes("roman urdu")) {
     return {
       label: chipText.includes("🇵🇰") ? chipText : "Roman Urdu 🇵🇰",
@@ -86,30 +116,23 @@ function getChipStyle(chipText: string): { label: string; className: string } {
         "border-sky-500/40 bg-sky-500/15 text-sky-300 hover:bg-sky-500/30 hover:border-sky-400 shadow-xs shadow-sky-950/40",
     };
   }
-  if (lower === "tour packages" || lower === "tours") {
+  if (lower.includes("insurance") || lower.includes("schengen shield") || lower.includes("schengen silver") || lower.includes("worldwide")) {
     return {
-      label: "Tour Packages 🌴",
-      className:
-        "border-amber-500/40 bg-amber-500/15 text-amber-300 hover:bg-amber-500/30 hover:border-amber-400 shadow-xs shadow-amber-950/40",
-    };
-  }
-  if (lower === "visa services" || lower === "visas") {
-    return {
-      label: "Visa Services 📄",
-      className:
-        "border-teal-500/40 bg-teal-500/15 text-teal-300 hover:bg-teal-500/30 hover:border-teal-400 shadow-xs shadow-teal-950/40",
-    };
-  }
-  if (lower === "travel insurance" || lower === "insurance") {
-    return {
-      label: "Travel Insurance 🛡️",
+      label: chipText.includes("🛡️") || chipText.includes("🌍") ? chipText : `🛡️ ${chipText}`,
       className:
         "border-purple-500/40 bg-purple-500/15 text-purple-300 hover:bg-purple-500/30 hover:border-purple-400 shadow-xs shadow-purple-950/40",
     };
   }
-  if (lower === "flight tickets" || lower === "tickets") {
+  if (lower.includes("visa")) {
     return {
-      label: "Flight Tickets ✈️",
+      label: chipText.includes("📄") || chipText.includes("📋") ? chipText : `📄 ${chipText}`,
+      className:
+        "border-teal-500/40 bg-teal-500/15 text-teal-300 hover:bg-teal-500/30 hover:border-teal-400 shadow-xs shadow-teal-950/40",
+    };
+  }
+  if (lower.includes("flight") || lower.includes("ticket") || lower.includes("umrah")) {
+    return {
+      label: chipText.includes("✈️") || chipText.includes("🕋") ? chipText : `✈️ ${chipText}`,
       className:
         "border-blue-500/40 bg-blue-500/15 text-blue-300 hover:bg-blue-500/30 hover:border-blue-400 shadow-xs shadow-blue-950/40",
     };

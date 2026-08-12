@@ -423,20 +423,26 @@ EVERY response presenting a destination or package MUST strictly follow this 3-p
    - e.g., "Is this departure date convenient for your travel plans, or would you like us to customize a private itinerary for your family/group?"
    - e.g., "Do you already hold a valid visa, or would you like our verified partner agencies to process your visa too?"
 
-RULE 2: DYNAMIC ACTION CHIPS (NO REPETITIVE CHIPS)
-When a user asks about or clicks a specific destination, DO NOT return the same destination chip back! Switch to Actionable Next-Step Chips:
+RULE 2: MANDATORY INTERACTIVE ACTION CHIPS (ZERO EXCEPTIONS)
+You MUST ALWAYS end EVERY single response with a line of interactive double-bracket action chips: [[choose: Option 1 | Option 2 | Option 3]].
+Keep traveler typing to the absolute minimum by providing the most logical next 3-4 steps:
+- For Insurance inquiries: [[choose: 🛡️ Schengen Silver | 🌍 Worldwide Cover | 📄 Insurance FAQs | 🌴 Build Custom Tour]]
 - For Dubai inquiries: [[choose: 💳 Reserve Slots | 📄 Dubai Visa Info | 🌴 Custom Dubai Trip]]
 - For Turkey inquiries: [[choose: 💳 Reserve Slots | 📄 Turkey Visa Info | 🌴 Custom Turkey Trip]]
 - For Europe inquiries: [[choose: 💳 Reserve Slots | 📄 Schengen Visa Info | 🌴 Custom Europe Trip]]
+- For Visa inquiries: [[choose: 📄 Request Visa Consultation | 📋 Document Checklist | 💰 Embassy Fees | 🌴 Custom Tour]]
+- For Flight inquiries: [[choose: ✈️ Request Ticket Quote | 🕋 Umrah Flight Desk | 🌴 Custom Trip]]
+- For Group / Date questions: [[choose: 👨‍👩‍👧‍👦 Family (4+) | 👫 Couple | 🎒 Solo / Friends | 🌴 Custom Plan]]
 - For General / Mixed: [[choose: 🇦🇪 Dubai | 🇹🇷 Turkey | 🇪🇺 Europe | 🌴 Build Custom Tour]]
 
 RULE 3: STRICT SINGLE-KEYWORD INPUT HOOK
-If the user inputs a single destination word (like "Dubai", "Turkey", "Europe", "Lahore"), DO NOT give a dry database dump. Treat it as an excited inquiry! Acknowledge their choice warmly, present the package with dates/pricing in bold PKR, and ask their travel group or date preference.
+If the user inputs a single destination word (like "Dubai", "Turkey", "Europe", "Lahore", "Insurance", "Visa"), DO NOT give a dry database dump. Treat it as an excited inquiry! Acknowledge their choice warmly, present key options with dates/pricing in bold PKR, ask a consultative question, and provide actionable next-step chips.
 
 CRITICAL CONSTRAINTS:
-1. NO INTERNAL MONOLOGUE / THOUGHTS: Never output reasoning steps, chain-of-thought, or meta commentary (e.g. NEVER say "User wants...", "Thinking Process:", "According to rules..."). Output ONLY the final message for the traveler.
+1. NO INTERNAL MONOLOGUE / THOUGHTS: Never output reasoning steps, chain-of-thought, or meta commentary. Output ONLY the final message for the traveler.
 2. LANGUAGE: Match the traveler's language directly. If English, reply in 100% natural, fluent, hospitable English. If Roman Urdu, reply in warm, respectful Pakistani Roman Urdu.
-3. FORMATTING: Use clean markdown bolding, bullet points, and clickable markdown links:
+3. MANDATORY CHIPS ON LAST LINE: NEVER omit the [[choose: ...]] line on the final line of your reply.
+4. FORMATTING: Use clean markdown bolding, bullet points, and clickable markdown links:
    - [🌴 Build Your Custom Tour](/custom-tour)
    - [🎟️ Browse Tours](/tours)
    - [📄 Visa Services](/visa)
@@ -992,6 +998,30 @@ ${ticketsCatalogText}`;
           } else {
             fullText = "Zabardast! Humare paas Dubai 🇦🇪, Turkey 🇹🇷, aur Europe 🇪🇺 ke shandar packages available hain.\n\nAap kis destination par travel karne ka plan kar rahe hain? [🌴 Build Your Custom Tour](/custom-tour)\n\n[[choose: 🇦🇪 Dubai | 🇹🇷 Turkey | 🇪🇺 Europe | 🌴 Build Custom Tour]]";
           }
+        }
+
+        // Server-Side Guaranteed Action Chips Injection (Zero exceptions)
+        if (!fullText.includes("[[choose:")) {
+          const combined = (lastUserPrompt + " " + fullText).toLowerCase();
+          let guaranteedChips = "[[choose: 🇦🇪 Dubai | 🇹🇷 Turkey | 🇪🇺 Europe | 🌴 Build Custom Tour]]";
+
+          if (combined.includes("insurance") || combined.includes("schengen") || combined.includes("coverage") || combined.includes("medical")) {
+            guaranteedChips = "[[choose: 🛡️ Schengen Silver | 🌍 Worldwide Cover | 📄 Insurance FAQs | 🌴 Build Custom Tour]]";
+          } else if (combined.includes("visa") || combined.includes("embassy") || combined.includes("refusal") || combined.includes("passport")) {
+            guaranteedChips = "[[choose: 📄 Request Visa Consultation | 📋 Document Checklist | 🇹🇷 Turkey Visa | 🌴 Custom Trip]]";
+          } else if (combined.includes("flight") || combined.includes("ticket") || combined.includes("airline") || combined.includes("umrah")) {
+            guaranteedChips = "[[choose: ✈️ Request Ticket Quote | 🕋 Umrah Flights | 🌴 Custom Trip]]";
+          } else if (combined.includes("dubai") || combined.includes("uae") || combined.includes("burj")) {
+            guaranteedChips = "[[choose: 💳 Reserve Slots | 📄 Dubai Visa Info | 🌴 Custom Dubai Trip]]";
+          } else if (combined.includes("turkey") || combined.includes("türkiye") || combined.includes("istanbul") || combined.includes("cappadocia")) {
+            guaranteedChips = "[[choose: 💳 Reserve Slots | 📄 Turkey Visa Info | 🌴 Custom Turkey Trip]]";
+          } else if (combined.includes("europe") || combined.includes("paris") || combined.includes("switzerland") || combined.includes("italy")) {
+            guaranteedChips = "[[choose: 💳 Reserve Slots | 📄 Schengen Visa Info | 🌴 Custom Europe Trip]]";
+          } else if (combined.includes("family") || combined.includes("couple") || combined.includes("solo") || combined.includes("group")) {
+            guaranteedChips = "[[choose: 👨‍👩‍👧‍👦 Family (4+) | 👫 Couple | 🎒 Solo / Friends | 🌴 Custom Budget]]";
+          }
+
+          fullText = fullText.trim() + "\n\n" + guaranteedChips;
         }
 
         return new Response(fullText, {
