@@ -64,6 +64,8 @@ function cleanAccommodation(acc?: TourAccommodation) {
   if (acc.return_tickets_included !== undefined) out.return_tickets_included = Boolean(acc.return_tickets_included);
   if (acc.visa_included !== undefined) out.visa_included = Boolean(acc.visa_included);
   if (acc.insurance_included !== undefined) out.insurance_included = Boolean(acc.insurance_included);
+  if (acc.hotel_breakfast !== undefined) out.hotel_breakfast = Boolean(acc.hotel_breakfast);
+  if (acc.hotel_wifi !== undefined) out.hotel_wifi = Boolean(acc.hotel_wifi);
   if (acc.departure_date) out.departure_date = acc.departure_date;
   if (acc.return_date) out.return_date = acc.return_date;
   if (acc.booking_deadline) out.booking_deadline = acc.booking_deadline;

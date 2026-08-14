@@ -208,8 +208,8 @@ function TourDetail() {
               const returnDateStr = tour.accommodation?.return_date;
               const deadlineStr = tour.accommodation?.booking_deadline;
 
-              const formattedDepDate = depDateStr ? new Date(depDateStr).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Upcoming";
-              const formattedDeadline = deadlineStr ? new Date(deadlineStr).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
+              const formattedDepDate = depDateStr ? new Date(depDateStr).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "Upcoming";
+              const formattedDeadline = deadlineStr ? new Date(deadlineStr).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : null;
 
               return (
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

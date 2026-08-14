@@ -42,6 +42,8 @@ export type TourAccommodation = {
   return_tickets_included?: boolean;
   visa_included?: boolean;
   insurance_included?: boolean;
+  hotel_breakfast?: boolean;
+  hotel_wifi?: boolean;
   departure_date?: string;
   return_date?: string;
   booking_deadline?: string;
@@ -387,6 +389,12 @@ function parseAccommodation(raw: unknown): TourAccommodation | undefined {
   if (typeof o.insurance_included === "boolean") {
     acc.insurance_included = o.insurance_included;
   }
+  if (typeof o.hotel_breakfast === "boolean") {
+    acc.hotel_breakfast = o.hotel_breakfast;
+  }
+  if (typeof o.hotel_wifi === "boolean") {
+    acc.hotel_wifi = o.hotel_wifi;
+  }
   if (typeof o.departure_date === "string") acc.departure_date = o.departure_date;
   if (typeof o.return_date === "string") acc.return_date = o.return_date;
   if (typeof o.booking_deadline === "string") acc.booking_deadline = o.booking_deadline;
@@ -414,6 +422,20 @@ export function mapDbTour(row: DbTourRow): Tour {
   const seats = row.total_seats ?? match?.totalSeats ?? 20;
   const duration = row.duration_days ?? match?.durationDays ?? 7;
   const dbItinerary = parseItinerary(row.itinerary);
+  const parsedAcc = parseAccommodation(row.accommodation);
+
+  // Derive dynamic inclusions list based on accommodation / package coverage
+  const dynamicInclusions: string[] = [];
+  if (parsedAcc?.return_tickets_included) dynamicInclusions.push("Return Flight Tickets");
+  if (parsedAcc?.hotel_breakfast) dynamicInclusions.push("Daily Hotel Breakfast");
+  if (parsedAcc?.hotel_wifi) dynamicInclusions.push("Free Hotel High-Speed Wi-Fi");
+  if (parsedAcc?.visa_included) dynamicInclusions.push("Visa Filing & Processing");
+  if (parsedAcc?.insurance_included) dynamicInclusions.push("Travel Insurance Coverage");
+  if (parsedAcc?.standard) dynamicInclusions.push(`Accommodation: ${parsedAcc.standard}`);
+
+  const finalInclusions = dynamicInclusions.length > 0
+    ? dynamicInclusions
+    : (match?.inclusions ?? ["Return flights", "Hotels", "Daily breakfast"]);
   return {
     id: row.id,
     vendor_id: row.vendor_id ?? undefined,
@@ -425,7 +447,7 @@ export function mapDbTour(row: DbTourRow): Tour {
     nights: Math.max(1, duration - 1),
     departureCity: ((row.departure_city as DepartureCity) ?? match?.departureCity ?? "Lahore") as DepartureCity,
     vendor: match?.vendor ?? "Verified Vendor",
-    inclusions: match?.inclusions ?? ["Return flights", "Hotels", "Daily breakfast"],
+    inclusions: finalInclusions,
     pricePKR: Number(row.price_pkr),
     seatsLeft: Math.max(1, Math.floor(seats * 0.4)),
     totalSeats: seats,

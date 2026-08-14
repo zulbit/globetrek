@@ -109,7 +109,7 @@ const emptyForm = (vendor_id: string): FormState => ({
   vendor_id,
   title: "",
   description: "",
-  destination_country: "Turkey",
+  destination_country: "",
   departure_city: "Karachi",
   duration_days: 7,
   price_pkr: 250000,
@@ -671,7 +671,7 @@ function VendorTours() {
                       <span className="inline-flex items-center gap-1"><Users className="size-3" />{t.total_seats} seats</span>
                       {dateMeta.depDateStr && (
                         <span className="inline-flex items-center gap-1 font-medium text-foreground">
-                          <Clock className="size-3 text-amber-400" /> Departs: {dateMeta.depDateStr}
+                          <Clock className="size-3 text-amber-400" /> Departs: {new Date(dateMeta.depDateStr).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                         </span>
                       )}
                       {(() => {
@@ -681,6 +681,16 @@ function VendorTours() {
                             {acc.return_tickets_included === true && (
                               <span className="inline-flex items-center gap-1 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-400">
                                 ✓ Return tickets
+                              </span>
+                            )}
+                            {acc.hotel_breakfast === true && (
+                              <span className="inline-flex items-center gap-1 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400">
+                                ✓ Breakfast
+                              </span>
+                            )}
+                            {acc.hotel_wifi === true && (
+                              <span className="inline-flex items-center gap-1 rounded bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-blue-400">
+                                ✓ Wi-Fi
                               </span>
                             )}
                             {acc.visa_included === true && (
@@ -771,6 +781,31 @@ function VendorTours() {
                         onChange={(e) => setEditing({ ...editing, title: e.target.value })}
                         placeholder="e.g. 7-Day Turkey Explorer — Istanbul & Cappadocia" />
                     </div>
+                    <div>
+                      <Label>Destination country / countries</Label>
+                      <Input
+                        value={editing.destination_country}
+                        onChange={(e) => setEditing({ ...editing, destination_country: e.target.value })}
+                        placeholder="e.g. Japan-South Korea or Europe"
+                        list="global-countries"
+                      />
+                      <datalist id="global-countries">
+                        {DESTINATIONS.map((d) => <option key={d} value={d} />)}
+                      </datalist>
+                      <p className="mt-1 text-[10px] text-muted-foreground">
+                        For multi-countries, use hyphens (e.g. <strong>Japan-South Korea</strong>).
+                      </p>
+                    </div>
+                    <div>
+                      <Label>Departure city</Label>
+                      <Select value={editing.departure_city}
+                        onValueChange={(v) => setEditing({ ...editing, departure_city: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {DEPARTURE_CITIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div className="sm:col-span-2">
                       <div className="mb-1 flex items-center justify-between gap-2">
                         <Label>Short description</Label>
@@ -796,31 +831,6 @@ function VendorTours() {
                       <Textarea rows={3} value={editing.description}
                         onChange={(e) => setEditing({ ...editing, description: e.target.value })}
                         placeholder="One-paragraph pitch: highlights, inclusions, what makes it special." />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <Label>Destination country / countries</Label>
-                      <Input
-                        value={editing.destination_country}
-                        onChange={(e) => setEditing({ ...editing, destination_country: e.target.value })}
-                        placeholder="e.g. Malaysia-Vietnam-Thailand (use hyphens for multiple countries)"
-                        list="global-countries"
-                      />
-                      <datalist id="global-countries">
-                        {DESTINATIONS.map((d) => <option key={d} value={d} />)}
-                      </datalist>
-                      <p className="mt-1 text-[11px] text-muted-foreground">
-                        For multi-country tours, separate countries with a hyphen (e.g. <strong>Malaysia-Vietnam-Thailand</strong> or enter <strong>Europe</strong>). Separate visa entries will be generated automatically.
-                      </p>
-                    </div>
-                    <div>
-                      <Label>Departure city</Label>
-                      <Select value={editing.departure_city}
-                        onValueChange={(v) => setEditing({ ...editing, departure_city: v })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {DEPARTURE_CITIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
                     </div>
                   </div>
                 </section>
@@ -892,7 +902,13 @@ function VendorTours() {
                             },
                           });
                         }} />
-                      <p className="mt-1 text-[10px] text-muted-foreground">When the group departs.</p>
+                      <p className="mt-1 text-[10px] text-muted-foreground">
+                        {editing.accommodation?.departure_date ? (
+                          <span className="font-semibold text-primary">
+                            🗓️ {new Date(editing.accommodation.departure_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                          </span>
+                        ) : "When the group departs."}
+                      </p>
                     </div>
                     <div>
                       <Label>Return Date</Label>
@@ -905,7 +921,13 @@ function VendorTours() {
                             return_date: e.target.value,
                           },
                         })} />
-                      <p className="mt-1 text-[10px] text-muted-foreground">Auto-calculated or custom return.</p>
+                      <p className="mt-1 text-[10px] text-muted-foreground">
+                        {editing.accommodation?.return_date ? (
+                          <span className="font-semibold text-primary">
+                            🗓️ {new Date(editing.accommodation.return_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                          </span>
+                        ) : "Auto-calculated or custom return."}
+                      </p>
                     </div>
                     <div>
                       <Label>Booking Deadline</Label>
@@ -918,7 +940,13 @@ function VendorTours() {
                             booking_deadline: e.target.value,
                           },
                         })} />
-                      <p className="mt-1 text-[10px] text-muted-foreground">Listing auto-disables after this date (visa processing buffer).</p>
+                      <p className="mt-1 text-[10px] text-muted-foreground">
+                        {editing.accommodation?.booking_deadline ? (
+                          <span className="font-semibold text-amber-400">
+                            ⏳ Closes: {new Date(editing.accommodation.booking_deadline).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                          </span>
+                        ) : "Listing auto-disables after this date."}
+                      </p>
                     </div>
                   </div>
                 </section>
@@ -1242,7 +1270,7 @@ function VendorTours() {
                     <SectionTitle><Tag className="mr-1 inline size-3.5" />Package inclusions & coverage</SectionTitle>
                     <p className="text-[11px] text-muted-foreground">Specify the core travel services covered under this tour's fixed price.</p>
                   </div>
-                  <div className="grid gap-2.5 sm:grid-cols-3">
+                  <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
                     <label className="flex items-start gap-2.5 rounded-lg border border-border bg-background/50 p-3 cursor-pointer transition hover:border-emerald-500/50">
                       <input
                         type="checkbox"
@@ -1259,6 +1287,44 @@ function VendorTours() {
                       <div>
                         <span className="block text-xs font-semibold text-foreground">Return Flights</span>
                         <span className="block text-[11px] text-muted-foreground">Return flights included for the whole itinerary</span>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start gap-2.5 rounded-lg border border-border bg-background/50 p-3 cursor-pointer transition hover:border-amber-500/50">
+                      <input
+                        type="checkbox"
+                        className="mt-0.5 rounded border-border bg-surface text-primary focus:ring-primary size-4"
+                        checked={editing.accommodation.hotel_breakfast ?? true}
+                        onChange={(e) => setEditing({
+                          ...editing,
+                          accommodation: {
+                            ...editing.accommodation,
+                            hotel_breakfast: e.target.checked,
+                          },
+                        })}
+                      />
+                      <div>
+                        <span className="block text-xs font-semibold text-foreground">Daily Breakfast</span>
+                        <span className="block text-[11px] text-muted-foreground">Complimentary buffet/daily hotel breakfast</span>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start gap-2.5 rounded-lg border border-border bg-background/50 p-3 cursor-pointer transition hover:border-blue-500/50">
+                      <input
+                        type="checkbox"
+                        className="mt-0.5 rounded border-border bg-surface text-primary focus:ring-primary size-4"
+                        checked={editing.accommodation.hotel_wifi ?? true}
+                        onChange={(e) => setEditing({
+                          ...editing,
+                          accommodation: {
+                            ...editing.accommodation,
+                            hotel_wifi: e.target.checked,
+                          },
+                        })}
+                      />
+                      <div>
+                        <span className="block text-xs font-semibold text-foreground">Free Wi-Fi</span>
+                        <span className="block text-[11px] text-muted-foreground">High-speed hotel Wi-Fi included</span>
                       </div>
                     </label>
 
@@ -1281,7 +1347,7 @@ function VendorTours() {
                       </div>
                     </label>
 
-                    <label className="flex items-start gap-2.5 rounded-lg border border-border bg-background/50 p-3 cursor-pointer transition hover:border-violet-500/50">
+                    <label className="flex items-start gap-2.5 rounded-lg border border-border bg-background/50 p-3 cursor-pointer transition hover:border-violet-500/50 sm:col-span-2 lg:col-span-1">
                       <input
                         type="checkbox"
                         className="mt-0.5 rounded border-border bg-surface text-primary focus:ring-primary size-4"

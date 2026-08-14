@@ -105,13 +105,19 @@ export const generateTourAIServer = createServerFn({ method: "POST" })
     const { openRouterModel } = await import("@/integrations/openrouter/openrouter.server");
     const model = openRouterModel(activeModel, customApiKey);
 
+    const titleText = (data.title || "").trim();
+    // If destination_country was defaulted or title mentions distinct countries, guide the AI explicitly
     const ctxLine = [
-      `Title: ${data.title || "(untitled)"}`,
-      `Destination: ${data.destination_country}`,
-      `Departure city: ${data.departure_city} (Pakistan)`,
+      `Tour Title: ${titleText || "(untitled)"}`,
+      `Selected Destination Country/Region: ${data.destination_country || "(Not specified)"}`,
+      `Departure city: ${data.departure_city || "Karachi"} (Pakistan)`,
       `Duration: ${data.duration_days} days`,
       `Price per person: PKR ${Number(data.price_pkr).toLocaleString("en-PK")}`,
       data.description ? `Existing description: ${data.description}` : "",
+      "\nIMPORTANT INSTRUCTION ON DESTINATION:",
+      titleText
+        ? `Always strictly prioritize and match the destination countries/cities mentioned in the Tour Title ("${titleText}") over any generic prefilled destination.`
+        : `Base the itinerary and sights strictly on "${data.destination_country}".`,
     ]
       .filter(Boolean)
       .join("\n");
@@ -123,7 +129,9 @@ export const generateTourAIServer = createServerFn({ method: "POST" })
         model,
         prompt: `You write short marketing descriptions for international tour packages sold to Pakistani travelers by a Lahore-based agency (GlobeTrek PK). Prices are in PKR.
 
-Write ONE punchy paragraph (~55-75 words, plain text, no markdown, no headings, no emojis) that highlights what makes this trip special — top sights, vibe, and a hook. Do not repeat the price or duration verbatim; sell the experience.
+Write ONE punchy paragraph (~55-75 words, plain text, no markdown, no headings, no emojis) that highlights what makes this trip special — top sights, vibe, and a hook.
+Do not repeat the price or duration verbatim; sell the experience.
+Make sure the description strictly matches the countries/places named in the Tour Title.
 
 Tour context:
 ${ctxLine}`,
@@ -154,14 +162,15 @@ ${ctxLine}`,
         prompt: `You are a senior tour planner for GlobeTrek PK, a Pakistani travel marketplace selling international packages priced in PKR.
 
 Design a realistic day-by-day itinerary for the tour below. Return exactly ${data.duration_days} days (day numbering 1..${data.duration_days}).
-${data.destination_country.toLowerCase().includes("europe") ? "\n- Since the destination is Europe, design a multi-country tour! Do not limit the itinerary to a single country. Include transition details between popular European countries (e.g. France, Switzerland, Italy, Germany) and show border crossings/trains.\n" : ""}
+Strictly prioritize and feature the countries/places named in the Tour Title ("${titleText || data.destination_country}").
+${(data.destination_country.toLowerCase().includes("europe") || titleText.toLowerCase().includes("europe")) ? "\n- Since the destination is Europe, design a multi-country tour! Do not limit the itinerary to a single country. Include transition details between popular European countries (e.g. France, Switzerland, Italy, Germany) and show border crossings/trains.\n" : ""}
 You MUST return your response as a valid, parsable JSON object matching this structure:
 {
   "description": "one crisp marketing paragraph (~60 words, plain text, no markdown)",
   "itinerary": [
     {
       "day": 1,
-      "title": "short evocative title (e.g. 'Arrival in ${data.destination_country} & Hotel Check-in')",
+      "title": "short evocative title (e.g. 'Arrival & Hotel Check-in')",
       "detail": "1-2 sentences summarising the day (transfers, meals, main sights)",
       "activities": [
         { "time": "09:00", "title": "Airport pickup & transfer to hotel" }
