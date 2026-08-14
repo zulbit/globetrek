@@ -32,7 +32,7 @@ const DEFAULT_PLANS = [
       "3 active listings — any category",
       "5 lead credits / month",
       "Basic public profile",
-      "Community support",
+      "Limited support",
     ],
     limits: {
       listings: "3 total",
@@ -41,7 +41,7 @@ const DEFAULT_PLANS = [
       aiDrafts: "—",
       aiPlans: "—",
       placement: "Standard",
-      support: "Community",
+      support: "Limited",
     },
     is_enabled: true,
     display_order: 1,

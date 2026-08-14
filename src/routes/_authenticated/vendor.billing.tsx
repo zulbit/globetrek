@@ -68,6 +68,21 @@ function BillingPage() {
     queryFn: () => getPlansFn(),
   });
 
+  const activeBasePlans = useMemo(() => {
+    if (!dbPlans || dbPlans.length === 0) return TIERS;
+    const baseOnly = dbPlans.filter((p: any) => (p.plan_type || "base") === "base" && p.is_enabled !== false);
+    if (baseOnly.length === 0) return TIERS;
+    return baseOnly.map((p: any) => {
+      const match = TIERS.find((t) => t.id === p.id);
+      return {
+        ...p,
+        icon: match?.icon || Sparkles,
+        accent: match?.accent || "muted-foreground",
+        covers: p.covers || match?.covers || [],
+      };
+    });
+  }, [dbPlans]);
+
   const activeAddons = useMemo(() => {
     if (!dbPlans || dbPlans.length === 0) {
       return [
@@ -308,9 +323,9 @@ function BillingPage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {TIERS.map((tier) => {
+              {activeBasePlans.map((tier) => {
                 const isCurrent = tier.id === currentTier;
-                const Icon = tier.icon;
+                const Icon = tier.icon || Sparkles;
                 const pending = mutation.isPending && mutation.variables === tier.id;
                 const disabled = isCurrent || isLoading || mutation.isPending;
                 return (

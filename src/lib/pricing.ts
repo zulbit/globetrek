@@ -61,7 +61,7 @@ export const TIERS: PricingTier[] = [
       "3 active listings — any category",
       "5 lead credits / month",
       "Basic public profile",
-      "Community support",
+      "Limited support",
     ],
     limits: {
       listings: "3 total",
@@ -70,7 +70,7 @@ export const TIERS: PricingTier[] = [
       aiDrafts: "—",
       aiPlans: "—",
       placement: "Standard",
-      support: "Community",
+      support: "Limited",
     },
   },
   {
