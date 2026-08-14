@@ -191,6 +191,7 @@ export interface VendorInvoiceItem {
   status: "paid" | "pending";
   method: string;
   period: string;
+  expires_at?: string;
   payment_intent_id?: string;
   destination?: string;
   departure_city?: string;
@@ -247,6 +248,9 @@ export const getVendorInvoices = createServerFn({ method: "GET" })
       const subDate = profile?.updated_at || profile?.created_at || new Date().toISOString();
       const subDateStr = subDate.split("T")[0];
       const invMonth = new Date(subDate).toLocaleDateString("en-US", { month: "short", year: "numeric" });
+      
+      const subExpire = new Date(subDate);
+      subExpire.setDate(subExpire.getDate() + 30);
 
       invoices.push({
         id: `INV-SUB-${profile?.subscription_tier?.toUpperCase()}-${new Date(subDate).getMonth() + 1}26`,
@@ -256,6 +260,7 @@ export const getVendorInvoices = createServerFn({ method: "GET" })
         status: "paid",
         method: "SafePay PKR (Recurring)",
         period: `${invMonth} Billing Period`,
+        expires_at: subExpire.toISOString().split("T")[0],
       });
     }
 
@@ -270,6 +275,7 @@ export const getVendorInvoices = createServerFn({ method: "GET" })
       const myAddons = (gatewayData.config as any[]).filter((a) => a.vendor_id === vendorId);
       myAddons.forEach((a) => {
         const dateStr = a.starts_at ? a.starts_at.split("T")[0] : new Date().toISOString().split("T")[0];
+        const expireStr = a.expires_at ? a.expires_at.split("T")[0] : undefined;
         const refSuffix = a.id ? a.id.slice(-6).toUpperCase() : Math.random().toString(36).slice(-6).toUpperCase();
         invoices.push({
           id: `INV-BOOST-${refSuffix}`,
@@ -279,6 +285,7 @@ export const getVendorInvoices = createServerFn({ method: "GET" })
           status: "paid",
           method: "SafePay PKR (QuickLink)",
           period: `${a.billing_period === "weekly" ? "7 Days Flash Campaign" : a.billing_period || "Monthly"} Active Boost`,
+          expires_at: expireStr,
         });
       });
     }
