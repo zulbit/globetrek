@@ -49,11 +49,29 @@ Formatting Rules:
 - Structure your answer with a bold **Heading** first, followed by a bulleted **Detail** breakdown.
 - If asked in Roman Urdu, respond in Roman Urdu. Otherwise respond in English.`;
 
-    const { text } = await generateText({
+    const startTime = Date.now();
+    const { text, usage } = await generateText({
       model,
       system: systemPrompt,
       prompt: data.question,
     });
+
+    try {
+      const { recordAIInvocationServer } = await import("@/lib/ai-admin.functions");
+      const promptTok = (usage as any)?.promptTokens ?? Math.round((systemPrompt.length + data.question.length) / 3.5);
+      const compTok = (usage as any)?.completionTokens ?? Math.round(text.length / 3.5);
+      await recordAIInvocationServer({
+        created_at: new Date().toISOString(),
+        feature: "Vendor Guide Operational Assistant",
+        model: activeModel,
+        prompt_tokens: promptTok,
+        completion_tokens: compTok,
+        total_tokens: promptTok + compTok,
+        estimated_cost_usd: activeModel.includes("free") || activeModel.startsWith("qwen") ? 0 : 0.00003,
+        latency_ms: Date.now() - startTime,
+        status: "success",
+      });
+    } catch {}
 
     return { answer: text };
   });
