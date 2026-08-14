@@ -21,6 +21,7 @@ import {
 } from "@/lib/tour-admin-utils";
 import { saveTourServer, setTourPublishedServer } from "@/lib/tours.functions";
 import { generateTourAIServer } from "@/lib/tour-ai.functions";
+import { inspectImageForContactInfoServer } from "@/lib/image-moderation.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -336,6 +337,8 @@ function VendorTours() {
     }
   };
 
+  const inspectImageFn = useServerFn(inspectImageForContactInfoServer);
+
   const handleImageUpload = async (raw: File) => {
     if (!editing) return;
     if (!raw.type.startsWith("image/")) {
@@ -347,8 +350,37 @@ function VendorTours() {
       return;
     }
     setUploading(true);
+    const toastId = toast.loading("Inspecting & optimizing cover image with Qwen-VL...");
+
     try {
       const file = await optimizeImage(raw, { maxDim: 1600, quality: 0.82 });
+      
+      // Convert to base64 for AI Vision Contact Info Scan
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+      });
+      reader.readAsDataURL(file);
+      const base64Data = await base64Promise;
+
+      // 1. Run Qwen-VL Visual Contact Inspection
+      const scanResult = await inspectImageFn({
+        data: { base64Data },
+      });
+
+      if (scanResult && scanResult.allowed === false) {
+        toast.dismiss(toastId);
+        toast.error("Direct Contact Info Detected on Image!", {
+          description: scanResult.reason || "Platform rules strictly prohibit embedding phone numbers, WhatsApp digits, or agency contact watermarks in cover images. Please upload clean destination photography.",
+          duration: 7000,
+        });
+        setUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
+
+      // 2. Upload to Supabase Storage if verified clean
       const savedKb = Math.max(0, Math.round((raw.size - file.size) / 1024));
       const ext = file.type === "image/jpeg" ? "jpg" : (file.name.split(".").pop() || "jpg");
       const path = `tours/${crypto.randomUUID()}.${ext}`;
@@ -360,9 +392,12 @@ function VendorTours() {
         .from("tour-images")
         .createSignedUrl(path, SIGNED_URL_TTL);
       if (signErr) throw signErr;
+
       setEditing({ ...editing, image_url: signed.signedUrl });
-      toast.success(savedKb > 20 ? `Uploaded (saved ${savedKb} KB)` : "Image uploaded");
+      toast.dismiss(toastId);
+      toast.success(savedKb > 20 ? `Verified & Uploaded (saved ${savedKb} KB) ✨` : "Image verified & uploaded ✨");
     } catch (e) {
+      toast.dismiss(toastId);
       toast.error((e as Error).message);
     } finally {
       setUploading(false);
@@ -984,8 +1019,14 @@ function VendorTours() {
                       <Input value={editing.image_url}
                         onChange={(e) => setEditing({ ...editing, image_url: e.target.value })}
                         placeholder="…or paste an https:// image URL" className="text-xs" />
-                      <p className="text-[11px] text-muted-foreground">
-                        JPG/PNG/WebP. Images are auto-optimized to under ~1600px.
+                      <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-0.5">
+                        <span>JPG/PNG/WebP. Images auto-optimized to under ~1600px.</span>
+                        <span className="text-emerald-400 font-medium flex items-center gap-1">
+                          <Sparkles className="size-3" /> Qwen-VL AI Contact Shield Active
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground/80 leading-relaxed">
+                        🛡️ <strong>B2B Marketplace Policy:</strong> Cover photos must be clean destination/hotel imagery. Photos containing phone numbers, WhatsApp digits, emails, or agency promotional watermarks are automatically blocked.
                       </p>
                     </div>
                   </div>

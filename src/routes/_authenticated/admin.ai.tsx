@@ -72,6 +72,10 @@ export const Route = createFileRoute("/_authenticated/admin/ai")({
 });
 
 const PRESET_MODELS = [
+  { id: "qwen-vl-plus", label: "Qwen VL Plus (👁️ Fast Visual OCR & Moderation · 1M Free Tokens · QwenCloud)", isFree: true },
+  { id: "qwen-vl-max", label: "Qwen VL Max (👑 High-Accuracy Vision & OCR · 1M Free Tokens · QwenCloud)", isFree: true },
+  { id: "qwen2.5-vl-72b-instruct", label: "Qwen 2.5 VL 72B (👑 Flagship Vision OCR · 1M Free Tokens · QwenCloud)", isFree: true },
+  { id: "qwen2.5-vl-7b-instruct", label: "Qwen 2.5 VL 7B (⚡ High-Speed Vision Scanner · 1M Free Tokens · QwenCloud)", isFree: true },
   { id: "qwen-turbo", label: "Qwen Turbo (⚡ Ultra-Fast 400ms · 1M Free Tokens · QwenCloud)", isFree: true },
   { id: "qwen-plus", label: "Qwen Plus (✨ High Accuracy · 1M Free Tokens · QwenCloud)", isFree: true },
   { id: "qwen-flash", label: "Qwen Flash (⚡ High-Speed · 1M Free Tokens · QwenCloud)", isFree: true },
