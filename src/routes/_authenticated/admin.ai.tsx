@@ -464,7 +464,9 @@ function AdminAIPage() {
           {/* Model Selection Dropdown */}
           <div className="space-y-2">
             <Label htmlFor="model-select" className="text-xs font-semibold text-foreground flex items-center justify-between">
-              <span>Select Active AI Model</span>
+              <span className="flex items-center gap-1.5">
+                <Sparkles className="size-3.5 text-primary" /> Primary Text &amp; Chat Model (Concierge &amp; Tour AI)
+              </span>
               <span className="text-[10px] text-muted-foreground font-normal">Stored in database settings</span>
             </Label>
             <select
@@ -480,6 +482,10 @@ function AdminAIPage() {
               ))}
               <option value="custom">-- Custom Model ID --</option>
             </select>
+
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              Powers the <strong>Bilingual AI Concierge Chat</strong>, <strong>Tour Itinerary Planner</strong>, and <strong>Vendor Guide Q&amp;A</strong>. <em>(Note: Visual image moderation automatically uses Qwen-VL Vision).</em>
+            </p>
 
             {selectedModel === "custom" && (
               <Input
