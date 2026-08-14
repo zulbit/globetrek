@@ -57,12 +57,14 @@ function AdminOverview() {
       monthStart.setHours(0, 0, 0, 0);
       const iso = monthStart.toISOString();
 
-      // Fetch all vendor profiles and lead unlocks to calculate complete real platform revenue
+      // Fetch all vendor profiles, tour lead unlocks, and visa lead unlock purchases
       const [
         vendors,
         customers,
         vendorProfilesRes,
         leadUnlocksRes,
+        visaLeadPurchasesRes,
+        customVisaLeadsCountRes,
         totalLeads,
         newLeadsMonth,
         tours,
@@ -77,6 +79,8 @@ function AdminOverview() {
         supabase.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "customer"),
         supabase.from("profiles").select("id, subscription_tier, created_at, updated_at"),
         supabase.from("lead_unlock_payments").select("id, amount, status, created_at").eq("status", "completed"),
+        supabase.from("payment_gateway_settings").select("config").eq("provider", "visa_lead_purchases").maybeSingle(),
+        supabase.from("payment_gateway_settings").select("config").eq("provider", "custom_visa_leads").maybeSingle(),
         supabase.from("leads").select("id", { count: "exact", head: true }),
         supabase.from("leads").select("id", { count: "exact", head: true }).gte("created_at", iso),
         supabase.from("tours").select("id", { count: "exact", head: true }),
@@ -92,11 +96,26 @@ function AdminOverview() {
         supabase.from("ticket_services").select("id", { count: "exact", head: true }).eq("is_active", true),
       ]);
 
+      // Parse custom visa leads count and visa unlock purchases
+      let customVisaLeadsCount = 0;
+      if (customVisaLeadsCountRes.data?.config) {
+        const parsed = typeof customVisaLeadsCountRes.data.config === "string" ? JSON.parse(customVisaLeadsCountRes.data.config) : customVisaLeadsCountRes.data.config;
+        customVisaLeadsCount = Array.isArray(parsed.leads) ? parsed.leads.length : 0;
+      }
+
+      let visaPurchases: Array<{ id: string; amount_paid: number; purchased_at: string }> = [];
+      if (visaLeadPurchasesRes.data?.config) {
+        const parsed = typeof visaLeadPurchasesRes.data.config === "string" ? JSON.parse(visaLeadPurchasesRes.data.config) : visaLeadPurchasesRes.data.config;
+        if (Array.isArray(parsed.purchases)) {
+          visaPurchases = parsed.purchases;
+        }
+      }
+
       // Query custom tour leads (with grace for missing table)
-      let customLeadsCount = 0;
+      let customTourLeadsCount = 0;
       try {
         const { count } = await supabase.from("custom_tour_leads").select("id", { count: "exact", head: true });
-        customLeadsCount = count ?? 0;
+        customTourLeadsCount = count ?? 0;
       } catch (err) {
         console.error("custom_tour_leads check failed (might not exist yet):", err);
       }
@@ -121,9 +140,9 @@ function AdminOverview() {
 
       const chartData = Object.entries(dailyLeads).map(([date, count]) => ({ date, count }));
 
-      // Comprehensive multi-tier & lead unlock revenue calculation
+      // Comprehensive multi-tier, tour lead unlock, and visa lead unlock revenue calculation
       const profiles = vendorProfilesRes.data ?? [];
-      const unlocks = leadUnlocksRes.data ?? [];
+      const tourUnlocks = leadUnlocksRes.data ?? [];
 
       let starterCount = 0;
       let proCount = 0;
@@ -140,16 +159,30 @@ function AdminOverview() {
 
       // Monthly baseline subscription recurring revenue across all tiers
       const monthlySubRev = starterCount * 4000 + proCount * 10000 + agencyCount * 25000;
-      const totalLeadUnlockRev = unlocks.reduce((acc, u) => acc + (u.amount || 5000), 0);
+      const totalTourUnlockRev = tourUnlocks.reduce((acc, u) => acc + (u.amount || 5000), 0);
+      const totalVisaUnlockRev = visaPurchases.reduce((acc, v) => acc + (v.amount_paid || 750), 0);
+      const totalLeadUnlockRev = totalTourUnlockRev + totalVisaUnlockRev;
 
       // Timeframe calculations (Today, 7d, 30d, 90d, All Time)
       const nowMs = Date.now();
       const oneDayMs = 24 * 60 * 60 * 1000;
 
-      const unlockToday = unlocks.filter((u) => new Date(u.created_at).getTime() >= nowMs - oneDayMs).reduce((a, b) => a + (b.amount || 5000), 0);
-      const unlock7d = unlocks.filter((u) => new Date(u.created_at).getTime() >= nowMs - 7 * oneDayMs).reduce((a, b) => a + (b.amount || 5000), 0);
-      const unlock30d = unlocks.filter((u) => new Date(u.created_at).getTime() >= nowMs - 30 * oneDayMs).reduce((a, b) => a + (b.amount || 5000), 0);
-      const unlock90d = unlocks.filter((u) => new Date(u.created_at).getTime() >= nowMs - 90 * oneDayMs).reduce((a, b) => a + (b.amount || 5000), 0);
+      // Tour lead unlocks by period
+      const tourUnlockToday = tourUnlocks.filter((u) => new Date(u.created_at).getTime() >= nowMs - oneDayMs).reduce((a, b) => a + (b.amount || 5000), 0);
+      const tourUnlock7d = tourUnlocks.filter((u) => new Date(u.created_at).getTime() >= nowMs - 7 * oneDayMs).reduce((a, b) => a + (b.amount || 5000), 0);
+      const tourUnlock30d = tourUnlocks.filter((u) => new Date(u.created_at).getTime() >= nowMs - 30 * oneDayMs).reduce((a, b) => a + (b.amount || 5000), 0);
+      const tourUnlock90d = tourUnlocks.filter((u) => new Date(u.created_at).getTime() >= nowMs - 90 * oneDayMs).reduce((a, b) => a + (b.amount || 5000), 0);
+
+      // Visa lead unlocks by period
+      const visaUnlockToday = visaPurchases.filter((v) => new Date(v.purchased_at).getTime() >= nowMs - oneDayMs).reduce((a, b) => a + (b.amount_paid || 750), 0);
+      const visaUnlock7d = visaPurchases.filter((v) => new Date(v.purchased_at).getTime() >= nowMs - 7 * oneDayMs).reduce((a, b) => a + (b.amount_paid || 750), 0);
+      const visaUnlock30d = visaPurchases.filter((v) => new Date(v.purchased_at).getTime() >= nowMs - 30 * oneDayMs).reduce((a, b) => a + (b.amount_paid || 750), 0);
+      const visaUnlock90d = visaPurchases.filter((v) => new Date(v.purchased_at).getTime() >= nowMs - 90 * oneDayMs).reduce((a, b) => a + (b.amount_paid || 750), 0);
+
+      const unlockToday = tourUnlockToday + visaUnlockToday;
+      const unlock7d = tourUnlock7d + visaUnlock7d;
+      const unlock30d = tourUnlock30d + visaUnlock30d;
+      const unlock90d = tourUnlock90d + visaUnlock90d;
 
       const revenueTotals = {
         today: Math.round(monthlySubRev / 30) + unlockToday,
@@ -165,7 +198,7 @@ function AdminOverview() {
         proVendors: proCount,
         starterVendors: starterCount,
         agencyVendors: agencyCount,
-        totalLeads: (totalLeads.count ?? 0) + customLeadsCount,
+        totalLeads: (totalLeads.count ?? 0) + customTourLeadsCount + customVisaLeadsCount,
         newLeadsMonth: newLeadsMonth.count ?? 0,
         tours: tours.count ?? 0,
         publishedTours: publishedTours.count ?? 0,
@@ -175,11 +208,14 @@ function AdminOverview() {
         proCount,
         agencyCount,
         monthlySubRev,
+        totalTourUnlockRev,
+        totalVisaUnlockRev,
         totalLeadUnlockRev,
         visaCount: visaCount.count ?? 0,
         insuranceCount: insuranceCount.count ?? 0,
         ticketCount: ticketCount.count ?? 0,
-        customLeadsCount,
+        customLeadsCount: customTourLeadsCount,
+        customVisaLeadsCount,
         chartData,
         recentLeads: leadsList.slice(0, 5),
       };
@@ -242,12 +278,13 @@ function AdminOverview() {
 
       {/* 2. Services Marketplace Channels */}
       <section className="w-full">
-        <h2 className="mb-4 text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold">Marketplace Channels</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 w-full">
+        <h2 className="mb-4 text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold">Marketplace Channels &amp; Custom Requests</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6 w-full">
           <MetricCard to="/admin/services" icon={FileCheck} label="Visa listings" value={data?.visaCount ?? 0} hint="Active visa consultants" tone="sky" />
           <MetricCard to="/admin/services" icon={Shield} label="Insurance plans" value={data?.insuranceCount ?? 0} hint="Active travel insurance" tone="emerald" />
           <MetricCard to="/admin/services" icon={Ticket} label="Ticketing services" value={data?.ticketCount ?? 0} hint="Active ticketing desks" tone="amber" />
           <MetricCard to="/admin/custom-leads" icon={Compass} label="Custom tour leads" value={data?.customLeadsCount ?? 0} hint="Exclusive group builder" tone="sky" />
+          <MetricCard to="/admin/custom-visa" icon={FileCheck} label="Custom visa leads" value={data?.customVisaLeadsCount ?? 0} hint="Dedicated visa cases" tone="emerald" />
           <MetricCard to="/admin/leads" icon={Inbox} label="Total leads" value={data?.totalLeads ?? 0} hint="All customer interactions" tone="violet" />
         </div>
       </section>
@@ -298,18 +335,22 @@ function AdminOverview() {
 
               <p className="mt-2 max-w-xl text-xs text-muted-foreground leading-relaxed">
                 Total earnings across all tiers (
-                <strong className="text-foreground">{data?.starterCount ?? 0} Travel Desk (Starter)</strong>,{" "}
-                <strong className="text-foreground">{data?.proCount ?? 0} Tour Operator (Pro)</strong>,{" "}
+                <strong className="text-foreground">{data?.starterCount ?? 0} Travel Desk</strong>,{" "}
+                <strong className="text-foreground">{data?.proCount ?? 0} Tour Operator</strong>,{" "}
                 <strong className="text-foreground">{data?.agencyCount ?? 0} Agency</strong>) plus{" "}
-                <strong className="text-emerald-400 font-mono">
-                  {formatPKR(data?.totalLeadUnlockRev ?? 0)}
+                <strong className="text-sky-400 font-mono">
+                  {formatPKR(data?.totalTourUnlockRev ?? 0)}
                 </strong>{" "}
-                in custom lead unlocks.
+                in custom tour unlocks and{" "}
+                <strong className="text-emerald-400 font-mono">
+                  {formatPKR(data?.totalVisaUnlockRev ?? 0)}
+                </strong>{" "}
+                in custom visa lead unlocks.
               </p>
             </div>
 
             <div className="mt-5 pt-3 border-t border-border/50 flex flex-wrap items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-4 text-muted-foreground text-[11px]">
+              <div className="flex flex-wrap items-center gap-3 text-muted-foreground text-[11px]">
                 <span>
                   MRR Subscriptions:{" "}
                   <strong className="text-emerald-400 font-mono font-bold">
@@ -318,9 +359,16 @@ function AdminOverview() {
                 </span>
                 <span>•</span>
                 <span>
-                  Lead Bids:{" "}
+                  Tour Leads (₨ 5k):{" "}
                   <strong className="text-sky-400 font-mono font-bold">
-                    {formatPKR(data?.totalLeadUnlockRev ?? 0)}
+                    {formatPKR(data?.totalTourUnlockRev ?? 0)}
+                  </strong>
+                </span>
+                <span>•</span>
+                <span>
+                  Visa Leads (₨ 750):{" "}
+                  <strong className="text-amber-400 font-mono font-bold">
+                    {formatPKR(data?.totalVisaUnlockRev ?? 0)}
                   </strong>
                 </span>
               </div>
