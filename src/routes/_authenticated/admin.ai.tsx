@@ -616,6 +616,85 @@ function AdminAIPage() {
         </div>
       </div>
 
+      {/* AI Feature Service & Model Routing Map */}
+      <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 space-y-4 shadow-md">
+        <div className="flex items-center justify-between border-b border-border pb-3">
+          <div className="flex items-center gap-3">
+            <div className="size-9 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+              <Layers className="size-4" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-foreground">AI Feature Architecture &amp; Active Model Routing</h2>
+              <p className="text-xs text-muted-foreground">Comprehensive map of all active platform features and their underlying LLMs, APIs, and token quotas.</p>
+            </div>
+          </div>
+          <Badge variant="outline" className="border-emerald-500/30 text-emerald-400 bg-emerald-500/5 text-[10px] font-mono">
+            Auto-Grounded
+          </Badge>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead>
+              <tr className="border-b border-border text-[10px] uppercase text-muted-foreground font-bold">
+                <th className="py-2.5 px-3">Platform Feature</th>
+                <th className="py-2.5 px-3">Primary LLM / Engine</th>
+                <th className="py-2.5 px-3">Provider Gateway</th>
+                <th className="py-2.5 px-3">Purpose &amp; Modality</th>
+                <th className="py-2.5 px-3 text-right">Cost / Quota</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/60">
+              <tr className="hover:bg-surface/50">
+                <td className="py-3 px-3 font-semibold text-foreground flex items-center gap-1.5">
+                  <span>💬</span> <span>Bilingual AI Concierge</span>
+                </td>
+                <td className="py-3 px-3 font-mono text-emerald-400 font-bold">{config?.active_model || "qwen-turbo"}</td>
+                <td className="py-3 px-3 text-muted-foreground">QwenCloud / OpenRouter</td>
+                <td className="py-3 px-3 text-muted-foreground">Traveler Chat (English &amp; Roman Urdu) + Lead Capture</td>
+                <td className="py-3 px-3 text-right font-mono text-cyan-300 font-bold">100% Free (1M Pool)</td>
+              </tr>
+              <tr className="hover:bg-surface/50">
+                <td className="py-3 px-3 font-semibold text-foreground flex items-center gap-1.5">
+                  <span>✨</span> <span>Tour Generator &amp; Itinerary Writer</span>
+                </td>
+                <td className="py-3 px-3 font-mono text-emerald-400 font-bold">{config?.active_model || "qwen-turbo"}</td>
+                <td className="py-3 px-3 text-muted-foreground">QwenCloud / OpenRouter</td>
+                <td className="py-3 px-3 text-muted-foreground">Day-by-day Itinerary Planning &amp; Descriptions</td>
+                <td className="py-3 px-3 text-right font-mono text-emerald-400 font-bold">Tier Quota Gated</td>
+              </tr>
+              <tr className="hover:bg-surface/50">
+                <td className="py-3 px-3 font-semibold text-foreground flex items-center gap-1.5">
+                  <span>🛡️</span> <span>Cover Image Contact Shield</span>
+                </td>
+                <td className="py-3 px-3 font-mono text-rose-400 font-bold">qwen-vl-plus / qwen-vl-max</td>
+                <td className="py-3 px-3 text-muted-foreground">DashScope Qwen-VL Vision</td>
+                <td className="py-3 px-3 text-muted-foreground">Multimodal Visual OCR (Phone/WhatsApp Detection)</td>
+                <td className="py-3 px-3 text-right font-mono text-cyan-300 font-bold">Free on Qwen-VL</td>
+              </tr>
+              <tr className="hover:bg-surface/50">
+                <td className="py-3 px-3 font-semibold text-foreground flex items-center gap-1.5">
+                  <span>🌐</span> <span>Visa Embassy Fee Lookup</span>
+                </td>
+                <td className="py-3 px-3 font-mono text-sky-400 font-bold">gpt-4o-mini:online</td>
+                <td className="py-3 px-3 text-muted-foreground">OpenRouter Grounded</td>
+                <td className="py-3 px-3 text-muted-foreground">Live Web-Grounded Embassy &amp; VFS Fee Schedules</td>
+                <td className="py-3 px-3 text-right font-mono text-amber-300 font-bold">~$0.0002 / call</td>
+              </tr>
+              <tr className="hover:bg-surface/50">
+                <td className="py-3 px-3 font-semibold text-foreground flex items-center gap-1.5">
+                  <span>🤖</span> <span>Vendor Guide Operational Assistant</span>
+                </td>
+                <td className="py-3 px-3 font-mono text-purple-400 font-bold">qwen-turbo / gpt-4o-mini</td>
+                <td className="py-3 px-3 text-muted-foreground">QwenCloud / OpenRouter</td>
+                <td className="py-3 px-3 text-muted-foreground">Operating Rules, KYC, SafePay &amp; Quota Q&amp;A</td>
+                <td className="py-3 px-3 text-right font-mono text-cyan-300 font-bold">Unlimited Public</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Feature Breakdown & Event Audit Logs */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Feature Token Share */}
