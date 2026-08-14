@@ -386,10 +386,11 @@ export const createVisaLeadUnlockCheckout = createServerFn({ method: "POST" })
 
     const secretKey = process.env.SAFEPAY_SECRET_KEY || "c3487d289512e74681b031cd3cf5d6a8d73a22b3c709bd939c3f833e95b7c27a";
 
-    // Format prefilled SafePay URL with all query parameters
+    // Format prefilled SafePay URL with all standard and variant query parameters
     const formatSafePayUrl = (baseUrlStr: string) => {
       try {
         const url = new URL(baseUrlStr);
+        // Standard query parameters
         url.searchParams.set("first_name", firstName);
         url.searchParams.set("last_name", lastName);
         url.searchParams.set("name", `${firstName} ${lastName}`);
@@ -403,6 +404,14 @@ export const createVisaLeadUnlockCheckout = createServerFn({ method: "POST" })
         url.searchParams.set("country", "Pakistan");
         url.searchParams.set("country_code", "PK");
         url.searchParams.set("postal_code", "44000");
+
+        // Additional camelCase and custom variants
+        url.searchParams.set("firstName", firstName);
+        url.searchParams.set("lastName", lastName);
+        url.searchParams.set("customer_email", vendorEmail);
+        url.searchParams.set("customer_phone", vendorPhone);
+        url.searchParams.set("billing_city", vendorCity);
+        url.searchParams.set("billing_address", streetAddress);
         return url.toString();
       } catch {
         return baseUrlStr;
@@ -424,19 +433,34 @@ export const createVisaLeadUnlockCheckout = createServerFn({ method: "POST" })
           currency: "PKR",
           note: `Unlock Custom Visa Lead (${targetLead.destination_country} - ${targetLead.visa_category})`,
           workflow: "MANUAL",
+          client: {
+            first_name: firstName,
+            last_name: lastName,
+            email: vendorEmail,
+            phone: vendorPhone,
+            phone_number: vendorPhone,
+            city: vendorCity,
+            address: streetAddress,
+            country: "PK",
+          },
           customer: {
             first_name: firstName,
             last_name: lastName,
             email: vendorEmail,
+            phone: vendorPhone,
             phone_number: vendorPhone,
             city: vendorCity,
             address: streetAddress,
             country: "PK",
           },
           billing_address: {
+            first_name: firstName,
+            last_name: lastName,
             city: vendorCity,
             street: streetAddress,
+            address: streetAddress,
             country: "PK",
+            postal_code: "44000",
           },
         }),
       });
