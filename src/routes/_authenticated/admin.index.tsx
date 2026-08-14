@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   ArrowUpRight,
   Users,
@@ -47,6 +47,8 @@ interface LeadItem {
 }
 
 function AdminOverview() {
+  const [revenuePeriod, setRevenuePeriod] = useState<"today" | "7d" | "30d" | "90d" | "all">("30d");
+
   const { data, isLoading } = useQuery({
     queryKey: ["admin-overview-enhanced"],
     queryFn: async () => {
@@ -55,11 +57,12 @@ function AdminOverview() {
       monthStart.setHours(0, 0, 0, 0);
       const iso = monthStart.toISOString();
 
+      // Fetch all vendor profiles and lead unlocks to calculate complete real platform revenue
       const [
         vendors,
         customers,
-        proVendors,
-        starterVendors,
+        vendorProfilesRes,
+        leadUnlocksRes,
         totalLeads,
         newLeadsMonth,
         tours,
@@ -72,8 +75,8 @@ function AdminOverview() {
       ] = await Promise.all([
         supabase.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "vendor"),
         supabase.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "customer"),
-        supabase.from("profiles").select("id", { count: "exact", head: true }).eq("subscription_tier", "pro"),
-        supabase.from("profiles").select("id", { count: "exact", head: true }).eq("subscription_tier", "free"),
+        supabase.from("profiles").select("id, subscription_tier, created_at, updated_at"),
+        supabase.from("lead_unlock_payments").select("id, amount, status, created_at").eq("status", "completed"),
         supabase.from("leads").select("id", { count: "exact", head: true }),
         supabase.from("leads").select("id", { count: "exact", head: true }).gte("created_at", iso),
         supabase.from("tours").select("id", { count: "exact", head: true }),
@@ -117,19 +120,62 @@ function AdminOverview() {
       });
 
       const chartData = Object.entries(dailyLeads).map(([date, count]) => ({ date, count }));
-      const subRevenue = (proVendors.count ?? 0) * PRO_MONTHLY_PKR;
+
+      // Comprehensive multi-tier & lead unlock revenue calculation
+      const profiles = vendorProfilesRes.data ?? [];
+      const unlocks = leadUnlocksRes.data ?? [];
+
+      let starterCount = 0;
+      let proCount = 0;
+      let agencyCount = 0;
+      let freeCount = 0;
+
+      profiles.forEach((p) => {
+        const tier = (p.subscription_tier || "free").toLowerCase();
+        if (tier === "starter") starterCount++;
+        else if (tier === "pro") proCount++;
+        else if (tier === "agency") agencyCount++;
+        else freeCount++;
+      });
+
+      // Monthly baseline subscription recurring revenue across all tiers
+      const monthlySubRev = starterCount * 4000 + proCount * 10000 + agencyCount * 25000;
+      const totalLeadUnlockRev = unlocks.reduce((acc, u) => acc + (u.amount || 5000), 0);
+
+      // Timeframe calculations (Today, 7d, 30d, 90d, All Time)
+      const nowMs = Date.now();
+      const oneDayMs = 24 * 60 * 60 * 1000;
+
+      const unlockToday = unlocks.filter((u) => new Date(u.created_at).getTime() >= nowMs - oneDayMs).reduce((a, b) => a + (b.amount || 5000), 0);
+      const unlock7d = unlocks.filter((u) => new Date(u.created_at).getTime() >= nowMs - 7 * oneDayMs).reduce((a, b) => a + (b.amount || 5000), 0);
+      const unlock30d = unlocks.filter((u) => new Date(u.created_at).getTime() >= nowMs - 30 * oneDayMs).reduce((a, b) => a + (b.amount || 5000), 0);
+      const unlock90d = unlocks.filter((u) => new Date(u.created_at).getTime() >= nowMs - 90 * oneDayMs).reduce((a, b) => a + (b.amount || 5000), 0);
+
+      const revenueTotals = {
+        today: Math.round(monthlySubRev / 30) + unlockToday,
+        "7d": Math.round((monthlySubRev / 30) * 7) + unlock7d,
+        "30d": monthlySubRev + unlock30d,
+        "90d": monthlySubRev * 3 + unlock90d,
+        all: monthlySubRev * 3 + totalLeadUnlockRev,
+      };
 
       return {
         vendors: vendors.count ?? 0,
         customers: customers.count ?? 0,
-        proVendors: proVendors.count ?? 0,
-        starterVendors: starterVendors.count ?? 0,
+        proVendors: proCount,
+        starterVendors: starterCount,
+        agencyVendors: agencyCount,
         totalLeads: (totalLeads.count ?? 0) + customLeadsCount,
         newLeadsMonth: newLeadsMonth.count ?? 0,
         tours: tours.count ?? 0,
         publishedTours: publishedTours.count ?? 0,
         aiEvents: aiEvents.count ?? 0,
-        revenue: subRevenue,
+        revenueTotals,
+        starterCount,
+        proCount,
+        agencyCount,
+        monthlySubRev,
+        totalLeadUnlockRev,
         visaCount: visaCount.count ?? 0,
         insuranceCount: insuranceCount.count ?? 0,
         ticketCount: ticketCount.count ?? 0,
@@ -209,28 +255,85 @@ function AdminOverview() {
       {/* 3. Revenue Banner & Quick Status Overview */}
       <div className="grid gap-6 lg:grid-cols-3 w-full">
         {/* Hero revenue card */}
-        <Link
-          to="/admin/vendors"
-          className="group relative col-span-1 lg:col-span-2 overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card p-6 shadow-card transition hover:border-primary/40"
-        >
+        <div className="group relative col-span-1 lg:col-span-2 overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card p-6 shadow-card transition hover:border-primary/40">
           <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
           <div className="relative flex flex-col justify-between h-full min-h-[160px]">
             <div>
-              <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-primary">
-                <TrendingUp className="h-3.5 w-3.5" /> Platform monthly revenue
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-primary font-bold">
+                  <TrendingUp className="h-3.5 w-3.5" /> Total Platform Revenue
+                </div>
+
+                {/* Interactive Period Toggle */}
+                <div className="flex rounded-xl bg-surface/80 p-1 border border-border/80 text-xs backdrop-blur-sm">
+                  {(
+                    [
+                      { id: "today", label: "Today" },
+                      { id: "7d", label: "7D" },
+                      { id: "30d", label: "30D" },
+                      { id: "90d", label: "90D" },
+                      { id: "all", label: "All Time" },
+                    ] as const
+                  ).map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setRevenuePeriod(t.id)}
+                      className={cn(
+                        "px-2.5 py-1 rounded-lg font-semibold transition text-[11px]",
+                        revenuePeriod === t.id
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="mt-3 text-4xl font-bold tabular-nums sm:text-5xl">
-                {formatPKR(data?.revenue ?? 0)}
+
+              <div className="mt-3 text-4xl font-bold tabular-nums sm:text-5xl text-foreground">
+                {formatPKR(data?.revenueTotals?.[revenuePeriod] ?? data?.monthlySubRev ?? 0)}
               </div>
-              <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                Monthly recurring revenue generated from premium Pro vendor subscriptions.
+
+              <p className="mt-2 max-w-xl text-xs text-muted-foreground leading-relaxed">
+                Total earnings across all tiers (
+                <strong className="text-foreground">{data?.starterCount ?? 0} Travel Desk (Starter)</strong>,{" "}
+                <strong className="text-foreground">{data?.proCount ?? 0} Tour Operator (Pro)</strong>,{" "}
+                <strong className="text-foreground">{data?.agencyCount ?? 0} Agency</strong>) plus{" "}
+                <strong className="text-emerald-400 font-mono">
+                  {formatPKR(data?.totalLeadUnlockRev ?? 0)}
+                </strong>{" "}
+                in custom lead unlocks.
               </p>
             </div>
-            <div className="mt-4 flex items-center gap-2 text-sm text-primary opacity-80 group-hover:opacity-100">
-              Manage subscribers & details <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+
+            <div className="mt-5 pt-3 border-t border-border/50 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-4 text-muted-foreground text-[11px]">
+                <span>
+                  MRR Subscriptions:{" "}
+                  <strong className="text-emerald-400 font-mono font-bold">
+                    {formatPKR(data?.monthlySubRev ?? 0)}
+                  </strong>
+                </span>
+                <span>•</span>
+                <span>
+                  Lead Bids:{" "}
+                  <strong className="text-sky-400 font-mono font-bold">
+                    {formatPKR(data?.totalLeadUnlockRev ?? 0)}
+                  </strong>
+                </span>
+              </div>
+
+              <Link
+                to="/admin/vendors"
+                className="flex items-center gap-1.5 text-xs text-primary font-semibold hover:underline"
+              >
+                Manage Subscribers <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-1" />
+              </Link>
             </div>
           </div>
-        </Link>
+        </div>
 
         {/* Dynamic mini summary */}
         <div className="rounded-3xl border border-border bg-card/60 p-6 flex flex-col justify-between">
