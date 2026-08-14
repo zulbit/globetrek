@@ -50,6 +50,7 @@ import { Route as AuthenticatedAdminAffiliatePayoutsRouteImport } from './routes
 import { Route as AuthenticatedAdminAffiliatesRouteImport } from './routes/_authenticated/admin.affiliates'
 import { Route as AuthenticatedAdminAiRouteImport } from './routes/_authenticated/admin.ai'
 import { Route as AuthenticatedAdminCustomLeadsRouteImport } from './routes/_authenticated/admin.custom-leads'
+import { Route as AuthenticatedAdminCustomVisaRouteImport } from './routes/_authenticated/admin.custom-visa'
 import { Route as AuthenticatedAdminFinancialsRouteImport } from './routes/_authenticated/admin.financials'
 import { Route as AuthenticatedAdminKycCmsRouteImport } from './routes/_authenticated/admin.kyc-cms'
 import { Route as AuthenticatedAdminLandingCmsRouteImport } from './routes/_authenticated/admin.landing-cms'
@@ -286,6 +287,12 @@ const AuthenticatedAdminCustomLeadsRoute =
     path: '/custom-leads',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminCustomVisaRoute =
+  AuthenticatedAdminCustomVisaRouteImport.update({
+    id: '/custom-visa',
+    path: '/custom-visa',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminFinancialsRoute =
   AuthenticatedAdminFinancialsRouteImport.update({
     id: '/financials',
@@ -487,6 +494,7 @@ export interface FileRoutesByFullPath {
   '/admin/affiliates': typeof AuthenticatedAdminAffiliatesRoute
   '/admin/ai': typeof AuthenticatedAdminAiRoute
   '/admin/custom-leads': typeof AuthenticatedAdminCustomLeadsRoute
+  '/admin/custom-visa': typeof AuthenticatedAdminCustomVisaRoute
   '/admin/financials': typeof AuthenticatedAdminFinancialsRoute
   '/admin/kyc-cms': typeof AuthenticatedAdminKycCmsRoute
   '/admin/landing-cms': typeof AuthenticatedAdminLandingCmsRoute
@@ -551,6 +559,7 @@ export interface FileRoutesByTo {
   '/admin/affiliates': typeof AuthenticatedAdminAffiliatesRoute
   '/admin/ai': typeof AuthenticatedAdminAiRoute
   '/admin/custom-leads': typeof AuthenticatedAdminCustomLeadsRoute
+  '/admin/custom-visa': typeof AuthenticatedAdminCustomVisaRoute
   '/admin/financials': typeof AuthenticatedAdminFinancialsRoute
   '/admin/kyc-cms': typeof AuthenticatedAdminKycCmsRoute
   '/admin/landing-cms': typeof AuthenticatedAdminLandingCmsRoute
@@ -623,6 +632,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/affiliates': typeof AuthenticatedAdminAffiliatesRoute
   '/_authenticated/admin/ai': typeof AuthenticatedAdminAiRoute
   '/_authenticated/admin/custom-leads': typeof AuthenticatedAdminCustomLeadsRoute
+  '/_authenticated/admin/custom-visa': typeof AuthenticatedAdminCustomVisaRoute
   '/_authenticated/admin/financials': typeof AuthenticatedAdminFinancialsRoute
   '/_authenticated/admin/kyc-cms': typeof AuthenticatedAdminKycCmsRoute
   '/_authenticated/admin/landing-cms': typeof AuthenticatedAdminLandingCmsRoute
@@ -695,6 +705,7 @@ export interface FileRouteTypes {
     | '/admin/affiliates'
     | '/admin/ai'
     | '/admin/custom-leads'
+    | '/admin/custom-visa'
     | '/admin/financials'
     | '/admin/kyc-cms'
     | '/admin/landing-cms'
@@ -759,6 +770,7 @@ export interface FileRouteTypes {
     | '/admin/affiliates'
     | '/admin/ai'
     | '/admin/custom-leads'
+    | '/admin/custom-visa'
     | '/admin/financials'
     | '/admin/kyc-cms'
     | '/admin/landing-cms'
@@ -830,6 +842,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/affiliates'
     | '/_authenticated/admin/ai'
     | '/_authenticated/admin/custom-leads'
+    | '/_authenticated/admin/custom-visa'
     | '/_authenticated/admin/financials'
     | '/_authenticated/admin/kyc-cms'
     | '/_authenticated/admin/landing-cms'
@@ -1180,6 +1193,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCustomLeadsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/custom-visa': {
+      id: '/_authenticated/admin/custom-visa'
+      path: '/custom-visa'
+      fullPath: '/admin/custom-visa'
+      preLoaderRoute: typeof AuthenticatedAdminCustomVisaRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/financials': {
       id: '/_authenticated/admin/financials'
       path: '/financials'
@@ -1384,6 +1404,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAffiliatesRoute: typeof AuthenticatedAdminAffiliatesRoute
   AuthenticatedAdminAiRoute: typeof AuthenticatedAdminAiRoute
   AuthenticatedAdminCustomLeadsRoute: typeof AuthenticatedAdminCustomLeadsRoute
+  AuthenticatedAdminCustomVisaRoute: typeof AuthenticatedAdminCustomVisaRoute
   AuthenticatedAdminFinancialsRoute: typeof AuthenticatedAdminFinancialsRoute
   AuthenticatedAdminKycCmsRoute: typeof AuthenticatedAdminKycCmsRoute
   AuthenticatedAdminLandingCmsRoute: typeof AuthenticatedAdminLandingCmsRoute
@@ -1406,6 +1427,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAffiliatesRoute: AuthenticatedAdminAffiliatesRoute,
   AuthenticatedAdminAiRoute: AuthenticatedAdminAiRoute,
   AuthenticatedAdminCustomLeadsRoute: AuthenticatedAdminCustomLeadsRoute,
+  AuthenticatedAdminCustomVisaRoute: AuthenticatedAdminCustomVisaRoute,
   AuthenticatedAdminFinancialsRoute: AuthenticatedAdminFinancialsRoute,
   AuthenticatedAdminKycCmsRoute: AuthenticatedAdminKycCmsRoute,
   AuthenticatedAdminLandingCmsRoute: AuthenticatedAdminLandingCmsRoute,

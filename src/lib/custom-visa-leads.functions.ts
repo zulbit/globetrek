@@ -787,3 +787,113 @@ export const getCustomerCustomVisaRequestsWithQuotes = createServerFn({ method: 
       return [];
     }
   });
+
+// -------- 9. Admin: Get All Custom Visa Leads with Unlocked Vendors & Quotes --------
+export const getAdminCustomVisaLeadsServer = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: { filterStatus?: string }) => input)
+  .handler(async ({ data: input, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden: Admin access required");
+
+    // Load leads
+    const { data: leadsRow } = await supabaseAdmin
+      .from("payment_gateway_settings")
+      .select("config")
+      .eq("provider", "custom_visa_leads")
+      .maybeSingle();
+
+    let allLeads: CustomVisaLeadItem[] = leadsRow?.config?.leads || [];
+
+    // Load purchases & unlocks
+    const { data: purchasesRow } = await supabaseAdmin
+      .from("payment_gateway_settings")
+      .select("config")
+      .eq("provider", "visa_lead_purchases")
+      .maybeSingle();
+
+    const purchases: VisaLeadPurchaseItem[] = purchasesRow?.config?.purchases || [];
+
+    // Load quotes
+    const { data: quotesRow } = await supabaseAdmin
+      .from("payment_gateway_settings")
+      .select("config")
+      .eq("provider", "visa_lead_quotes")
+      .maybeSingle();
+
+    const allQuotes: VisaLeadQuoteItem[] = quotesRow?.config?.quotes || [];
+
+    // Load vendor profile metadata for attribution
+    const { data: profiles } = await supabaseAdmin
+      .from("profiles")
+      .select("id, full_name, company_name, email, phone");
+
+    const profileMap = new Map((profiles || []).map((p) => [p.id, p]));
+
+    if (input?.filterStatus && input.filterStatus !== "all") {
+      allLeads = allLeads.filter((l) => l.status === input.filterStatus);
+    }
+
+    return allLeads.map((lead) => {
+      const leadPurchases = purchases.filter((p) => p.lead_id === lead.id);
+      const unlockedVendors = leadPurchases.map((p) => {
+        const prof = profileMap.get(p.vendor_id);
+        return {
+          vendor_id: p.vendor_id,
+          purchased_at: p.purchased_at,
+          amount_paid: p.amount_paid,
+          profiles: {
+            full_name: prof?.company_name || prof?.full_name || "Verified Visa Agent",
+            email: prof?.email || "",
+            phone: prof?.phone || "",
+          },
+        };
+      });
+
+      const leadQuotes = allQuotes.filter((q) => q.lead_id === lead.id);
+
+      return {
+        ...lead,
+        unlocked_vendors: unlockedVendors,
+        quotes: leadQuotes,
+        quote_count: leadQuotes.length,
+      };
+    });
+  });
+
+// -------- 10. Admin: Update Custom Visa Lead Status --------
+export const updateVisaLeadStatusServer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: { leadId: string; status: "verified" | "accepted" | "closed" }) => input)
+  .handler(async ({ data: input, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden: Admin access required");
+
+    const { data: leadsRow } = await supabaseAdmin
+      .from("payment_gateway_settings")
+      .select("config")
+      .eq("provider", "custom_visa_leads")
+      .maybeSingle();
+
+    const leads: CustomVisaLeadItem[] = leadsRow?.config?.leads || [];
+    const targetLead = leads.find((l) => l.id === input.leadId);
+    if (!targetLead) throw new Error("Custom Visa Lead not found");
+
+    targetLead.status = input.status;
+
+    await supabaseAdmin.from("payment_gateway_settings").upsert({
+      provider: "custom_visa_leads",
+      config: { leads },
+      updated_at: new Date().toISOString(),
+    });
+
+    return { ok: true, status: input.status };
+  });
