@@ -364,7 +364,7 @@ export const createVisaLeadUnlockCheckout = createServerFn({ method: "POST" })
     // Vendor profile for billing prefill
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("full_name, company_name, email, city")
+      .select("full_name, company_name, email, phone, city")
       .eq("id", vendorId)
       .maybeSingle();
 
@@ -386,7 +386,7 @@ export const createVisaLeadUnlockCheckout = createServerFn({ method: "POST" })
 
     const secretKey = process.env.SAFEPAY_SECRET_KEY || "c3487d289512e74681b031cd3cf5d6a8d73a22b3c709bd939c3f833e95b7c27a";
 
-    // Format prefilled SafePay URL
+    // Format prefilled SafePay URL with all query parameters
     const formatSafePayUrl = (baseUrlStr: string) => {
       try {
         const url = new URL(baseUrlStr);
@@ -395,10 +395,14 @@ export const createVisaLeadUnlockCheckout = createServerFn({ method: "POST" })
         url.searchParams.set("name", `${firstName} ${lastName}`);
         url.searchParams.set("email", vendorEmail);
         url.searchParams.set("phone", vendorPhone);
+        url.searchParams.set("phone_number", vendorPhone);
         url.searchParams.set("city", vendorCity);
+        url.searchParams.set("street", streetAddress);
+        url.searchParams.set("street_address", streetAddress);
         url.searchParams.set("address", streetAddress);
         url.searchParams.set("country", "Pakistan");
         url.searchParams.set("country_code", "PK");
+        url.searchParams.set("postal_code", "44000");
         return url.toString();
       } catch {
         return baseUrlStr;
