@@ -3,7 +3,12 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export type AIConfig = {
-  active_model: string;
+  active_model: string; // Global default fallback
+  concierge_model?: string;
+  tour_generator_model?: string;
+  vendor_guide_model?: string;
+  visa_lookup_model?: string;
+  image_moderation_model?: string;
   max_tokens: number;
   api_key_configured: boolean;
   masked_api_key: string;
@@ -88,7 +93,12 @@ export const getAIConfigServer = createServerFn({ method: "GET" })
         const masked = rawKey ? `${rawKey.slice(0, 8)}...${rawKey.slice(-4)}` : "Built-in Environment Key";
 
         return {
-          active_model: parsed.active_model || "openai/gpt-4o-mini",
+          active_model: parsed.active_model || "qwen-turbo",
+          concierge_model: parsed.concierge_model || parsed.active_model || "qwen-turbo",
+          tour_generator_model: parsed.tour_generator_model || parsed.active_model || "qwen-turbo",
+          vendor_guide_model: parsed.vendor_guide_model || parsed.active_model || "qwen-turbo",
+          visa_lookup_model: parsed.visa_lookup_model || "openai/gpt-4o-mini",
+          image_moderation_model: parsed.image_moderation_model || "qwen-vl-plus",
           max_tokens: Number(parsed.max_tokens) || 400,
           api_key_configured: Boolean(rawKey),
           masked_api_key: masked,
@@ -103,7 +113,12 @@ export const getAIConfigServer = createServerFn({ method: "GET" })
     const masked = rawKey ? `${rawKey.slice(0, 8)}...${rawKey.slice(-4)}` : "Built-in Environment Key";
 
     return {
-      active_model: "openai/gpt-4o-mini",
+      active_model: "qwen-turbo",
+      concierge_model: "qwen-turbo",
+      tour_generator_model: "qwen-turbo",
+      vendor_guide_model: "qwen-turbo",
+      visa_lookup_model: "openai/gpt-4o-mini",
+      image_moderation_model: "qwen-vl-plus",
       max_tokens: 400,
       api_key_configured: true,
       masked_api_key: masked,
@@ -115,13 +130,36 @@ export const getAIConfigServer = createServerFn({ method: "GET" })
 export const saveAIConfigServer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator(
-    (data: { active_model: string; max_tokens: number; custom_api_key?: string }) => data,
+    (data: {
+      active_model?: string;
+      concierge_model?: string;
+      tour_generator_model?: string;
+      vendor_guide_model?: string;
+      visa_lookup_model?: string;
+      image_moderation_model?: string;
+      max_tokens: number;
+      custom_api_key?: string;
+    }) => data,
   )
   .handler(async ({ data }) => {
-    const { active_model, max_tokens, custom_api_key } = data;
+    const {
+      active_model,
+      concierge_model,
+      tour_generator_model,
+      vendor_guide_model,
+      visa_lookup_model,
+      image_moderation_model,
+      max_tokens,
+      custom_api_key,
+    } = data;
 
     const payload = {
-      active_model: active_model || "openai/gpt-4o-mini",
+      active_model: active_model || "qwen-turbo",
+      concierge_model: concierge_model || active_model || "qwen-turbo",
+      tour_generator_model: tour_generator_model || active_model || "qwen-turbo",
+      vendor_guide_model: vendor_guide_model || active_model || "qwen-turbo",
+      visa_lookup_model: visa_lookup_model || "openai/gpt-4o-mini",
+      image_moderation_model: image_moderation_model || "qwen-vl-plus",
       max_tokens: Math.max(50, Math.min(4000, Number(max_tokens) || 400)),
       custom_api_key: custom_api_key?.trim() || undefined,
     };

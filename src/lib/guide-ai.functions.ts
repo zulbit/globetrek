@@ -12,7 +12,27 @@ export const askVendorGuideAIServer = createServerFn({ method: "POST" })
       throw new Error("Question text cannot be empty.");
     }
 
-    const model = openRouterModel();
+    let activeModel = "qwen-turbo";
+    let customApiKey: string | undefined = undefined;
+
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: aiSetting } = await supabaseAdmin
+        .from("payment_gateway_settings")
+        .select("config")
+        .eq("provider", "openrouter_config")
+        .maybeSingle();
+
+      if (aiSetting?.config) {
+        const parsed = typeof aiSetting.config === "string" ? JSON.parse(aiSetting.config) : (aiSetting.config as any);
+        if (parsed.vendor_guide_model || parsed.active_model) {
+          activeModel = String(parsed.vendor_guide_model || parsed.active_model);
+        }
+        if (parsed.custom_api_key) customApiKey = String(parsed.custom_api_key).trim();
+      }
+    } catch {}
+
+    const model = openRouterModel(activeModel, customApiKey);
 
     const systemPrompt = `You are the official GlobeTrek PK AI Partner Assistant.
 Your job is to answer questions from tour operators, travel agents, visa consultants, insurance brokers, and ticketing desks regarding GlobeTrek PK marketplace operations.

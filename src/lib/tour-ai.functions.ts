@@ -97,7 +97,9 @@ export const generateTourAIServer = createServerFn({ method: "POST" })
 
       if (aiSetting?.config) {
         const parsed = typeof aiSetting.config === "string" ? JSON.parse(aiSetting.config) : (aiSetting.config as any);
-        if (parsed.active_model) activeModel = String(parsed.active_model);
+        if (parsed.tour_generator_model || parsed.active_model) {
+          activeModel = String(parsed.tour_generator_model || parsed.active_model);
+        }
         if (parsed.custom_api_key) customApiKey = String(parsed.custom_api_key).trim();
       }
     } catch {}

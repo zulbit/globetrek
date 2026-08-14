@@ -850,8 +850,8 @@ ${ticketsCatalogText}`;
             if (parsed.max_tokens) {
               activeMaxTokens = Math.max(50, Math.min(4000, Number(parsed.max_tokens)));
             }
-            if (parsed.active_model) {
-              activeModel = String(parsed.active_model);
+            if (parsed.concierge_model || parsed.active_model) {
+              activeModel = String(parsed.concierge_model || parsed.active_model);
             }
             if (parsed.custom_api_key) {
               customApiKey = String(parsed.custom_api_key).trim();

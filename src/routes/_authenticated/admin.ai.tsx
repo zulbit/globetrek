@@ -114,6 +114,11 @@ function AdminAIPage() {
   // Local Form & Chart State
   const [selectedModel, setSelectedModel] = useState<string>("openai/gpt-4o-mini");
   const [customModel, setCustomModel] = useState<string>("");
+  const [conciergeModel, setConciergeModel] = useState<string>("qwen-turbo");
+  const [tourModel, setTourModel] = useState<string>("qwen-turbo");
+  const [vendorGuideModel, setVendorGuideModel] = useState<string>("qwen-turbo");
+  const [visaModel, setVisaModel] = useState<string>("openai/gpt-4o-mini");
+  const [imageModModel, setImageModModel] = useState<string>("qwen-vl-plus");
   const [maxTokens, setMaxTokens] = useState<number>(250);
   const [apiKeyInput, setApiKeyInput] = useState<string>("");
   const [showApiKey, setShowApiKey] = useState<boolean>(false);
@@ -127,6 +132,11 @@ function AdminAIPage() {
         setSelectedModel("custom");
         setCustomModel(config.active_model);
       }
+      setConciergeModel(config.concierge_model || config.active_model || "qwen-turbo");
+      setTourModel(config.tour_generator_model || config.active_model || "qwen-turbo");
+      setVendorGuideModel(config.vendor_guide_model || config.active_model || "qwen-turbo");
+      setVisaModel(config.visa_lookup_model || "openai/gpt-4o-mini");
+      setImageModModel(config.image_moderation_model || "qwen-vl-plus");
       setMaxTokens(config.max_tokens ?? 250);
     }
   }, [config]);
@@ -151,6 +161,11 @@ function AdminAIPage() {
       return saveConfigFn({
         data: {
           active_model: modelToSave,
+          concierge_model: conciergeModel,
+          tour_generator_model: tourModel,
+          vendor_guide_model: vendorGuideModel,
+          visa_lookup_model: visaModel,
+          image_moderation_model: imageModModel,
           max_tokens: maxTokens,
           custom_api_key: apiKeyInput.trim() || undefined,
         },
@@ -160,8 +175,8 @@ function AdminAIPage() {
       toast.success("AI Configuration saved successfully!");
       qc.invalidateQueries({ queryKey: ["admin-ai-config"] });
     },
-    onError: (err: Error) => {
-      toast.error(err.message || "Failed to save configuration");
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to save AI configuration");
     },
   });
 
@@ -631,11 +646,11 @@ function AdminAIPage() {
             </div>
             <div>
               <h2 className="text-base font-bold text-foreground">AI Feature Architecture &amp; Active Model Routing</h2>
-              <p className="text-xs text-muted-foreground">Comprehensive map of all active platform features and their underlying LLMs, APIs, and token quotas.</p>
+              <p className="text-xs text-muted-foreground">Individually configure and switch the AI model for each specific platform feature below.</p>
             </div>
           </div>
           <Badge variant="outline" className="border-emerald-500/30 text-emerald-400 bg-emerald-500/5 text-[10px] font-mono">
-            Auto-Grounded
+            Granular Multi-Engine Routing
           </Badge>
         </div>
 
@@ -643,61 +658,157 @@ function AdminAIPage() {
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-border text-[10px] uppercase text-muted-foreground font-bold">
-                <th className="py-2.5 px-3">Platform Feature</th>
-                <th className="py-2.5 px-3">Primary LLM / Engine</th>
+                <th className="py-2.5 px-3 min-w-[190px]">Platform Feature</th>
+                <th className="py-2.5 px-3 min-w-[240px]">Configured Model Selector</th>
                 <th className="py-2.5 px-3">Provider Gateway</th>
                 <th className="py-2.5 px-3">Purpose &amp; Modality</th>
                 <th className="py-2.5 px-3 text-right">Cost / Quota</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
+              {/* 1. Bilingual AI Concierge */}
               <tr className="hover:bg-surface/50">
-                <td className="py-3 px-3 font-semibold text-foreground flex items-center gap-1.5">
-                  <span>💬</span> <span>Bilingual AI Concierge</span>
+                <td className="py-3 px-3 font-semibold text-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <span>💬</span> <span>Bilingual AI Concierge</span>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground block font-normal mt-0.5">Traveler Assistant (English/Urdu)</span>
                 </td>
-                <td className="py-3 px-3 font-mono text-emerald-400 font-bold">{config?.active_model || "qwen-turbo"}</td>
+                <td className="py-3 px-3">
+                  <select
+                    value={conciergeModel}
+                    onChange={(e) => setConciergeModel(e.target.value)}
+                    className="w-full h-8 rounded-lg border border-border bg-surface px-2 text-[11px] font-mono text-emerald-400 font-semibold focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    {PRESET_MODELS.filter((m) => !m.id.includes("-vl-")).map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.label}
+                      </option>
+                    ))}
+                  </select>
+                </td>
                 <td className="py-3 px-3 text-muted-foreground">QwenCloud / OpenRouter</td>
-                <td className="py-3 px-3 text-muted-foreground">Traveler Chat (English &amp; Roman Urdu) + Lead Capture</td>
+                <td className="py-3 px-3 text-muted-foreground">Traveler Chat + RAG Lead Capture</td>
                 <td className="py-3 px-3 text-right font-mono text-cyan-300 font-bold">100% Free (1M Pool)</td>
               </tr>
+
+              {/* 2. Tour Generator */}
               <tr className="hover:bg-surface/50">
-                <td className="py-3 px-3 font-semibold text-foreground flex items-center gap-1.5">
-                  <span>✨</span> <span>Tour Generator &amp; Itinerary Writer</span>
+                <td className="py-3 px-3 font-semibold text-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <span>✨</span> <span>Tour Generator &amp; Itinerary Writer</span>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground block font-normal mt-0.5">Agency Daily Schedule Creator</span>
                 </td>
-                <td className="py-3 px-3 font-mono text-emerald-400 font-bold">{config?.active_model || "qwen-turbo"}</td>
+                <td className="py-3 px-3">
+                  <select
+                    value={tourModel}
+                    onChange={(e) => setTourModel(e.target.value)}
+                    className="w-full h-8 rounded-lg border border-border bg-surface px-2 text-[11px] font-mono text-emerald-400 font-semibold focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    {PRESET_MODELS.filter((m) => !m.id.includes("-vl-")).map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.label}
+                      </option>
+                    ))}
+                  </select>
+                </td>
                 <td className="py-3 px-3 text-muted-foreground">QwenCloud / OpenRouter</td>
                 <td className="py-3 px-3 text-muted-foreground">Day-by-day Itinerary Planning &amp; Descriptions</td>
                 <td className="py-3 px-3 text-right font-mono text-emerald-400 font-bold">Tier Quota Gated</td>
               </tr>
+
+              {/* 3. Cover Image Contact Shield */}
               <tr className="hover:bg-surface/50">
-                <td className="py-3 px-3 font-semibold text-foreground flex items-center gap-1.5">
-                  <span>🛡️</span> <span>Cover Image Contact Shield</span>
+                <td className="py-3 px-3 font-semibold text-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <span>🛡️</span> <span>Cover Image Contact Shield</span>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground block font-normal mt-0.5">Anti-Circumvention OCR Scanner</span>
                 </td>
-                <td className="py-3 px-3 font-mono text-rose-400 font-bold">qwen-vl-plus / qwen-vl-max</td>
+                <td className="py-3 px-3">
+                  <select
+                    value={imageModModel}
+                    onChange={(e) => setImageModModel(e.target.value)}
+                    className="w-full h-8 rounded-lg border border-border bg-surface px-2 text-[11px] font-mono text-rose-400 font-semibold focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="qwen-vl-plus">Qwen VL Plus (⚡ Fast Visual OCR · Recommended)</option>
+                    <option value="qwen-vl-max">Qwen VL Max (👑 High-Accuracy Deep Vision)</option>
+                    <option value="qwen2.5-vl-72b-instruct">Qwen 2.5 VL 72B (Flagship Vision OCR)</option>
+                    <option value="qwen2.5-vl-7b-instruct">Qwen 2.5 VL 7B (Lightweight Vision)</option>
+                  </select>
+                </td>
                 <td className="py-3 px-3 text-muted-foreground">DashScope Qwen-VL Vision</td>
                 <td className="py-3 px-3 text-muted-foreground">Multimodal Visual OCR (Phone/WhatsApp Detection)</td>
                 <td className="py-3 px-3 text-right font-mono text-cyan-300 font-bold">Free on Qwen-VL</td>
               </tr>
+
+              {/* 4. Visa Embassy Fee Lookup */}
               <tr className="hover:bg-surface/50">
-                <td className="py-3 px-3 font-semibold text-foreground flex items-center gap-1.5">
-                  <span>🌐</span> <span>Visa Embassy Fee Lookup</span>
+                <td className="py-3 px-3 font-semibold text-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <span>🌐</span> <span>Visa Embassy Fee Lookup</span>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground block font-normal mt-0.5">Live Embassy Fee &amp; VFS Requirements</span>
                 </td>
-                <td className="py-3 px-3 font-mono text-sky-400 font-bold">gpt-4o-mini:online</td>
+                <td className="py-3 px-3">
+                  <select
+                    value={visaModel}
+                    onChange={(e) => setVisaModel(e.target.value)}
+                    className="w-full h-8 rounded-lg border border-border bg-surface px-2 text-[11px] font-mono text-sky-400 font-semibold focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="openai/gpt-4o-mini">OpenAI GPT-4o Mini (Web-Grounded / Fast)</option>
+                    <option value="qwen-turbo">Qwen Turbo (Fast Reference · Free)</option>
+                    <option value="qwen-plus">Qwen Plus (High Accuracy · Free)</option>
+                    <option value="deepseek/deepseek-chat">DeepSeek V3 (Accurate)</option>
+                  </select>
+                </td>
                 <td className="py-3 px-3 text-muted-foreground">OpenRouter Grounded</td>
                 <td className="py-3 px-3 text-muted-foreground">Live Web-Grounded Embassy &amp; VFS Fee Schedules</td>
                 <td className="py-3 px-3 text-right font-mono text-amber-300 font-bold">~$0.0002 / call</td>
               </tr>
+
+              {/* 5. Vendor Guide Operational Assistant */}
               <tr className="hover:bg-surface/50">
-                <td className="py-3 px-3 font-semibold text-foreground flex items-center gap-1.5">
-                  <span>🤖</span> <span>Vendor Guide Operational Assistant</span>
+                <td className="py-3 px-3 font-semibold text-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <span>🤖</span> <span>Vendor Guide Operational Assistant</span>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground block font-normal mt-0.5">B2B Partner Operating Rules &amp; KYC Q&amp;A</span>
                 </td>
-                <td className="py-3 px-3 font-mono text-purple-400 font-bold">qwen-turbo / gpt-4o-mini</td>
+                <td className="py-3 px-3">
+                  <select
+                    value={vendorGuideModel}
+                    onChange={(e) => setVendorGuideModel(e.target.value)}
+                    className="w-full h-8 rounded-lg border border-border bg-surface px-2 text-[11px] font-mono text-purple-400 font-semibold focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    {PRESET_MODELS.filter((m) => !m.id.includes("-vl-")).map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.label}
+                      </option>
+                    ))}
+                  </select>
+                </td>
                 <td className="py-3 px-3 text-muted-foreground">QwenCloud / OpenRouter</td>
                 <td className="py-3 px-3 text-muted-foreground">Operating Rules, KYC, SafePay &amp; Quota Q&amp;A</td>
                 <td className="py-3 px-3 text-right font-mono text-cyan-300 font-bold">Unlimited Public</td>
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <div className="flex items-center justify-between pt-2 text-[11px] text-muted-foreground border-t border-border/50">
+          <span>💡 Tip: Adjusting any dropdown above applies when you click <strong>Save AI Configuration</strong>.</span>
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => saveMutation.mutate()}
+            disabled={saveMutation.isPending}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs h-8 px-4"
+          >
+            {saveMutation.isPending ? <Loader2 className="mr-1.5 size-3.5 animate-spin" /> : <Save className="mr-1.5 size-3.5" />}
+            Save All Model Routes
+          </Button>
         </div>
       </div>
 

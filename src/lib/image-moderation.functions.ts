@@ -34,6 +34,7 @@ export const inspectImageForContactInfoServer = createServerFn({ method: "POST" 
 
     // 1. Fetch AI configuration for active API keys & models
     let customApiKey: string | undefined;
+    let visionModel = "qwen-vl-plus";
     try {
       const { data: dbConfig } = await supabaseAdmin
         .from("payment_gateway_settings")
@@ -44,15 +45,15 @@ export const inspectImageForContactInfoServer = createServerFn({ method: "POST" 
       if (dbConfig?.config) {
         const parsed = typeof dbConfig.config === "string" ? JSON.parse(dbConfig.config) : dbConfig.config;
         customApiKey = parsed.custom_api_key;
+        if (parsed.image_moderation_model) {
+          visionModel = String(parsed.image_moderation_model);
+        }
       }
     } catch (e) {
       console.warn("[inspectImageForContactInfoServer] Config fetch warning:", e);
     }
 
     const apiKey = customApiKey || process.env.DASHSCOPE_API_KEY || DEFAULT_DASHSCOPE_KEY;
-
-    // Use high-speed Qwen-VL Vision model for moderation
-    const visionModel = "qwen-vl-plus";
     const imagePayload = base64Data
       ? (base64Data.startsWith("data:") ? base64Data : `data:image/jpeg;base64,${base64Data}`)
       : (imageUrl || "");
