@@ -4,7 +4,17 @@ import { FileCheck, Shield, Ticket, ArrowUpRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPKR } from "@/lib/services";
 
-export function CrossSellPanel({ destinationCountry }: { destinationCountry: string }) {
+export function CrossSellPanel({
+  destinationCountry,
+  visaIncluded,
+  insuranceIncluded,
+  ticketsIncluded,
+}: {
+  destinationCountry: string;
+  visaIncluded?: boolean;
+  insuranceIncluded?: boolean;
+  ticketsIncluded?: boolean;
+}) {
   const { data } = useQuery({
     queryKey: ["cross-sell", destinationCountry],
     queryFn: async () => {
@@ -33,7 +43,12 @@ export function CrossSellPanel({ destinationCountry }: { destinationCountry: str
   });
 
   if (!data) return null;
-  const hasAny = data.visa.length + data.insurance.length + data.tickets.length > 0;
+
+  const visaList = visaIncluded ? [] : data.visa;
+  const insuranceList = insuranceIncluded ? [] : data.insurance;
+  const ticketsList = ticketsIncluded ? [] : data.tickets;
+
+  const hasAny = visaList.length + insuranceList.length + ticketsList.length > 0;
   if (!hasAny) return null;
 
   return (
@@ -45,7 +60,7 @@ export function CrossSellPanel({ destinationCountry }: { destinationCountry: str
         </p>
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {data.visa.map((v) => (
+        {visaList.map((v) => (
           <Link
             key={v.id}
             to="/visa/$id"
@@ -64,7 +79,7 @@ export function CrossSellPanel({ destinationCountry }: { destinationCountry: str
             <ArrowUpRight className="size-4 shrink-0 text-sky-400 opacity-0 transition group-hover:opacity-100" />
           </Link>
         ))}
-        {data.insurance.map((p) => (
+        {insuranceList.map((p) => (
           <Link
             key={p.id}
             to="/insurance/$id"
@@ -83,7 +98,7 @@ export function CrossSellPanel({ destinationCountry }: { destinationCountry: str
             <ArrowUpRight className="size-4 shrink-0 text-emerald-400 opacity-0 transition group-hover:opacity-100" />
           </Link>
         ))}
-        {data.tickets.map((t) => (
+        {ticketsList.map((t) => (
           <Link
             key={t.id}
             to="/tickets/$id"

@@ -73,13 +73,12 @@ const SIGNED_URL_TTL = 60 * 60 * 24 * 365 * 5;
 
 const DEFAULT_REQUIREMENTS: TourRequirement[] = [
   { item: "Original Passport (6+ months validity)", required: true },
-  { item: "Visa", required: true, note: "Provided/assisted by vendor" },
   { item: "Bank Statement (last 6 months)", required: true },
   { item: "Family Registration Certificate (FRC / NADRA)", required: true },
   { item: "2 recent passport-size photos", required: true },
   { item: "Copy of CNIC", required: true },
-  { item: "Tour Guide (English/Urdu speaking)", required: false, note: "Included in package" },
-  { item: "Travel insurance", required: false },
+  { item: "Confirmed Return Flight Ticket", required: true, note: "Mandatory for immigration clearance" },
+  { item: "Travel Insurance", required: true, note: "Mandatory for international travel entry" },
 ];
 
 const DEFAULT_ACCOMMODATION: TourAccommodation = {

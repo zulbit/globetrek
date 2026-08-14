@@ -436,29 +436,45 @@ export function mapDbTour(row: DbTourRow): Tour {
     requirements: (() => {
       const requirements = parseRequirements(row.requirements) || [];
       const dest = row.destination_country || "";
+      const acc = parseAccommodation(row.accommodation);
+      const isVisaIncluded = acc?.visa_included === true;
+
+      // Filter out redundant placeholder "Visa" if visa is included or if specific country visas are present
+      let filtered = requirements.filter(r => {
+        // If it's a generic "Visa" item marked as optional, or if visa is included in package, we can refine it
+        if (r.item.trim().toLowerCase() === "visa" && isVisaIncluded) {
+          return false;
+        }
+        return true;
+      });
+
       if (dest.includes("-") || dest.includes(",") || dest.includes("/")) {
         const countries = dest.split(/[-,\/]+/).map(c => c.trim()).filter(Boolean);
         countries.forEach(country => {
-          const hasVisa = requirements.some(r => r.item.toLowerCase().includes("visa") && r.item.toLowerCase().includes(country.toLowerCase()));
+          const hasVisa = filtered.some(r => r.item.toLowerCase().includes("visa") && r.item.toLowerCase().includes(country.toLowerCase()));
           if (!hasVisa && country.toLowerCase() !== "europe" && country.toLowerCase() !== "multi") {
-            requirements.push({
+            filtered.push({
               item: `Visa for ${country}`,
-              required: true,
-              note: `Separate visa filing required for entry into ${country}`,
+              required: !isVisaIncluded,
+              note: isVisaIncluded
+                ? `Visa filing is included in your tour package by the vendor`
+                : `Separate visa filing required for entry into ${country}`,
             });
           }
         });
       } else if (dest.toLowerCase() === "europe") {
-        const hasSchengen = requirements.some(r => r.item.toLowerCase().includes("schengen") || r.item.toLowerCase().includes("visa"));
+        const hasSchengen = filtered.some(r => r.item.toLowerCase().includes("schengen") || r.item.toLowerCase().includes("visa"));
         if (!hasSchengen) {
-          requirements.push({
+          filtered.push({
             item: "Schengen Visa",
-            required: true,
-            note: "Required for entry into Schengen zone countries",
+            required: !isVisaIncluded,
+            note: isVisaIncluded
+              ? "Schengen visa processing is included in your package"
+              : "Required for entry into Schengen zone countries",
           });
         }
       }
-      return requirements;
+      return filtered;
     })(),
     accommodation: parseAccommodation(row.accommodation),
     extraNotes: row.extra_notes ?? undefined,

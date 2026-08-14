@@ -301,9 +301,15 @@ function TourDetail() {
                           <td className="px-4 py-2.5">{r.item}</td>
                           <td className="px-4 py-2.5 text-muted-foreground">{r.note ?? "—"}</td>
                           <td className="px-4 py-2.5 text-right">
-                            <span className={`rounded-full border px-2 py-0.5 text-[11px] ${
-                              r.required ? "border-destructive/40 bg-destructive/10 text-destructive" : "border-border bg-surface text-muted-foreground"
-                            }`}>{r.required ? "Required" : "Optional"}</span>
+                            {r.required ? (
+                              <span className="rounded-full border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-[11px] font-medium text-destructive">
+                                Required
+                              </span>
+                            ) : (
+                              <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-400">
+                                Included in Package
+                              </span>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -345,7 +351,12 @@ function TourDetail() {
               </div>
             )}
 
-            <CrossSellPanel destinationCountry={tour.destination} />
+            <CrossSellPanel
+              destinationCountry={tour.destination}
+              visaIncluded={tour.accommodation?.visa_included === true}
+              insuranceIncluded={tour.accommodation?.insurance_included === true}
+              ticketsIncluded={tour.accommodation?.return_tickets_included === true}
+            />
           </div>
 
 
