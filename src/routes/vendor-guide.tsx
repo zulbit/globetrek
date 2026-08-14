@@ -55,12 +55,13 @@ const ICON_MAP: Record<string, any> = {
   Building2,
   Wallet,
   Compass,
-  Sparkles,
   BookOpen,
   FileCheck,
 };
 
 const SUGGESTED_AI_PROMPTS = [
+  "Cover image par phone number ya WhatsApp daalne par listing block kyun hoti hai?",
+  "Qwen-VL Visual Contact Shield image upload hone se pehle kya check karta hai?",
   "Custom Visa Leads unlock karne ki fee kitni hai (₨ 750) aur max kitne vendors unlock kar sakte hain?",
   "Refusal case visa leads mein applicant ki rejection details kaise milti hain?",
   "Gerry's aur VFS drop-box submission center leads par local client match badge kaise milta hai?",

@@ -155,6 +155,13 @@ const COMPARISON_DATA = [
     wordpress: false,
   },
   {
+    feature: "Qwen-VL Visual Contact Shield (Automated OCR Disintermediation & Phone Blocking)",
+    globetrek: true,
+    cloneScript: false,
+    saasPms: false,
+    wordpress: false,
+  },
+  {
     feature: "Fair 30-Day Rolling Quota Cycle (No Loss on Mid-Month Signup)",
     globetrek: true,
     cloneScript: false,
@@ -734,6 +741,40 @@ function EnterpriseShowcase() {
               <ul className="space-y-1.5 text-xs text-muted-foreground">
                 <li className="flex items-start gap-2"><CheckCircle2 className="size-3.5 text-emerald-400 shrink-0 mt-0.5" /> English & Roman Urdu — auto-detected at inference time</li>
                 <li className="flex items-start gap-2"><CheckCircle2 className="size-3.5 text-emerald-400 shrink-0 mt-0.5" /> Structured bold heading + bullet detail format in every response</li>
+              </ul>
+            </Card>
+
+            {/* Tool 5: Qwen-VL Visual Contact Shield & Anti-Disintermediation Engine */}
+            <Card className="p-6 space-y-4 border-rose-500/30 bg-gradient-to-br from-rose-500/10 via-card to-card shadow-sm sm:col-span-2">
+              <div className="flex items-start gap-4">
+                <div className="size-12 rounded-2xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-2xl shrink-0">
+                  🛡️
+                </div>
+                <div className="space-y-1">
+                  <Badge className="bg-rose-500/20 text-rose-400 border-rose-500/30 text-[10px] font-bold">Marketplace Governance &amp; Anti-Disintermediation</Badge>
+                  <h3 className="font-bold text-base text-foreground">Qwen-VL Visual Contact Shield (Automated Image OCR Moderation)</h3>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Protects the commercial integrity of the B2B marketplace by automatically scanning all vendor-uploaded tour cover photos and banners using high-speed <strong>Qwen-VL Vision-Language Models</strong>.
+              </p>
+              <div className="grid sm:grid-cols-3 gap-3">
+                <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-3 space-y-1">
+                  <span className="text-[10px] font-bold text-rose-300 uppercase tracking-wider block">Phone &amp; WhatsApp OCR</span>
+                  <p className="text-xs text-foreground">Detects Pakistani mobile numbers (03xx, +92), landlines, and WhatsApp contact text embedded in images.</p>
+                </div>
+                <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-3 space-y-1">
+                  <span className="text-[10px] font-bold text-rose-300 uppercase tracking-wider block">B2B Disintermediation Guard</span>
+                  <p className="text-xs text-foreground">Prevents vendors from bypassing platform lead flows with external booking URLs or agency contact watermarks.</p>
+                </div>
+                <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-3 space-y-1">
+                  <span className="text-[10px] font-bold text-rose-300 uppercase tracking-wider block">Sub-Second Live Feedback</span>
+                  <p className="text-xs text-foreground">Scans uploads in &lt; 500ms and returns instant corrective toasts with zero upload delay for clean destination imagery.</p>
+                </div>
+              </div>
+              <ul className="space-y-1.5 text-xs text-muted-foreground">
+                <li className="flex items-start gap-2"><CheckCircle2 className="size-3.5 text-emerald-400 shrink-0 mt-0.5" /> Powered by Qwen-VL Vision Models (QwenCloud &amp; OpenRouter fallback)</li>
+                <li className="flex items-start gap-2"><CheckCircle2 className="size-3.5 text-emerald-400 shrink-0 mt-0.5" /> Every moderation scan logged in Admin AI Analytics with latency and audit metrics</li>
               </ul>
             </Card>
           </div>

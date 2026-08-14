@@ -369,6 +369,59 @@ Upon passing KYC document audit (DTS License + NTN Tax ID), your agency automati
 1. 🛡️ **"Verified Partner" Badge**: Displayed on all tour packages, visa services, and custom lead quotations to prove government registration.
 2. 🥇 **"Gold Tier Vendor" Badge**: Awarded to **Pro** and **Agency** subscription plans maintaining a 4.5+ star rating, granting priority placement in universal search.
 3. ⚡ **"Fast Responder" Badge**: Automatically earned by partner agencies maintaining an average quote submission time under **6 hours**.`
+  },
+  {
+    id: "fallback-7",
+    slug: "image-moderation-contact-shield",
+    title: "Cover Image Policy & Qwen-VL Contact Shield",
+    category: "Quality Standards & Rules",
+    description: "Guidelines on tour and service cover photography, automated AI vision moderation, and strict prohibition of direct contact info or phone numbers.",
+    icon_name: "ShieldCheck",
+    display_order: 8,
+    is_published: true,
+    content: `# Cover Image Guidelines & Qwen-VL Contact Shield 🛡️
+
+To maintain a premium B2B travel marketplace and protect platform integrity, GlobeTrek PK deploys an automated **Qwen-VL Visual Contact Shield** that inspects all cover photos and banner uploads in real time.
+
+---
+
+### What is the Qwen-VL Visual Contact Shield?
+
+When you upload or replace a cover photo in the **Vendor Tours Console**, GlobeTrek PK passes the image through our multimodal **Qwen-VL Vision AI model** before it is published.
+
+The AI inspects the visual canvas for:
+1. **Pakistani Mobile & Landline Digits** (e.g. \`03xx-xxxxxxx\`, \`+92300\`, landline numbers).
+2. **WhatsApp Logos & Call-to-Action Badges** (e.g. *"WhatsApp us for booking"*, *"Call now 0321..."*).
+3. **External Agency URLs & Social Handles** (e.g. \`www.agency.com\`, \`@travelagency\`).
+4. **Promotional Watermarks or Banners** designed to bypass marketplace lead flows.
+
+---
+
+### Why Direct Contact Info is Blocked on Cover Images
+
+GlobeTrek PK operates on a structured B2B lead generation model:
+- **Fair Marketplace Distribution**: High-intent travelers interact through verified lead forms, instant WhatsApp lead alerts, and secure SafePay checkouts.
+- **Brand Protection**: Travelers trust clean, uncluttered, high-definition scenery and hotel photography rather than promotional classified-style flyers.
+- **Accreditation Safeguard**: Verified partner badges and agency contact channels are cleanly presented in official quote cards once a booking lead is unlocked.
+
+---
+
+### What Happens if Contact Details are Detected?
+
+If your uploaded image contains phone numbers or WhatsApp contact graphics:
+1. The upload is **instantly blocked** with a warning message.
+2. The AI provides a constructive reason (e.g. *"Detected phone digits: 0300-1234567"*).
+3. Your listing draft remains safe — simply replace the file with clean destination or hotel photography.
+
+---
+
+### Best Practices for Listing Cover Photos 📸
+
+To maximize traveler clicks and conversion rates:
+- **Resolution**: Use high-resolution horizontal photos (minimum 1200 × 800 px).
+- **Subject Matter**: Showcase iconic landmarks (e.g. Hunza Valley, Bosphorus Istanbul, Baku Boulevard, Swiss Alps), verified hotel rooms, or comfortable transport vehicles.
+- **Format**: JPG, PNG, or WebP (under 20MB — automatically optimized to under ~1600px upon upload).
+- **Clarity**: Keep images free of heavy text, borders, or low-resolution collages.`
   }
 ];
 
