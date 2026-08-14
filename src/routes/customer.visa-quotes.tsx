@@ -1,4 +1,4 @@
-import { createFileRoute, useSearch } from "@tanstack/react-router";
+import { createFileRoute, useSearch, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   FileCheck2,
@@ -14,6 +14,9 @@ import {
   Clock,
   ArrowRight,
   MapPin,
+  ArrowLeft,
+  Home,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -59,6 +62,13 @@ function CustomerVisaQuotesPortal() {
           <p className="text-sm text-muted-foreground">
             Please use the secure link sent to your WhatsApp or Email to view your custom visa proposals.
           </p>
+          <div className="pt-2">
+            <Link to="/customer">
+              <Button variant="outline" className="rounded-xl text-xs">
+                <ArrowLeft className="size-3.5 mr-1.5" /> Back to Traveler Portal
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -81,6 +91,13 @@ function CustomerVisaQuotesPortal() {
           <p className="text-xs text-muted-foreground">
             {(error as Error)?.message || "We could not find visa proposals for this link."}
           </p>
+          <div className="pt-2">
+            <Link to="/customer">
+              <Button variant="outline" className="rounded-xl text-xs">
+                <ArrowLeft className="size-3.5 mr-1.5" /> Back to Dashboard
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -91,8 +108,34 @@ function CustomerVisaQuotesPortal() {
   const acceptedQuote = quotes.find((q: VisaLeadQuoteItem) => q.status === "accepted");
 
   return (
-    <div className="min-h-screen bg-background py-10 px-4">
-      <div className="container max-w-5xl mx-auto space-y-8">
+    <div className="min-h-screen bg-background py-6 sm:py-10 px-4">
+      <div className="container max-w-5xl mx-auto space-y-6">
+        {/* Navigation Bar */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Link
+              to="/customer"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface/80 px-3.5 py-1.5 text-xs font-semibold text-foreground hover:bg-surface hover:text-primary transition shadow-sm"
+            >
+              <ArrowLeft className="size-3.5 text-primary" /> Back to Customer Dashboard
+            </Link>
+
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border/60 bg-surface/40 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition hidden sm:inline-flex"
+            >
+              <Home className="size-3.5" /> Home
+            </Link>
+          </div>
+
+          <Link
+            to="/custom-visa"
+            className="text-xs text-primary font-semibold hover:underline hidden sm:inline-block"
+          >
+            + New Visa Request
+          </Link>
+        </div>
+
         {/* Banner Header */}
         <div className="relative overflow-hidden rounded-3xl border border-rose-500/30 bg-gradient-to-r from-rose-500/15 via-amber-500/10 to-transparent p-6 sm:p-8 shadow-xl">
           <div className="absolute -right-12 -top-12 size-48 rounded-full bg-rose-400/10 blur-3xl" />
