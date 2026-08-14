@@ -345,7 +345,19 @@ export const activateVendorAddon = createServerFn({ method: "POST" })
     return input;
   })
   .handler(async ({ data, context }) => {
-    const durationDays = data.billingPeriod === "weekly" ? 7 : 30;
+    let durationDays = 30;
+    const periodLower = (data.billingPeriod || "").toLowerCase().trim();
+    const daysMatch = periodLower.match(/(\d+)\s*(d|day|days)?/);
+    if (daysMatch && daysMatch[1]) {
+      durationDays = parseInt(daysMatch[1], 10);
+    } else if (periodLower.includes("week") || periodLower.includes("7")) {
+      durationDays = 7;
+    } else if (periodLower.includes("month") || periodLower.includes("30")) {
+      durationDays = 30;
+    } else if (periodLower.includes("year") || periodLower.includes("365")) {
+      durationDays = 365;
+    }
+
     const startsAt = new Date();
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + durationDays);

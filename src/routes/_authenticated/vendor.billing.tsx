@@ -55,6 +55,8 @@ function BillingPage() {
       });
       setSelectedAddonCheckout(null);
       qc.invalidateQueries({ queryKey: ["vendor-my-active-addons"] });
+      qc.invalidateQueries({ queryKey: ["vendor-invoices"] });
+      qc.invalidateQueries({ queryKey: ["vendor-billing"] });
     },
     onError: (err: any) => {
       toast.error("Checkout failed", {
@@ -418,6 +420,9 @@ function BillingPage() {
               {activeAddons.map((addon: any) => {
                 const isAd = addon.plan_type === "advertisement";
                 const isFreeTier = currentTier === "free";
+                const activeMatch = (myActiveAddons || []).find((a: any) => a.addon_id === addon.id || a.addon_title === addon.name);
+                const isAlreadyActive = !!activeMatch;
+                const daysRemaining = activeMatch ? Math.max(1, Math.ceil((new Date(activeMatch.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : 0;
 
                 return (
                   <div
@@ -425,9 +430,11 @@ function BillingPage() {
                     className={`relative flex flex-col justify-between rounded-2xl border p-5 shadow-sm transition group ${
                       isFreeTier
                         ? "border-border/60 bg-surface/30 opacity-75 grayscale-[25%]"
-                        : isAd
-                          ? "border-rose-500/40 bg-gradient-to-b from-rose-500/10 to-card hover:-translate-y-0.5"
-                          : "border-purple-500/40 bg-gradient-to-b from-purple-500/10 to-card hover:-translate-y-0.5"
+                        : isAlreadyActive
+                          ? "border-emerald-500/50 bg-emerald-500/5 ring-1 ring-emerald-500/30"
+                          : isAd
+                            ? "border-rose-500/40 bg-gradient-to-b from-rose-500/10 to-card hover:-translate-y-0.5"
+                            : "border-purple-500/40 bg-gradient-to-b from-purple-500/10 to-card hover:-translate-y-0.5"
                     }`}
                   >
                     {/* Free Tier Overlay / Hover Warning Banner */}
@@ -457,18 +464,24 @@ function BillingPage() {
                       <div className="flex items-center justify-between gap-2 mb-2">
                         <span
                           className={`inline-block text-[9px] uppercase font-bold px-2 py-0.5 rounded-full border ${
-                            isAd
-                              ? "bg-rose-500/20 text-rose-300 border-rose-500/30"
-                              : "bg-purple-500/20 text-purple-300 border-purple-500/30"
+                            isAlreadyActive
+                              ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                              : isAd
+                                ? "bg-rose-500/20 text-rose-300 border-rose-500/30"
+                                : "bg-purple-500/20 text-purple-300 border-purple-500/30"
                           }`}
                         >
-                          {isAd ? "⚡ 1-Week Flash Banner" : "🌟 Placement Add-on"}
+                          {isAlreadyActive ? "✓ Active Boost" : isAd ? "⚡ 1-Week Flash Banner" : "🌟 Placement Add-on"}
                         </span>
-                        {isFreeTier && (
+                        {isAlreadyActive ? (
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                            Live ({daysRemaining}d left)
+                          </span>
+                        ) : isFreeTier ? (
                           <span className="text-[9px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 rounded-md flex items-center gap-1">
                             <Lock className="size-2.5" /> Locked on Free
                           </span>
-                        )}
+                        ) : null}
                       </div>
 
                       <h4 className="text-sm font-bold text-foreground mb-1">{addon.name}</h4>
@@ -479,7 +492,7 @@ function BillingPage() {
                           {formatTierPrice(addon.price_pkr)}
                         </span>
                         <span className="text-[10px] text-muted-foreground">
-                          / {addon.billing_period === "weekly" ? "7 days" : "mo"}
+                          / {addon.billing_period === "weekly" ? "7 days" : addon.billing_period || "mo"}
                         </span>
                       </div>
 
@@ -488,7 +501,11 @@ function BillingPage() {
                           <li key={i} className="flex items-start gap-1.5 text-muted-foreground">
                             <Check
                               className={`size-3 shrink-0 mt-0.5 ${
-                                isAd ? "text-rose-400" : "text-purple-400"
+                                isAlreadyActive
+                                  ? "text-emerald-400"
+                                  : isAd
+                                    ? "text-rose-400"
+                                    : "text-purple-400"
                               }`}
                             />
                             <span className="text-foreground/90">{f}</span>
@@ -499,17 +516,25 @@ function BillingPage() {
 
                     <Button
                       size="sm"
-                      disabled={isFreeTier}
+                      disabled={isFreeTier || isAlreadyActive}
                       onClick={() => setSelectedAddonCheckout(addon)}
                       className={`w-full font-bold text-xs rounded-xl border ${
-                        isFreeTier
-                          ? "bg-surface text-muted-foreground border-border cursor-not-allowed"
-                          : isAd
-                            ? "bg-rose-500 hover:bg-rose-600 text-white border-rose-400/40"
-                            : "bg-purple-600 hover:bg-purple-700 text-white border-purple-400/40"
+                        isAlreadyActive
+                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 cursor-default"
+                          : isFreeTier
+                            ? "bg-surface text-muted-foreground border-border cursor-not-allowed"
+                            : isAd
+                              ? "bg-rose-500 hover:bg-rose-600 text-white border-rose-400/40"
+                              : "bg-purple-600 hover:bg-purple-700 text-white border-purple-400/40"
                       }`}
                     >
-                      {isFreeTier ? "Requires Paid Plan" : isAd ? "Book Flash Banner" : "Activate Add-on"}
+                      {isAlreadyActive
+                        ? `Active (Expires in ${daysRemaining} day${daysRemaining === 1 ? "" : "s"})`
+                        : isFreeTier
+                          ? "Requires Paid Plan"
+                          : isAd
+                            ? "Book Flash Banner"
+                            : "Activate Add-on"}
                     </Button>
                   </div>
                 );

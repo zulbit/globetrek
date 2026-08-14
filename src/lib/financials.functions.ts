@@ -61,10 +61,20 @@ export const getAdminFinancialMetrics = createServerFn({ method: "GET" })
       0
     );
 
-    // Total gross collections
-    const totalGrossCollections = mrrSubscriptions + totalLeadUnlockRevenue;
+    // 5. Fetch all vendor active add-ons for financial ledger
+    const { data: addonGatewayData } = await supabaseAdmin
+      .from("payment_gateway_settings")
+      .select("config")
+      .eq("provider", "vendor_active_addons")
+      .maybeSingle();
 
-    // 5. Generate daily collections chart data
+    const allAddonsList: any[] = (addonGatewayData?.config as any[]) || [];
+    const totalAddonRevenue = allAddonsList.reduce((acc, a) => acc + (Number(a.amount_pkr) || 0), 0);
+
+    // Total gross collections
+    const totalGrossCollections = mrrSubscriptions + totalLeadUnlockRevenue + totalAddonRevenue;
+
+    // 6. Generate daily collections chart data
     const dailyMap: Record<string, { date: string; subscriptions: number; leadUnlocks: number; total: number }> = {};
     const daysCount = inputData.period === "30d" ? 30 : inputData.period === "90d" ? 90 : 180;
 
@@ -89,12 +99,21 @@ export const getAdminFinancialMetrics = createServerFn({ method: "GET" })
       }
     });
 
+    allAddonsList.forEach((a) => {
+      const dateKey = new Date(a.starts_at || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      const amt = Number(a.amount_pkr) || 0;
+      if (dailyMap[dateKey]) {
+        dailyMap[dateKey].total += amt;
+      }
+    });
+
     const timeSeriesData = Object.values(dailyMap);
 
-    // 6. Pie Chart Data: Revenue Breakdown by Stream
+    // 7. Pie Chart Data: Revenue Breakdown by Stream
     const breakdownPieData = [
       { name: "Pro Subscriptions", value: proCount * TIER_PRICES.pro, color: "#10b981" },
       { name: "Custom Lead Unlocks", value: totalLeadUnlockRevenue, color: "#f59e0b" },
+      { name: "Agency Visibility Boosts", value: totalAddonRevenue, color: "#ec4899" },
       { name: "Agency Subscriptions", value: agencyCount * TIER_PRICES.agency, color: "#a855f7" },
       { name: "Starter Subscriptions", value: starterCount * TIER_PRICES.starter, color: "#38bdf8" },
     ].filter((item) => item.value > 0);
@@ -103,7 +122,9 @@ export const getAdminFinancialMetrics = createServerFn({ method: "GET" })
       breakdownPieData.push({ name: "Lead Unlocks", value: 5000, color: "#f59e0b" });
     }
 
-    // 7. Recent Transaction Feed
+    // 8. Recent Transaction Feed
+    const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
+
     const recentTransactions = vendorsList
       .filter((v) => (v.subscription_tier || "free") !== "free")
       .map((v) => ({
@@ -128,8 +149,23 @@ export const getAdminFinancialMetrics = createServerFn({ method: "GET" })
           status: "Settled (SafePay)",
         }))
       )
+      .concat(
+        allAddonsList.map((a: any) => {
+          const v = profileMap.get(a.vendor_id);
+          return {
+            id: `boost-${a.id ? a.id.slice(-8) : Math.random().toString(36).slice(-8)}`,
+            type: "Marketplace Boost / Ad",
+            vendorName: v?.company_name || v?.full_name || "Verified Partner",
+            email: v?.email || "agency@globetrek.pk",
+            tier: "BOOST ADDON",
+            amount: Number(a.amount_pkr) || 0,
+            date: a.starts_at || new Date().toISOString(),
+            status: "Settled (SafePay)",
+          };
+        })
+      )
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 20);
+      .slice(0, 25);
 
     return {
       mrrSubscriptions,
@@ -223,5 +259,29 @@ export const getVendorInvoices = createServerFn({ method: "GET" })
       });
     }
 
-    return invoices;
+    // 3. Fetch vendor active add-on subscriptions & flash banner invoices
+    const { data: gatewayData } = await supabaseAdmin
+      .from("payment_gateway_settings")
+      .select("config")
+      .eq("provider", "vendor_active_addons")
+      .maybeSingle();
+
+    if (gatewayData?.config && Array.isArray(gatewayData.config)) {
+      const myAddons = (gatewayData.config as any[]).filter((a) => a.vendor_id === vendorId);
+      myAddons.forEach((a) => {
+        const dateStr = a.starts_at ? a.starts_at.split("T")[0] : new Date().toISOString().split("T")[0];
+        const refSuffix = a.id ? a.id.slice(-6).toUpperCase() : Math.random().toString(36).slice(-6).toUpperCase();
+        invoices.push({
+          id: `INV-BOOST-${refSuffix}`,
+          date: dateStr,
+          description: `${a.addon_title} (${a.billing_period || "Campaign"})`,
+          amount_pkr: Number(a.amount_pkr || 0),
+          status: "paid",
+          method: "SafePay PKR (QuickLink)",
+          period: `${a.billing_period === "weekly" ? "7 Days Flash Campaign" : a.billing_period || "Monthly"} Active Boost`,
+        });
+      });
+    }
+
+    return invoices.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   });
