@@ -76,118 +76,216 @@ function VendorInvoicesPage() {
     try {
       const jspdfModule = await import("jspdf");
       const jsPDF = jspdfModule.jsPDF || (jspdfModule as any).default;
-      const doc = new jsPDF();
+      const doc = new jsPDF({
+        unit: "mm",
+        format: "a4",
+      });
 
-      // 1. Header Banner
-      doc.setFillColor(4, 120, 87); // Primary emerald #047857
-      doc.rect(0, 0, 210, 22, "F");
+      // ---- Premium Colors ----
+      // Emerald Primary: #059669 (5, 150, 105)
+      // Dark Slate: #0f172a (15, 23, 42)
+      // Soft Slate: #475569 (71, 85, 105)
+      // Card BG: #f8fafc (248, 250, 252)
+      // Border: #e2e8f0 (226, 232, 240)
 
+      // 1. Top Decorative Bar
+      doc.setFillColor(5, 150, 105);
+      doc.rect(0, 0, 210, 6, "F");
+
+      // 2. Header: Logo / Brand & Company Info
+      // Logo Icon box
+      doc.setFillColor(5, 150, 105);
+      doc.roundedRect(15, 15, 14, 14, 3, 3, "F");
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(16);
+      doc.setFontSize(11);
       doc.setTextColor(255, 255, 255);
-      doc.text("GlobeTrek PK", 15, 15);
+      doc.text("GT", 18.5, 24.5);
 
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
-      doc.text("Official Vendor Tax Receipt & Billing Statement", 115, 15);
-
-      // 2. Status Badge & Invoice ID
-      doc.setTextColor(15, 23, 42); // #0f172a
-      doc.setFontSize(13);
+      // Company Title & Subtitle
       doc.setFont("helvetica", "bold");
-      doc.text(`INVOICE: ${inv.id}`, 15, 34);
+      doc.setFontSize(18);
+      doc.setTextColor(15, 23, 42);
+      doc.text("GlobeTrek PK", 33, 22);
 
-      doc.setFontSize(10);
+      doc.setFontSize(8.5);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(71, 85, 105);
+      doc.text("Pakistan's Premier Travel Marketplace & B2B Portal", 33, 27);
+      doc.text("GlobeTrek PK Technologies (Pvt) Ltd · NTN: 8941029-7", 33, 31);
+
+      // Right Header: Invoice Title & Ref
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
       doc.setTextColor(5, 150, 105);
-      doc.text(`STATUS: ${inv.status.toUpperCase()}`, 155, 34);
+      doc.text("TAX INVOICE", 195, 22, { align: "right" });
 
-      // 3. Billed To & Metadata Boxes
-      doc.setDrawColor(226, 232, 240);
-      doc.setFillColor(248, 250, 252);
-      doc.roundedRect(15, 42, 85, 38, 3, 3, "FD");
-      doc.roundedRect(110, 42, 85, 38, 3, 3, "FD");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(15, 23, 42);
+      doc.text(`Ref: ${inv.id}`, 195, 27, { align: "right" });
 
-      // Billed To Text
+      // Status Badge (Paid / Verified)
+      doc.setFillColor(209, 250, 229); // emerald-100
+      doc.roundedRect(165, 30, 30, 6, 2, 2, "F");
       doc.setFontSize(8);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(100, 116, 139);
-      doc.text("BILLED TO (VENDOR AGENCY)", 20, 50);
+      doc.setTextColor(4, 120, 87);
+      doc.text("✓ PAID & SETTLED", 180, 34.2, { align: "center" });
 
-      doc.setFontSize(10);
+      // Horizontal Divider
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.5);
+      doc.line(15, 38, 195, 38);
+
+      // 3. Two-Column Metadata Info Cards
+      // Left Card: Billed To
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(15, 43, 86, 36, 2.5, 2.5, "FD");
+
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(100, 116, 139);
+      doc.text("BILLED TO (REGISTERED VENDOR)", 20, 49);
+
+      doc.setFontSize(10.5);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(15, 23, 42);
-      doc.text(agencyDisplayName, 20, 58);
+      doc.text(agencyDisplayName, 20, 56);
 
-      doc.setFontSize(9);
+      doc.setFontSize(8.5);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(71, 85, 105);
-      doc.text(`City: ${profile?.city || "Pakistan"}`, 20, 66);
-      doc.text(`Account Tier: ${profile?.subscription_tier || "Agency"} Plan`, 20, 73);
+      doc.text(`Account Tier: ${profile?.subscription_tier ? profile.subscription_tier.toUpperCase() : "STARTER"} Partner`, 20, 63);
+      doc.text(`Operating City: ${profile?.city || "Pakistan"}`, 20, 68);
+      doc.text(`Email: ${profile?.email || "vendor@globetrek.pk"}`, 20, 73);
 
-      // Invoice Metadata Text
-      doc.setFontSize(8);
+      // Right Card: Invoice & Payment Specs
+      doc.setFillColor(248, 250, 252);
+      doc.roundedRect(109, 43, 86, 36, 2.5, 2.5, "FD");
+
+      doc.setFontSize(7.5);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(100, 116, 139);
-      doc.text("INVOICE METADATA", 115, 50);
+      doc.text("PAYMENT & INVOICE DETAILS", 114, 49);
 
-      doc.setFontSize(9);
+      doc.setFontSize(8.5);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(71, 85, 105);
-      doc.text(`Date: ${inv.date}`, 115, 58);
-      doc.text(`Period: ${inv.period}`, 115, 66);
-      doc.text(`Gateway: SafePay PKR (NTN: 8941029-7)`, 115, 73);
+      doc.text("Issue Date:", 114, 56);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(15, 23, 42);
+      doc.text(`${inv.date}`, 142, 56);
 
-      // 4. Line Items Table Header
-      doc.setFillColor(15, 23, 42);
-      doc.rect(15, 88, 180, 10, "F");
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(71, 85, 105);
+      doc.text("Billing Period:", 114, 63);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(15, 23, 42);
+      doc.text(`${inv.period}`, 142, 63);
+
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(71, 85, 105);
+      doc.text("Payment Gateway:", 114, 70);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(5, 150, 105);
+      doc.text("SafePay PKR (QuickLink)", 142, 70);
+
+      // 4. Itemized Table
+      const tableStartY = 86;
+      doc.setFillColor(15, 23, 42); // Dark slate header
+      doc.rect(15, tableStartY, 180, 9, "F");
 
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(9);
+      doc.setFontSize(8.5);
       doc.setTextColor(255, 255, 255);
-      doc.text("Item Description", 20, 94);
-      doc.text("Billing Period", 105, 94);
-      doc.text("Amount (PKR)", 160, 94);
+      doc.text("ITEM DESCRIPTION & SERVICE SPECIFICATION", 20, tableStartY + 6);
+      doc.text("PERIOD", 125, tableStartY + 6);
+      doc.text("AMOUNT (PKR)", 190, tableStartY + 6, { align: "right" });
 
-      // Row Data
+      // Table Row
+      const rowY = tableStartY + 16;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
       doc.setTextColor(15, 23, 42);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.text(inv.description, 20, 106);
-      doc.text(inv.period, 105, 106);
-      doc.setFont("courier", "bold");
-      doc.text(`Rs ${inv.amount_pkr.toLocaleString()}`, 160, 106);
-
-      doc.setDrawColor(226, 232, 240);
-      doc.line(15, 112, 195, 112);
-
-      // 5. Totals Box
-      doc.setFillColor(248, 250, 252);
-      doc.roundedRect(120, 120, 75, 28, 3, 3, "FD");
+      doc.text(inv.description, 20, rowY);
 
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
+      doc.setFontSize(8);
       doc.setTextColor(100, 116, 139);
-      doc.text("Subtotal:", 125, 128);
-      doc.text(`Rs ${inv.amount_pkr.toLocaleString()}`, 160, 128);
+      doc.text("Verified B2B Service Activation · Tax Invoice Compliant", 20, rowY + 5);
 
-      doc.text("Sales Tax (0%):", 125, 135);
-      doc.text("Rs 0", 160, 135);
+      doc.setFontSize(8.5);
+      doc.setTextColor(71, 85, 105);
+      doc.text(inv.period, 125, rowY);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(15, 23, 42);
+      doc.text(`Rs ${Number(inv.amount_pkr).toLocaleString()}`, 190, rowY, { align: "right" });
+
+      // Table Row Border
+      doc.setDrawColor(226, 232, 240);
+      doc.line(15, rowY + 10, 195, rowY + 10);
+
+      // 5. Bottom Section: Security Stamp (Left) + Totals Box (Right)
+      const bottomY = rowY + 16;
+
+      // Security Stamp & Compliance Note (Left)
+      doc.setFillColor(241, 245, 249);
+      doc.roundedRect(15, bottomY, 96, 32, 2, 2, "F");
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(15, 23, 42);
+      doc.text("🔒 VERIFIED TRANSACTION & NTN CERTIFIED", 20, bottomY + 7);
+
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 116, 139);
+      doc.text("This receipt confirms payment settlement via SafePay.", 20, bottomY + 13);
+      doc.text("GST/PRA Sales Tax Exempt under Digital Services Schedule.", 20, bottomY + 18);
+      doc.text("Generated by GlobeTrek PK Financial Billing Engine.", 20, bottomY + 23);
+
+      // Totals Box (Right)
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(118, bottomY, 77, 32, 2, 2, "FD");
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(100, 116, 139);
+      doc.text("Subtotal:", 123, bottomY + 8);
+      doc.setTextColor(15, 23, 42);
+      doc.text(`Rs ${Number(inv.amount_pkr).toLocaleString()}`, 190, bottomY + 8, { align: "right" });
+
+      doc.setTextColor(100, 116, 139);
+      doc.text("Sales Tax (0%):", 123, bottomY + 15);
+      doc.setTextColor(15, 23, 42);
+      doc.text("Rs 0", 190, bottomY + 15, { align: "right" });
 
       doc.setDrawColor(203, 213, 225);
-      doc.line(125, 138, 190, 138);
+      doc.line(123, bottomY + 19, 190, bottomY + 19);
 
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
-      doc.setTextColor(4, 120, 87);
-      doc.text("Total Paid:", 125, 144);
-      doc.text(`Rs ${inv.amount_pkr.toLocaleString()}`, 160, 144);
+      doc.setFontSize(10.5);
+      doc.setTextColor(5, 150, 105);
+      doc.text("Total Paid (PKR):", 123, bottomY + 26);
+      doc.text(`Rs ${Number(inv.amount_pkr).toLocaleString()}`, 190, bottomY + 26, { align: "right" });
 
-      // 6. Footer
+      // 6. Professional Footer
+      doc.setDrawColor(226, 232, 240);
+      doc.line(15, 265, 195, 265);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.5);
+      doc.setTextColor(71, 85, 105);
+      doc.text("GlobeTrek PK Technologies (Private) Limited", 105, 271, { align: "center" });
+
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
+      doc.setFontSize(7);
       doc.setTextColor(148, 163, 184);
-      doc.text("GlobeTrek PK Technologies (Private) Limited — Tax Reg / NTN: 8941029-7", 42, 175);
-      doc.text("Official computer-generated receipt issued upon verified SafePay PKR gateway payment completion.", 30, 180);
+      doc.text("Karachi · Lahore · Islamabad · Peshawar · Quetta | Web: globetrek.pk | Support: billing@globetrek.pk", 105, 275, { align: "center" });
+      doc.text("Official computer-generated tax invoice. No signature required.", 105, 279, { align: "center" });
 
       // Direct File Save to Browser Downloads Folder!
       doc.save(`GlobeTrek_Invoice_${inv.id}.pdf`);
@@ -211,67 +309,110 @@ function VendorInvoicesPage() {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>GlobeTrek PK — Invoice ${inv.id}</title>
+          <title>GlobeTrek PK — Tax Invoice ${inv.id}</title>
           <style>
-            body { font-family: system-ui, -apple-system, sans-serif; padding: 40px; color: #0f172a; max-width: 800px; margin: 0 auto; }
-            .header { border-bottom: 2px solid #059669; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end; }
-            .title { font-size: 24px; font-weight: 800; color: #047857; margin: 0; }
-            .subtitle { font-size: 11px; color: #64748b; margin: 2px 0 0 0; }
-            .badge { display: inline-block; background-color: #d1fae5; color: #047857; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; text-transform: uppercase; }
-            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; font-size: 12px; }
-            .card { background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 8px; }
+            @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+            * { box-sizing: border-box; }
+            body { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; padding: 40px; color: #0f172a; max-width: 820px; margin: 0 auto; background: #ffffff; }
+            .header { border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; }
+            .brand { display: flex; align-items: center; gap: 12px; }
+            .brand-logo { width: 44px; height: 44px; background: #059669; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 18px; }
+            .brand-title { font-size: 22px; font-weight: 800; color: #0f172a; margin: 0; line-height: 1.1; }
+            .brand-sub { font-size: 11px; color: #64748b; margin: 3px 0 0 0; }
+            .badge { display: inline-block; background-color: #d1fae5; color: #047857; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; text-transform: uppercase; margin-top: 6px; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; font-size: 12px; }
+            .card { background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 12px; }
             table { width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 12px; }
-            th { background-color: #0f172a; color: #ffffff; padding: 10px 12px; text-align: left; }
-            td { border-bottom: 1px solid #e2e8f0; padding: 12px; }
-            .totals { display: flex; justify-content: flex-end; margin-bottom: 30px; }
-            .total-box { width: 250px; background-color: #f8fafc; border: 1px solid #cbd5e1; padding: 14px; border-radius: 8px; font-size: 12px; }
-            .footer { border-top: 1px solid #e2e8f0; padding-top: 16px; text-align: center; font-size: 10px; color: #94a3b8; }
+            th { background-color: #0f172a; color: #ffffff; padding: 12px 14px; text-align: left; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+            th:first-child { border-top-left-radius: 8px; }
+            th:last-child { border-top-right-radius: 8px; }
+            td { border-bottom: 1px solid #e2e8f0; padding: 14px; }
+            .totals { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; }
+            .security-box { background: #f1f5f9; border: 1px solid #e2e8f0; padding: 14px; border-radius: 10px; font-size: 11px; color: #475569; width: 50%; line-height: 1.5; }
+            .total-box { width: 42%; background-color: #f8fafc; border: 1px solid #cbd5e1; padding: 16px; border-radius: 12px; font-size: 12px; }
+            .footer { border-top: 1px solid #e2e8f0; padding-top: 16px; text-align: center; font-size: 11px; color: #94a3b8; }
+            @media print {
+              body { padding: 0; }
+              .header { border-bottom: 2px solid #059669; }
+            }
           </style>
         </head>
         <body>
           <div class="header">
-            <div>
-              <h1 class="title">GlobeTrek PK</h1>
-              <p class="subtitle">Official Vendor Tax Receipt &amp; Billing Statement</p>
+            <div class="brand">
+              <div class="brand-logo">GT</div>
+              <div>
+                <h1 class="brand-title">GlobeTrek PK</h1>
+                <p class="brand-sub">Pakistan's Premier Travel Marketplace &amp; B2B Portal</p>
+                <p class="brand-sub" style="color: #059669; font-weight: 600;">NTN: 8941029-7 · SafePay Verified</p>
+              </div>
             </div>
             <div style="text-align: right;">
-              <span class="badge">${inv.status}</span>
-              <p style="font-size: 12px; font-weight: 700; font-family: monospace; margin: 6px 0 0 0;">${inv.id}</p>
+              <h2 style="font-size: 20px; font-weight: 800; color: #059669; margin: 0;">TAX INVOICE</h2>
+              <p style="font-size: 12px; font-weight: 700; font-family: monospace; color: #0f172a; margin: 4px 0 0 0;">${inv.id}</p>
+              <span class="badge">✓ ${inv.status.toUpperCase()}</span>
             </div>
           </div>
+
           <div class="grid">
             <div class="card">
-              <p style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #64748b; margin: 0 0 6px 0;">Billed To</p>
-              <p style="font-size: 13px; font-weight: 700; margin: 0 0 2px 0;">${agencyDisplayName}</p>
-              <p style="color: #475569; margin: 0;">City: ${profile?.city || "Pakistan"}</p>
+              <p style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: #64748b; margin: 0 0 6px 0;">Billed To (Registered Vendor)</p>
+              <p style="font-size: 14px; font-weight: 800; color: #0f172a; margin: 0 0 4px 0;">${agencyDisplayName}</p>
+              <p style="color: #475569; margin: 0 0 2px 0;">Account Tier: <strong>${profile?.subscription_tier ? profile.subscription_tier.toUpperCase() : "STARTER"} Partner</strong></p>
+              <p style="color: #475569; margin: 0 0 2px 0;">City: ${profile?.city || "Pakistan"}</p>
+              <p style="color: #475569; margin: 0;">Email: ${profile?.email || "vendor@globetrek.pk"}</p>
             </div>
             <div class="card">
-              <p style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #64748b; margin: 0 0 6px 0;">Invoice Details</p>
-              <p style="margin: 0;"><strong>Date:</strong> ${inv.date}</p>
-              <p style="margin: 2px 0 0 0;"><strong>Period:</strong> ${inv.period}</p>
-              <p style="margin: 2px 0 0 0;"><strong>NTN:</strong> 8941029-7</p>
+              <p style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: #64748b; margin: 0 0 6px 0;">Payment &amp; Invoice Details</p>
+              <p style="margin: 0 0 4px 0; color: #475569;"><strong>Date:</strong> <span style="color: #0f172a;">${inv.date}</span></p>
+              <p style="margin: 0 0 4px 0; color: #475569;"><strong>Period:</strong> <span style="color: #0f172a;">${inv.period}</span></p>
+              <p style="margin: 0; color: #475569;"><strong>Gateway:</strong> <span style="color: #059669; font-weight: 700;">SafePay PKR (QuickLink)</span></p>
             </div>
           </div>
+
           <table>
             <thead>
-              <tr><th>Item Description</th><th style="text-align:center;">Period</th><th style="text-align:right;">Amount (PKR)</th></tr>
+              <tr>
+                <th>Item Description &amp; Specification</th>
+                <th style="text-align:center;">Period</th>
+                <th style="text-align:right;">Amount (PKR)</th>
+              </tr>
             </thead>
             <tbody>
               <tr>
-                <td style="font-weight: 600;">${inv.description}</td>
-                <td style="text-align: center;">${inv.period}</td>
-                <td style="text-align: right; font-family: monospace; font-weight: 700;">Rs ${inv.amount_pkr.toLocaleString()}</td>
+                <td>
+                  <div style="font-weight: 700; font-size: 13px; color: #0f172a;">${inv.description}</div>
+                  <div style="font-size: 11px; color: #64748b; margin-top: 3px;">Verified B2B Service Activation · Tax Invoice Compliant</div>
+                </td>
+                <td style="text-align: center; color: #475569; font-weight: 600;">${inv.period}</td>
+                <td style="text-align: right; font-family: monospace; font-weight: 800; font-size: 13px; color: #0f172a;">Rs ${Number(inv.amount_pkr).toLocaleString()}</td>
               </tr>
             </tbody>
           </table>
+
           <div class="totals">
+            <div class="security-box">
+              <strong>🔒 Verified Payment &amp; Compliance</strong><br>
+              This invoice confirms payment settlement via SafePay PKR.<br>
+              GST/PRA Sales Tax Exempt under Digital Services Schedule.<br>
+              Issued by GlobeTrek PK Technologies (Private) Limited.
+            </div>
             <div class="total-box">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><span>Subtotal:</span><span>Rs ${inv.amount_pkr.toLocaleString()}</span></div>
-              <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 800; color: #047857; border-top: 1px solid #cbd5e1; padding-top: 6px;"><span>Total Paid:</span><span>Rs ${inv.amount_pkr.toLocaleString()}</span></div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 6px; color: #64748b;">
+                <span>Subtotal:</span><span style="font-weight: 600; color: #0f172a;">Rs ${Number(inv.amount_pkr).toLocaleString()}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #64748b;">
+                <span>Sales Tax (0%):</span><span style="color: #0f172a;">Rs 0</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 15px; font-weight: 800; color: #059669; border-top: 2px solid #e2e8f0; padding-top: 8px;">
+                <span>Total Paid:</span><span>Rs ${Number(inv.amount_pkr).toLocaleString()}</span>
+              </div>
             </div>
           </div>
+
           <div class="footer">
-            <p>GlobeTrek PK Technologies — NTN: 8941029-7 | Computer-Generated Tax Receipt</p>
+            <p style="margin: 0 0 4px 0; font-weight: 600; color: #475569;">GlobeTrek PK Technologies (Private) Limited · NTN: 8941029-7</p>
+            <p style="margin: 0;">Karachi · Lahore · Islamabad · Peshawar · Quetta | Web: globetrek.pk | Support: billing@globetrek.pk</p>
           </div>
           <script>window.onload = function() { window.print(); };</script>
         </body>
