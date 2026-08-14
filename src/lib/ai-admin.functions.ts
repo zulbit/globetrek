@@ -307,18 +307,38 @@ export const getAIAnalyticsServer = createServerFn({ method: "POST" })
     const monthlyTokens = isDemoMode ? (calcTokens(monthlyLogs) || 48900) : calcTokens(monthlyLogs);
     const monthlyCostUsd = isDemoMode ? (calcCost(monthlyLogs) || 0.00733) : calcCost(monthlyLogs);
 
-    // Feature breakdown calculation
+    const ALL_PLATFORM_FEATURES = [
+      "AI Concierge Chat",
+      "Tour AI Generator",
+      "Cover Image Contact Shield",
+      "Visa Embassy Fee Lookup",
+      "Vendor Guide Operational Assistant",
+    ];
+
+    // Feature breakdown calculation across all 5 platform features
     const counts: Record<string, number> = {};
+    ALL_PLATFORM_FEATURES.forEach((feat) => {
+      counts[feat] = 0;
+    });
+
     logs.forEach((l) => {
-      counts[l.feature] = (counts[l.feature] || 0) + l.total_tokens;
+      // Map potential alternate feature names to canonical names
+      let featName = l.feature;
+      if (featName === "Visa Lookup AI") featName = "Visa Embassy Fee Lookup";
+      if (featName === "Vendor Guide AI") featName = "Vendor Guide Operational Assistant";
+      if (featName === "Cover Image Shield" || featName === "Image Moderation Shield") featName = "Cover Image Contact Shield";
+      
+      counts[featName] = (counts[featName] || 0) + l.total_tokens;
     });
 
     const totalTokensAll = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
-    const feature_breakdown = Object.entries(counts).map(([name, tokens]) => ({
-      name,
-      tokens,
-      percentage: Math.round((tokens / totalTokensAll) * 100),
-    }));
+    const feature_breakdown = Object.entries(counts)
+      .map(([name, tokens]) => ({
+        name,
+        tokens,
+        percentage: Math.round((tokens / totalTokensAll) * 100),
+      }))
+      .sort((a, b) => b.tokens - a.tokens);
 
     let time_series;
     if (isDemoMode) {
