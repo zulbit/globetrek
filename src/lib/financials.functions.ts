@@ -171,6 +171,8 @@ export const getAdminFinancialMetrics = createServerFn({ method: "GET" })
       mrrSubscriptions,
       totalLeadUnlocks,
       totalLeadUnlockRevenue,
+      totalAddonRevenue,
+      totalAddonsCount: allAddonsList.length,
       totalGrossCollections,
       paidVendorsCount: proCount + starterCount + agencyCount,
       freeVendorsCount: freeCount,

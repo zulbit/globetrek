@@ -157,20 +157,20 @@ export function AdminFinancials() {
           </div>
         </Card>
 
-        {/* Active Partner Tiers */}
+        {/* Agency Visibility Boosts */}
         <Card className="p-5 space-y-2 border-purple-500/30 bg-gradient-to-br from-purple-500/10 via-card to-card relative overflow-hidden shadow-card">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-purple-300">Paid Partner Base</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-purple-300">Agency Visibility Boosts</span>
             <div className="size-9 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-300">
-              <Building2 className="size-4" />
+              <Sparkles className="size-4" />
             </div>
           </div>
           <div className="text-3xl font-black text-foreground font-mono">
-            {(data?.proCount ?? 0) + (data?.starterCount ?? 0) + (data?.agencyCount ?? 0)}
+            {formatPKR(data?.totalAddonRevenue ?? 0)}
           </div>
           <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
-            <span>Agencies on Paid Tiers</span>
-            <span className="text-purple-300 font-semibold">{data?.freeCount ?? 0} Free Trial</span>
+            <span>{data?.totalAddonsCount ?? 0} Boosts Active</span>
+            <span className="text-purple-300 font-semibold">Flash Ads &amp; Badges</span>
           </div>
         </Card>
       </div>
