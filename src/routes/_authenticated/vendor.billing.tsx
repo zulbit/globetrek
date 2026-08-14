@@ -50,13 +50,21 @@ function BillingPage() {
     mutationFn: (input: { addonId: string; addonTitle: string; amountPKR: number; billingPeriod: string }) =>
       activateAddonFn({ data: input }),
     onSuccess: (res, variables) => {
-      toast.success(`Activated ${variables.addonTitle}!`, {
-        description: "Your SafePay PKR payment completed cleanly. Your visibility boost is live now!",
-      });
       setSelectedAddonCheckout(null);
       qc.invalidateQueries({ queryKey: ["vendor-my-active-addons"] });
       qc.invalidateQueries({ queryKey: ["vendor-invoices"] });
       qc.invalidateQueries({ queryKey: ["vendor-billing"] });
+
+      if (res?.checkoutUrl) {
+        toast.success(`Redirecting to SafePay Checkout…`, {
+          description: `Loading encrypted PKR payment page for ${variables.addonTitle}.`,
+        });
+        window.location.href = res.checkoutUrl;
+      } else {
+        toast.success(`Activated ${variables.addonTitle}!`, {
+          description: "Your visibility boost is live now!",
+        });
+      }
     },
     onError: (err: any) => {
       toast.error("Checkout failed", {

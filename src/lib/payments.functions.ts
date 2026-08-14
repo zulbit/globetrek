@@ -337,7 +337,7 @@ export const saveSubscriptionPlans = createServerFn({ method: "POST" })
     return { ok: true, plans: plansToSave };
   });
 
-// -------- Vendor: activate / purchase addon subscription --------
+// -------- Vendor: create SafePay checkout & activate addon subscription --------
 export const activateVendorAddon = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: { addonId: string; addonTitle: string; amountPKR: number; billingPeriod: string }) => {
@@ -364,7 +364,71 @@ export const activateVendorAddon = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // 1. Save to vendor_addon_subscriptions table
+    // Fetch vendor profile details for SafePay customer metadata
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("full_name, company_name, email, city")
+      .eq("id", context.userId)
+      .maybeSingle();
+
+    const vendorEmail = profile?.email || context.userEmail || "vendor@globetrek.pk";
+    const vendorName = profile?.company_name || profile?.full_name || "GlobeTrek Vendor";
+    const [firstName, ...rest] = vendorName.trim().split(/\s+/);
+    const lastName = rest.join(" ") || "Partner";
+
+    // 1. Create SafePay QuickLink if configured
+    let checkoutUrl = "";
+    const env = (process.env.SAFEPAY_ENV || "sandbox").toLowerCase();
+    const baseUrl = env === "production" || env === "live"
+      ? "https://api.getsafepay.com"
+      : "https://sandbox.api.getsafepay.com";
+    const secretKey = process.env.SAFEPAY_SECRET_KEY;
+
+    if (secretKey && data.amountPKR > 0) {
+      try {
+        const qlRes = await fetch(`${baseUrl}/invoice/quick-links/v2/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-SFPY-MERCHANT-SECRET": secretKey,
+          },
+          body: JSON.stringify({
+            amount: Math.round(data.amountPKR),
+            currency: "PKR",
+            note: `GlobeTrek PK — ${data.addonTitle} (${data.billingPeriod || "Campaign"})`,
+            workflow: "MANUAL",
+            customer: {
+              first_name: firstName,
+              last_name: lastName,
+              email: vendorEmail,
+              phone_number: "+923001234567",
+            },
+          }),
+        });
+
+        if (qlRes.ok) {
+          const qlJson = (await qlRes.json()) as {
+            data?: { id?: string; metadata?: { recipient_view_url?: string }[] };
+          };
+          const recipientUrl = qlJson.data?.metadata?.[0]?.recipient_view_url;
+          if (recipientUrl) {
+            const url = new URL(recipientUrl);
+            url.searchParams.set("email", vendorEmail);
+            url.searchParams.set("first_name", firstName);
+            url.searchParams.set("last_name", lastName);
+            url.searchParams.set("name", `${firstName} ${lastName}`);
+            url.searchParams.set("city", profile?.city || "Karachi");
+            url.searchParams.set("country", "Pakistan");
+            url.searchParams.set("country_code", "PK");
+            checkoutUrl = url.toString();
+          }
+        }
+      } catch (err) {
+        console.error("[activateVendorAddon] SafePay link generation failed:", err);
+      }
+    }
+
+    // 2. Save to vendor_addon_subscriptions table
     try {
       await supabaseAdmin.from("vendor_addon_subscriptions").insert({
         vendor_id: context.userId,
@@ -380,7 +444,7 @@ export const activateVendorAddon = createServerFn({ method: "POST" })
       // Table fallback handled below
     }
 
-    // 2. Save to payment_gateway_settings as vendor_active_addons fallback
+    // 3. Save to payment_gateway_settings as vendor_active_addons fallback
     const { data: existing } = await supabaseAdmin
       .from("payment_gateway_settings")
       .select("config")
@@ -407,7 +471,7 @@ export const activateVendorAddon = createServerFn({ method: "POST" })
       { onConflict: "provider" }
     );
 
-    return { ok: true, activeAddon: newAddonRecord };
+    return { ok: true, activeAddon: newAddonRecord, checkoutUrl };
   });
 
 // -------- Vendor: get active addon subscriptions --------
