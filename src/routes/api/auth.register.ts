@@ -80,6 +80,7 @@ export const Route = createFileRoute("/api/auth/register")({
             company_name: role === "vendor" ? company_name || null : null,
             vendor_status: role === "vendor" ? "pending" : "approved",
             subscription_tier: "free",
+            lead_credits_balance: role === "vendor" ? 5 : 0,
             referral_code_used: role === "vendor" && referral_code ? referral_code.toUpperCase() : null,
           });
 

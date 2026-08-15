@@ -395,12 +395,12 @@ function VendorOverview() {
               <Sparkles className="size-5" />
             </span>
             <div className="min-w-0 flex-1">
-              <h3 className="text-sm font-semibold">Upgrade to Pro for ₨ 10,000 / month</h3>
+              <h3 className="text-sm font-semibold">Upgrade to Tour Operator for ₨ 7,500 / month</h3>
               <p className="text-xs text-muted-foreground">
-                Unlimited lead unlocks, priority placement on search, and a verified vendor badge.
+                100 monthly lead credits, interactive OSM map &amp; flight paths, unlimited tour listings, and verified badge.
               </p>
             </div>
-            <Button onClick={() => setUpgradeOpen(true)} className="bg-highlight text-black hover:bg-highlight/90">
+            <Button onClick={() => setUpgradeOpen(true)} className="bg-highlight text-black hover:bg-highlight/90 font-bold">
               <Zap className="mr-2 size-4" /> Upgrade Now
             </Button>
           </div>
