@@ -72,7 +72,36 @@ export const Route = createFileRoute("/api/auth/register")({
 
           const userId = adminData.user.id;
 
-          // 2. Ensure profile record exists with valid columns
+          // 2. Dynamically determine starting lead credits from subscription_plans config
+          let initialVendorCredits = 5;
+          if (role === "vendor") {
+            try {
+              const { data: planSetting } = await supabaseAdmin
+                .from("payment_gateway_settings")
+                .select("config")
+                .eq("provider", "subscription_plans")
+                .maybeSingle();
+
+              if (planSetting?.config) {
+                const plans = typeof planSetting.config === "string" ? JSON.parse(planSetting.config) : planSetting.config;
+                const freePlan = Array.isArray(plans) ? plans.find((p: any) => p.id === "free") : null;
+                if (freePlan) {
+                  const credFeature = freePlan.features?.find((f: string) => /lead credits/i.test(f));
+                  if (credFeature) {
+                    const match = credFeature.match(/(\d+)\s+lead credits/i);
+                    if (match) initialVendorCredits = parseInt(match[1], 10);
+                  } else if (freePlan.limits?.leadCredits) {
+                    const match = String(freePlan.limits.leadCredits).match(/(\d+)/);
+                    if (match) initialVendorCredits = parseInt(match[1], 10);
+                  }
+                }
+              }
+            } catch (err) {
+              console.warn("Failed to dynamically fetch Free tier lead credits:", err);
+            }
+          }
+
+          // 3. Ensure profile record exists with valid columns and dynamic credits
           await supabaseAdmin.from("profiles").upsert({
             id: userId,
             email,
@@ -80,7 +109,7 @@ export const Route = createFileRoute("/api/auth/register")({
             company_name: role === "vendor" ? company_name || null : null,
             vendor_status: role === "vendor" ? "pending" : "approved",
             subscription_tier: "free",
-            lead_credits_balance: role === "vendor" ? 5 : 0,
+            lead_credits_balance: role === "vendor" ? initialVendorCredits : 0,
             referral_code_used: role === "vendor" && referral_code ? referral_code.toUpperCase() : null,
           });
 
