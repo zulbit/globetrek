@@ -59,6 +59,8 @@ function VendorKYCPage() {
     queryFn: () => fetchKYCDetailsFn({ data: { userId: user!.id } }),
   });
 
+  const [formData, setFormData] = React.useState<Record<string, string>>({});
+
   React.useEffect(() => {
     if (profile || existingKyc || user) {
       const kycFields = existingKyc?.fields || {};
