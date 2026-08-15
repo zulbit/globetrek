@@ -140,13 +140,20 @@ function AdminVendors() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const pendingVendors = (data ?? []).filter((v) => v.vendor_status === "pending");
-  const filteredVendors = (data ?? []).filter((v) => filter === "all" || v.vendor_status === filter);
+  const submittedKycVendors = (data ?? []).filter((v) => v.vendor_status === "pending" && v.kycSubmitted);
+  const awaitingKycVendors = (data ?? []).filter((v) => v.vendor_status === "pending" && !v.kycSubmitted);
+
+  const filteredVendors = (data ?? []).filter((v) => {
+    if (filter === "all") return true;
+    if (filter === "pending") return v.vendor_status === "pending" && v.kycSubmitted;
+    if (filter === "awaiting_kyc") return v.vendor_status === "pending" && !v.kycSubmitted;
+    return v.vendor_status === filter;
+  });
 
   return (
     <div className="space-y-6 pb-16">
-      {/* Top Banner: Pending Agency Approvals Notice */}
-      {pendingVendors.length > 0 && (
+      {/* Top Banner: Only alert for vendors who have ACTUALLY submitted KYC documents */}
+      {submittedKycVendors.length > 0 && (
         <div className="rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-500/10 via-card to-card p-5 space-y-3 shadow-xs">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -155,10 +162,10 @@ function AdminVendors() {
               </span>
               <div>
                 <h3 className="text-base font-bold text-foreground">
-                  Pending Vendor Approvals ({pendingVendors.length})
+                  Pending KYC Reviews ({submittedKycVendors.length})
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  New travel agencies waiting for license &amp; mobile verification.
+                  Agencies that have submitted official DTS licenses, NTN, and CNIC credentials for verification.
                 </p>
               </div>
             </div>
@@ -168,7 +175,7 @@ function AdminVendors() {
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 pt-1">
-            {pendingVendors.map((vendor) => (
+            {submittedKycVendors.map((vendor) => (
               <div
                 key={vendor.id}
                 className="rounded-xl border border-amber-500/30 bg-card p-4 space-y-2 text-xs shadow-xs"
@@ -179,9 +186,12 @@ function AdminVendors() {
                       {vendor.company_name || vendor.full_name || "New Travel Agency"}
                     </h4>
                     <p className="text-[11px] text-muted-foreground truncate">{vendor.email}</p>
+                    <p className="text-[10px] text-amber-400/90 font-medium mt-0.5">
+                      Submitted: {vendor.kycSubmittedAt ? new Date(vendor.kycSubmittedAt).toLocaleDateString() : "Recently"}
+                    </p>
                   </div>
                   <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-[9px] uppercase font-bold">
-                    Pending
+                    KYC Review
                   </Badge>
                 </div>
 
@@ -202,10 +212,21 @@ function AdminVendors() {
                 <div className="pt-2 flex gap-2 border-t border-border/50">
                   <Button
                     size="sm"
-                    onClick={() => setStatus.mutate({ id: vendor.id, status: "approved" })}
-                    className="w-full h-7 text-xs font-bold bg-emerald-500 text-black hover:bg-emerald-400 rounded-lg gap-1"
+                    variant="outline"
+                    onClick={() => {
+                      setViewingKyc(vendor.id);
+                      setViewingKycName(vendor.company_name || vendor.full_name || "Vendor");
+                    }}
+                    className="w-1/2 h-7 text-xs font-semibold border-amber-500/40 text-amber-400 hover:bg-amber-500/10 rounded-lg"
                   >
-                    <Check className="size-3" /> Approve Agency
+                    <FileText className="mr-1 size-3" /> Review KYC
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setStatus.mutate({ id: vendor.id, status: "approved" })}
+                    className="w-1/2 h-7 text-xs font-bold bg-emerald-500 text-black hover:bg-emerald-400 rounded-lg gap-1"
+                  >
+                    <Check className="size-3" /> Approve
                   </Button>
                 </div>
               </div>
@@ -224,8 +245,9 @@ function AdminVendors() {
         <div className="flex items-center gap-1 bg-surface p-1 rounded-xl border border-border text-xs">
           {[
             { id: "all", label: `All (${data?.length ?? 0})` },
-            { id: "pending", label: `Pending (${pendingVendors.length})` },
-            { id: "approved", label: "Approved" },
+            { id: "pending", label: `In Review (${submittedKycVendors.length})` },
+            { id: "awaiting_kyc", label: `Setup Mode (${awaitingKycVendors.length})` },
+            { id: "approved", label: "Verified" },
             { id: "banned", label: "Banned" },
           ].map((tab) => (
             <button
@@ -442,14 +464,25 @@ function VendorRow({
         </button>
       </div>
       <div className="flex justify-end gap-1.5">
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={onViewKyc}
-          className="h-7 text-xs font-semibold border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 rounded-lg px-2.5"
-        >
-          <FileText className="mr-1 size-3" /> View KYC
-        </Button>
+        {p.kycSubmitted ? (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onViewKyc}
+            className="h-7 text-xs font-bold border-amber-500/50 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 rounded-lg px-2.5 shadow-xs"
+          >
+            <FileText className="mr-1 size-3" /> View KYC
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={onViewKyc}
+            className="h-7 text-xs font-medium text-muted-foreground border border-border/60 hover:bg-surface rounded-lg px-2.5"
+          >
+            <FileText className="mr-1 size-3 opacity-60" /> KYC Pending
+          </Button>
+        )}
         <Button
           size="sm"
           variant="outline"
@@ -466,13 +499,28 @@ function VendorRow({
           <UserCheck className="mr-1 size-3" /> Login As
         </Button>
         {p.vendor_status !== "approved" && (
-          <Button
-            size="sm"
-            onClick={() => onStatus("approved")}
-            className="h-7 text-xs font-bold bg-emerald-500 text-black hover:bg-emerald-400 rounded-lg px-2.5"
-          >
-            <Check className="mr-1 size-3" /> Approve
-          </Button>
+          p.kycSubmitted ? (
+            <Button
+              size="sm"
+              onClick={() => onStatus("approved")}
+              className="h-7 text-xs font-bold bg-emerald-500 text-black hover:bg-emerald-400 rounded-lg px-2.5 shadow-xs"
+            >
+              <Check className="mr-1 size-3" /> Approve
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                if (confirm(`Notice: ${p.company_name || p.full_name} is in Setup Mode and has NOT submitted official KYC credentials yet. Are you sure you want to manually verify them?`)) {
+                  onStatus("approved");
+                }
+              }}
+              className="h-7 text-xs font-medium border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 rounded-lg px-2.5"
+            >
+              <Check className="mr-1 size-3" /> Approve (Manual)
+            </Button>
+          )
         )}
         {p.vendor_status !== "banned" && (
           <Button
