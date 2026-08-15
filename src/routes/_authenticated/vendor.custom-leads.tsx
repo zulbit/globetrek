@@ -47,6 +47,7 @@ import {
 import { toast } from "sonner";
 import { formatPKR } from "@/lib/tours";
 
+import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/vendor/custom-leads")({
@@ -55,21 +56,25 @@ export const Route = createFileRoute("/_authenticated/vendor/custom-leads")({
 
 export function VendorCustomLeadsPage() {
   const qc = useQueryClient();
+  const { user, profile: authProfile, isProfileLoading } = useAuth();
 
   const { data: profile } = useQuery({
-    queryKey: ["vendor-profile-status"],
+    queryKey: ["vendor-profile-status", user?.id],
+    enabled: !!user?.id,
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
       const { data } = await supabase
         .from("profiles")
         .select("vendor_status")
-        .eq("id", user.id)
+        .eq("id", user!.id)
         .maybeSingle();
       return data;
     },
   });
-  const isApproved = profile?.vendor_status === "approved";
+
+  const isApproved =
+    authProfile?.vendor_status === "approved" ||
+    profile?.vendor_status === "approved" ||
+    authProfile?.role === "admin";
 
   // -------- Custom Tour Marketplace Leads Query --------
   const { data: marketplaceLeads = [], isLoading, refetch } = useQuery({

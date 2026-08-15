@@ -197,8 +197,22 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
       .eq("user_id", vendorId)
       .maybeSingle();
 
+    const { data: kycRow } = await supabaseAdmin
+      .from("payment_gateway_settings")
+      .select("config")
+      .eq("provider", `vendor_kyc_${vendorId}`)
+      .maybeSingle();
+
+    let isKycApproved = false;
+    if (kycRow?.config) {
+      try {
+        const parsed = typeof kycRow.config === "string" ? JSON.parse(kycRow.config) : kycRow.config;
+        isKycApproved = parsed.status === "approved";
+      } catch {}
+    }
+
     const isAdmin = roleRow?.role === "admin";
-    const isApproved = vendorProfile?.vendor_status === "approved";
+    const isApproved = vendorProfile?.vendor_status === "approved" || isKycApproved;
 
     if (!isAdmin && !isApproved) {
       throw new Error(

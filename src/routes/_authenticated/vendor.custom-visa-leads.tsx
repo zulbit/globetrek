@@ -44,7 +44,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-
+import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/vendor/custom-visa-leads")({
@@ -53,23 +53,27 @@ export const Route = createFileRoute("/_authenticated/vendor/custom-visa-leads")
 
 export function VendorCustomVisaLeadsPage() {
   const qc = useQueryClient();
+  const { user, profile: authProfile, isProfileLoading } = useAuth();
   const [selectedFilter, setSelectedFilter] = useState<string>("all");
   const [refusalOnly, setRefusalOnly] = useState<boolean>(false);
 
   const { data: profile } = useQuery({
-    queryKey: ["vendor-profile-status"],
+    queryKey: ["vendor-profile-status", user?.id],
+    enabled: !!user?.id,
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
       const { data } = await supabase
         .from("profiles")
         .select("vendor_status")
-        .eq("id", user.id)
+        .eq("id", user!.id)
         .maybeSingle();
       return data;
     },
   });
-  const isApproved = profile?.vendor_status === "approved";
+
+  const isApproved =
+    authProfile?.vendor_status === "approved" ||
+    profile?.vendor_status === "approved" ||
+    authProfile?.role === "admin";
 
   // Proposal Modal State
   const [proposalModalOpen, setProposalModalOpen] = useState(false);
