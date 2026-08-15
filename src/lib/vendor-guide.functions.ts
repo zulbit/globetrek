@@ -29,6 +29,8 @@ export const FALLBACK_VENDOR_GUIDE_SECTIONS: VendorGuideSection[] = [
 
 Welcome to **GlobeTrek PK** — Pakistan's premier digital B2B marketplace and AI-powered travel ecosystem. Built specifically for verified Pakistani tour operators, visa consultants, travel insurance brokers, and ticketing desks, GlobeTrek PK bridges the traditional gap between ambitious travel agencies and digital-first travelers across Pakistan and the international diaspora.
 
+![GlobeTrek PK Marketplace Landing Overview](/images/guide/landing-page.png?v=intro-ecosystem)
+
 ---
 
 ### What is the GlobeTrek Portal & Ecosystem?
@@ -88,7 +90,7 @@ This guide provides step-by-step procedures for every operational facet of the p
 
 Welcome to **GlobeTrek PK**. We have made getting started simple and straightforward for travel agencies, tour operators, and visa consultants across Pakistan.
 
-![GlobeTrek Partner Auth & Portal](/images/guide/auth-page.png)
+![GlobeTrek Partner Auth & Portal](/images/guide/auth-page.png?v=vendor-kyc-auth)
 
 ---
 
@@ -146,6 +148,8 @@ Go to **[Agency Verification (KYC)](/vendor/kyc)** from your sidebar menu and pr
     content: `# GlobeTrek AI Engine — Complete AI Features Guide
 
 GlobeTrek PK embeds a suite of **four production-ready AI tools** powered by OpenRouter (GPT-4o-mini via \`@ai-sdk/openai-compatible\`). Each tool is purpose-built for a different stage of the travel workflow — from real-time customer chat to automated package writing to vendor operational support.
+
+![GlobeTrek AI Travel & Itinerary Engine](/images/guide/properties-page.png?v=ai-engine-tools)
 
 ---
 
@@ -209,7 +213,7 @@ Answers partner operational queries regarding DTS license verification, lead bid
 
 Custom Tour Leads are high-intent traveler requests for group itineraries (family, corporate, honeymoon) generated directly through the GlobeTrek AI Concierge & Request Portal.
 
-![GlobeTrek Vendor Custom Leads Marketplace](/images/guide/customer-traveler-hub.png?v=custom-tour-leads)
+![Custom Tour Requests & Lead Bidding Marketplace](/images/guide/customer-traveler-hub.png?v=custom-tour-bidding)
 
 ---
 
@@ -245,7 +249,7 @@ In the Pakistani travel market, visa inquiries and refusal rectifications (parti
 
 GlobeTrek PK operates a specialized **Custom Visa Intake & Lead Bidding Engine** connecting applicants directly with verified Pakistani visa consultants, immigration lawyers, and former embassy officers.
 
-![Custom Visa Leads Marketplace](/images/guide/vendor-custom-visa-leads.png?v=custom-visa-leads-hub)
+![Custom Visa Leads & Consultation Portal](/images/guide/vendor-custom-visa-leads.png?v=custom-visa-leads-hub)
 
 ---
 
@@ -297,8 +301,8 @@ Once unlocked, vendors use the built-in **Proposal Submission Modal** to enter:
     content: `# Vendor Console Navigation & 30-Day Activity Analytics
 
 Your **Vendor Console** ('/vendor') provides real-time operational visibility over customer inquiries, service listings, and analytics.
- 
-![GlobeTrek Vendor Operations Overview](/images/guide/properties-page.png?v=vendor-console)
+
+![GlobeTrek Vendor Operations Console & Analytics](/images/guide/vendor-guide-page.png?v=vendor-console-nav)
 
 ---
 
@@ -323,11 +327,13 @@ Your **Vendor Console** ('/vendor') provides real-time operational visibility ov
     category: "Billing & Payouts",
     description: "Understanding vendor plan billing (Starter/Pro), SafePay payment receipts, and lead unlock transaction flows.",
     icon_name: "Wallet",
-    display_order: 4,
+    display_order: 7,
     is_published: true,
     content: `# SafePay Gateway Payments, Receipts & Vendor Subscriptions
 
 GlobeTrek PK integrates with **SafePay Gateway** for fast, secure PKR payment processing for vendor subscription upgrades and custom lead unlocks.
+
+![SafePay Digital Settlements & Plan Invoices](/images/guide/pdf-cover-preview.png?v=safepay-billing)
 
 ---
 
@@ -351,11 +357,13 @@ GlobeTrek PK integrates with **SafePay Gateway** for fast, secure PKR payment pr
     category: "Quality & Governance",
     description: "Required service standards for tour itineraries, visa filing timelines, and partner code of conduct.",
     icon_name: "ShieldCheck",
-    display_order: 5,
+    display_order: 8,
     is_published: true,
     content: `# Marketplace Quality Standards & Code of Conduct
 
 To protect traveler confidence across Pakistan, all GlobeTrek PK partner agencies adhere to strict quality standards:
+
+![Marketplace Quality Standards & Trust Badges](/images/guide/privacy-page-verified.png?v=quality-standards)
 
 ---
 
@@ -395,11 +403,13 @@ Upon passing KYC document audit (DTS License + NTN Tax ID), your agency automati
     category: "Quality Standards & Rules",
     description: "Guidelines on tour and service cover photography, automated AI vision moderation, and strict prohibition of direct contact info or phone numbers.",
     icon_name: "ShieldCheck",
-    display_order: 8,
+    display_order: 9,
     is_published: true,
     content: `# Cover Image Guidelines & Qwen-VL Contact Shield 🛡️
 
 To maintain a premium B2B travel marketplace and protect platform integrity, GlobeTrek PK deploys an automated **Qwen-VL Visual Contact Shield** that inspects all cover photos and banner uploads in real time.
+
+![Qwen-VL Visual Contact Moderation Shield](/images/whitepaper/enterprise-page.png?v=qwen-shield)
 
 ---
 
@@ -443,17 +453,18 @@ To maximize traveler clicks and conversion rates:
   }
 ];
 
-// Helper: Fallback persistence via app_config table when Postgres table is unmigrated or unavailable
+// Helper: Persistence via payment_gateway_settings table
 async function saveToAppConfigFallback(sections: VendorGuideSection[]): Promise<void> {
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("app_config").upsert(
+    await supabaseAdmin.from("payment_gateway_settings").upsert(
       {
-        key: "vendor_guide_sections",
-        value: JSON.stringify(sections),
+        provider: "vendor_guide_sections",
+        enabled: true,
+        config: sections as any,
         updated_at: new Date().toISOString(),
       },
-      { onConflict: "key" }
+      { onConflict: "provider" }
     );
   } catch (err) {
     console.warn("[saveToAppConfigFallback Warning]:", err);
@@ -464,13 +475,14 @@ async function getFromAppConfigFallback(): Promise<VendorGuideSection[] | null> 
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data } = await supabaseAdmin
-      .from("app_config")
-      .select("value")
-      .eq("key", "vendor_guide_sections")
+      .from("payment_gateway_settings")
+      .select("config")
+      .eq("provider", "vendor_guide_sections")
       .maybeSingle();
 
-    if (data?.value) {
-      return JSON.parse(data.value) as VendorGuideSection[];
+    if (data?.config) {
+      const parsed = typeof data.config === "string" ? JSON.parse(data.config) : data.config;
+      return parsed as VendorGuideSection[];
     }
   } catch {}
   return null;
@@ -491,9 +503,9 @@ export const fetchVendorGuideSections = createServerFn({ method: "GET" })
       }
     } catch {}
 
-    const fallbackAppConfig = await getFromAppConfigFallback();
-    if (fallbackAppConfig && fallbackAppConfig.length > 0) {
-      return fallbackAppConfig;
+    const fallbackDb = await getFromAppConfigFallback();
+    if (fallbackDb && fallbackDb.length > 0) {
+      return fallbackDb;
     }
 
     return FALLBACK_VENDOR_GUIDE_SECTIONS;
@@ -528,8 +540,8 @@ export const createVendorGuideSection = createServerFn({ method: "POST" })
       }
     } catch {}
 
-    // Fallback: Save to app_config table
-    const currentSections = (await getFromAppConfigFallback()) || FALLBACK_VENDOR_GUIDE_SECTIONS;
+    // Fallback: Save to payment_gateway_settings table
+    const currentSections = (await getFromAppConfigFallback()) || [...FALLBACK_VENDOR_GUIDE_SECTIONS];
     const createdSection: VendorGuideSection = {
       id: newId,
       ...payload,
@@ -563,8 +575,8 @@ export const updateVendorGuideSection = createServerFn({ method: "POST" })
       } catch {}
     }
 
-    // 2. Fail-safe Fallback: Persist to app_config table
-    const currentSections = (await getFromAppConfigFallback()) || FALLBACK_VENDOR_GUIDE_SECTIONS;
+    // 2. Fail-safe Fallback: Persist to payment_gateway_settings table
+    const currentSections = (await getFromAppConfigFallback()) || [...FALLBACK_VENDOR_GUIDE_SECTIONS];
     let targetIndex = currentSections.findIndex((s) => s.id === data.id);
 
     if (targetIndex === -1 && data.payload.slug) {
@@ -614,7 +626,7 @@ export const deleteVendorGuideSection = createServerFn({ method: "POST" })
       } catch {}
     }
 
-    const currentSections = (await getFromAppConfigFallback()) || FALLBACK_VENDOR_GUIDE_SECTIONS;
+    const currentSections = (await getFromAppConfigFallback()) || [...FALLBACK_VENDOR_GUIDE_SECTIONS];
     const filtered = currentSections.filter((s) => s.id !== data.id);
     await saveToAppConfigFallback(filtered);
     return { ok: true };
