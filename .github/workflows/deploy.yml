@@ -52,8 +52,8 @@ jobs:
             fi
 
             echo "===> [5/6] Syncing public assets <==="
-            sudo rm -rf "$SITE_DIR/assets"
             sudo mkdir -p "$SITE_DIR/assets"
+            # Overwrite/merge new assets while preserving existing hashed chunks for cached browser sessions
             sudo cp -r .output/public/* "$SITE_DIR/" 2>/dev/null || true
             sudo chown -R globetrek_pk_usr40:globetrek_pk_usr40 "$SITE_DIR/"
 
