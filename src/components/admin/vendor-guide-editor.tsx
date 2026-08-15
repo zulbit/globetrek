@@ -144,14 +144,52 @@ export function AdminVendorGuideEditor() {
     setIsDialogOpen(true);
   };
 
-  const insertImageMarkdown = (title: string, url: string) => {
+  // Extract primary/main screenshot from markdown content
+  const extractMainScreenshot = (content: string = "") => {
+    const match = content.match(/!\[(.*?)\]\((.*?)\)/);
+    if (match) {
+      return { alt: match[1], url: match[2], fullMatch: match[0] };
+    }
+    return null;
+  };
+
+  // Replace or set the main screenshot at the top of the chapter
+  const replaceMainScreenshot = (title: string, url: string) => {
     if (!editingSection) return;
-    const markdownTag = `\n\n![${title}](${url})\n\n`;
+    const currentContent = editingSection.content || "";
+    const mainImg = extractMainScreenshot(currentContent);
+    const newTag = `![${title}](${url})`;
+
+    let newContent = "";
+    if (mainImg) {
+      // Replace existing primary image
+      newContent = currentContent.replace(mainImg.fullMatch, newTag);
+    } else {
+      // Insert right after the top header (or at the very top)
+      const headerMatch = currentContent.match(/^(# [^\n]+\n+)/);
+      if (headerMatch) {
+        newContent = currentContent.replace(headerMatch[0], `${headerMatch[0]}${newTag}\n\n`);
+      } else {
+        newContent = `${newTag}\n\n${currentContent}`;
+      }
+    }
+
     setEditingSection((prev) => ({
       ...prev,
-      content: (prev?.content || "") + markdownTag,
+      content: newContent,
     }));
-    toast.success(`Inserted screenshot tag for "${title}"`);
+    toast.success(`Main screenshot replaced with "${title}"!`);
+  };
+
+  // Remove main screenshot from chapter
+  const removeMainScreenshot = () => {
+    if (!editingSection) return;
+    const currentContent = editingSection.content || "";
+    const mainImg = extractMainScreenshot(currentContent);
+    if (!mainImg) return;
+    const newContent = currentContent.replace(mainImg.fullMatch, "").replace(/\n\s*\n\s*\n/g, "\n\n");
+    setEditingSection((prev) => ({ ...prev, content: newContent }));
+    toast.success("Main screenshot removed from chapter.");
   };
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -178,14 +216,14 @@ export function AdminVendorGuideEditor() {
         const reader = new FileReader();
         reader.onload = (event) => {
           const dataUrl = event.target?.result as string;
-          insertImageMarkdown(cleanTitle, dataUrl);
-          toast.success(`Screenshot inserted as preview!`, { id: toastId });
+          replaceMainScreenshot(cleanTitle, dataUrl);
+          toast.success(`Main screenshot updated as preview!`, { id: toastId });
         };
         reader.readAsDataURL(file);
       } else {
         const { data: pub } = supabase.storage.from("public-assets").getPublicUrl(filePath);
-        insertImageMarkdown(cleanTitle, pub.publicUrl);
-        toast.success(`Screenshot uploaded and inserted into Markdown!`, { id: toastId });
+        replaceMainScreenshot(cleanTitle, pub.publicUrl);
+        toast.success(`Main screenshot uploaded and replaced!`, { id: toastId });
       }
     } catch (err: any) {
       toast.error(`Upload failed: ${err.message}`, { id: toastId });
@@ -372,56 +410,107 @@ export function AdminVendorGuideEditor() {
                 />
               </div>
 
-              {/* Preset & Local Screenshot Quick Inserters */}
-              <div className="rounded-xl border border-border/80 bg-surface/50 p-3 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold flex items-center gap-1.5 text-foreground">
-                    <ImageIcon className="size-3.5 text-primary" /> Quick Screenshot Inserter
-                  </span>
-                  <span className="text-[10px] text-muted-foreground">Upload from computer or pick preset screenshot</span>
-                </div>
+              {/* Main Chapter Screenshot Manager (Replaces the top primary screenshot) */}
+              {(() => {
+                const mainImg = extractMainScreenshot(editingSection?.content);
+                return (
+                  <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <ImageIcon className="size-4 text-primary" />
+                        <div>
+                          <h4 className="text-xs font-bold text-foreground">Main Chapter Screenshot</h4>
+                          <p className="text-[11px] text-muted-foreground">
+                            The primary screenshot displayed at the top of this chapter.
+                          </p>
+                        </div>
+                      </div>
+                      {mainImg && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={removeMainScreenshot}
+                          className="h-6 text-[11px] text-destructive hover:bg-destructive/10 px-2"
+                        >
+                          <Trash2 className="size-3 mr-1" /> Remove Image
+                        </Button>
+                      )}
+                    </div>
 
-                {/* Hidden file picker input */}
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleLocalScreenshotUpload}
-                  accept="image/*"
-                  className="hidden"
-                />
+                    {/* Hidden file picker input */}
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleLocalScreenshotUpload}
+                      accept="image/*"
+                      className="hidden"
+                    />
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={isUploadingImage}
-                    onClick={() => fileInputRef.current?.click()}
-                    className="text-xs h-7 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-xs"
-                  >
-                    {isUploadingImage ? (
-                      <Loader2 className="size-3.5 animate-spin" />
+                    {/* Screenshot Preview Card */}
+                    {mainImg ? (
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 bg-card border border-border p-3 rounded-xl shadow-xs">
+                        <img
+                          src={mainImg.url}
+                          alt={mainImg.alt || "Main Chapter Screenshot"}
+                          className="w-full sm:w-48 h-28 object-cover rounded-lg border border-border bg-surface"
+                        />
+                        <div className="space-y-1.5 min-w-0 flex-1">
+                          <p className="text-xs font-bold text-foreground truncate">{mainImg.alt || "Chapter Screenshot"}</p>
+                          <p className="text-[11px] text-muted-foreground font-mono truncate max-w-full">{mainImg.url}</p>
+                          <div className="pt-1.5 flex flex-wrap gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              disabled={isUploadingImage}
+                              onClick={() => fileInputRef.current?.click()}
+                              className="text-xs h-7 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-xs"
+                            >
+                              {isUploadingImage ? <Loader2 className="size-3 animate-spin" /> : <Upload className="size-3" />}
+                              Upload & Replace Screenshot
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
                     ) : (
-                      <Upload className="size-3.5" />
+                      <div className="flex items-center justify-between bg-card border border-dashed border-border p-3 rounded-xl">
+                        <span className="text-xs text-muted-foreground">No main screenshot set for this chapter.</span>
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={isUploadingImage}
+                          onClick={() => fileInputRef.current?.click()}
+                          className="text-xs h-7 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-xs"
+                        >
+                          {isUploadingImage ? <Loader2 className="size-3 animate-spin" /> : <Upload className="size-3" />}
+                          Upload Main Screenshot
+                        </Button>
+                      </div>
                     )}
-                    Upload Local Screenshot
-                  </Button>
 
-                  <div className="h-4 w-px bg-border/80 hidden sm:block" />
-
-                  {PRESET_SCREENSHOTS.map((ps) => (
-                    <Button
-                      key={ps.url}
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="text-[10px] h-7 gap-1 border-border/70 hover:bg-surface text-muted-foreground hover:text-foreground"
-                      onClick={() => insertImageMarkdown(ps.title, ps.url)}
-                    >
-                      <Plus className="size-3" /> {ps.title}
-                    </Button>
-                  ))}
-                </div>
-              </div>
+                    {/* Quick Preset Selector to Replace Main Screenshot */}
+                    <div className="pt-1 space-y-1.5">
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block">
+                        Or Pick from System Presets to Replace:
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {PRESET_SCREENSHOTS.map((ps) => (
+                          <Button
+                            key={ps.url}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="text-[10px] h-6 gap-1 border-border/80 hover:bg-surface text-muted-foreground hover:text-foreground"
+                            onClick={() => replaceMainScreenshot(ps.title, ps.url)}
+                          >
+                            <Plus className="size-2.5" /> {ps.title}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Markdown Editor Textarea */}
               <div>

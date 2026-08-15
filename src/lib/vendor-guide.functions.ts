@@ -209,7 +209,7 @@ Answers partner operational queries regarding DTS license verification, lead bid
 
 Custom Tour Leads are high-intent traveler requests for group itineraries (family, corporate, honeymoon) generated directly through the GlobeTrek AI Concierge & Request Portal.
 
-![GlobeTrek Vendor Custom Leads Marketplace](/images/guide/vendor-leads-marketplace.png)
+![GlobeTrek Vendor Custom Leads Marketplace](/images/guide/customer-traveler-hub.png?v=custom-tour-leads)
 
 ---
 
@@ -245,7 +245,7 @@ In the Pakistani travel market, visa inquiries and refusal rectifications (parti
 
 GlobeTrek PK operates a specialized **Custom Visa Intake & Lead Bidding Engine** connecting applicants directly with verified Pakistani visa consultants, immigration lawyers, and former embassy officers.
 
-![Custom Visa Leads Marketplace](/images/guide/vendor-custom-visa-leads.png)
+![Custom Visa Leads Marketplace](/images/guide/vendor-custom-visa-leads.png?v=custom-visa-leads-hub)
 
 ---
 
@@ -297,8 +297,8 @@ Once unlocked, vendors use the built-in **Proposal Submission Modal** to enter:
     content: `# Vendor Console Navigation & 30-Day Activity Analytics
 
 Your **Vendor Console** ('/vendor') provides real-time operational visibility over customer inquiries, service listings, and analytics.
-
-![GlobeTrek Vendor Operations Overview](/images/guide/vendor-dashboard.png)
+ 
+![GlobeTrek Vendor Operations Overview](/images/guide/properties-page.png?v=vendor-console)
 
 ---
 
