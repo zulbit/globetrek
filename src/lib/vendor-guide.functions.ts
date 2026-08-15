@@ -84,37 +84,103 @@ This guide provides step-by-step procedures for every operational facet of the p
     icon_name: "UserCheck",
     display_order: 2,
     is_published: true,
-    content: `# Vendor Registration & Verification (KYC)
+    content: `# Vendor Registration, Verification (KYC) & Feature Gating
 
-Welcome to **GlobeTrek PK** — Pakistan's premier travel marketplace. Partnering with GlobeTrek PK allows verified tour operators, visa consultants, insurance providers, and ticketing desks to reach thousands of travelers across Pakistan with 0% hidden commissions.
+Welcome to **GlobeTrek PK** — Pakistan's premier B2B and B2C travel marketplace. To protect travelers from fraudulent operators and maintain the highest standard of legitimacy across Pakistan, GlobeTrek PK implements a **Two-Phase Verification & Feature Gating Lifecycle**.
 
 ![GlobeTrek Partner Auth & Portal](/images/guide/auth-page.png)
 
 ---
 
-### Step 1: Account Creation & Sign Up
+### The 5-Step Vendor Onboarding Lifecycle
+
+```mermaid
+graph TD
+    A[Step 1: Sign Up /auth] --> B[Step 2: Setup Mode Active]
+    B --> C[Draft Tours, Visas & Configure Profile]
+    B --> D[Step 3: Submit Agency KYC /vendor/kyc]
+    D --> E[Status: KYC Submitted & Under Review]
+    E --> F[Step 4: Admin DTS & NTN Audit 24h SLA]
+    F -->|Approved| G[Step 5: Verified Agency Partner]
+    G --> H[Live Public Publishing & Lead Unlocking Unlocked]
+```
+
+---
+
+### Step-by-Step Onboarding Procedures
+
+#### Step 1: Account Creation & Sign Up
 1. Visit [GlobeTrek Partner Portal Sign Up](/auth).
-2. Register your agency profile:
-   - **Legal Business Name** (e.g., *Royal Travel & Tours Ltd*)
-   - **Official Business Email** & **WhatsApp Phone Number** (for real-time lead alerts)
-   - **City / Region of Operation**
-3. Select your active vertical services: **Tour Packages**, **Visa Filing**, **Travel Insurance**, or **Flight/Umrah Ticketing**.
+2. Fill in your agency registration credentials:
+   - **Agency / Company Legal Name** (e.g., *Skylark Travels & Tours Pvt Ltd*)
+   - **Official WhatsApp Number** (Direct number for instant lead & booking alerts)
+   - **Official Business Email** & **Secure Password**
+   - **Referral Code** *(optional)*
+3. Upon registration, your account is immediately created in **Setup Mode** with status \`pending\`.
 
 ---
 
-### Step 2: KYC & Document Audit
-To maintain marketplace trust, every vendor undergoes mandatory identity and license verification before listings are published:
+#### Step 2: Setup Mode (Drafting & Sandbox Preparation)
+In **Setup Mode**, new agencies have full internal dashboard access to prepare catalog listings without waiting:
+- Build tour itineraries using the **AI Trip Planner**.
+- Draft Visa service descriptions, requirements, and fee schedules.
+- Add travel insurance coverage tiers and flight ticketing routes.
+- Explore lead feeds and review marketplace guidelines.
 
-#### Required Verification Documents:
-- **Government ID (CNIC / Passport)**: Authorized agency owner or manager.
-- **DTS License / Business License**: Department of Tourist Services (DTS) license or NTN tax registration certificate.
-- **Bank Account / SafePay Wallet**: Official bank IBAN for direct payout settlements.
+> [!IMPORTANT]
+> **Setup Mode Guard**: While in Setup Mode, listings are safely saved as **Drafts** (\`is_active: false\`). Live publishing to public travelers and lead contact unlocking remain protected until agency KYC is verified.
 
 ---
 
-### Step 3: Verification Approval & Portal Unlocking
-1. Our Partner Audit Team verifies your submitted credentials within **24 hours**.
-2. Upon approval, your **Vendor Operating Console** is unlocked, allowing you to list packages, receive direct customer leads, and bid on high-value Custom Tour requests.`
+#### Step 3: Submitting Required Business Credentials (KYC)
+To activate live public listings, navigate to **Vendor Console → [Agency Verification (KYC)](/vendor/kyc)** and provide your official business credentials:
+
+| Field | Requirement | Purpose |
+| :--- | :---: | :--- |
+| **Agency / Business Legal Name** | Mandatory | Trade name shown on traveler vouchers and marketplace tiles |
+| **Official WhatsApp Contact** | Mandatory | Real-time booking alerts, quotation links & traveler chat |
+| **DTS License No. / Registration** | Mandatory | Department of Tourist Services (DTS) license number (e.g., *DTS-LHR-9410*) |
+| **FBR Tax ID / NTN Number** | Mandatory | Federal Board of Revenue 7-digit tax number (e.g., *NTN-8941029-7*) |
+| **Business Owner CNIC Number** | Mandatory | 13-digit Pakistani CNIC of proprietor/director (e.g., *35202-1234567-1*) |
+| **Primary Operating City** | Mandatory | Headquarters city (Lahore, Karachi, Islamabad, etc.) |
+| **Physical Office Address** | Mandatory | Verified commercial street address |
+| **Bank IBAN / Account Title** | Recommended | Account details for SafePay payout settlements |
+
+Once submitted, your KYC status badge updates instantly to **⏳ KYC Submitted & Under Review**.
+
+---
+
+#### Step 4: Admin Audit & Verification (24h SLA)
+GlobeTrek PK Compliance Administrators review submitted credentials within **24 hours**:
+1. **DTS Registry Cross-Check**: Validating the agency's current standing with the provincial Department of Tourist Services.
+2. **FBR NTN Active Taxpayer Verification**: Confirming tax profile legitimacy.
+3. **WhatsApp Number Handshake**: Verifying the agency contact number for prompt traveler response.
+
+---
+
+#### Step 5: Verified Agency Partner Activation
+Upon Admin approval:
+- Your status updates to **✅ Verified Agency Partner**.
+- The prestigious **Verified Gold Shield** badge is affixed to all your marketplace listings and lead proposals.
+- **Live Publishing is unlocked**: Switch any draft tour, visa, insurance, or ticketing listing to **Published** to appear live on the public marketplace.
+- **Lead Unlocking & Bidding is unlocked**: Access direct traveler contact numbers and submit custom proposals.
+
+---
+
+### Feature Gating & Permissions Matrix
+
+| Platform Capability | Setup Mode (Unverified) | Verified Agency Partner (\`approved\`) |
+| :--- | :---: | :---: |
+| **Access Vendor Dashboard & Analytics** | ✅ Full Access | ✅ Full Access |
+| **AI Trip Planner & Description Writer** | ✅ Full Access | ✅ Full Access |
+| **Create & Save Draft Tour Listings** | ✅ Unlimited | ✅ Unlimited |
+| **Create & Save Draft Visa Services** | ✅ Unlimited | ✅ Unlimited |
+| **Create & Save Draft Insurance & Flights** | ✅ Unlimited | ✅ Unlimited |
+| **Publish Live to Public Travelers (\`is_active: true\`)** | 🔒 Locked (Saves as Draft) | ✅ Instant Live Discovery |
+| **Unlock Direct Customer Leads & Phone Numbers** | 🔒 Locked (KYC Prompt) | ✅ Instant Lead Unlock |
+| **Bid on Custom Group Tour Requests** | 🔒 Locked (KYC Prompt) | ✅ Direct WhatsApp Bidding |
+| **Bid on Custom Visa Consultation Requests** | 🔒 Locked (KYC Prompt) | ✅ Direct WhatsApp Bidding |
+| **Verified Partner Badge on Listings** | 🔒 Inactive | ✅ Verified Gold Shield Active |`
   },
   {
     id: "fallback-6",
