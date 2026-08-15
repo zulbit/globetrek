@@ -234,8 +234,26 @@ function VendorKYCPage() {
         <form onSubmit={handleSubmit} className="space-y-5 text-xs">
           <div className="grid gap-5 sm:grid-cols-2">
             {enabledFields.map((field) => {
-              const isCritical = ["dts_license", "ntn_number", "cnic_number", "company_name"].includes(field.id);
+              const isCritical = [
+                "dts_license",
+                "dts_license_type",
+                "dts_expiry_date",
+                "ntn_number",
+                "cnic_number",
+                "company_name",
+              ].includes(field.id);
               const isLocked = isApproved && isCritical;
+
+              const isDate = field.id === "dts_expiry_date" || field.type === "date";
+              const isSelect = field.id === "dts_license_type" || field.type === "select";
+
+              const selectOptions = field.options || [
+                "International Packages & Group Tours",
+                "Hajj & Umrah Packages",
+                "Air Tickets & Passenger Booking Only",
+                "Domestic Tours & Northern Areas",
+                "Full Comprehensive Travel & Tourism Agency",
+              ];
 
               return (
                 <div key={field.id} className="space-y-1.5">
@@ -250,19 +268,42 @@ function VendorKYCPage() {
                     )}
                   </label>
 
-                  <Input
-                    type={field.id === "phone" ? "tel" : "text"}
-                    required={field.required}
-                    disabled={isLocked}
-                    placeholder={field.placeholder}
-                    value={formData[field.id] || ""}
-                    onChange={(e) => handleInputChange(field.id, e.target.value)}
-                    className={`text-xs text-foreground h-9 rounded-xl placeholder:text-muted-foreground ${
-                      isLocked
-                        ? "bg-surface/50 border-border/50 text-muted-foreground cursor-not-allowed opacity-80"
-                        : "bg-surface border-border focus:border-primary"
-                    }`}
-                  />
+                  {isSelect ? (
+                    <select
+                      required={field.required}
+                      disabled={isLocked}
+                      value={formData[field.id] || ""}
+                      onChange={(e) => handleInputChange(field.id, e.target.value)}
+                      className={`w-full text-xs text-foreground h-9 rounded-xl px-3 outline-none transition-colors ${
+                        isLocked
+                          ? "bg-surface/50 border border-border/50 text-muted-foreground cursor-not-allowed opacity-80"
+                          : "bg-surface border border-border focus:border-primary"
+                      }`}
+                    >
+                      <option value="" disabled>
+                        -- Select DTS License Type / Operation --
+                      </option>
+                      {selectOptions.map((opt) => (
+                        <option key={opt} value={opt} className="bg-card text-foreground">
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <Input
+                      type={isDate ? "date" : field.id === "phone" ? "tel" : "text"}
+                      required={field.required}
+                      disabled={isLocked}
+                      placeholder={field.placeholder}
+                      value={formData[field.id] || ""}
+                      onChange={(e) => handleInputChange(field.id, e.target.value)}
+                      className={`text-xs text-foreground h-9 rounded-xl placeholder:text-muted-foreground ${
+                        isLocked
+                          ? "bg-surface/50 border-border/50 text-muted-foreground cursor-not-allowed opacity-80"
+                          : "bg-surface border-border focus:border-primary"
+                      }`}
+                    />
+                  )}
 
                   {isLocked ? (
                     <p className="text-[11px] text-amber-400/90 leading-tight">

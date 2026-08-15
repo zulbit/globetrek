@@ -354,12 +354,41 @@ function AdminVendors() {
                   const label = key
                     .replace(/_/g, " ")
                     .replace(/\b\w/g, (c) => c.toUpperCase());
+                  
+                  const isExpiry = key === "dts_expiry_date";
+                  const isLicenseType = key === "dts_license_type";
+                  const isExpired = isExpiry && val ? new Date(String(val)) < new Date() : false;
+
                   return (
-                    <div key={key} className="space-y-1 bg-surface/50 border border-border p-2.5 rounded-lg">
-                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider block font-semibold">
-                        {label}
-                      </span>
-                      <span className="text-foreground text-sm font-medium break-all">
+                    <div
+                      key={key}
+                      className={`space-y-1 p-2.5 rounded-lg border ${
+                        isExpiry
+                          ? isExpired
+                            ? "bg-rose-500/10 border-rose-500/30"
+                            : "bg-emerald-500/10 border-emerald-500/30"
+                          : isLicenseType
+                          ? "bg-primary/10 border-primary/30 col-span-2"
+                          : "bg-surface/50 border-border"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider block font-semibold">
+                          {label}
+                        </span>
+                        {isExpiry && val && (
+                          <span
+                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                              isExpired
+                                ? "bg-rose-500/20 text-rose-300"
+                                : "bg-emerald-500/20 text-emerald-300"
+                            }`}
+                          >
+                            {isExpired ? "⚠️ EXPIRED" : "✅ VALID"}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-foreground text-sm font-medium break-all block">
                         {String(val || "—")}
                       </span>
                     </div>

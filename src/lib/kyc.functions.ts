@@ -8,6 +8,8 @@ export interface KYCFieldConfig {
   required: boolean;
   enabled: boolean;
   description?: string;
+  type?: "text" | "tel" | "date" | "select";
+  options?: string[];
 }
 
 export interface KYCTemplateSettings {
@@ -23,10 +25,11 @@ const DEFAULT_KYC_TEMPLATE: KYCTemplateSettings = {
     {
       id: "company_name",
       label: "Agency / Business Legal Name",
-      placeholder: "e.g. Skylark Travels & Tours (Pvt) Ltd",
+      placeholder: "e.g. Deluxe Holidays (Pvt) Ltd",
       required: true,
       enabled: true,
       description: "Registered trade name of your travel desk.",
+      type: "text",
     },
     {
       id: "phone",
@@ -35,14 +38,41 @@ const DEFAULT_KYC_TEMPLATE: KYCTemplateSettings = {
       required: true,
       enabled: true,
       description: "Direct WhatsApp number for instant booking alerts & traveler communication.",
+      type: "tel",
     },
     {
       id: "dts_license",
       label: "DTS License No. / Registration",
-      placeholder: "e.g. DTS-LHR-9410",
+      placeholder: "e.g. DTS-3877 / KH-12345",
       required: true,
       enabled: true,
-      description: "Department of Tourist Services license number.",
+      description: "Department of Tourist Services license number from Form II.",
+      type: "text",
+    },
+    {
+      id: "dts_license_type",
+      label: "DTS License Type / Field of Operation",
+      placeholder: "Select permitted field of operation",
+      required: true,
+      enabled: true,
+      description: "Field of operation authorized under Section 3(3) of Travel Agencies Rules 1977.",
+      type: "select",
+      options: [
+        "International Packages & Group Tours",
+        "Hajj & Umrah Packages",
+        "Air Tickets & Passenger Booking Only",
+        "Domestic Tours & Northern Areas",
+        "Full Comprehensive Travel & Tourism Agency",
+      ],
+    },
+    {
+      id: "dts_expiry_date",
+      label: "DTS License Expiry Date",
+      placeholder: "YYYY-MM-DD",
+      required: true,
+      enabled: true,
+      description: "Valid renewal expiry date printed on your DTS license form.",
+      type: "date",
     },
     {
       id: "ntn_number",
@@ -51,6 +81,7 @@ const DEFAULT_KYC_TEMPLATE: KYCTemplateSettings = {
       required: true,
       enabled: true,
       description: "Federal Board of Revenue 7-digit tax number.",
+      type: "text",
     },
     {
       id: "cnic_number",
@@ -59,6 +90,7 @@ const DEFAULT_KYC_TEMPLATE: KYCTemplateSettings = {
       required: true,
       enabled: true,
       description: "13-digit national identity card number of proprietor.",
+      type: "text",
     },
     {
       id: "city",
@@ -67,14 +99,16 @@ const DEFAULT_KYC_TEMPLATE: KYCTemplateSettings = {
       required: true,
       enabled: true,
       description: "City where main physical office is located.",
+      type: "text",
     },
     {
       id: "office_address",
       label: "Physical Office Address",
-      placeholder: "e.g. Suite 402, Main Boulevard, Gulberg III, Lahore",
+      placeholder: "e.g. Office # 311, Balad Trade Centre, BMCHS, Karachi",
       required: true,
       enabled: true,
       description: "Complete street address of agency office.",
+      type: "text",
     },
     {
       id: "bank_iban",
@@ -83,6 +117,7 @@ const DEFAULT_KYC_TEMPLATE: KYCTemplateSettings = {
       required: false,
       enabled: true,
       description: "Account details for vendor payout settlements.",
+      type: "text",
     },
   ],
 };
@@ -163,7 +198,7 @@ export const submitVendorKYC = createServerFn({ method: "POST" })
       : {};
 
     // Check if any CRITICAL legal/government credentials were modified
-    const criticalFields = ["dts_license", "ntn_number", "cnic_number", "company_name"];
+    const criticalFields = ["dts_license", "dts_license_type", "dts_expiry_date", "ntn_number", "cnic_number", "company_name"];
     let criticalFieldsModified = false;
 
     if (isAlreadyApproved) {
