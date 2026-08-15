@@ -160,6 +160,31 @@ const mdComponents: import("react-markdown").Components = {
   p: ({ children }) => (
     <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed my-2">{children}</p>
   ),
+  img: ({ src, alt }: { src?: string; alt?: string }) => {
+    if (!src) return null;
+    return (
+      <div className="my-5 overflow-hidden rounded-2xl border border-border bg-surface/40 shadow-sm transition-all hover:border-primary/40">
+        <img
+          src={src}
+          alt={alt || "Guide Screenshot"}
+          className="w-full max-h-[460px] object-cover rounded-2xl"
+          loading="lazy"
+          onError={(e) => {
+            const target = e.currentTarget;
+            if (!target.src.includes("/images/guide/landing-page.png")) {
+              target.src = "/images/guide/landing-page.png?v=fallback";
+            }
+          }}
+        />
+        {alt && (
+          <div className="border-t border-border/60 bg-card/60 px-4 py-2 text-[11px] text-muted-foreground italic flex items-center justify-between">
+            <span>📷 {alt}</span>
+            <span className="text-[10px] uppercase font-bold text-primary tracking-wider">GlobeTrek PK Platform</span>
+          </div>
+        )}
+      </div>
+    );
+  },
 };
 
 // Ordered list items need their own marker, override li for ol context via parent
