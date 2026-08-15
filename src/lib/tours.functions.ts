@@ -80,6 +80,30 @@ export const saveTourServer = createServerFn({ method: "POST" })
     const err = validateTour(data);
     if (err) throw new Error(err);
 
+    // Enforce KYC verification for live publishing
+    if (data.is_active) {
+      const { data: profile } = await context.supabase
+        .from("profiles")
+        .select("vendor_status")
+        .eq("id", context.userId)
+        .maybeSingle();
+
+      const { data: roleRow } = await context.supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", context.userId)
+        .maybeSingle();
+
+      const isAdmin = roleRow?.role === "admin";
+      const isApproved = profile?.vendor_status === "approved";
+
+      if (!isAdmin && !isApproved) {
+        throw new Error(
+          "Agency Verification Required: Unverified accounts can only save listings as Draft in Setup Mode. Submit and complete your KYC verification to publish live on GlobeTrek PK."
+        );
+      }
+    }
+
     const payload = {
       vendor_id: data.vendor_id,
       title: data.title.trim(),
@@ -96,7 +120,6 @@ export const saveTourServer = createServerFn({ method: "POST" })
       accommodation: cleanAccommodation(data.accommodation),
       extra_notes: data.extra_notes?.trim() || null,
     };
-
 
     if (data.id) {
       const { error } = await context.supabase.from("tours").update(payload as never).eq("id", data.id);
@@ -116,6 +139,29 @@ export const setTourPublishedServer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { id: string; is_active: boolean }) => data)
   .handler(async ({ data, context }) => {
+    if (data.is_active) {
+      const { data: profile } = await context.supabase
+        .from("profiles")
+        .select("vendor_status")
+        .eq("id", context.userId)
+        .maybeSingle();
+
+      const { data: roleRow } = await context.supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", context.userId)
+        .maybeSingle();
+
+      const isAdmin = roleRow?.role === "admin";
+      const isApproved = profile?.vendor_status === "approved";
+
+      if (!isAdmin && !isApproved) {
+        throw new Error(
+          "Agency Verification Required: You must complete KYC verification and receive Admin approval before publishing live tour packages."
+        );
+      }
+    }
+
     const { error } = await context.supabase
       .from("tours")
       .update({ is_active: data.is_active })

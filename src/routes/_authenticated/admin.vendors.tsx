@@ -306,8 +306,29 @@ function AdminVendors() {
             </div>
           ) : (
             <div className="space-y-4 py-2">
+              {/* Submission Status Alert */}
+              {(() => {
+                const isSub = "isSubmitted" in (kycDetails as any) ? (kycDetails as any).isSubmitted : true;
+                const subAt = "submittedAt" in (kycDetails as any) ? (kycDetails as any).submittedAt : null;
+                return isSub ? (
+                  <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs text-amber-300">
+                    <Clock className="size-4 shrink-0" />
+                    <span>
+                      KYC Documents Submitted {subAt ? `on ${new Date(subAt).toLocaleString()}` : "for Review"}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 rounded-lg border border-border bg-surface p-2.5 text-xs text-muted-foreground">
+                    <AlertCircle className="size-4 shrink-0 text-amber-400" />
+                    <span>
+                      Vendor registered but has <strong>not yet submitted</strong> full DTS / NTN / CNIC documents.
+                    </span>
+                  </div>
+                );
+              })()}
+
               <div className="grid grid-cols-2 gap-4 text-xs">
-                {Object.entries(kycDetails).map(([key, val]) => {
+                {Object.entries("fields" in (kycDetails as any) ? (kycDetails as any).fields : (kycDetails as any) || {}).map(([key, val]) => {
                   const label = key
                     .replace(/_/g, " ")
                     .replace(/\b\w/g, (c) => c.toUpperCase());
@@ -368,10 +389,18 @@ function VendorRow({
               ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-400"
               : p.vendor_status === "banned"
                 ? "border-destructive/40 bg-destructive/15 text-destructive"
-                : "border-amber-500/40 bg-amber-500/15 text-amber-300"
+                : p.kycSubmitted
+                  ? "border-amber-500/40 bg-amber-500/15 text-amber-300"
+                  : "border-border bg-surface/80 text-muted-foreground"
           }`}
         >
-          {p.vendor_status === "approved" ? "Verified" : p.vendor_status}
+          {p.vendor_status === "approved"
+            ? "Verified"
+            : p.vendor_status === "banned"
+              ? "Banned"
+              : p.kycSubmitted
+                ? "KYC Submitted (In Review)"
+                : "KYC Not Submitted"}
         </span>
       </div>
       <div className="truncate text-xs font-semibold text-foreground">{p.company_name || "—"}</div>

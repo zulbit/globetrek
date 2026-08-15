@@ -361,12 +361,27 @@ export const createVisaLeadUnlockCheckout = createServerFn({ method: "POST" })
       throw new Error("This visa lead has reached the maximum 5 vendor unlocks limit.");
     }
 
-    // Vendor profile for billing prefill
+    // Vendor profile for billing prefill and verification status
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("full_name, company_name, email, phone, city")
+      .select("full_name, company_name, email, phone, city, vendor_status")
       .eq("id", vendorId)
       .maybeSingle();
+
+    const { data: roleRow } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", vendorId)
+      .maybeSingle();
+
+    const isAdmin = roleRow?.role === "admin";
+    const isApproved = profile?.vendor_status === "approved";
+
+    if (!isAdmin && !isApproved) {
+      throw new Error(
+        "Agency Verification Required: Unverified accounts in Setup Mode cannot unlock visa leads. Please submit and complete your KYC verification to receive Admin approval."
+      );
+    }
 
     const unlockFee = targetLead.unlock_fee_pkr || 750;
     const [firstName, ...rest] = (profile?.full_name || profile?.company_name || "Travel Partner").trim().split(/\s+/);

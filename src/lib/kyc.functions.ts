@@ -130,6 +130,14 @@ export const saveKYCTemplateSettings = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+export interface VendorKYCRecord {
+  isSubmitted: boolean;
+  status: "not_submitted" | "submitted" | "approved" | "rejected";
+  submittedAt?: string | null;
+  registeredAt?: string | null;
+  fields: Record<string, string>;
+}
+
 export const submitVendorKYC = createServerFn({ method: "POST" })
   .validator((data: { userId: string; profileUpdates: Record<string, any> }) => data)
   .handler(async ({ data }) => {
@@ -168,9 +176,11 @@ export const submitVendorKYC = createServerFn({ method: "POST" })
       }
     }
 
-    // 2. Store full dynamic KYC payload in payment_gateway_settings for Admin review
+    // 2. Store full dynamic KYC payload in payment_gateway_settings with is_submitted: true
     const kycPayload = {
       userId,
+      is_submitted: true,
+      status: "submitted",
       submittedAt: new Date().toISOString(),
       fields: profileUpdates,
     };
@@ -193,7 +203,7 @@ export const submitVendorKYC = createServerFn({ method: "POST" })
 
 export const getVendorKYCDetails = createServerFn({ method: "POST" })
   .validator((data: { userId: string }) => data)
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<VendorKYCRecord | null> => {
     try {
       const { data: record } = await supabaseAdmin
         .from("payment_gateway_settings")
@@ -203,8 +213,32 @@ export const getVendorKYCDetails = createServerFn({ method: "POST" })
 
       if (!record?.settings) return null;
       const parsed = typeof record.settings === "string" ? JSON.parse(record.settings) : record.settings;
-      return parsed?.fields || null;
-    } catch {
+      if (!parsed) return null;
+
+      const fields = (parsed.fields || {}) as Record<string, string>;
+      
+      // Determine if actually submitted:
+      // Either explicit is_submitted flag is true OR vendor has provided critical registration identifiers like DTS, NTN or CNIC
+      const hasMeaningfulDocs = Boolean(
+        fields.dts_license?.trim() ||
+        fields.ntn_number?.trim() ||
+        fields.cnic_number?.trim() ||
+        fields.office_address?.trim()
+      );
+
+      const isSubmitted = parsed.is_submitted === true || (parsed.is_submitted !== false && hasMeaningfulDocs);
+      const status: "not_submitted" | "submitted" | "approved" | "rejected" = 
+        parsed.status || (isSubmitted ? "submitted" : "not_submitted");
+
+      return {
+        isSubmitted,
+        status,
+        submittedAt: parsed.submittedAt || null,
+        registeredAt: parsed.registeredAt || null,
+        fields,
+      };
+    } catch (err) {
+      console.error("[getVendorKYCDetails Exception]:", err);
       return null;
     }
   });

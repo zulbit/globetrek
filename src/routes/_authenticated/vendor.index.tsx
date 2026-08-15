@@ -16,6 +16,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UpgradeModal } from "@/components/upgrade-modal";
 
+import { useServerFn } from "@tanstack/react-start";
+import { getVendorKYCDetails } from "@/lib/kyc.functions";
+
 export const Route = createFileRoute("/_authenticated/vendor/")({
   component: VendorOverview,
 });
@@ -88,6 +91,7 @@ interface RecentLead {
 /* ─── Component ───────────────────────────────────── */
 function VendorOverview() {
   const queryClient = useQueryClient();
+  const getKycFn = useServerFn(getVendorKYCDetails);
 
   const { data } = useQuery({
     queryKey: ["vendor-overview"],
@@ -102,16 +106,17 @@ function VendorOverview() {
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
       thirtyDaysAgo.setHours(0, 0, 0, 0);
 
-      const [tours, visas, insurance, tickets, leads, profile, usage, chartLeadsRes, customPurchasesRes] = await Promise.all([
+      const [tours, visas, insurance, tickets, leads, profile, usage, chartLeadsRes, customPurchasesRes, kycData] = await Promise.all([
         supabase.from("tours").select("id,is_active").eq("vendor_id", uid),
         supabase.from("visa_services").select("id,is_active").eq("vendor_id", uid),
         supabase.from("insurance_plans").select("id,is_active").eq("vendor_id", uid),
         supabase.from("ticket_services").select("id,is_active").eq("vendor_id", uid),
         supabase.from("leads").select("id,is_unlocked,service_type,customer_name,created_at").eq("vendor_id", uid).order("created_at", { ascending: false }).limit(50),
-        supabase.from("profiles").select("lead_credits_balance,subscription_tier").eq("id", uid).maybeSingle(),
+        supabase.from("profiles").select("lead_credits_balance,subscription_tier,vendor_status,company_name,full_name").eq("id", uid).maybeSingle(),
         supabase.from("ai_usage_events").select("kind").eq("user_id", uid).gte("created_at", monthStart.toISOString()),
         supabase.from("leads").select("service_type,created_at").eq("vendor_id", uid).gte("created_at", thirtyDaysAgo.toISOString()),
         supabase.from("vendor_lead_purchases").select("purchased_at").eq("vendor_id", uid).gte("purchased_at", thirtyDaysAgo.toISOString()),
+        getKycFn({ data: { userId: uid } }).catch(() => null),
       ]);
 
       const allLeads = leads.data ?? [];
@@ -162,6 +167,9 @@ function VendorOverview() {
         recentLeads: allLeads.slice(0, 5) as RecentLead[],
         credits: profile.data?.lead_credits_balance ?? 0,
         tier: (profile.data?.subscription_tier ?? "free") as Tier,
+        vendorStatus: profile.data?.vendor_status ?? "pending",
+        companyName: profile.data?.company_name ?? "",
+        kycRecord: kycData,
         aiDescriptions: events.filter((e) => e.kind === "description").length,
         aiPlans: events.filter((e) => e.kind === "plan").length,
         chartData,
@@ -254,9 +262,99 @@ function VendorOverview() {
     ? Math.round((data.unlockedLeads / data.totalLeads) * 100)
     : 0;
 
+  const isApproved = data?.vendorStatus === "approved";
+  const isKycSubmitted = !!data?.kycRecord?.isSubmitted;
+
   return (
     <div className="space-y-6">
       <UpgradeModal open={upgradeOpen} onOpenChange={setUpgradeOpen} recommend="pro" />
+
+      {/* ── Agency Onboarding & KYC Progress Card ── */}
+      {!isApproved && (
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-xs space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
+            <div>
+              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-400 mb-1">
+                <FileCheck className="size-4" /> Agency Onboarding Progress
+              </div>
+              <h2 className="text-xl font-black text-foreground tracking-tight">
+                Complete Setup to Activate Live Marketplace
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5 max-w-xl">
+                Your agency account is in Setup Mode. Prepare your tour drafts now — complete verification to unlock live publishing and traveler inquiries.
+              </p>
+            </div>
+
+            <Button asChild size="sm" className="bg-amber-500 text-black hover:bg-amber-400 font-bold text-xs rounded-xl px-4 shrink-0 gap-1.5 shadow-md">
+              <Link to="/vendor/kyc">
+                {isKycSubmitted ? "View Verification Details" : "Submit KYC Documents"} <ArrowRight className="size-3.5" />
+              </Link>
+            </Button>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-4 text-xs">
+            {/* Step 1 */}
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-emerald-400 text-[11px] uppercase tracking-wider">Step 1</span>
+                <span className="rounded-full bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 text-[10px] font-bold">Done</span>
+              </div>
+              <p className="font-bold text-foreground">Agency Account</p>
+              <p className="text-[11px] text-muted-foreground leading-tight">Registered &amp; authorized</p>
+            </div>
+
+            {/* Step 2 */}
+            <div className={`rounded-xl border p-3.5 space-y-1.5 ${
+              isKycSubmitted
+                ? "border-emerald-500/30 bg-emerald-500/10"
+                : "border-amber-500/40 bg-amber-500/10 animate-pulse"
+            }`}>
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-amber-400 text-[11px] uppercase tracking-wider">Step 2</span>
+                <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                  isKycSubmitted
+                    ? "bg-emerald-500/20 text-emerald-300"
+                    : "bg-amber-500/30 text-amber-300"
+                }`}>
+                  {isKycSubmitted ? "Submitted" : "Action Required"}
+                </span>
+              </div>
+              <p className="font-bold text-foreground">DTS &amp; NTN Credentials</p>
+              <p className="text-[11px] text-muted-foreground leading-tight">
+                {isKycSubmitted ? "KYC details provided" : "Submit license for approval"}
+              </p>
+            </div>
+
+            {/* Step 3 */}
+            <div className={`rounded-xl border p-3.5 space-y-1.5 ${
+              isKycSubmitted
+                ? "border-amber-500/30 bg-amber-500/10"
+                : "border-border bg-surface/50 opacity-70"
+            }`}>
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-muted-foreground text-[11px] uppercase tracking-wider">Step 3</span>
+                <span className="rounded-full bg-surface text-muted-foreground px-1.5 py-0.5 text-[10px] font-bold">
+                  {isKycSubmitted ? "Under Review" : "Pending Step 2"}
+                </span>
+              </div>
+              <p className="font-bold text-foreground">Admin Verification</p>
+              <p className="text-[11px] text-muted-foreground leading-tight">
+                {isKycSubmitted ? "24h verification SLA" : "Starts after KYC submission"}
+              </p>
+            </div>
+
+            {/* Step 4 */}
+            <div className="rounded-xl border border-border bg-surface/50 opacity-70 p-3.5 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-muted-foreground text-[11px] uppercase tracking-wider">Step 4</span>
+                <span className="rounded-full bg-surface text-muted-foreground px-1.5 py-0.5 text-[10px] font-bold">Locked</span>
+              </div>
+              <p className="font-bold text-foreground">Marketplace Live</p>
+              <p className="text-[11px] text-muted-foreground leading-tight">Publish tours &amp; unlock leads</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── New Lead Waiting Alert ── */}
       {lockedLeadsCount > 0 && (

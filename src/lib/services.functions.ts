@@ -22,6 +22,30 @@ export const saveServiceListing = createServerFn({ method: "POST" })
     const table = TABLES[data.serviceType];
     if (!table) throw new Error("Invalid service type");
 
+    const isActive = Boolean(data.data.is_active);
+    if (isActive) {
+      const { data: profile } = await context.supabase
+        .from("profiles")
+        .select("vendor_status")
+        .eq("id", context.userId)
+        .maybeSingle();
+
+      const { data: roleRow } = await context.supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", context.userId)
+        .maybeSingle();
+
+      const isAdmin = roleRow?.role === "admin";
+      const isApproved = profile?.vendor_status === "approved";
+
+      if (!isAdmin && !isApproved) {
+        throw new Error(
+          "Agency Verification Required: Unverified accounts can only save listings as Draft in Setup Mode. Please complete KYC verification to publish live."
+        );
+      }
+    }
+
     const payload = { ...data.data, vendor_id: context.userId };
     if (data.id) {
       const { error } = await context.supabase
@@ -41,6 +65,29 @@ export const toggleServiceActive = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { serviceType: ServiceType; id: string; is_active: boolean }) => d)
   .handler(async ({ data, context }) => {
+    if (data.is_active) {
+      const { data: profile } = await context.supabase
+        .from("profiles")
+        .select("vendor_status")
+        .eq("id", context.userId)
+        .maybeSingle();
+
+      const { data: roleRow } = await context.supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", context.userId)
+        .maybeSingle();
+
+      const isAdmin = roleRow?.role === "admin";
+      const isApproved = profile?.vendor_status === "approved";
+
+      if (!isAdmin && !isApproved) {
+        throw new Error(
+          "Agency Verification Required: You must complete KYC verification and receive Admin approval before publishing live listings."
+        );
+      }
+    }
+
     const table = TABLES[data.serviceType];
     const { error } = await context.supabase
       .from(table).update({ is_active: data.is_active }).eq("id", data.id);

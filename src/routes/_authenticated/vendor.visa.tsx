@@ -70,6 +70,20 @@ function VendorVisa() {
   const [draft, setDraft] = useState<Draft>(emptyDraft());
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  const { data: profile } = useQuery({
+    enabled: !!user?.id,
+    queryKey: ["vendor-profile-status", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("vendor_status")
+        .eq("id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+  const isApproved = profile?.vendor_status === "approved";
+
   const { data: rows = [], isLoading } = useQuery({
     enabled: !!user?.id,
     queryKey: ["vendor-visa", user?.id],
@@ -92,6 +106,15 @@ function VendorVisa() {
   const saveM = useMutation({
     mutationFn: async () => {
       const docs = (draft.documents_text ?? "").split("\n").map((s) => s.trim()).filter(Boolean);
+      const shouldPublish = Boolean(draft.is_active ?? true);
+      const finalActive = isApproved ? shouldPublish : false;
+
+      if (shouldPublish && !isApproved) {
+        toast.info("Setup Mode: Saved as Draft", {
+          description: "Your visa service is saved. It will be published once GlobeTrek PK Admins approve your KYC verification.",
+        });
+      }
+
       const payload = {
         country: draft.country?.trim(),
         visa_type: draft.visa_type,
@@ -102,12 +125,12 @@ function VendorVisa() {
         description: draft.description ?? "",
         extra_notes: draft.extra_notes || null,
         documents_required: docs,
-        is_active: draft.is_active ?? true,
+        is_active: finalActive,
       };
       return save({ data: { serviceType: "visa", id: editingId ?? undefined, data: payload } });
     },
     onSuccess: () => {
-      toast.success(editingId ? "Visa service updated" : "Visa service listed");
+      toast.success(editingId ? "Visa service updated" : "Visa service saved");
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["vendor-visa"] });
     },
@@ -115,8 +138,14 @@ function VendorVisa() {
   });
 
   const toggleM = useMutation({
-    mutationFn: (r: VisaService) => toggle({ data: { serviceType: "visa", id: r.id, is_active: !r.is_active } }),
+    mutationFn: (r: VisaService) => {
+      if (!r.is_active && !isApproved) {
+        throw new Error("Agency Verification Required: Unverified vendors cannot publish live visa services. Submit your KYC on /vendor/kyc.");
+      }
+      return toggle({ data: { serviceType: "visa", id: r.id, is_active: !r.is_active } });
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["vendor-visa"] }),
+    onError: (e: any) => toast.error(e.message || "Failed to toggle status"),
   });
   const removeM = useMutation({
     mutationFn: (id: string) => remove({ data: { serviceType: "visa", id } }),

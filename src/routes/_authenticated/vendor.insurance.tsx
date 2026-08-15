@@ -57,6 +57,20 @@ function VendorInsurance() {
   const [draft, setDraft] = useState<Draft>(emptyDraft());
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  const { data: profile } = useQuery({
+    enabled: !!user?.id,
+    queryKey: ["vendor-profile-status", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("vendor_status")
+        .eq("id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+  const isApproved = profile?.vendor_status === "approved";
+
   const { data: rows = [], isLoading } = useQuery({
     enabled: !!user?.id,
     queryKey: ["vendor-insurance", user?.id],
@@ -81,6 +95,15 @@ function VendorInsurance() {
     mutationFn: async () => {
       const benefits = (draft.benefits_text ?? "").split("\n").map((s) => s.trim()).filter(Boolean);
       const exclusions = (draft.exclusions_text ?? "").split("\n").map((s) => s.trim()).filter(Boolean);
+      const shouldPublish = Boolean(draft.is_active ?? true);
+      const finalActive = isApproved ? shouldPublish : false;
+
+      if (shouldPublish && !isApproved) {
+        toast.info("Setup Mode: Saved as Draft", {
+          description: "Your insurance plan is saved. It will be published once GlobeTrek PK Admins approve your KYC verification.",
+        });
+      }
+
       const payload = {
         plan_name: draft.plan_name?.trim(),
         coverage_type: draft.coverage_type,
@@ -91,17 +114,23 @@ function VendorInsurance() {
         age_max: Number(draft.age_max) || 99,
         description: draft.description ?? "",
         benefits, exclusions,
-        is_active: draft.is_active ?? true,
+        is_active: finalActive,
       };
       return save({ data: { serviceType: "insurance", id: editingId ?? undefined, data: payload } });
     },
-    onSuccess: () => { toast.success(editingId ? "Plan updated" : "Plan listed"); setOpen(false); qc.invalidateQueries({ queryKey: ["vendor-insurance"] }); },
+    onSuccess: () => { toast.success(editingId ? "Plan updated" : "Plan saved"); setOpen(false); qc.invalidateQueries({ queryKey: ["vendor-insurance"] }); },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Save failed"),
   });
 
   const toggleM = useMutation({
-    mutationFn: (r: InsurancePlan) => toggle({ data: { serviceType: "insurance", id: r.id, is_active: !r.is_active } }),
+    mutationFn: (r: InsurancePlan) => {
+      if (!r.is_active && !isApproved) {
+        throw new Error("Agency Verification Required: Unverified vendors cannot publish live insurance plans. Submit your KYC on /vendor/kyc.");
+      }
+      return toggle({ data: { serviceType: "insurance", id: r.id, is_active: !r.is_active } });
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["vendor-insurance"] }),
+    onError: (e: any) => toast.error(e.message || "Failed to toggle status"),
   });
   const removeM = useMutation({
     mutationFn: (id: string) => remove({ data: { serviceType: "insurance", id } }),

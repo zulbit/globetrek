@@ -151,18 +151,20 @@ function VendorTours() {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? ""));
   }, []);
 
-  const { data: vendorTier = "free" } = useQuery({
-    queryKey: ["vendor-tier", userId],
+  const { data: vendorProfile } = useQuery({
+    queryKey: ["vendor-profile", userId],
     enabled: !!userId,
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("subscription_tier")
+        .select("subscription_tier, vendor_status")
         .eq("id", userId)
         .maybeSingle();
-      return (data?.subscription_tier as string | undefined) ?? "free";
+      return data;
     },
   });
+  const vendorTier = vendorProfile?.subscription_tier ?? "free";
+  const isApproved = vendorProfile?.vendor_status === "approved";
   const isPro = vendorTier === "pro";
 
   // null = unlimited, 0 = not included in tier (kept in sync with server)
@@ -780,7 +782,19 @@ function VendorTours() {
                     <Pencil className="size-3.5" /> Edit
                   </Button>
                   <Button size="sm" variant="ghost" className="gap-1"
-                    onClick={() => toggleMutation.mutate({ id: t.id, is_active: !t.is_active })}>
+                    onClick={() => {
+                      if (!t.is_active && !isApproved) {
+                        toast.error("Agency Verification Required", {
+                          description: "Unverified accounts in Setup Mode cannot publish live tours to travelers. Please submit your KYC documents to get approved.",
+                          action: {
+                            label: "Go to KYC",
+                            onClick: () => { window.location.href = "/vendor/kyc"; },
+                          },
+                        });
+                        return;
+                      }
+                      toggleMutation.mutate({ id: t.id, is_active: !t.is_active });
+                    }}>
                     {t.is_active ? <><EyeOff className="size-3.5" /> Unpublish</> : <><Eye className="size-3.5" /> Publish</>}
                   </Button>
                   <Button size="sm" variant="ghost" className="ml-auto text-destructive hover:text-destructive"
@@ -1420,15 +1434,28 @@ function VendorTours() {
 
 
                 {/* Publish toggle */}
-                <section className="flex items-center gap-3 rounded-xl border border-border bg-surface/40 p-4">
+                <section className={`flex items-center gap-3 rounded-xl border p-4 ${
+                  !isApproved && editing.is_active
+                    ? "border-amber-500/40 bg-amber-500/10"
+                    : "border-border bg-surface/40"
+                }`}>
                   <Switch checked={editing.is_active}
-                    onCheckedChange={(v) => setEditing({ ...editing, is_active: v })} />
+                    onCheckedChange={(v) => {
+                      if (v && !isApproved) {
+                        toast.info("Setup Mode Active", {
+                          description: "Your tour will be saved as Draft. Complete KYC verification on /vendor/kyc to publish live to travelers.",
+                        });
+                      }
+                      setEditing({ ...editing, is_active: v });
+                    }} />
                   <div>
                     <p className="text-sm font-medium">
                       {editing.is_active ? "Published — visible on the marketplace" : "Draft — hidden from travelers"}
                     </p>
                     <p className="text-[11px] text-muted-foreground">
-                      Publish only when the itinerary is complete. You can toggle this any time.
+                      {!isApproved && editing.is_active
+                        ? "⚠️ Verification required: Unapproved accounts can save draft itineraries, but live publication requires Admin KYC verification."
+                        : "Publish only when the itinerary is complete. You can toggle this any time."}
                     </p>
                   </div>
                 </section>
@@ -1458,11 +1485,22 @@ function VendorTours() {
           )}
           <DialogFooter>
             <Button variant="ghost" onClick={() => setEditing(null)}>Cancel</Button>
-            <Button onClick={() => editing && saveMutation.mutate(editing)}
+            <Button onClick={() => {
+              if (editing) {
+                if (editing.is_active && !isApproved) {
+                  toast.error("Agency Verification Required", {
+                    description: "You must complete and submit your KYC documents on /vendor/kyc before publishing live listings. Saving as Draft instead.",
+                  });
+                  saveMutation.mutate({ ...editing, is_active: false });
+                } else {
+                  saveMutation.mutate(editing);
+                }
+              }
+            }}
               disabled={saveMutation.isPending || !!itineraryValidation.error || !editing?.title.trim()}
               className="gap-2">
               {saveMutation.isPending && <Loader2 className="size-4 animate-spin" />}
-              {editing?.id ? "Save changes" : (editing?.is_active ? "Create & publish" : "Save as draft")}
+              {editing?.id ? "Save changes" : (editing?.is_active && isApproved ? "Create & publish" : "Save as draft")}
             </Button>
           </DialogFooter>
         </DialogContent>

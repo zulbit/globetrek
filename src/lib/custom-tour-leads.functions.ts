@@ -184,12 +184,27 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
       ? "https://api.getsafepay.com"
       : "https://sandbox.api.getsafepay.com";
 
-    // Get vendor details for customer billing
+    // Get vendor details for customer billing and verification status
     const { data: vendorProfile } = await supabaseAdmin
       .from("profiles")
-      .select("full_name, company_name, email, phone, city")
+      .select("full_name, company_name, email, phone, city, vendor_status")
       .eq("id", vendorId)
       .maybeSingle();
+
+    const { data: roleRow } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", vendorId)
+      .maybeSingle();
+
+    const isAdmin = roleRow?.role === "admin";
+    const isApproved = vendorProfile?.vendor_status === "approved";
+
+    if (!isAdmin && !isApproved) {
+      throw new Error(
+        "Agency Verification Required: Unverified accounts in Setup Mode cannot unlock traveler leads. Please submit and complete your KYC verification to receive Admin approval."
+      );
+    }
 
     const [firstName, ...rest] = (vendorProfile?.full_name || vendorProfile?.company_name || "Travel Partner").trim().split(/\s+/);
     const lastName = rest.join(" ") || (vendorProfile?.company_name ? "Agency" : "Vendor");

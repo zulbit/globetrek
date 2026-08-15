@@ -45,6 +45,8 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
+import { supabase } from "@/integrations/supabase/client";
+
 export const Route = createFileRoute("/_authenticated/vendor/custom-visa-leads")({
   component: VendorCustomVisaLeadsPage,
 });
@@ -53,6 +55,21 @@ export function VendorCustomVisaLeadsPage() {
   const qc = useQueryClient();
   const [selectedFilter, setSelectedFilter] = useState<string>("all");
   const [refusalOnly, setRefusalOnly] = useState<boolean>(false);
+
+  const { data: profile } = useQuery({
+    queryKey: ["vendor-profile-status"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("vendor_status")
+        .eq("id", user.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+  const isApproved = profile?.vendor_status === "approved";
 
   // Proposal Modal State
   const [proposalModalOpen, setProposalModalOpen] = useState(false);
@@ -343,7 +360,19 @@ export function VendorCustomVisaLeadsPage() {
                       <Button
                         size="sm"
                         disabled={isSoldOut || unlockMutation.isPending}
-                        onClick={() => unlockMutation.mutate(lead.id)}
+                        onClick={() => {
+                          if (!isApproved) {
+                            toast.error("Agency Verification Required", {
+                              description: "Unverified accounts in Setup Mode cannot unlock visa leads. Please submit your KYC on /vendor/kyc.",
+                              action: {
+                                label: "Go to KYC",
+                                onClick: () => { window.location.href = "/vendor/kyc"; },
+                              },
+                            });
+                            return;
+                          }
+                          unlockMutation.mutate(lead.id);
+                        }}
                         className="w-full gap-2 bg-gradient-to-r from-rose-600 via-red-600 to-amber-600 font-bold text-white shadow-glow hover:scale-[1.01] transition-transform text-xs h-10"
                       >
                         <Lock className="size-4" />

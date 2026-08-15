@@ -12,6 +12,9 @@ export interface VendorProfile {
   subscription_tier: string;
   lead_credits_balance: number;
   created_at?: string;
+  kycSubmitted?: boolean;
+  kycSubmittedAt?: string | null;
+  kycStatus?: string;
   kycDetails?: Record<string, any>;
 }
 
@@ -46,12 +49,27 @@ export const getAdminVendors = createServerFn({ method: "GET" }).handler(async (
       .select("provider, settings")
       .like("provider", "vendor_kyc_%");
 
-    const kycMap = new Map<string, any>();
+    const kycMap = new Map<string, { fields: any; isSubmitted: boolean; submittedAt?: string; status?: string }>();
     (kycRecords ?? []).forEach((r) => {
       const uId = r.provider.replace("vendor_kyc_", "");
       try {
         const parsed = typeof r.settings === "string" ? JSON.parse(r.settings) : r.settings;
-        if (parsed?.fields) kycMap.set(uId, parsed.fields);
+        if (parsed) {
+          const fields = parsed.fields || {};
+          const hasMeaningfulDocs = Boolean(
+            fields.dts_license?.trim() ||
+            fields.ntn_number?.trim() ||
+            fields.cnic_number?.trim() ||
+            fields.office_address?.trim()
+          );
+          const isSubmitted = parsed.is_submitted === true || (parsed.is_submitted !== false && hasMeaningfulDocs);
+          kycMap.set(uId, {
+            fields,
+            isSubmitted,
+            submittedAt: parsed.submittedAt,
+            status: parsed.status,
+          });
+        }
       } catch {}
     });
 
@@ -65,10 +83,14 @@ export const getAdminVendors = createServerFn({ method: "GET" }).handler(async (
         return false;
       })
       .map((p: any) => {
-        const kycFields = kycMap.get(p.id) || {};
+        const kycRecord = kycMap.get(p.id);
+        const kycFields = kycRecord?.fields || {};
         return {
           ...p,
           phone: kycFields.phone || p.phone || null,
+          kycSubmitted: kycRecord?.isSubmitted ?? false,
+          kycSubmittedAt: kycRecord?.submittedAt || null,
+          kycStatus: kycRecord?.status || (kycRecord?.isSubmitted ? "submitted" : "not_submitted"),
           kycDetails: kycFields,
         };
       });

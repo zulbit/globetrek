@@ -83,14 +83,16 @@ export const Route = createFileRoute("/api/auth/register")({
             referral_code_used: role === "vendor" && referral_code ? referral_code.toUpperCase() : null,
           });
 
-          // Store initial vendor contact in payment_gateway_settings if vendor
+          // Store initial vendor contact draft in payment_gateway_settings if vendor
           if (role === "vendor" && phone) {
             await supabaseAdmin.from("payment_gateway_settings").upsert({
               provider: `vendor_kyc_${userId}`,
               is_enabled: true,
               settings: JSON.stringify({
                 userId,
-                submittedAt: new Date().toISOString(),
+                is_submitted: false,
+                status: "not_submitted",
+                registeredAt: new Date().toISOString(),
                 fields: {
                   company_name: company_name || null,
                   phone,

@@ -47,12 +47,29 @@ import {
 import { toast } from "sonner";
 import { formatPKR } from "@/lib/tours";
 
+import { supabase } from "@/integrations/supabase/client";
+
 export const Route = createFileRoute("/_authenticated/vendor/custom-leads")({
   component: VendorCustomLeadsPage,
 });
 
 export function VendorCustomLeadsPage() {
   const qc = useQueryClient();
+
+  const { data: profile } = useQuery({
+    queryKey: ["vendor-profile-status"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("vendor_status")
+        .eq("id", user.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+  const isApproved = profile?.vendor_status === "approved";
 
   // -------- Custom Tour Marketplace Leads Query --------
   const { data: marketplaceLeads = [], isLoading, refetch } = useQuery({
@@ -454,7 +471,19 @@ export function VendorCustomLeadsPage() {
                         <Button
                           className="w-full gap-2 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow hover:opacity-95 rounded-xl font-bold"
                           disabled={unlockMutation.isPending}
-                          onClick={() => unlockMutation.mutate(l.id)}
+                          onClick={() => {
+                            if (!isApproved) {
+                              toast.error("Agency Verification Required", {
+                                description: "Unverified accounts in Setup Mode cannot unlock traveler leads. Please submit your KYC on /vendor/kyc.",
+                                action: {
+                                  label: "Go to KYC",
+                                  onClick: () => { window.location.href = "/vendor/kyc"; },
+                                },
+                              });
+                              return;
+                            }
+                            unlockMutation.mutate(l.id);
+                          }}
                         >
                           {unlockMutation.isPending ? (
                             <Loader2 className="size-4 animate-spin" />

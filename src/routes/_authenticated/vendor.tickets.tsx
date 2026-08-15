@@ -69,6 +69,20 @@ function VendorTickets() {
   const [draft, setDraft] = useState<Draft>(emptyDraft());
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  const { data: profile } = useQuery({
+    enabled: !!user?.id,
+    queryKey: ["vendor-profile-status", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("vendor_status")
+        .eq("id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+  const isApproved = profile?.vendor_status === "approved";
+
   const { data: rows = [], isLoading } = useQuery({
     enabled: !!user?.id,
     queryKey: ["vendor-tickets", user?.id],
@@ -93,6 +107,15 @@ function VendorTickets() {
     mutationFn: async () => {
       const airlines = (draft.airlines_text ?? "").split(/[,\n]/).map((s) => s.trim()).filter(Boolean);
       const sample_routes = parseRoutes(draft.routes_text ?? "");
+      const shouldPublish = Boolean(draft.is_active ?? true);
+      const finalActive = isApproved ? shouldPublish : false;
+
+      if (shouldPublish && !isApproved) {
+        toast.info("Setup Mode: Saved as Draft", {
+          description: "Your ticketing service is saved. It will be published once GlobeTrek PK Admins approve your KYC verification.",
+        });
+      }
+
       const payload = {
         service_name: draft.service_name?.trim(),
         route_type: draft.route_type,
@@ -101,17 +124,23 @@ function VendorTickets() {
         refundable: !!draft.refundable,
         sample_routes,
         description: draft.description ?? "",
-        is_active: draft.is_active ?? true,
+        is_active: finalActive,
       };
       return save({ data: { serviceType: "tickets", id: editingId ?? undefined, data: payload } });
     },
-    onSuccess: () => { toast.success(editingId ? "Ticket service updated" : "Ticket service listed"); setOpen(false); qc.invalidateQueries({ queryKey: ["vendor-tickets"] }); },
+    onSuccess: () => { toast.success(editingId ? "Ticket service updated" : "Ticket service saved"); setOpen(false); qc.invalidateQueries({ queryKey: ["vendor-tickets"] }); },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Save failed"),
   });
 
   const toggleM = useMutation({
-    mutationFn: (r: TicketService) => toggle({ data: { serviceType: "tickets", id: r.id, is_active: !r.is_active } }),
+    mutationFn: (r: TicketService) => {
+      if (!r.is_active && !isApproved) {
+        throw new Error("Agency Verification Required: Unverified vendors cannot publish live ticketing desks. Submit your KYC on /vendor/kyc.");
+      }
+      return toggle({ data: { serviceType: "tickets", id: r.id, is_active: !r.is_active } });
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["vendor-tickets"] }),
+    onError: (e: any) => toast.error(e.message || "Failed to toggle status"),
   });
   const removeM = useMutation({
     mutationFn: (id: string) => remove({ data: { serviceType: "tickets", id } }),

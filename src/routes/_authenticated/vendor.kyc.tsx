@@ -64,10 +64,11 @@ function VendorKYCPage() {
 
   React.useEffect(() => {
     if (profile && !isFormInitialized) {
+      const kycFields = existingKyc?.fields || {};
       setFormData({
-        company_name: profile.company_name || "",
-        city: profile.city || "",
-        ...(existingKyc || {}),
+        company_name: profile.company_name || kycFields.company_name || "",
+        city: profile.city || kycFields.city || "",
+        ...kycFields,
       });
       if (existingKyc || profile.company_name) {
         setIsFormInitialized(true);
@@ -90,6 +91,7 @@ function VendorKYCPage() {
         description: "GlobeTrek PK Admins will review your agency license & credentials within 24 hours.",
       });
       qc.invalidateQueries({ queryKey: ["vendor-kyc-profile"] });
+      qc.invalidateQueries({ queryKey: ["vendor-kyc-existing"] });
       qc.invalidateQueries({ queryKey: ["vendor-services-nav"] });
     },
     onError: (err: any) => {
@@ -108,6 +110,8 @@ function VendorKYCPage() {
 
   const enabledFields = (template?.fields || []).filter((f) => f.enabled);
   const isApproved = profile?.vendor_status === "approved";
+  const isSubmitted = !isApproved && !!existingKyc?.isSubmitted;
+  const isNotSubmitted = !isApproved && !isSubmitted;
 
   function formatCNIC(value: string): string {
     const digits = value.replace(/\D/g, "").slice(0, 13);
@@ -165,19 +169,45 @@ function VendorKYCPage() {
             className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border shadow-xs ${
               isApproved
                 ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
-                : "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                : isSubmitted
+                ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                : "bg-rose-500/20 text-rose-300 border-rose-500/40 animate-pulse"
             }`}
           >
-            {isApproved ? "✅ Verified Agency Partner" : "⏳ KYC Under Review"}
+            {isApproved
+              ? "✅ Verified Agency Partner"
+              : isSubmitted
+              ? "⏳ KYC Submitted & Under Review"
+              : "⚠️ Action Required: KYC Not Submitted"}
           </Badge>
         </div>
 
-        {!isApproved && (
+        {isApproved && (
+          <div className="flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-xs text-emerald-200">
+            <CheckCircle2 className="size-4 shrink-0 text-emerald-400 mt-0.5" />
+            <div className="leading-relaxed">
+              <strong className="text-emerald-300 font-bold block mb-0.5">Verified Agency Partner:</strong>
+              Your agency credentials and DTS license have been verified by GlobeTrek PK Admins. You have full access to publish active packages and unlock traveler inquiries.
+            </div>
+          </div>
+        )}
+
+        {isSubmitted && (
           <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs text-amber-200">
             <Clock className="size-4 shrink-0 text-amber-400 mt-0.5" />
             <div className="leading-relaxed">
-              <strong className="text-amber-300 font-bold block mb-0.5">Verification Timeline &amp; Access:</strong>
-              Your agency account is active in setup mode. Once you submit the required verification details below, GlobeTrek PK Admins verify DTS licenses and WhatsApp numbers within 24 hours to issue your Verified Partner badge.
+              <strong className="text-amber-300 font-bold block mb-0.5">Application Submitted — Admin Review in Progress (24h SLA):</strong>
+              Your verification credentials were submitted {existingKyc?.submittedAt ? `on ${new Date(existingKyc.submittedAt).toLocaleDateString()}` : "recently"}. GlobeTrek PK Admins are reviewing your DTS license and contact details. You will receive an automated WhatsApp confirmation once approved.
+            </div>
+          </div>
+        )}
+
+        {isNotSubmitted && (
+          <div className="flex items-start gap-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3.5 text-xs text-rose-200">
+            <AlertCircle className="size-4 shrink-0 text-rose-400 mt-0.5" />
+            <div className="leading-relaxed">
+              <strong className="text-rose-300 font-bold block mb-0.5">Verification Action Required:</strong>
+              Your account is currently active in <span className="underline font-semibold">Setup Mode</span>. You can prepare drafts, but publishing live tour packages and unlocking traveler leads requires official verification. Please submit your DTS license number, NTN, and CNIC below.
             </div>
           </div>
         )}
