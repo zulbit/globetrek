@@ -116,11 +116,11 @@ function VendorKYCPage() {
       </div>
     );
   }
-
   const enabledFields = (template?.fields || []).filter((f) => f.enabled);
   const isApproved = profile?.vendor_status === "approved";
   const isSubmitted = !isApproved && !!existingKyc?.isSubmitted;
   const isNotSubmitted = !isApproved && !isSubmitted;
+  const [isUnlockedForRevetting, setIsUnlockedForRevetting] = React.useState(false);
 
   function formatCNIC(value: string): string {
     const digits = value.replace(/\D/g, "").slice(0, 13);
@@ -138,9 +138,9 @@ function VendorKYCPage() {
     e.preventDefault();
 
     // Validate mandatory required fields
-    for (const f of enabledFields) {
-      if (f.required && !formData[f.id]?.trim()) {
-        toast.error(`"${f.label}" is required for agency verification.`);
+    for (const field of enabledFields) {
+      if (field.required && !formData[field.id]?.trim()) {
+        toast.error(`Missing Required Field: Please provide ${field.label}.`);
         return;
       }
     }
@@ -192,12 +192,24 @@ function VendorKYCPage() {
         </div>
 
         {isApproved && (
-          <div className="flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-xs text-emerald-200">
-            <CheckCircle2 className="size-4 shrink-0 text-emerald-400 mt-0.5" />
-            <div className="leading-relaxed">
-              <strong className="text-emerald-300 font-bold block mb-0.5">Verified Agency Partner:</strong>
-              Your agency credentials and DTS license have been verified by GlobeTrek PK Admins. You have full access to publish active packages and unlock traveler inquiries.
+          <div className="space-y-3">
+            <div className="flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-xs text-emerald-200">
+              <CheckCircle2 className="size-4 shrink-0 text-emerald-400 mt-0.5" />
+              <div className="leading-relaxed">
+                <strong className="text-emerald-300 font-bold block mb-0.5">Verified Agency Partner:</strong>
+                Your agency credentials and DTS license have been verified by GlobeTrek PK Admins. You have full access to publish active packages and unlock traveler inquiries.
+              </div>
             </div>
+
+            {isUnlockedForRevetting && (
+              <div className="flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/15 p-3.5 text-xs text-amber-200">
+                <AlertCircle className="size-4 shrink-0 text-amber-400 mt-0.5" />
+                <div className="leading-relaxed">
+                  <strong className="text-amber-300 font-bold block mb-0.5">⚠️ Re-Vetting Mode Active:</strong>
+                  You have unlocked your verified legal credentials. Modifying your DTS license number, license type, expiry date, NTN, CNIC, or agency name will put your agency under review for Admin re-vetting.
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -225,10 +237,38 @@ function VendorKYCPage() {
       {/* Dynamic KYC Form */}
       <div className="rounded-2xl border border-border bg-card p-6 shadow-xs space-y-6">
         <div className="border-b border-border pb-3 flex items-center justify-between">
-          <h2 className="text-base font-bold text-foreground">Required Business Credentials</h2>
-          <span className="text-xs text-muted-foreground">
-            Fields marked with <span className="text-rose-400 font-bold">*</span> are required by Admin
-          </span>
+          <div>
+            <h2 className="text-base font-bold text-foreground">Required Business Credentials</h2>
+            <span className="text-xs text-muted-foreground">
+              Fields marked with <span className="text-rose-400 font-bold">*</span> are required by Admin
+            </span>
+          </div>
+
+          {isApproved && (
+            <div>
+              {!isUnlockedForRevetting ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsUnlockedForRevetting(true)}
+                  className="text-xs h-8 border-amber-500/40 text-amber-300 hover:bg-amber-500/10 font-bold gap-1.5"
+                >
+                  🔓 Unlock to Update Legal Info
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsUnlockedForRevetting(false)}
+                  className="text-xs h-8 border-border text-muted-foreground font-semibold gap-1.5"
+                >
+                  🔒 Lock Verified Credentials
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 text-xs">
@@ -242,7 +282,9 @@ function VendorKYCPage() {
                 "cnic_number",
                 "company_name",
               ].includes(field.id);
-              const isLocked = isApproved && isCritical;
+
+              const hasExistingValue = Boolean((existingKyc?.fields?.[field.id] || "").trim());
+              const isLocked = isApproved && isCritical && hasExistingValue && !isUnlockedForRevetting;
 
               const isDate = field.id === "dts_expiry_date" || field.type === "date";
               const isSelect = field.id === "dts_license_type" || field.type === "select";
@@ -261,11 +303,15 @@ function VendorKYCPage() {
                     <span className="flex items-center gap-1.5">
                       {field.label} {field.required && <span className="text-rose-400 font-bold">*</span>}
                     </span>
-                    {isLocked && (
+                    {isLocked ? (
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded-md">
                         🔒 Verified &amp; Locked
                       </span>
-                    )}
+                    ) : isApproved && isCritical && !hasExistingValue ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded-md">
+                        ✨ Required Update
+                      </span>
+                    ) : null}
                   </label>
 
                   {isSelect ? (
@@ -307,7 +353,7 @@ function VendorKYCPage() {
 
                   {isLocked ? (
                     <p className="text-[11px] text-amber-400/90 leading-tight">
-                      Verified government credential. Contact GlobeTrek Support to request changes.
+                      Verified government credential. Click "Unlock to Update Legal Info" to submit modifications for Admin review.
                     </p>
                   ) : field.description ? (
                     <p className="text-[11px] text-muted-foreground leading-tight">{field.description}</p>
