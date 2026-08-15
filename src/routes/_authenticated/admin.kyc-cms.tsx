@@ -123,18 +123,137 @@ function AdminKYCCMS() {
           </p>
         </div>
 
-        <Button
-          disabled={saveMutation.isPending}
-          onClick={() => saveMutation.mutate(settings)}
-          className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-xs rounded-xl px-5 h-10 gap-1.5 shadow-md"
-        >
-          {saveMutation.isPending ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Save className="size-4" />
-          )}
-          Publish KYC Template Live
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (confirm("Load official DTS Form II Travel Agency Rules (1977) fields into the template?")) {
+                const dtsDefault = {
+                  instructions: "Please submit your official business registration, DTS Form II license, and tax documents to complete agency verification on GlobeTrek PK.",
+                  auto_approval_enabled: false,
+                  fields: [
+                    {
+                      id: "company_name",
+                      label: "Agency / Business Legal Name",
+                      placeholder: "e.g. Deluxe Holidays (Pvt) Ltd",
+                      required: true,
+                      enabled: true,
+                      description: "Registered trade name of your travel desk.",
+                      type: "text" as const,
+                    },
+                    {
+                      id: "phone",
+                      label: "Official WhatsApp Number",
+                      placeholder: "e.g. +92 300 1234567",
+                      required: true,
+                      enabled: true,
+                      description: "Direct WhatsApp number for instant booking alerts & traveler communication.",
+                      type: "tel" as const,
+                    },
+                    {
+                      id: "dts_license",
+                      label: "DTS License No. / Registration",
+                      placeholder: "e.g. DTS-3877 / KH-12345",
+                      required: true,
+                      enabled: true,
+                      description: "Department of Tourist Services license number from Form II.",
+                      type: "text" as const,
+                    },
+                    {
+                      id: "dts_license_type",
+                      label: "DTS License Type / Field of Operation",
+                      placeholder: "Select permitted field of operation",
+                      required: true,
+                      enabled: true,
+                      description: "Field of operation authorized under Section 3(3) of Travel Agencies Rules 1977.",
+                      type: "select" as const,
+                      options: [
+                        "International Packages & Group Tours",
+                        "Hajj & Umrah Packages",
+                        "Air Tickets & Passenger Booking Only",
+                        "Domestic Tours & Northern Areas",
+                        "Full Comprehensive Travel & Tourism Agency",
+                      ],
+                    },
+                    {
+                      id: "dts_expiry_date",
+                      label: "DTS License Expiry Date",
+                      placeholder: "YYYY-MM-DD",
+                      required: true,
+                      enabled: true,
+                      description: "Valid renewal expiry date printed on your DTS license form.",
+                      type: "date" as const,
+                    },
+                    {
+                      id: "ntn_number",
+                      label: "FBR Tax ID / NTN Number",
+                      placeholder: "e.g. NTN-8941029-7",
+                      required: true,
+                      enabled: true,
+                      description: "Federal Board of Revenue 7-digit tax number.",
+                      type: "text" as const,
+                    },
+                    {
+                      id: "cnic_number",
+                      label: "Business Owner CNIC Number",
+                      placeholder: "e.g. 35202-1234567-1",
+                      required: true,
+                      enabled: true,
+                      description: "13-digit national identity card number of proprietor.",
+                      type: "text" as const,
+                    },
+                    {
+                      id: "city",
+                      label: "Primary Operating City",
+                      placeholder: "e.g. Lahore, Karachi, Islamabad",
+                      required: true,
+                      enabled: true,
+                      description: "City where main physical office is located.",
+                      type: "text" as const,
+                    },
+                    {
+                      id: "office_address",
+                      label: "Physical Office Address",
+                      placeholder: "e.g. Office # 311, Balad Trade Centre, BMCHS, Karachi",
+                      required: true,
+                      enabled: true,
+                      description: "Complete street address of agency office.",
+                      type: "text" as const,
+                    },
+                    {
+                      id: "bank_iban",
+                      label: "Bank IBAN / Account Title",
+                      placeholder: "e.g. PK36 HABB 0001 2345 6789 0102",
+                      required: false,
+                      enabled: true,
+                      description: "Account details for vendor payout settlements.",
+                      type: "text" as const,
+                    },
+                  ],
+                };
+                setSettings(dtsDefault);
+                saveMutation.mutate(dtsDefault);
+              }
+            }}
+            className="text-xs h-10 border-amber-500/30 text-amber-300 hover:bg-amber-500/10 font-bold gap-1.5"
+          >
+            <Sparkles className="size-3.5" /> Reset to DTS Standards
+          </Button>
+
+          <Button
+            disabled={saveMutation.isPending}
+            onClick={() => saveMutation.mutate(settings)}
+            className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-xs rounded-xl px-5 h-10 gap-1.5 shadow-md"
+          >
+            {saveMutation.isPending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Save className="size-4" />
+            )}
+            Publish KYC Template Live
+          </Button>
+        </div>
       </div>
 
       {/* Main Settings Form */}

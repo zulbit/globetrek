@@ -454,7 +454,47 @@ function VendorRow({
                 : "KYC Not Submitted"}
         </span>
       </div>
-      <div className="truncate text-xs font-semibold text-foreground">{p.company_name || "—"}</div>
+      <div className="min-w-0 space-y-1">
+        <div className="truncate text-xs font-bold text-foreground flex items-center gap-1.5">
+          <Building2 className="size-3.5 text-primary shrink-0" />
+          <span>{p.company_name || "—"}</span>
+          {(p.city || p.kycDetails?.city) && (
+            <span className="text-[10px] text-muted-foreground font-normal">
+              📍 {p.city || p.kycDetails?.city}
+            </span>
+          )}
+        </div>
+
+        {p.kycDetails?.dts_license ? (
+          <div className="flex flex-wrap items-center gap-1 pt-0.5">
+            <span className="text-[10px] font-mono font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded">
+              DTS: {p.kycDetails.dts_license}
+            </span>
+            {p.kycDetails.dts_license_type && (
+              <span
+                className="text-[10px] font-semibold text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded truncate max-w-[160px]"
+                title={p.kycDetails.dts_license_type}
+              >
+                {p.kycDetails.dts_license_type}
+              </span>
+            )}
+            {p.kycDetails.dts_expiry_date && (
+              <span
+                className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
+                  new Date(p.kycDetails.dts_expiry_date) < new Date()
+                    ? "bg-rose-500/15 text-rose-300 border-rose-500/30"
+                    : "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+                }`}
+              >
+                {new Date(p.kycDetails.dts_expiry_date) < new Date() ? "⚠️ Exp: " : "Exp: "}
+                {p.kycDetails.dts_expiry_date}
+              </span>
+            )}
+          </div>
+        ) : (
+          <span className="text-[10px] text-muted-foreground italic block">No DTS license recorded</span>
+        )}
+      </div>
       <div>
         <select
           value={p.subscription_tier || "free"}
