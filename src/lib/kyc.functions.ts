@@ -130,17 +130,45 @@ export const getKYCTemplateSettings = createServerFn({ method: "GET" }).handler(
       .eq("provider", "kyc_template_settings")
       .maybeSingle();
 
-    if (error) {
-      console.error("[getKYCTemplateSettings Error]:", error);
-      return DEFAULT_KYC_TEMPLATE;
-    }
-
-    if (!data?.config) {
+    if (error || !data?.config) {
       return DEFAULT_KYC_TEMPLATE;
     }
 
     const parsed = typeof data.config === "string" ? JSON.parse(data.config) : data.config;
-    return (parsed as KYCTemplateSettings) || DEFAULT_KYC_TEMPLATE;
+    if (!parsed || !Array.isArray(parsed.fields)) {
+      return DEFAULT_KYC_TEMPLATE;
+    }
+
+    // Merge: Guarantee that all Form II DTS fields from DEFAULT_KYC_TEMPLATE exist and are properly typed
+    const loadedFieldMap = new Map<string, KYCFieldConfig>(
+      (parsed.fields as KYCFieldConfig[]).map((f) => [f.id, f])
+    );
+
+    const mergedFields: KYCFieldConfig[] = DEFAULT_KYC_TEMPLATE.fields.map((defField) => {
+      const existing = loadedFieldMap.get(defField.id);
+      if (!existing) return defField;
+      return {
+        ...defField,
+        ...existing,
+        type: defField.type || existing.type,
+        options: defField.options || existing.options,
+      };
+    });
+
+    // Also include any other valid custom fields added by admin
+    parsed.fields.forEach((f: KYCFieldConfig) => {
+      if (!DEFAULT_KYC_TEMPLATE.fields.some((def) => def.id === f.id)) {
+        if (!f.id.startsWith("custom_1786816625998")) {
+          mergedFields.push(f);
+        }
+      }
+    });
+
+    return {
+      ...DEFAULT_KYC_TEMPLATE,
+      ...parsed,
+      fields: mergedFields,
+    };
   } catch (err) {
     console.error("[getKYCTemplateSettings Exception]:", err);
     return DEFAULT_KYC_TEMPLATE;
