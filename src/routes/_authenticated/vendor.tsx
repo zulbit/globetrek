@@ -43,8 +43,8 @@ function VendorLayout() {
   const services: string[] = (profile?.vendor_services as string[] | null) ?? ["tours"];
   const has = (s: string) => services.includes(s);
   
-  const isApproved = profile?.vendor_status === "approved";
-  const isSubmitted = !isApproved && !!kycData?.isSubmitted;
+  const isApproved = profile?.vendor_status === "approved" || kycData?.status === "approved";
+  const isSubmitted = !isApproved && (kycData?.status === "submitted" || !!kycData?.isSubmitted);
   const isNotSubmitted = !isApproved && !isSubmitted;
 
   const kycBadgeText = isApproved ? undefined : isSubmitted ? "Under Review" : "Action Required";

@@ -262,8 +262,8 @@ function VendorOverview() {
     ? Math.round((data.unlockedLeads / data.totalLeads) * 100)
     : 0;
 
-  const isApproved = data?.vendorStatus === "approved";
-  const isKycSubmitted = !!data?.kycRecord?.isSubmitted;
+  const isApproved = data?.vendorStatus === "approved" || data?.kycRecord?.status === "approved";
+  const isKycSubmitted = !isApproved && (data?.kycRecord?.status === "submitted" || !!data?.kycRecord?.isSubmitted);
 
   return (
     <div className="space-y-6">

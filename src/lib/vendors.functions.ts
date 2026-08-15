@@ -107,8 +107,37 @@ export const updateAdminVendorStatus = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { error } = await supabaseAdmin
       .from("profiles")
-      .update({ vendor_status: data.status })
+      .update({
+        vendor_status: data.status,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", data.id);
+
+    // Sync status with payment_gateway_settings KYC document if exists
+    try {
+      const { data: existingKyc } = await supabaseAdmin
+        .from("payment_gateway_settings")
+        .select("config")
+        .eq("provider", `vendor_kyc_${data.id}`)
+        .maybeSingle();
+
+      if (existingKyc?.config) {
+        const parsed = typeof existingKyc.config === "string" ? JSON.parse(existingKyc.config) : existingKyc.config;
+        await supabaseAdmin
+          .from("payment_gateway_settings")
+          .update({
+            config: {
+              ...parsed,
+              status: data.status === "approved" ? "approved" : data.status === "banned" ? "rejected" : "submitted",
+              approvedAt: data.status === "approved" ? new Date().toISOString() : undefined,
+            },
+            updated_at: new Date().toISOString(),
+          })
+          .eq("provider", `vendor_kyc_${data.id}`);
+      }
+    } catch (err) {
+      console.warn("Failed to sync KYC status in payment_gateway_settings:", err);
+    }
 
     if (error) throw new Error(error.message);
     return { success: true };
