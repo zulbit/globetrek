@@ -89,12 +89,19 @@ function VendorKYCPage() {
       });
     },
     onSuccess: () => {
-      toast.success("Verification Details Submitted to Admin!", {
-        description: "GlobeTrek PK Admins will review your agency license & credentials within 24 hours.",
-      });
+      if (isApproved) {
+        toast.success("Agency Credentials Updated!", {
+          description: "Your business details and payout settings have been saved.",
+        });
+      } else {
+        toast.success("Verification Details Submitted to Admin!", {
+          description: "GlobeTrek PK Admins will review your agency license & credentials within 24 hours.",
+        });
+      }
       qc.invalidateQueries({ queryKey: ["vendor-kyc-profile"] });
       qc.invalidateQueries({ queryKey: ["vendor-kyc-existing"] });
       qc.invalidateQueries({ queryKey: ["vendor-services-nav"] });
+      qc.invalidateQueries({ queryKey: ["vendor-overview"] });
     },
     onError: (err: any) => {
       toast.error(`Submission error: ${err.message}`);

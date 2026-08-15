@@ -144,9 +144,18 @@ export const submitVendorKYC = createServerFn({ method: "POST" })
     const { userId, profileUpdates } = data;
     if (!userId) throw new Error("Vendor user ID is required");
 
-    // 1. Strictly filter only valid columns present in profiles table schema
+    // 1. Check existing vendor status to preserve "approved" state for verified partners
+    const { data: existingProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("vendor_status")
+      .eq("id", userId)
+      .maybeSingle();
+
+    const isAlreadyApproved = existingProfile?.vendor_status === "approved";
+
+    // Strictly filter only valid columns present in profiles table schema
     const standardUpdates: Record<string, any> = {
-      vendor_status: "pending",
+      vendor_status: isAlreadyApproved ? "approved" : "pending",
       updated_at: new Date().toISOString(),
     };
 
@@ -176,11 +185,11 @@ export const submitVendorKYC = createServerFn({ method: "POST" })
       }
     }
 
-    // 2. Store full dynamic KYC payload in payment_gateway_settings with is_submitted: true
+    // 2. Store full dynamic KYC payload in payment_gateway_settings
     const kycPayload = {
       userId,
       is_submitted: true,
-      status: "submitted",
+      status: isAlreadyApproved ? "approved" : "submitted",
       submittedAt: new Date().toISOString(),
       fields: profileUpdates,
     };
