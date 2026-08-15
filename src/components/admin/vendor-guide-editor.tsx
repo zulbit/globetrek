@@ -204,26 +204,46 @@ export function AdminVendorGuideEditor() {
     const cleanTitle = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
 
     try {
-      const fileExt = file.name.split(".").pop() || "png";
-      const filePath = `guide-screenshots/${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
+      const cleanFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const filePath = `guide-screenshots/${Date.now()}-${cleanFileName}`;
 
-      const { data, error } = await supabase.storage
+      let uploadSuccess = false;
+      let publicUrl = "";
+
+      // 1. Try public-assets bucket
+      const { error: err1 } = await supabase.storage
         .from("public-assets")
         .upload(filePath, file, { upsert: true });
 
-      if (error) {
-        // Fallback: Read as Base64 Data URL so upload always succeeds even if storage bucket isn't initialized
+      if (!err1) {
+        const { data: pub } = supabase.storage.from("public-assets").getPublicUrl(filePath);
+        publicUrl = pub.publicUrl;
+        uploadSuccess = true;
+      } else {
+        // 2. Fallback to tour-images bucket
+        const { error: err2 } = await supabase.storage
+          .from("tour-images")
+          .upload(filePath, file, { upsert: true });
+
+        if (!err2) {
+          const { data: pub } = supabase.storage.from("tour-images").getPublicUrl(filePath);
+          publicUrl = pub.publicUrl;
+          uploadSuccess = true;
+        }
+      }
+
+      if (uploadSuccess && publicUrl) {
+        replaceMainScreenshot(cleanTitle, publicUrl);
+        toast.success(`Screenshot uploaded & replaced! Click 'Save Chapter' to publish.`, { id: toastId });
+      } else {
+        // Fallback: Read as Base64 Data URL so upload never blocks
         const reader = new FileReader();
         reader.onload = (event) => {
           const dataUrl = event.target?.result as string;
           replaceMainScreenshot(cleanTitle, dataUrl);
-          toast.success(`Main screenshot updated as preview!`, { id: toastId });
+          toast.success(`Screenshot replaced! Click 'Save Chapter' to publish.`, { id: toastId });
         };
         reader.readAsDataURL(file);
-      } else {
-        const { data: pub } = supabase.storage.from("public-assets").getPublicUrl(filePath);
-        replaceMainScreenshot(cleanTitle, pub.publicUrl);
-        toast.success(`Main screenshot uploaded and replaced!`, { id: toastId });
       }
     } catch (err: any) {
       toast.error(`Upload failed: ${err.message}`, { id: toastId });
@@ -318,16 +338,30 @@ export function AdminVendorGuideEditor() {
 
       {/* Create / Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto bg-card border-border">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg font-bold">
-              <BookOpen className="size-5 text-primary" />
-              {editingSection?.id ? "Edit Guide Chapter" : "Create Guide Chapter"}
-            </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground">
-              Edit chapter metadata, category, icon, and Markdown documentation text.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-3xl max-h-[92vh] flex flex-col p-0 bg-card border-border overflow-hidden shadow-2xl">
+          <div className="flex items-center justify-between border-b border-border px-6 py-3.5 bg-card/90 backdrop-blur-md shrink-0">
+            <div>
+              <DialogTitle className="flex items-center gap-2 text-base font-bold text-foreground">
+                <BookOpen className="size-4 text-primary" />
+                {editingSection?.id ? "Edit Guide Chapter" : "Create Guide Chapter"}
+              </DialogTitle>
+              <DialogDescription className="text-[11px] text-muted-foreground">
+                Edit chapter content and manage main screenshots.
+              </DialogDescription>
+            </div>
+
+            <Button
+              size="sm"
+              className="h-8 gap-1.5 font-bold bg-emerald-500 text-black hover:bg-emerald-400 shadow-sm shrink-0 mr-6"
+              disabled={saveMutation.isPending || !editingSection?.title}
+              onClick={() => saveMutation.mutate(editingSection!)}
+            >
+              {saveMutation.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
+              Save Chapter
+            </Button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
 
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
             <TabsList className="grid grid-cols-2 w-full mb-4">
@@ -551,23 +585,25 @@ export function AdminVendorGuideEditor() {
               </div>
             </TabsContent>
           </Tabs>
+        </div>
 
-          <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setIsDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              size="sm"
-              className="gap-1.5 font-bold"
-              disabled={saveMutation.isPending || !editingSection?.title}
-              onClick={() => saveMutation.mutate(editingSection!)}
-            >
-              {saveMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-              Save Chapter
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        {/* Sticky Modal Bottom Footer */}
+        <div className="flex items-center justify-between border-t border-border px-6 py-3 bg-card/95 backdrop-blur-sm shrink-0">
+          <Button variant="outline" size="sm" onClick={() => setIsDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            className="gap-1.5 font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-md px-5"
+            disabled={saveMutation.isPending || !editingSection?.title}
+            onClick={() => saveMutation.mutate(editingSection!)}
+          >
+            {saveMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+            Save Chapter
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
     </div>
   );
 }
