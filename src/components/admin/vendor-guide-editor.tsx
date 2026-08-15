@@ -32,6 +32,7 @@ import {
   ShieldCheck,
   LayoutDashboard,
   Wallet,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
@@ -151,6 +152,47 @@ export function AdminVendorGuideEditor() {
       content: (prev?.content || "") + markdownTag,
     }));
     toast.success(`Inserted screenshot tag for "${title}"`);
+  };
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  const handleLocalScreenshotUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingImage(true);
+    const toastId = toast.loading(`Uploading "${file.name}"...`);
+    const cleanTitle = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+
+    try {
+      const fileExt = file.name.split(".").pop() || "png";
+      const filePath = `guide-screenshots/${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
+
+      const { data, error } = await supabase.storage
+        .from("public-assets")
+        .upload(filePath, file, { upsert: true });
+
+      if (error) {
+        // Fallback: Read as Base64 Data URL so upload always succeeds even if storage bucket isn't initialized
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const dataUrl = event.target?.result as string;
+          insertImageMarkdown(cleanTitle, dataUrl);
+          toast.success(`Screenshot inserted as preview!`, { id: toastId });
+        };
+        reader.readAsDataURL(file);
+      } else {
+        const { data: pub } = supabase.storage.from("public-assets").getPublicUrl(filePath);
+        insertImageMarkdown(cleanTitle, pub.publicUrl);
+        toast.success(`Screenshot uploaded and inserted into Markdown!`, { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(`Upload failed: ${err.message}`, { id: toastId });
+    } finally {
+      setIsUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   return (
@@ -330,22 +372,49 @@ export function AdminVendorGuideEditor() {
                 />
               </div>
 
-              {/* Preset Screenshot Quick Inserters */}
-              <div className="rounded-xl border border-border/80 bg-surface/50 p-3 space-y-2">
+              {/* Preset & Local Screenshot Quick Inserters */}
+              <div className="rounded-xl border border-border/80 bg-surface/50 p-3 space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold flex items-center gap-1.5">
+                  <span className="text-xs font-bold flex items-center gap-1.5 text-foreground">
                     <ImageIcon className="size-3.5 text-primary" /> Quick Screenshot Inserter
                   </span>
-                  <span className="text-[10px] text-muted-foreground">Click to insert image markdown</span>
+                  <span className="text-[10px] text-muted-foreground">Upload from computer or pick preset screenshot</span>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
+
+                {/* Hidden file picker input */}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleLocalScreenshotUpload}
+                  accept="image/*"
+                  className="hidden"
+                />
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={isUploadingImage}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-xs h-7 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-xs"
+                  >
+                    {isUploadingImage ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <Upload className="size-3.5" />
+                    )}
+                    Upload Local Screenshot
+                  </Button>
+
+                  <div className="h-4 w-px bg-border/80 hidden sm:block" />
+
                   {PRESET_SCREENSHOTS.map((ps) => (
                     <Button
                       key={ps.url}
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="text-[10px] h-7 gap-1 border-primary/20 hover:bg-primary/10"
+                      className="text-[10px] h-7 gap-1 border-border/70 hover:bg-surface text-muted-foreground hover:text-foreground"
                       onClick={() => insertImageMarkdown(ps.title, ps.url)}
                     >
                       <Plus className="size-3" /> {ps.title}
