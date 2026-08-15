@@ -59,22 +59,22 @@ function VendorKYCPage() {
     queryFn: () => fetchKYCDetailsFn({ data: { userId: user!.id } }),
   });
 
-  const [formData, setFormData] = React.useState<Record<string, string>>({});
-  const [isFormInitialized, setIsFormInitialized] = React.useState(false);
-
   React.useEffect(() => {
-    if (profile && !isFormInitialized) {
+    if (profile || existingKyc || user) {
       const kycFields = existingKyc?.fields || {};
-      setFormData({
-        company_name: profile.company_name || kycFields.company_name || "",
-        city: profile.city || kycFields.city || "",
+      const authPhone = (user?.user_metadata?.phone as string) || "";
+      setFormData((prev) => ({
+        company_name: prev.company_name || profile?.company_name || kycFields.company_name || "",
+        city: prev.city || profile?.city || kycFields.city || "",
+        phone: prev.phone || kycFields.phone || authPhone || "",
         ...kycFields,
-      });
-      if (existingKyc || profile.company_name) {
-        setIsFormInitialized(true);
-      }
+        // Keep whatever the user may have manually typed in the current session
+        ...(prev.phone ? { phone: prev.phone } : {}),
+        ...(prev.company_name ? { company_name: prev.company_name } : {}),
+        ...(prev.city ? { city: prev.city } : {}),
+      }));
     }
-  }, [profile, existingKyc, isFormInitialized]);
+  }, [profile, existingKyc, user]);
 
   const submitMutation = useMutation({
     mutationFn: async () => {
