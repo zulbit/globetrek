@@ -87,8 +87,8 @@ export const Route = createFileRoute("/api/auth/register")({
           if (role === "vendor" && phone) {
             await supabaseAdmin.from("payment_gateway_settings").upsert({
               provider: `vendor_kyc_${userId}`,
-              is_enabled: true,
-              settings: JSON.stringify({
+              enabled: true,
+              config: {
                 userId,
                 is_submitted: false,
                 status: "not_submitted",
@@ -97,7 +97,7 @@ export const Route = createFileRoute("/api/auth/register")({
                   company_name: company_name || null,
                   phone,
                 },
-              }),
+              } as any,
               updated_at: new Date().toISOString(),
             });
           }

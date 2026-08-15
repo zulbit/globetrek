@@ -91,7 +91,7 @@ export const getKYCTemplateSettings = createServerFn({ method: "GET" }).handler(
   try {
     const { data, error } = await supabaseAdmin
       .from("payment_gateway_settings")
-      .select("settings")
+      .select("config")
       .eq("provider", "kyc_template_settings")
       .maybeSingle();
 
@@ -100,11 +100,11 @@ export const getKYCTemplateSettings = createServerFn({ method: "GET" }).handler(
       return DEFAULT_KYC_TEMPLATE;
     }
 
-    if (!data?.settings) {
+    if (!data?.config) {
       return DEFAULT_KYC_TEMPLATE;
     }
 
-    const parsed = typeof data.settings === "string" ? JSON.parse(data.settings) : data.settings;
+    const parsed = typeof data.config === "string" ? JSON.parse(data.config) : data.config;
     return (parsed as KYCTemplateSettings) || DEFAULT_KYC_TEMPLATE;
   } catch (err) {
     console.error("[getKYCTemplateSettings Exception]:", err);
@@ -117,8 +117,8 @@ export const saveKYCTemplateSettings = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { error } = await supabaseAdmin.from("payment_gateway_settings").upsert({
       provider: "kyc_template_settings",
-      is_enabled: true,
-      settings: JSON.stringify(data),
+      enabled: true,
+      config: data as any,
       updated_at: new Date().toISOString(),
     });
 
@@ -189,13 +189,14 @@ export const submitVendorKYC = createServerFn({ method: "POST" })
       .from("payment_gateway_settings")
       .upsert({
         provider: `vendor_kyc_${userId}`,
-        is_enabled: true,
-        settings: JSON.stringify(kycPayload),
+        enabled: true,
+        config: kycPayload as any,
         updated_at: new Date().toISOString(),
       });
 
     if (kycErr) {
       console.error("[submitVendorKYC Storage Error]:", kycErr);
+      throw new Error(`Failed to save KYC documents: ${kycErr.message}`);
     }
 
     return { success: true };
@@ -207,12 +208,12 @@ export const getVendorKYCDetails = createServerFn({ method: "POST" })
     try {
       const { data: record } = await supabaseAdmin
         .from("payment_gateway_settings")
-        .select("settings")
+        .select("config")
         .eq("provider", `vendor_kyc_${data.userId}`)
         .maybeSingle();
 
-      if (!record?.settings) return null;
-      const parsed = typeof record.settings === "string" ? JSON.parse(record.settings) : record.settings;
+      if (!record?.config) return null;
+      const parsed = typeof record.config === "string" ? JSON.parse(record.config) : record.config;
       if (!parsed) return null;
 
       const fields = (parsed.fields || {}) as Record<string, string>;

@@ -46,14 +46,14 @@ export const getAdminVendors = createServerFn({ method: "GET" }).handler(async (
     // 3. Fetch all submitted KYC details from payment_gateway_settings
     const { data: kycRecords } = await supabaseAdmin
       .from("payment_gateway_settings")
-      .select("provider, settings")
+      .select("provider, config")
       .like("provider", "vendor_kyc_%");
 
     const kycMap = new Map<string, { fields: any; isSubmitted: boolean; submittedAt?: string; status?: string }>();
     (kycRecords ?? []).forEach((r) => {
       const uId = r.provider.replace("vendor_kyc_", "");
       try {
-        const parsed = typeof r.settings === "string" ? JSON.parse(r.settings) : r.settings;
+        const parsed = typeof r.config === "string" ? JSON.parse(r.config) : r.config;
         if (parsed) {
           const fields = parsed.fields || {};
           const hasMeaningfulDocs = Boolean(
