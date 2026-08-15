@@ -6,6 +6,7 @@ import {
   updateVendorGuideSection,
   deleteVendorGuideSection,
   VendorGuideSection,
+  FALLBACK_VENDOR_GUIDE_SECTIONS,
 } from "@/lib/vendor-guide.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -70,9 +71,10 @@ export function AdminVendorGuideEditor() {
   const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit");
 
   // Fetch sections
-  const { data: sections = [], isLoading } = useQuery({
+  const { data: sections = FALLBACK_VENDOR_GUIDE_SECTIONS, isLoading } = useQuery({
     queryKey: ["vendor-guide-sections"],
-    queryFn: fetchVendorGuideSections,
+    queryFn: () => fetchVendorGuideSections(),
+    initialData: FALLBACK_VENDOR_GUIDE_SECTIONS,
   });
 
   // Save mutation

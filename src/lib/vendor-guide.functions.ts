@@ -94,7 +94,7 @@ Welcome to **GlobeTrek PK** — Pakistan's premier B2B and B2C travel marketplac
 
 ### The 5-Step Vendor Onboarding Lifecycle
 
-```mermaid
+\`\`\`mermaid
 graph TD
     A[Step 1: Sign Up /auth] --> B[Step 2: Setup Mode Active]
     B --> C[Draft Tours, Visas & Configure Profile]
@@ -103,7 +103,7 @@ graph TD
     E --> F[Step 4: Admin DTS & NTN Audit 24h SLA]
     F -->|Approved| G[Step 5: Verified Agency Partner]
     G --> H[Live Public Publishing & Lead Unlocking Unlocked]
-```
+\`\`\`
 
 ---
 
@@ -525,25 +525,27 @@ async function getFromAppConfigFallback(): Promise<VendorGuideSection[] | null> 
 }
 
 // -------- Server Function: Fetch All Vendor Guide Sections --------
-export const fetchVendorGuideSections = async (): Promise<VendorGuideSection[]> => {
-  try {
-    const { data, error } = await supabase
-      .from("vendor_guide_sections")
-      .select("*")
-      .order("display_order", { ascending: true });
+export const fetchVendorGuideSections = createServerFn({ method: "GET" })
+  .handler(async (): Promise<VendorGuideSection[]> => {
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data, error } = await supabaseAdmin
+        .from("vendor_guide_sections")
+        .select("*")
+        .order("display_order", { ascending: true });
 
-    if (!error && data && data.length > 0) {
-      return data as VendorGuideSection[];
+      if (!error && data && data.length > 0) {
+        return data as VendorGuideSection[];
+      }
+    } catch {}
+
+    const fallbackAppConfig = await getFromAppConfigFallback();
+    if (fallbackAppConfig && fallbackAppConfig.length > 0) {
+      return fallbackAppConfig;
     }
-  } catch {}
 
-  const fallbackAppConfig = await getFromAppConfigFallback();
-  if (fallbackAppConfig && fallbackAppConfig.length > 0) {
-    return fallbackAppConfig;
-  }
-
-  return FALLBACK_VENDOR_GUIDE_SECTIONS;
-};
+    return FALLBACK_VENDOR_GUIDE_SECTIONS;
+  });
 
 // -------- Server Function: Create Section --------
 export const createVendorGuideSection = createServerFn({ method: "POST" })

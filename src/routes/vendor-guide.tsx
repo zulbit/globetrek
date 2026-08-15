@@ -3,7 +3,7 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchVendorGuideSections, VendorGuideSection } from "@/lib/vendor-guide.functions";
+import { fetchVendorGuideSections, VendorGuideSection, FALLBACK_VENDOR_GUIDE_SECTIONS } from "@/lib/vendor-guide.functions";
 import { askVendorGuideAIServer } from "@/lib/guide-ai.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -202,9 +202,10 @@ function VendorGuidePage() {
   const leadUnlockFeePKR = 5000;
 
   // Fetch sections
-  const { data: sections = [], isLoading } = useQuery({
+  const { data: sections = FALLBACK_VENDOR_GUIDE_SECTIONS, isLoading } = useQuery({
     queryKey: ["vendor-guide-sections"],
-    queryFn: fetchVendorGuideSections,
+    queryFn: () => fetchVendorGuideSections(),
+    initialData: FALLBACK_VENDOR_GUIDE_SECTIONS,
   });
 
   // Check if current user is admin
