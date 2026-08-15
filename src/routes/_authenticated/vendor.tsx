@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, Link } from "@tanstack/react-router";
+import { createFileRoute, Outlet, Link, useLocation } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard, Package, Inbox, CreditCard, Settings2,
@@ -19,6 +19,8 @@ export const Route = createFileRoute("/_authenticated/vendor")({
 
 function VendorLayout() {
   const { user } = useAuth();
+  const location = useLocation();
+  const isKycPage = location.pathname.startsWith("/vendor/kyc");
   const getKycFn = useServerFn(getVendorKYCDetails);
 
   const { data: profile } = useQuery({
@@ -68,7 +70,7 @@ function VendorLayout() {
   return (
     <RoleGuard allow={["vendor", "admin"]}>
       <DashboardShell title="Vendor Portal" subtitle="Grow your travel business" nav={nav} wide>
-        {isNotSubmitted && (
+        {!isKycPage && isNotSubmitted && (
           <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-rose-500/40 bg-gradient-to-r from-rose-500/10 via-card to-card p-4 shadow-sm">
             <div className="flex items-start gap-3">
               <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-rose-500/20 text-rose-400 ring-1 ring-rose-500/30">
@@ -95,7 +97,7 @@ function VendorLayout() {
           </div>
         )}
 
-        {isSubmitted && (
+        {!isKycPage && isSubmitted && (
           <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-500/10 via-card to-card p-4 shadow-sm">
             <div className="flex items-start gap-3">
               <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30">

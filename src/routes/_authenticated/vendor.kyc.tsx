@@ -117,8 +117,8 @@ function VendorKYCPage() {
     );
   }
   const enabledFields = (template?.fields || []).filter((f) => f.enabled);
-  const isApproved = profile?.vendor_status === "approved";
-  const isSubmitted = !isApproved && !!existingKyc?.isSubmitted;
+  const isApproved = profile?.vendor_status === "approved" || existingKyc?.status === "approved";
+  const isSubmitted = !isApproved && (existingKyc?.status === "submitted" || !!existingKyc?.isSubmitted);
   const isNotSubmitted = !isApproved && !isSubmitted;
   const [isUnlockedForRevetting, setIsUnlockedForRevetting] = React.useState(false);
 
