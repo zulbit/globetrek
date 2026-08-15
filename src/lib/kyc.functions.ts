@@ -144,18 +144,44 @@ export const submitVendorKYC = createServerFn({ method: "POST" })
     const { userId, profileUpdates } = data;
     if (!userId) throw new Error("Vendor user ID is required");
 
-    // 1. Check existing vendor status to preserve "approved" state for verified partners
+    // 1. Check existing vendor status and existing approved KYC fields
     const { data: existingProfile } = await supabaseAdmin
       .from("profiles")
       .select("vendor_status")
       .eq("id", userId)
       .maybeSingle();
 
+    const { data: existingKyc } = await supabaseAdmin
+      .from("payment_gateway_settings")
+      .select("config")
+      .eq("provider", `vendor_kyc_${userId}`)
+      .maybeSingle();
+
     const isAlreadyApproved = existingProfile?.vendor_status === "approved";
+    const existingFields = existingKyc?.config
+      ? (typeof existingKyc.config === "string" ? JSON.parse(existingKyc.config) : existingKyc.config).fields || {}
+      : {};
+
+    // Check if any CRITICAL legal/government credentials were modified
+    const criticalFields = ["dts_license", "ntn_number", "cnic_number", "company_name"];
+    let criticalFieldsModified = false;
+
+    if (isAlreadyApproved) {
+      for (const key of criticalFields) {
+        if (profileUpdates[key] !== undefined && profileUpdates[key]?.trim() !== (existingFields[key] || "")?.trim()) {
+          criticalFieldsModified = true;
+          break;
+        }
+      }
+    }
+
+    // If critical fields were modified, status falls back to "pending" for admin re-vetting
+    const nextVendorStatus = isAlreadyApproved && !criticalFieldsModified ? "approved" : "pending";
+    const nextKycStatus = isAlreadyApproved && !criticalFieldsModified ? "approved" : "submitted";
 
     // Strictly filter only valid columns present in profiles table schema
     const standardUpdates: Record<string, any> = {
-      vendor_status: isAlreadyApproved ? "approved" : "pending",
+      vendor_status: nextVendorStatus,
       updated_at: new Date().toISOString(),
     };
 
@@ -189,9 +215,12 @@ export const submitVendorKYC = createServerFn({ method: "POST" })
     const kycPayload = {
       userId,
       is_submitted: true,
-      status: isAlreadyApproved ? "approved" : "submitted",
+      status: nextKycStatus,
       submittedAt: new Date().toISOString(),
-      fields: profileUpdates,
+      fields: {
+        ...existingFields,
+        ...profileUpdates,
+      },
     };
 
     const { error: kycErr } = await supabaseAdmin

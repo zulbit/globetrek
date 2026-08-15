@@ -233,28 +233,47 @@ function VendorKYCPage() {
 
         <form onSubmit={handleSubmit} className="space-y-5 text-xs">
           <div className="grid gap-5 sm:grid-cols-2">
-            {enabledFields.map((field) => (
-              <div key={field.id} className="space-y-1.5">
-                <label className="font-semibold text-foreground flex items-center justify-between">
-                  <span>
-                    {field.label} {field.required && <span className="text-rose-400 font-bold">*</span>}
-                  </span>
-                </label>
+            {enabledFields.map((field) => {
+              const isCritical = ["dts_license", "ntn_number", "cnic_number", "company_name"].includes(field.id);
+              const isLocked = isApproved && isCritical;
 
-                <Input
-                  type={field.id === "phone" ? "tel" : "text"}
-                  required={field.required}
-                  placeholder={field.placeholder}
-                  value={formData[field.id] || ""}
-                  onChange={(e) => handleInputChange(field.id, e.target.value)}
-                  className="bg-surface border-border text-xs text-foreground h-9 rounded-xl placeholder:text-muted-foreground"
-                />
+              return (
+                <div key={field.id} className="space-y-1.5">
+                  <label className="font-semibold text-foreground flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      {field.label} {field.required && <span className="text-rose-400 font-bold">*</span>}
+                    </span>
+                    {isLocked && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded-md">
+                        🔒 Verified &amp; Locked
+                      </span>
+                    )}
+                  </label>
 
-                {field.description && (
-                  <p className="text-[11px] text-muted-foreground leading-tight">{field.description}</p>
-                )}
-              </div>
-            ))}
+                  <Input
+                    type={field.id === "phone" ? "tel" : "text"}
+                    required={field.required}
+                    disabled={isLocked}
+                    placeholder={field.placeholder}
+                    value={formData[field.id] || ""}
+                    onChange={(e) => handleInputChange(field.id, e.target.value)}
+                    className={`text-xs text-foreground h-9 rounded-xl placeholder:text-muted-foreground ${
+                      isLocked
+                        ? "bg-surface/50 border-border/50 text-muted-foreground cursor-not-allowed opacity-80"
+                        : "bg-surface border-border focus:border-primary"
+                    }`}
+                  />
+
+                  {isLocked ? (
+                    <p className="text-[11px] text-amber-400/90 leading-tight">
+                      Verified government credential. Contact GlobeTrek Support to request changes.
+                    </p>
+                  ) : field.description ? (
+                    <p className="text-[11px] text-muted-foreground leading-tight">{field.description}</p>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
 
           <div className="pt-4 flex items-center justify-between border-t border-border">
