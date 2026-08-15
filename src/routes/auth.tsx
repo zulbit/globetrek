@@ -580,8 +580,9 @@ function AuthPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="phone" className="text-white/80">Mobile / WhatsApp Number*</Label>
+                      <Label htmlFor="phone" className="text-white/80">Official WhatsApp Number*</Label>
                       <Input id="phone" type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} className="bg-white/5 text-white placeholder:text-white/40" placeholder="e.g. +92 300 1234567" />
+                      <p className="text-[10px] text-white/40">Direct WhatsApp number for booking alerts and traveler inquiries.</p>
                     </div>
 
                     <div className="space-y-2">

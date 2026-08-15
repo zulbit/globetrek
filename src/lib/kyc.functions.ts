@@ -30,11 +30,11 @@ const DEFAULT_KYC_TEMPLATE: KYCTemplateSettings = {
     },
     {
       id: "phone",
-      label: "Mobile / WhatsApp Contact",
+      label: "Official WhatsApp Number",
       placeholder: "e.g. +92 300 1234567",
       required: true,
       enabled: true,
-      description: "Direct mobile number for WhatsApp booking alerts.",
+      description: "Direct WhatsApp number for instant booking alerts & traveler communication.",
     },
     {
       id: "dts_license",

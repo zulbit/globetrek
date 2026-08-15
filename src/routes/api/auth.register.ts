@@ -43,7 +43,7 @@ export const Route = createFileRoute("/api/auth/register")({
         }
 
         if (role === "vendor" && !phone) {
-          return new Response(JSON.stringify({ error: "Mobile / WhatsApp number is required for vendor registration." }), {
+          return new Response(JSON.stringify({ error: "Official WhatsApp number is required for vendor registration." }), {
             status: 400,
             headers: { "Content-Type": "application/json" },
           });
