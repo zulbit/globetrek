@@ -60,6 +60,7 @@ function VendorKYCPage() {
   });
 
   const [formData, setFormData] = React.useState<Record<string, string>>({});
+  const [isUnlockedForRevetting, setIsUnlockedForRevetting] = React.useState(false);
 
   React.useEffect(() => {
     if (profile || existingKyc || user) {
@@ -108,6 +109,10 @@ function VendorKYCPage() {
     },
   });
 
+  const isApproved = profile?.vendor_status === "approved" || existingKyc?.status === "approved";
+  const isSubmitted = !isApproved && (existingKyc?.status === "submitted" || !!existingKyc?.isSubmitted);
+  const isNotSubmitted = !isApproved && !isSubmitted;
+
   if (isTemplateLoading || isProfileLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
@@ -117,10 +122,6 @@ function VendorKYCPage() {
     );
   }
   const enabledFields = (template?.fields || []).filter((f) => f.enabled);
-  const isApproved = profile?.vendor_status === "approved" || existingKyc?.status === "approved";
-  const isSubmitted = !isApproved && (existingKyc?.status === "submitted" || !!existingKyc?.isSubmitted);
-  const isNotSubmitted = !isApproved && !isSubmitted;
-  const [isUnlockedForRevetting, setIsUnlockedForRevetting] = React.useState(false);
 
   function formatCNIC(value: string): string {
     const digits = value.replace(/\D/g, "").slice(0, 13);
