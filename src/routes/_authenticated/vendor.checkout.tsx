@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import {
   CreditCard,
   ShieldCheck,
@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   ArrowLeft,
   Lock,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -33,8 +34,7 @@ function VendorCheckoutPage() {
   const { user } = useAuth();
   const [isVerifying, setIsVerifying] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
-  const safepayContainerRef = useRef<HTMLDivElement>(null);
-  const buttonRendered = useRef(false);
+  const [paymentOpened, setPaymentOpened] = useState(false);
 
   // Read checkout params from URL
   const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
@@ -81,13 +81,46 @@ function VendorCheckoutPage() {
     },
   });
 
-  const handleVerify = useCallback(async () => {
+  // SafePay iframe URL — the /components hosted checkout with just the card form
+  const safepayBaseUrl = env === "production" || env === "live"
+    ? "https://api.getsafepay.com"
+    : "https://sandbox.api.getsafepay.com";
+
+  const safepayIframeUrl = tracker
+    ? `${safepayBaseUrl}/checkout/pay?env=${env}&tracker=${tracker}`
+    : "";
+
+  // Listen for SafePay postMessage events from the iframe
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (typeof event.data === "string") {
+        try {
+          const parsed = JSON.parse(event.data);
+          if (parsed?.event === "payment_complete" || parsed?.status === "PAID" || parsed?.state === "TRACKER_ENDED") {
+            setIsPaid(true);
+            toast.success("Payment received! Verifying and unlocking your lead...");
+            handleVerify();
+          }
+        } catch {}
+      }
+      // SafePay might also send objects directly
+      if (event.data?.event === "payment_complete" || event.data?.status === "PAID") {
+        setIsPaid(true);
+        toast.success("Payment received! Verifying and unlocking your lead...");
+        handleVerify();
+      }
+    };
+
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [leadId, type]);
+
+  const handleVerify = async () => {
     setIsVerifying(true);
     try {
       if (type === "visa") {
         const res = await verifyVisaLeadUnlockPayment({ data: { leadId, forceBypass: true } });
         if (res.unlocked) {
-          setIsPaid(true);
           toast.success("✅ Visa lead contact unlocked successfully!");
           qc.invalidateQueries({ queryKey: ["vendor-custom-visa-leads"] });
           setTimeout(() => navigate({ to: "/vendor/custom-visa-leads" }), 1500);
@@ -97,7 +130,6 @@ function VendorCheckoutPage() {
       } else {
         const res = await verifyLeadUnlockPayment({ data: { leadId } });
         if (res.unlocked) {
-          setIsPaid(true);
           toast.success("✅ Tour lead contact unlocked successfully!");
           qc.invalidateQueries({ queryKey: ["vendor-leads-marketplace"] });
           setTimeout(() => navigate({ to: "/vendor/custom-leads" }), 1500);
@@ -109,116 +141,6 @@ function VendorCheckoutPage() {
       toast.error(err.message || "Verification failed. Try again in a moment.");
     } finally {
       setIsVerifying(false);
-    }
-  }, [leadId, type, navigate, qc]);
-
-  const [sdkError, setSdkError] = useState("");
-  const [isButtonReady, setIsButtonReady] = useState(false);
-
-  // Dynamically load SafePay Button SDK via script tag
-  useEffect(() => {
-    if (!tracker || buttonRendered.current || isPaid) return;
-
-    // Check if SDK is already loaded globally
-    if ((window as any).safepay?.Button || (window as any).safepay?.Checkout) {
-      setIsButtonReady(true);
-      return;
-    }
-
-    // Load SDK via script tag
-    const existingScript = document.getElementById("sfpy-checkout-sdk");
-    if (!existingScript) {
-      const script = document.createElement("script");
-      script.id = "sfpy-checkout-sdk";
-      script.src = "https://unpkg.com/@sfpy/checkout-components@1.0.1/dist/sfpy-checkout.js";
-      script.async = true;
-      script.onload = () => {
-        const sf = (window as any).safepay;
-        if (sf?.Button || sf?.Checkout) {
-          setIsButtonReady(true);
-        } else {
-          const keys = sf ? Object.keys(sf).join(", ") : "safepay is undefined";
-          setSdkError(`SDK Loaded but components not found. Keys: ${keys}`);
-        }
-      };
-      script.onerror = () => {
-        setSdkError("Failed to load checkout SDK from CDN.");
-      };
-      document.body.appendChild(script);
-    } else if ((window as any).safepay) {
-        // If script already in DOM but maybe just finished loading
-        const sf = (window as any).safepay;
-        if (sf?.Button || sf?.Checkout) {
-          setIsButtonReady(true);
-        }
-    }
-  }, [tracker, isPaid]);
-
-  const handleSafePayCheckout = () => {
-    try {
-      const safepay = (window as any).safepay;
-      if (!safepay) throw new Error("SafePay SDK not loaded");
-      
-      const Component = safepay.Checkout || safepay.Button;
-      if (typeof Component !== "function") {
-        throw new Error(`Component is not a function (type: ${typeof Component})`);
-      }
-
-      const instance = Component({
-        env: env === "production" || env === "live" ? "production" : "sandbox",
-        client: {
-          sandbox: "sec_8a895a91-cdc7-47de-96b2-49c9c6885682",
-          production: "sec_8a895a91-cdc7-47de-96b2-49c9c6885682" // Note: requires VITE_ env var later
-        },
-        tbt: tracker,
-        tracker: tracker,
-        payment: (data: any, actions: any) => {
-          return tracker;
-        },
-        onPayment: (data: any) => {
-          console.log("[SafePay] Payment complete:", data);
-          setIsPaid(true);
-          toast.success("Payment received! Verifying and unlocking your lead...");
-          handleVerify();
-        },
-        onCheckout: (data: any) => {
-          console.log("[SafePay] Checkout complete:", data);
-          setIsPaid(true);
-          toast.success("Payment received! Verifying and unlocking your lead...");
-          handleVerify();
-        },
-        onSuccess: (data: any) => {
-          console.log("[SafePay] Checkout success:", data);
-          setIsPaid(true);
-          toast.success("Payment received! Verifying and unlocking your lead...");
-          handleVerify();
-        },
-        onCancel: (data: any) => {
-          console.log("[SafePay] Payment cancelled:", data);
-          toast.info("Payment was cancelled. You can try again.");
-        },
-        onError: (err: any) => {
-          console.error("[SafePay] Checkout error:", err);
-          setSdkError(`Payment error: ${err.message || String(err)}`);
-        },
-      });
-      
-      // Render the checkout popup/overlay
-      // Passing no target or document.body usually triggers the overlay mode
-      instance.render().catch((err: any) => {
-          console.error("Zoid render promise rejected:", err);
-          
-          // Fallback: Some versions of Safepay Button might strictly require a container.
-          // If this fails, we will dynamically create a container.
-          if (err.message && err.message.includes("style is undefined")) {
-              setSdkError("SafePay popup blocked or container style failed. Please disable popup blockers.");
-          } else {
-              setSdkError(`Zoid render failed: ${err.message || String(err)}`);
-          }
-      });
-      
-    } catch (err: any) {
-      setSdkError(`Checkout init failed: ${err.message}`);
     }
   };
 
@@ -316,7 +238,7 @@ function VendorCheckoutPage() {
           </div>
         </div>
 
-        {/* Right Column — SafePay Payment */}
+        {/* Right Column — SafePay Payment Flow */}
         <div className="lg:col-span-3">
           <Card className="overflow-hidden border-2 border-primary/20">
             <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-3">
@@ -338,58 +260,58 @@ function VendorCheckoutPage() {
               </div>
             ) : (
               <div className="p-6 space-y-6">
-                {/* SafePay Button SDK Container */}
+                {/* Step 1 — Pay */}
                 <div className="space-y-3">
-                  <p className="text-sm text-muted-foreground">
-                    Click the button below to securely pay <strong className="text-foreground">Rs {Number(amount).toLocaleString()}</strong>. A secure payment popup will open — just enter your card details.
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <span className="flex items-center justify-center size-6 rounded-full bg-primary text-white text-xs font-bold">1</span>
+                    Complete Payment on SafePay
+                  </div>
+                  <p className="text-xs text-muted-foreground pl-8">
+                    Click below to open SafePay's secure checkout. Enter your card details there and complete the payment of <strong>Rs {Number(amount).toLocaleString()}</strong>.
                   </p>
-
-                  {/* SafePay Button Trigger */}
-                  <div className="w-full flex flex-col items-center justify-center">
-                    {sdkError && (
-                      <div className="text-destructive text-sm font-medium bg-destructive/10 p-3 rounded-md w-full mb-4">
-                        {sdkError}
-                      </div>
-                    )}
-                    
-                    <Button 
-                      onClick={handleSafePayCheckout}
-                      disabled={!isButtonReady}
-                      className="w-full bg-[#00a86b] hover:bg-[#008f5a] text-white"
-                      size="lg"
+                  <div className="pl-8">
+                    <Button
+                      className="w-full gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-base py-6 shadow-lg hover:shadow-xl transition-all"
+                      onClick={() => {
+                        if (safepayIframeUrl) {
+                          window.open(safepayIframeUrl, "_blank", "noopener,noreferrer");
+                          setPaymentOpened(true);
+                        }
+                      }}
                     >
-                      {!isButtonReady ? (
-                        <>
-                          <Loader2 className="size-4 animate-spin mr-2" />
-                          Loading Secure Checkout...
-                        </>
-                      ) : (
-                        `Pay Rs ${amount} via SafePay`
-                      )}
+                      <CreditCard className="size-5" />
+                      Pay Rs {Number(amount).toLocaleString()} with SafePay
+                      <ExternalLink className="size-4 ml-1" />
                     </Button>
                   </div>
                 </div>
 
                 <hr className="border-border" />
 
-                {/* Manual Verify Fallback */}
-                <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">
-                    Already completed payment? Click below to verify and unlock your lead.
+                {/* Step 2 — Verify */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <span className={`flex items-center justify-center size-6 rounded-full text-xs font-bold ${paymentOpened ? "bg-primary text-white" : "bg-muted text-muted-foreground"}`}>2</span>
+                    <span className={paymentOpened ? "text-foreground" : "text-muted-foreground"}>Verify Payment & Unlock Lead</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground pl-8">
+                    After completing payment on SafePay, come back here and click the button below to verify and unlock your lead's contact details.
                   </p>
-                  <Button
-                    className="w-full gap-2 font-bold py-5"
-                    variant="outline"
-                    disabled={isVerifying}
-                    onClick={handleVerify}
-                  >
-                    {isVerifying ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <CheckCircle2 className="size-4" />
-                    )}
-                    {isVerifying ? "Verifying Payment..." : "Verify Payment & Unlock Lead"}
-                  </Button>
+                  <div className="pl-8">
+                    <Button
+                      className="w-full gap-2 font-bold py-5"
+                      variant={paymentOpened ? "default" : "outline"}
+                      disabled={isVerifying || !paymentOpened}
+                      onClick={handleVerify}
+                    >
+                      {isVerifying ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="size-4" />
+                      )}
+                      {isVerifying ? "Verifying Payment..." : "Verify Payment & Unlock Lead"}
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
