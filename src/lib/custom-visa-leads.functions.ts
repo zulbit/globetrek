@@ -397,15 +397,18 @@ export const createVisaLeadUnlockCheckout = createServerFn({ method: "POST" })
       );
     }
 
+    const kycFields = kycRow?.config
+      ? (typeof kycRow.config === "string" ? JSON.parse(kycRow.config) : kycRow.config).fields || {}
+      : {};
+
     const unlockFee = targetLead.unlock_fee_pkr || 750;
-    const [firstName, ...rest] = (profile?.full_name || profile?.company_name || "Travel Partner").trim().split(/\s+/);
-    const lastName = rest.join(" ") || (profile?.company_name ? "Agency" : "Vendor");
-    const vendorEmail = profile?.email || "vendor@globetrek.pk";
-    const vendorCity = profile?.city || "Islamabad";
-    const streetAddress = profile?.company_name
-      ? `${profile.company_name} Commercial Office`
-      : "Main Commercial Boulevard, Shahrah-e-Faisal";
-    const rawPhone = (profile?.phone || "+923001234567").replace(/\D/g, "").replace(/^0+/, "");
+    const contactName = (profile?.full_name || kycFields.company_name || profile?.company_name || "Partner").trim();
+    const [firstName, ...rest] = contactName.split(/\s+/);
+    const lastName = rest.join(" ") || (profile?.company_name || "Agency");
+    const vendorEmail = profile?.email || "partner@globetrek.pk";
+    const vendorCity = kycFields.city || profile?.city || "Karachi";
+    const streetAddress = kycFields.office_address || (profile?.company_name ? `${profile.company_name} Office` : "Main Commercial Office");
+    const rawPhone = (kycFields.phone || profile?.phone || "+923001234567").replace(/\D/g, "").replace(/^0+/, "");
     const vendorPhone = rawPhone.startsWith("92") ? `+${rawPhone}` : `+92${rawPhone}`;
 
     const env = (process.env.SAFEPAY_ENV || "sandbox").toLowerCase();

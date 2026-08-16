@@ -220,15 +220,18 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
       );
     }
 
-    const [firstName, ...rest] = (vendorProfile?.full_name || vendorProfile?.company_name || "Travel Partner").trim().split(/\s+/);
-    const lastName = rest.join(" ") || (vendorProfile?.company_name ? "Agency" : "Vendor");
-    const vendorEmail = vendorProfile?.email || "vendor@globetrek.pk";
-    const rawPhone = (vendorProfile?.phone || "+923001234567").replace(/\D/g, "").replace(/^0+/, "");
+    const kycFields = kycRow?.config
+      ? (typeof kycRow.config === "string" ? JSON.parse(kycRow.config) : kycRow.config).fields || {}
+      : {};
+
+    const contactName = (vendorProfile?.full_name || kycFields.company_name || vendorProfile?.company_name || "Partner").trim();
+    const [firstName, ...rest] = contactName.split(/\s+/);
+    const lastName = rest.join(" ") || (vendorProfile?.company_name || "Agency");
+    const vendorEmail = vendorProfile?.email || "partner@globetrek.pk";
+    const rawPhone = (kycFields.phone || vendorProfile?.phone || "+923001234567").replace(/\D/g, "").replace(/^0+/, "");
     const vendorPhone = rawPhone.startsWith("92") ? `+${rawPhone}` : `+92${rawPhone}`;
-    const vendorCity = vendorProfile?.city || "Karachi";
-    const streetAddress = vendorProfile?.company_name
-      ? `${vendorProfile.company_name} Commercial Office`
-      : "Main Commercial Boulevard, Shahrah-e-Faisal";
+    const vendorCity = kycFields.city || vendorProfile?.city || "Karachi";
+    const streetAddress = kycFields.office_address || (vendorProfile?.company_name ? `${vendorProfile.company_name} Office` : "Main Commercial Office");
 
     // Helper to format full pre-filled SafePay QuickLink URL with all query parameters
     const formatSafePayUrl = (baseUrlStr: string) => {
