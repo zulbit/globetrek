@@ -520,6 +520,11 @@ function VendorRow({
           <option value="pro">Tour Operator</option>
           <option value="agency">Full Agency</option>
         </select>
+        {p.subscriptionExpiresAt && p.subscription_tier !== "free" && (
+          <span className="text-[10px] text-muted-foreground block mt-1">
+            Renews: {new Date(p.subscriptionExpiresAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+          </span>
+        )}
       </div>
       <div className="flex items-center gap-1">
         <button

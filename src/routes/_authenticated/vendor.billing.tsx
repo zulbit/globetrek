@@ -165,7 +165,7 @@ function BillingPage() {
       const monthStart = new Date();
       monthStart.setUTCDate(1);
       monthStart.setUTCHours(0, 0, 0, 0);
-      const [profile, usage, tours, leads] = await Promise.all([
+      const [profile, usage, tours, leads, payments] = await Promise.all([
         supabase
           .from("profiles")
           .select("subscription_tier, lead_credits_balance, updated_at")
@@ -178,12 +178,22 @@ function BillingPage() {
           .gte("created_at", monthStart.toISOString()),
         supabase.from("tours").select("id,is_active").eq("vendor_id", uid),
         supabase.from("leads").select("id,is_unlocked").eq("vendor_id", uid),
+        supabase.from("payments").select("created_at, metadata").eq("owner_id", uid).eq("status", "paid").order("created_at", { ascending: false }).limit(20),
       ]);
       const events = (usage.data ?? []) as { kind: "description" | "plan" }[];
+      
+      let subscriptionExpiresAt: string | undefined;
+      const subPayment = (payments.data ?? []).find((p: any) => p.metadata?.type === "subscription");
+      if (subPayment && subPayment.created_at) {
+        const d = new Date(subPayment.created_at);
+        d.setDate(d.getDate() + 30);
+        subscriptionExpiresAt = d.toISOString();
+      }
       return {
         tier: (profile.data?.subscription_tier ?? "free") as Tier,
         credits: profile.data?.lead_credits_balance ?? 0,
         updated_at: profile.data?.updated_at as string | undefined,
+        subscriptionExpiresAt,
         aiDescriptions: events.filter((e) => e.kind === "description").length,
         aiPlans: events.filter((e) => e.kind === "plan").length,
         activeTours: (tours.data ?? []).filter((t) => t.is_active).length,
@@ -242,12 +252,19 @@ function BillingPage() {
                     <p className="text-xs text-muted-foreground">{currentTierMeta.tagline}</p>
                   </div>
                 </div>
-                <div className="mt-4 flex items-baseline gap-1.5">
-                  <span className="text-3xl font-bold tabular-nums">
-                    {formatTierPrice(currentTierMeta.price_pkr)}
-                  </span>
-                  {currentTierMeta.price_pkr > 0 && (
-                    <span className="text-xs text-muted-foreground">/ month</span>
+                <div className="mt-4 flex flex-col gap-2">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-3xl font-bold tabular-nums">
+                      {formatTierPrice(currentTierMeta.price_pkr)}
+                    </span>
+                    {currentTierMeta.price_pkr > 0 && (
+                      <span className="text-xs text-muted-foreground">/ month</span>
+                    )}
+                  </div>
+                  {data?.subscriptionExpiresAt && (
+                    <div className="text-[11px] text-primary font-semibold bg-primary/10 w-fit px-2.5 py-0.5 rounded-full border border-primary/20">
+                      Cycle Renews: {new Date(data.subscriptionExpiresAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                    </div>
                   )}
                 </div>
               </div>

@@ -16,6 +16,7 @@ export interface VendorProfile {
   kycSubmittedAt?: string | null;
   kycStatus?: string;
   kycDetails?: Record<string, any>;
+  subscriptionExpiresAt?: string | null;
 }
 
 export const getAdminVendors = createServerFn({ method: "GET" }).handler(async () => {
@@ -73,7 +74,26 @@ export const getAdminVendors = createServerFn({ method: "GET" }).handler(async (
       } catch {}
     });
 
-    // 4. Filter and enhance vendor profiles with KYC data
+    // 4. Fetch all successful subscription payments to compute expiry dates
+    const { data: subPayments } = await supabaseAdmin
+      .from("payments")
+      .select("owner_id, created_at")
+      .eq("status", "paid")
+      .contains("metadata", { type: "subscription" })
+      .order("created_at", { ascending: false });
+
+    const subExpiryMap = new Map<string, string>();
+    if (subPayments) {
+      subPayments.forEach((p) => {
+        if (p.owner_id && !subExpiryMap.has(p.owner_id)) {
+          const d = new Date(p.created_at);
+          d.setDate(d.getDate() + 30);
+          subExpiryMap.set(p.owner_id, d.toISOString());
+        }
+      });
+    }
+
+    // 5. Filter and enhance vendor profiles with KYC and subscription data
     const vendors = (profilesData ?? [])
       .filter((p: any) => {
         if (vendorUserIds.has(p.id)) return true;
@@ -92,6 +112,7 @@ export const getAdminVendors = createServerFn({ method: "GET" }).handler(async (
           kycSubmittedAt: kycRecord?.submittedAt || null,
           kycStatus: kycRecord?.status || (kycRecord?.isSubmitted ? "submitted" : "not_submitted"),
           kycDetails: kycFields,
+          subscriptionExpiresAt: subExpiryMap.get(p.id) || null,
         };
       });
 
