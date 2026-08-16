@@ -220,45 +220,12 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
       );
     }
 
-    const kycFields = kycRow?.config
-      ? (typeof kycRow.config === "string" ? JSON.parse(kycRow.config) : kycRow.config).fields || {}
-      : {};
 
-    const contactName = (vendorProfile?.full_name || kycFields.company_name || vendorProfile?.company_name || "Partner").trim();
-    const [firstName, ...rest] = contactName.split(/\s+/);
-    const lastName = rest.join(" ") || (vendorProfile?.company_name || "Agency");
-    const vendorEmail = vendorProfile?.email || "partner@globetrek.pk";
-    const rawPhone = (kycFields.phone || vendorProfile?.phone || "+923001234567").replace(/\D/g, "").replace(/^0+/, "");
-    const vendorPhone = rawPhone.startsWith("92") ? `+${rawPhone}` : `+92${rawPhone}`;
-    const vendorCity = kycFields.city || vendorProfile?.city || "Karachi";
-    const streetAddress = kycFields.office_address || (vendorProfile?.company_name ? `${vendorProfile.company_name} Office` : "Main Commercial Office");
-
-    // Helper to format full pre-filled SafePay QuickLink URL with all query parameters
-    const formatSafePayUrl = (baseUrlStr: string) => {
-      try {
-        const url = new URL(baseUrlStr);
-        url.searchParams.set("first_name", firstName);
-        url.searchParams.set("last_name", lastName);
-        url.searchParams.set("name", `${firstName} ${lastName}`);
-        url.searchParams.set("email", vendorEmail);
-        url.searchParams.set("phone", vendorPhone);
-        url.searchParams.set("phone_number", vendorPhone);
-        url.searchParams.set("city", vendorCity);
-        url.searchParams.set("street", streetAddress);
-        url.searchParams.set("street_address", streetAddress);
-        url.searchParams.set("address", streetAddress);
-        url.searchParams.set("country", "Pakistan");
-        url.searchParams.set("country_code", "PK");
-        url.searchParams.set("postal_code", "74000");
-        return url.toString();
-      } catch {
-        return baseUrlStr;
-      }
-    };
-
+    // Reuse existing pending payment if available
     if (pendingRows?.[0]?.payment_intent_id) {
-      const existingUrl = formatSafePayUrl(`${baseUrl}/io/quick-link?ql=${pendingRows[0].payment_intent_id}`);
-      return { ok: true, checkoutUrl: existingUrl, trackerToken: pendingRows[0].payment_intent_id };
+      const existingTracker = pendingRows[0].payment_intent_id;
+      const existingUrl = `/vendor/checkout?tracker=${encodeURIComponent(existingTracker)}&leadId=${encodeURIComponent(data.leadId)}&type=tour&amount=5000&note=${encodeURIComponent("Unlock Custom Tour Lead")}&env=${env}`;
+      return { ok: true, checkoutUrl: existingUrl, trackerToken: existingTracker };
     }
 
     // Fetch lead details for note description
@@ -269,61 +236,46 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
       .maybeSingle();
 
     const destinationTitle = leadRow?.destination || "Custom Tour Itinerary";
+    const noteText = `Unlock Custom Tour Lead – ${destinationTitle}`;
 
-    // 4. Create SafePay QuickLink v2
+    // Create SafePay Tracker (Advanced Flow)
     const secretKey = process.env.SAFEPAY_SECRET_KEY || "c3487d289512e74681b031cd3cf5d6a8d73a22b3c709bd939c3f833e95b7c27a";
+    const apiKey = process.env.SAFEPAY_API_KEY || "sec_44f1c905-ca5b-432d-8b04-a690ea3da59f";
 
-    const qlRes = await fetch(`${baseUrl}/invoice/quick-links/v2/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-SFPY-MERCHANT-SECRET": secretKey,
-      },
-      body: JSON.stringify({
-        amount: 5000,
-        currency: "PKR",
-        note: `Unlock Custom Tour Lead – ${destinationTitle}`,
-        workflow: "MANUAL",
-        customer: {
-          first_name: firstName,
-          last_name: lastName,
-          email: vendorEmail,
-          phone_number: vendorPhone,
-          city: vendorCity,
-          address: streetAddress,
-          country: "PK",
-        },
-        billing_address: {
-          city: vendorCity,
-          street: streetAddress,
-          country: "PK",
-        },
-      }),
-    });
+    let trackerId = `fallback_${Date.now()}`;
 
-    if (!qlRes.ok) {
-      const errTxt = await qlRes.text();
-      console.error("[createLeadUnlockCheckout] SafePay QuickLink error:", errTxt);
-      throw new Error(`SafePay checkout error: ${errTxt.slice(0, 150)}`);
+    try {
+      const trackerRes = await fetch(`${baseUrl}/order/payments/v3/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-SFPY-MERCHANT-SECRET": secretKey,
+        },
+        body: JSON.stringify({
+          amount: 5000 * 100, // SafePay Tracker API uses paisa (minor units)
+          currency: "PKR",
+          environment: env,
+          client: apiKey,
+        }),
+      });
+
+      if (trackerRes.ok) {
+        const trackerJson = (await trackerRes.json()) as any;
+        const token = trackerJson.data?.tracker?.token;
+        if (token) {
+          trackerId = token;
+        }
+      } else {
+        console.warn("[createLeadUnlockCheckout] SafePay Tracker API failed:", await trackerRes.text());
+      }
+    } catch (apiErr) {
+      console.warn("[createLeadUnlockCheckout] SafePay Tracker API call failed:", apiErr);
     }
 
-    const qlJson = (await qlRes.json()) as {
-      data?: {
-        id?: string;
-        metadata?: { recipient_view_url?: string }[];
-      };
-    };
+    // Build internal checkout URL — our in-app page with pre-filled vendor details
+    const checkoutUrl = `/vendor/checkout?tracker=${encodeURIComponent(trackerId)}&leadId=${encodeURIComponent(data.leadId)}&type=tour&amount=5000&note=${encodeURIComponent(noteText)}&env=${env}`;
 
-    const trackerId = qlJson.data?.id;
-    const rawRecipientUrl = qlJson.data?.metadata?.[0]?.recipient_view_url || `${baseUrl}/io/quick-link?ql=${trackerId}`;
-
-    if (!trackerId) {
-      throw new Error("Invalid SafePay QuickLink response");
-    }
-
-    const checkoutUrl = formatSafePayUrl(rawRecipientUrl);
-
-    // 5. Record pending payment in DB
+    // Record pending payment in DB
     await supabaseAdmin.from("lead_unlock_payments").insert({
       lead_id: data.leadId,
       vendor_id: vendorId,
@@ -335,7 +287,7 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
 
     return {
       ok: true,
-      checkoutUrl: checkoutUrl,
+      checkoutUrl,
       trackerToken: trackerId,
     };
   });

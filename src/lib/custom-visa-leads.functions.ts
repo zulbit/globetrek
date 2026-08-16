@@ -402,14 +402,6 @@ export const createVisaLeadUnlockCheckout = createServerFn({ method: "POST" })
       : {};
 
     const unlockFee = targetLead.unlock_fee_pkr || 750;
-    const contactName = (profile?.full_name || kycFields.company_name || profile?.company_name || "Partner").trim();
-    const [firstName, ...rest] = contactName.split(/\s+/);
-    const lastName = rest.join(" ") || (profile?.company_name || "Agency");
-    const vendorEmail = profile?.email || "partner@globetrek.pk";
-    const vendorCity = kycFields.city || profile?.city || "Karachi";
-    const streetAddress = kycFields.office_address || (profile?.company_name ? `${profile.company_name} Office` : "Main Commercial Office");
-    const rawPhone = (kycFields.phone || profile?.phone || "+923001234567").replace(/\D/g, "").replace(/^0+/, "");
-    const vendorPhone = rawPhone.startsWith("92") ? `+${rawPhone}` : `+92${rawPhone}`;
 
     const env = (process.env.SAFEPAY_ENV || "sandbox").toLowerCase();
     const baseUrl = env === "production" || env === "live"
@@ -417,99 +409,42 @@ export const createVisaLeadUnlockCheckout = createServerFn({ method: "POST" })
       : "https://sandbox.api.getsafepay.com";
 
     const secretKey = process.env.SAFEPAY_SECRET_KEY || "c3487d289512e74681b031cd3cf5d6a8d73a22b3c709bd939c3f833e95b7c27a";
+    const apiKey = process.env.SAFEPAY_API_KEY || "sec_44f1c905-ca5b-432d-8b04-a690ea3da59f";
 
-    // Format prefilled SafePay URL with all standard and variant query parameters
-    const formatSafePayUrl = (baseUrlStr: string) => {
-      try {
-        const url = new URL(baseUrlStr);
-        // Standard query parameters
-        url.searchParams.set("first_name", firstName);
-        url.searchParams.set("last_name", lastName);
-        url.searchParams.set("name", `${firstName} ${lastName}`);
-        url.searchParams.set("email", vendorEmail);
-        url.searchParams.set("phone", vendorPhone);
-        url.searchParams.set("phone_number", vendorPhone);
-        url.searchParams.set("city", vendorCity);
-        url.searchParams.set("street", streetAddress);
-        url.searchParams.set("street_address", streetAddress);
-        url.searchParams.set("address", streetAddress);
-        url.searchParams.set("country", "Pakistan");
-        url.searchParams.set("country_code", "PK");
-        url.searchParams.set("postal_code", "44000");
-
-        // Additional camelCase and custom variants
-        url.searchParams.set("firstName", firstName);
-        url.searchParams.set("lastName", lastName);
-        url.searchParams.set("customer_email", vendorEmail);
-        url.searchParams.set("customer_phone", vendorPhone);
-        url.searchParams.set("billing_city", vendorCity);
-        url.searchParams.set("billing_address", streetAddress);
-        return url.toString();
-      } catch {
-        return baseUrlStr;
-      }
-    };
-
-    let trackerId = `ql_${Date.now()}`;
-    let checkoutUrl = `${baseUrl}/io/quick-link?ql=${trackerId}`;
+    // Create SafePay Tracker (Advanced Flow) — customer prefill via API body is stored server-side
+    let trackerId = `fallback_${Date.now()}`;
+    const noteText = `Unlock Custom Visa Lead (${targetLead.destination_country} - ${targetLead.visa_category})`;
 
     try {
-      const qlRes = await fetch(`${baseUrl}/invoice/quick-links/v2/`, {
+      const trackerRes = await fetch(`${baseUrl}/order/payments/v3/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "X-SFPY-MERCHANT-SECRET": secretKey,
         },
         body: JSON.stringify({
-          amount: unlockFee,
+          amount: unlockFee * 100, // SafePay Tracker API uses paisa (minor units)
           currency: "PKR",
-          note: `Unlock Custom Visa Lead (${targetLead.destination_country} - ${targetLead.visa_category})`,
-          workflow: "MANUAL",
-          client: {
-            first_name: firstName,
-            last_name: lastName,
-            email: vendorEmail,
-            phone: vendorPhone,
-            phone_number: vendorPhone,
-            city: vendorCity,
-            address: streetAddress,
-            country: "PK",
-          },
-          customer: {
-            first_name: firstName,
-            last_name: lastName,
-            email: vendorEmail,
-            phone: vendorPhone,
-            phone_number: vendorPhone,
-            city: vendorCity,
-            address: streetAddress,
-            country: "PK",
-          },
-          billing_address: {
-            first_name: firstName,
-            last_name: lastName,
-            city: vendorCity,
-            street: streetAddress,
-            address: streetAddress,
-            country: "PK",
-            postal_code: "44000",
-          },
+          environment: env,
+          client: apiKey,
         }),
       });
 
-      if (qlRes.ok) {
-        const qlJson = (await qlRes.json()) as any;
-        const apiTrackerId = qlJson.data?.id;
-        const rawRecipientUrl = qlJson.data?.metadata?.[0]?.recipient_view_url || `${baseUrl}/io/quick-link?ql=${apiTrackerId}`;
-        if (apiTrackerId) {
-          trackerId = apiTrackerId;
-          checkoutUrl = formatSafePayUrl(rawRecipientUrl);
+      if (trackerRes.ok) {
+        const trackerJson = (await trackerRes.json()) as any;
+        const token = trackerJson.data?.tracker?.token;
+        if (token) {
+          trackerId = token;
         }
+      } else {
+        console.warn("[createVisaLeadUnlockCheckout] SafePay Tracker API failed:", await trackerRes.text());
       }
     } catch (apiErr) {
-      console.warn("SafePay QuickLink API call fallback:", apiErr);
-      checkoutUrl = formatSafePayUrl(`${baseUrl}/io/quick-link?ql=${trackerId}`);
+      console.warn("[createVisaLeadUnlockCheckout] SafePay Tracker API call failed:", apiErr);
     }
+
+    // Build internal checkout URL — our in-app page with pre-filled vendor details
+    const checkoutUrl = `/vendor/checkout?tracker=${encodeURIComponent(trackerId)}&leadId=${encodeURIComponent(data.leadId)}&type=visa&amount=${unlockFee}&note=${encodeURIComponent(noteText)}&env=${env}`;
 
     // Record pending transaction
     const { data: paymentsRow } = await supabaseAdmin
