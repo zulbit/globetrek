@@ -337,9 +337,11 @@ GlobeTrek PK integrates with **SafePay Gateway** for fast, secure PKR payment pr
 
 ---
 
-### 1. Subscription Tiers & Benefits
-- **Starter Plan**: Standard listing access, catalog inquiry notifications.
-- **Pro Plan**: Priority search placement, verified Gold vendor badge, unlimited direct customer leads, and reduced lead unlock fees.
+### 1. Subscription Tiers, Limits & Downgrades
+- **Free Tier (Default)**: Limited to a maximum of **3 active listings** across the entire marketplace.
+- **Starter / Pro / Agency Plans**: Unlimited active catalog listings, priority search placement, unrestricted access to the AI Planner, and verified vendor badges.
+- **Graceful Degradation (Expiry)**: If your paid subscription expires (30 days), your account is automatically transitioned to the Free Tier. **Your existing listings will remain active**, but you will be **locked out** from editing them or creating new listings until you either renew your subscription or manually deactivate enough listings to get back under the 3-listing limit.
+- **Lead Access is Safe**: Your paid Custom Leads (Quotations) are never affected by subscription downgrades. You will always retain access to travelers you've paid to unlock.
 
 ---
 
