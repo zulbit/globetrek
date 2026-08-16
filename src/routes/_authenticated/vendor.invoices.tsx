@@ -533,6 +533,22 @@ function VendorInvoicesPage() {
             >
               Paid
             </button>
+            <button
+              onClick={() => setStatusFilter("pending")}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+                statusFilter === "pending" ? "bg-amber-500/20 text-amber-400 border border-amber-500/30" : "text-muted-foreground hover:bg-surface"
+              }`}
+            >
+              Pending
+            </button>
+            <button
+              onClick={() => setStatusFilter("failed")}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+                statusFilter === "failed" ? "bg-rose-500/20 text-rose-400 border border-rose-500/30" : "text-muted-foreground hover:bg-surface"
+              }`}
+            >
+              Failed
+            </button>
           </div>
         </div>
 
@@ -563,7 +579,9 @@ function VendorInvoicesPage() {
                 {filteredInvoices.map((inv) => (
                   <tr key={inv.id} className="hover:bg-surface/50 transition">
                     <td className="py-3 px-3 font-mono font-bold text-foreground">{inv.id}</td>
-                    <td className="py-3 px-3 text-muted-foreground">{inv.date}</td>
+                    <td className="py-3 px-3 text-muted-foreground whitespace-nowrap">
+                      {new Date(inv.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                    </td>
                     <td className="py-3 px-3 font-semibold text-foreground">{inv.description}</td>
                     <td className="py-3 px-3 text-muted-foreground">{inv.period}</td>
                     <td className="py-3 px-3 text-right font-mono font-bold text-foreground">
