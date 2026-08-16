@@ -13,7 +13,7 @@ import {
   CheckCircle2,
   ArrowLeft,
   Lock,
-  RefreshCw,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -34,6 +34,7 @@ function VendorCheckoutPage() {
   const { user } = useAuth();
   const [isVerifying, setIsVerifying] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
+  const [paymentOpened, setPaymentOpened] = useState(false);
 
   // Read checkout params from URL
   const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
@@ -237,15 +238,15 @@ function VendorCheckoutPage() {
           </div>
         </div>
 
-        {/* Right Column — SafePay Card Payment */}
+        {/* Right Column — SafePay Payment Flow */}
         <div className="lg:col-span-3">
           <Card className="overflow-hidden border-2 border-primary/20">
             <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-3">
               <h3 className="text-white font-semibold text-sm flex items-center gap-2">
                 <CreditCard className="size-4" />
-                Enter Payment Details
+                Payment via SafePay
               </h3>
-              <p className="text-emerald-100 text-xs mt-0.5">Powered by SafePay — PCI-DSS Compliant</p>
+              <p className="text-emerald-100 text-xs mt-0.5">PCI-DSS Compliant — Your card details never touch our servers</p>
             </div>
 
             {isPaid ? (
@@ -257,42 +258,61 @@ function VendorCheckoutPage() {
                 </p>
                 <Loader2 className="size-5 animate-spin mx-auto text-primary" />
               </div>
-            ) : safepayIframeUrl ? (
-              <div className="relative">
-                <iframe
-                  src={safepayIframeUrl}
-                  title="SafePay Secure Payment"
-                  className="w-full border-0"
-                  style={{ height: "520px", minHeight: "520px" }}
-                  allow="payment"
-                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation"
-                />
-              </div>
             ) : (
-              <div className="p-8 text-center text-muted-foreground">
-                <Loader2 className="size-6 animate-spin mx-auto mb-2" />
-                Initializing payment session...
-              </div>
-            )}
+              <div className="p-6 space-y-6">
+                {/* Step 1 — Pay */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <span className="flex items-center justify-center size-6 rounded-full bg-primary text-white text-xs font-bold">1</span>
+                    Complete Payment on SafePay
+                  </div>
+                  <p className="text-xs text-muted-foreground pl-8">
+                    Click below to open SafePay's secure checkout. Enter your card details there and complete the payment of <strong>Rs {Number(amount).toLocaleString()}</strong>.
+                  </p>
+                  <div className="pl-8">
+                    <Button
+                      className="w-full gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-base py-6 shadow-lg hover:shadow-xl transition-all"
+                      onClick={() => {
+                        if (safepayIframeUrl) {
+                          window.open(safepayIframeUrl, "_blank", "noopener,noreferrer");
+                          setPaymentOpened(true);
+                        }
+                      }}
+                    >
+                      <CreditCard className="size-5" />
+                      Pay Rs {Number(amount).toLocaleString()} with SafePay
+                      <ExternalLink className="size-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
 
-            {/* Manual Verify Button (fallback) */}
-            {!isPaid && (
-              <div className="px-5 py-4 border-t border-border bg-muted/30">
-                <Button
-                  className="w-full gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold"
-                  disabled={isVerifying}
-                  onClick={handleVerify}
-                >
-                  {isVerifying ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <RefreshCw className="size-4" />
-                  )}
-                  {isVerifying ? "Verifying Payment..." : "Already paid? Click to verify & unlock"}
-                </Button>
-                <p className="text-[10px] text-muted-foreground text-center mt-2">
-                  If you completed payment on SafePay, click above to verify and unlock your lead.
-                </p>
+                <hr className="border-border" />
+
+                {/* Step 2 — Verify */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <span className={`flex items-center justify-center size-6 rounded-full text-xs font-bold ${paymentOpened ? "bg-primary text-white" : "bg-muted text-muted-foreground"}`}>2</span>
+                    <span className={paymentOpened ? "text-foreground" : "text-muted-foreground"}>Verify Payment & Unlock Lead</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground pl-8">
+                    After completing payment on SafePay, come back here and click the button below to verify and unlock your lead's contact details.
+                  </p>
+                  <div className="pl-8">
+                    <Button
+                      className="w-full gap-2 font-bold py-5"
+                      variant={paymentOpened ? "default" : "outline"}
+                      disabled={isVerifying || !paymentOpened}
+                      onClick={handleVerify}
+                    >
+                      {isVerifying ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="size-4" />
+                      )}
+                      {isVerifying ? "Verifying Payment..." : "Verify Payment & Unlock Lead"}
+                    </Button>
+                  </div>
+                </div>
               </div>
             )}
           </Card>
