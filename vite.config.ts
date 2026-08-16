@@ -7,6 +7,12 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
+  nitro: {
+    preset: "node-server",
+  },
+  tanstackStart: {
+    server: { entry: "server" },
+  },
   vite: {
     preview: {
       allowedHosts: true,
@@ -14,16 +20,6 @@ export default defineConfig({
     server: {
       allowedHosts: true,
     },
-  },
-  nitro: {
-    preset: "node-server",
-  },
-  tanstackStart: {
-    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-    // nitro/vite builds from this
-    server: { entry: "server" },
-  },
-  vite: {
     define: {
       "process.env.DEEPSEEK_API_KEY": JSON.stringify(
         process.env.DEEPSEEK_API_KEY || "sk-63b81cc565044a77a4672887143e9ef4",
