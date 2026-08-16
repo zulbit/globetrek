@@ -113,6 +113,7 @@ function VendorCheckoutPage() {
   }, [leadId, type, navigate, qc]);
 
   const [sdkError, setSdkError] = useState("");
+  const [isButtonReady, setIsButtonReady] = useState(false);
 
   // Dynamically load SafePay Button SDK via script tag (zoid-based SDK needs window at eval time)
   useEffect(() => {
@@ -159,9 +160,6 @@ function VendorCheckoutPage() {
 
     function renderSafepayButton(safepay: any, target: string) {
       try {
-        const container = document.getElementById(target);
-        if (container) container.innerHTML = ""; // Clear loading spinner
-
         // The SDK exposes zoid components as functions that return an instance with .render()
         const Component = safepay.Button || safepay.Checkout;
         
@@ -190,6 +188,9 @@ function VendorCheckoutPage() {
             toast.info("Payment was cancelled. You can try again.");
           },
         });
+        
+        // Hide spinner and let Zoid take over the container
+        setIsButtonReady(true);
         
         // Zoid components render asynchronously
         instance.render(`#${target}`).catch((err: any) => {
@@ -332,11 +333,13 @@ function VendorCheckoutPage() {
                     ref={safepayContainerRef}
                     className="min-h-[60px] flex flex-col items-center justify-center text-center"
                   >
-                    {sdkError ? (
+                    {sdkError && (
                       <div className="text-destructive text-sm font-medium bg-destructive/10 p-3 rounded-md w-full">
                         {sdkError}
                       </div>
-                    ) : (
+                    )}
+                    
+                    {!isButtonReady && !sdkError && (
                       <>
                         <Loader2 className="size-5 animate-spin text-muted-foreground" />
                         <span className="text-sm text-muted-foreground mt-2">Loading payment button...</span>
