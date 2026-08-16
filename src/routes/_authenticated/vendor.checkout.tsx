@@ -170,6 +170,7 @@ function VendorCheckoutPage() {
           sandbox: "sec_8a895a91-cdc7-47de-96b2-49c9c6885682",
           production: "sec_8a895a91-cdc7-47de-96b2-49c9c6885682" // Note: requires VITE_ env var later
         },
+        tbt: tracker,
         tracker: tracker,
         payment: (data: any, actions: any) => {
           return tracker;
