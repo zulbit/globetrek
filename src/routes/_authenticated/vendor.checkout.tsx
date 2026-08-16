@@ -115,15 +115,13 @@ function VendorCheckoutPage() {
   const [sdkError, setSdkError] = useState("");
   const [isButtonReady, setIsButtonReady] = useState(false);
 
-  // Dynamically load SafePay Button SDK via script tag (zoid-based SDK needs window at eval time)
+  // Dynamically load SafePay Button SDK via script tag
   useEffect(() => {
     if (!tracker || buttonRendered.current || isPaid) return;
 
-    const containerId = "safepay-button-container";
-
     // Check if SDK is already loaded globally
     if ((window as any).safepay?.Button || (window as any).safepay?.Checkout) {
-      renderSafepayButton((window as any).safepay, containerId);
+      setIsButtonReady(true);
       return;
     }
 
@@ -137,7 +135,7 @@ function VendorCheckoutPage() {
       script.onload = () => {
         const sf = (window as any).safepay;
         if (sf?.Button || sf?.Checkout) {
-          renderSafepayButton(sf, containerId);
+          setIsButtonReady(true);
         } else {
           const keys = sf ? Object.keys(sf).join(", ") : "safepay is undefined";
           setSdkError(`SDK Loaded but components not found. Keys: ${keys}`);
@@ -151,71 +149,67 @@ function VendorCheckoutPage() {
         // If script already in DOM but maybe just finished loading
         const sf = (window as any).safepay;
         if (sf?.Button || sf?.Checkout) {
-          renderSafepayButton(sf, containerId);
-        } else {
-          const keys = sf ? Object.keys(sf).join(", ") : "safepay is undefined";
-          setSdkError(`Script exists but components not found. Keys: ${keys}`);
+          setIsButtonReady(true);
         }
     }
+  }, [tracker, isPaid]);
 
-    function renderSafepayButton(safepay: any, target: string) {
-      try {
-        // The SDK exposes zoid components as functions that return an instance with .render()
-        const Component = safepay.Button || safepay.Checkout;
-        
-        if (typeof Component !== "function") {
-          throw new Error(`Component is not a function (type: ${typeof Component})`);
-        }
-
-        const instance = Component({
-          env: env === "production" || env === "live" ? "production" : "sandbox",
-          client: {
-            sandbox: "sec_8a895a91-cdc7-47de-96b2-49c9c6885682",
-            production: "sec_8a895a91-cdc7-47de-96b2-49c9c6885682" // Note: requires VITE_ env var later
-          },
-          // Some versions read tracker directly, others require the payment function to return it
-          tracker: tracker,
-          payment: (data: any, actions: any) => {
-            return tracker;
-          },
-          onPayment: (data: any) => {
-            console.log("[SafePay] Payment complete:", data);
-            setIsPaid(true);
-            toast.success("Payment received! Verifying and unlocking your lead...");
-            handleVerify();
-          },
-          onCheckout: (data: any) => {
-            // Some versions use onCheckout instead of onPayment
-            console.log("[SafePay] Checkout complete:", data);
-            setIsPaid(true);
-            toast.success("Payment received! Verifying and unlocking your lead...");
-            handleVerify();
-          },
-          onCancel: (data: any) => {
-            console.log("[SafePay] Payment cancelled:", data);
-            toast.info("Payment was cancelled. You can try again.");
-          },
-        });
-        
-        // Hide spinner and let Zoid take over the container
-        setIsButtonReady(true);
-        
-        // Zoid components render asynchronously. Pass string selector and delay until React finishes DOM mutation
-        setTimeout(() => {
-          if (document.getElementById(target)) {
-            instance.render(`#${target}`).catch((err: any) => {
-              console.error("Zoid render promise rejected:", err);
-              setSdkError(`Zoid render failed: ${err.message || String(err)}`);
-            });
-          }
-        }, 50);
-        
-        buttonRendered.current = true;
-      } catch (err: any) {
-        setSdkError(`Button init failed: ${err.message}`);
+  const handleSafePayCheckout = () => {
+    try {
+      const safepay = (window as any).safepay;
+      if (!safepay) throw new Error("SafePay SDK not loaded");
+      
+      const Component = safepay.Checkout || safepay.Button;
+      if (typeof Component !== "function") {
+        throw new Error(`Component is not a function (type: ${typeof Component})`);
       }
+
+      const instance = Component({
+        env: env === "production" || env === "live" ? "production" : "sandbox",
+        client: {
+          sandbox: "sec_8a895a91-cdc7-47de-96b2-49c9c6885682",
+          production: "sec_8a895a91-cdc7-47de-96b2-49c9c6885682" // Note: requires VITE_ env var later
+        },
+        tracker: tracker,
+        payment: (data: any, actions: any) => {
+          return tracker;
+        },
+        onPayment: (data: any) => {
+          console.log("[SafePay] Payment complete:", data);
+          setIsPaid(true);
+          toast.success("Payment received! Verifying and unlocking your lead...");
+          handleVerify();
+        },
+        onCheckout: (data: any) => {
+          console.log("[SafePay] Checkout complete:", data);
+          setIsPaid(true);
+          toast.success("Payment received! Verifying and unlocking your lead...");
+          handleVerify();
+        },
+        onCancel: (data: any) => {
+          console.log("[SafePay] Payment cancelled:", data);
+          toast.info("Payment was cancelled. You can try again.");
+        },
+      });
+      
+      // Render the checkout popup/overlay
+      // Passing no target or document.body usually triggers the overlay mode
+      instance.render().catch((err: any) => {
+          console.error("Zoid render promise rejected:", err);
+          
+          // Fallback: Some versions of Safepay Button might strictly require a container.
+          // If this fails, we will dynamically create a container.
+          if (err.message && err.message.includes("style is undefined")) {
+              setSdkError("SafePay popup blocked or container style failed. Please disable popup blockers.");
+          } else {
+              setSdkError(`Zoid render failed: ${err.message || String(err)}`);
+          }
+      });
+      
+    } catch (err: any) {
+      setSdkError(`Checkout init failed: ${err.message}`);
     }
-  }, [tracker, env, isPaid, handleVerify]);
+  };
 
   if (!tracker || !leadId) {
     return (
@@ -339,34 +333,30 @@ function VendorCheckoutPage() {
                     Click the button below to securely pay <strong className="text-foreground">Rs {Number(amount).toLocaleString()}</strong>. A secure payment popup will open — just enter your card details.
                   </p>
 
-                  {/* SafePay renders its button here */}
-                  <div
-                    id="safepay-button-container"
-                    ref={safepayContainerRef}
-                    className="w-full h-[60px] flex flex-col items-center justify-center text-center relative overflow-hidden"
-                  >
+                  {/* SafePay Button Trigger */}
+                  <div className="w-full flex flex-col items-center justify-center">
                     {sdkError && (
-                      <div className="text-destructive text-sm font-medium bg-destructive/10 p-3 rounded-md w-full">
+                      <div className="text-destructive text-sm font-medium bg-destructive/10 p-3 rounded-md w-full mb-4">
                         {sdkError}
                       </div>
                     )}
                     
-                    {!isButtonReady && !sdkError && (
-                      <>
-                        <Loader2 className="size-5 animate-spin text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground mt-2">Loading payment button...</span>
-                      </>
-                    )}
+                    <Button 
+                      onClick={handleSafePayCheckout}
+                      disabled={!isButtonReady}
+                      className="w-full bg-[#00a86b] hover:bg-[#008f5a] text-white"
+                      size="lg"
+                    >
+                      {!isButtonReady ? (
+                        <>
+                          <Loader2 className="size-4 animate-spin mr-2" />
+                          Loading Secure Checkout...
+                        </>
+                      ) : (
+                        `Pay Rs ${amount} via SafePay`
+                      )}
+                    </Button>
                   </div>
-                  
-                  {isButtonReady && !sdkError && (
-                    <div className="text-xs text-center text-muted-foreground mt-2" onClick={() => {
-                      const container = document.getElementById('safepay-button-container');
-                      toast.info(`Container innerHTML length: ${container?.innerHTML.length}. Has iframe? ${!!container?.querySelector('iframe')}`);
-                    }}>
-                      (If button is missing, click here to debug)
-                    </div>
-                  )}
                 </div>
 
                 <hr className="border-border" />
