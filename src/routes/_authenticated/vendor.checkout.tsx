@@ -121,7 +121,7 @@ function VendorCheckoutPage() {
     const containerId = "safepay-button-container";
 
     // Check if SDK is already loaded globally
-    if ((window as any).safepay?.Button?.render) {
+    if ((window as any).safepay?.Button || (window as any).safepay?.Checkout) {
       renderSafepayButton((window as any).safepay, containerId);
       return;
     }
@@ -135,13 +135,11 @@ function VendorCheckoutPage() {
       script.async = true;
       script.onload = () => {
         const sf = (window as any).safepay;
-        if (sf?.Button?.render) {
+        if (sf?.Button || sf?.Checkout) {
           renderSafepayButton(sf, containerId);
-        } else if (sf?.Checkout?.render) {
-          renderSafepayButton({ Button: sf.Checkout }, containerId); // Fallback for Checkout alias
         } else {
           const keys = sf ? Object.keys(sf).join(", ") : "safepay is undefined";
-          setSdkError(`SDK Loaded but render not found. Keys: ${keys}`);
+          setSdkError(`SDK Loaded but components not found. Keys: ${keys}`);
         }
       };
       script.onerror = () => {
@@ -151,11 +149,11 @@ function VendorCheckoutPage() {
     } else if ((window as any).safepay) {
         // If script already in DOM but maybe just finished loading
         const sf = (window as any).safepay;
-        if (sf?.Button?.render) {
+        if (sf?.Button || sf?.Checkout) {
           renderSafepayButton(sf, containerId);
         } else {
           const keys = sf ? Object.keys(sf).join(", ") : "safepay is undefined";
-          setSdkError(`Script exists but render not found. Keys: ${keys}`);
+          setSdkError(`Script exists but components not found. Keys: ${keys}`);
         }
     }
 
@@ -164,7 +162,14 @@ function VendorCheckoutPage() {
         const container = document.getElementById(target);
         if (container) container.innerHTML = ""; // Clear loading spinner
 
-        safepay.Button.render({
+        // The SDK exposes zoid components as functions that return an instance with .render()
+        const Component = safepay.Button || safepay.Checkout;
+        
+        if (typeof Component !== "function") {
+          throw new Error(`Component is not a function (type: ${typeof Component})`);
+        }
+
+        const instance = Component({
           env: env === "production" || env === "live" ? "production" : "sandbox",
           tracker: tracker,
           onPayment: (data: any) => {
@@ -173,14 +178,28 @@ function VendorCheckoutPage() {
             toast.success("Payment received! Verifying and unlocking your lead...");
             handleVerify();
           },
+          onCheckout: (data: any) => {
+            // Some versions use onCheckout instead of onPayment
+            console.log("[SafePay] Checkout complete:", data);
+            setIsPaid(true);
+            toast.success("Payment received! Verifying and unlocking your lead...");
+            handleVerify();
+          },
           onCancel: (data: any) => {
             console.log("[SafePay] Payment cancelled:", data);
             toast.info("Payment was cancelled. You can try again.");
           },
-        }, `#${target}`);
+        });
+        
+        // Zoid components render asynchronously
+        instance.render(`#${target}`).catch((err: any) => {
+            console.error("Zoid render promise rejected:", err);
+            setSdkError(`Zoid render failed: ${err.message || String(err)}`);
+        });
+        
         buttonRendered.current = true;
       } catch (err: any) {
-        setSdkError(`Button.render() failed: ${err.message}`);
+        setSdkError(`Button init failed: ${err.message}`);
       }
     }
   }, [tracker, env, isPaid, handleVerify]);
