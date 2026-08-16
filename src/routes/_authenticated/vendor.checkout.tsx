@@ -187,9 +187,19 @@ function VendorCheckoutPage() {
           toast.success("Payment received! Verifying and unlocking your lead...");
           handleVerify();
         },
+        onSuccess: (data: any) => {
+          console.log("[SafePay] Checkout success:", data);
+          setIsPaid(true);
+          toast.success("Payment received! Verifying and unlocking your lead...");
+          handleVerify();
+        },
         onCancel: (data: any) => {
           console.log("[SafePay] Payment cancelled:", data);
           toast.info("Payment was cancelled. You can try again.");
+        },
+        onError: (err: any) => {
+          console.error("[SafePay] Checkout error:", err);
+          setSdkError(`Payment error: ${err.message || String(err)}`);
         },
       });
       
