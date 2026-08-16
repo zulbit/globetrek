@@ -300,7 +300,7 @@ function BillingPage() {
                       <div>
                         <span className="font-bold text-foreground block">{act.addon_title}</span>
                         <span className="text-[10px] text-purple-300 font-mono">
-                          Expires in {daysLeft} day{daysLeft === 1 ? "" : "s"} ({new Date(act.expires_at).toLocaleDateString()})
+                          Expires in {daysLeft} day{daysLeft === 1 ? "" : "s"} ({new Date(act.expires_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })})
                         </span>
                       </div>
                       <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] uppercase font-bold">

@@ -544,7 +544,7 @@ function VendorLeads() {
                     <div className="min-w-0">
                       <div className="truncate font-medium">{l.customer_name}</div>
                       <div className="truncate text-xs text-muted-foreground">
-                        {new Date(l.created_at).toLocaleDateString()} · {l.message || "No message"}
+                        {new Date(l.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })} · {l.message || "No message"}
                       </div>
                     </div>
                     <div className="truncate text-xs text-muted-foreground">{subject}</div>
@@ -650,7 +650,7 @@ function VendorLeads() {
                         Custom tour to {l.destination}
                       </h3>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        Submitted {new Date(l.created_at).toLocaleDateString()}
+                        Submitted {new Date(l.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                       </p>
                     </div>
 

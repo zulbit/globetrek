@@ -149,7 +149,7 @@ function CustomerQuotesPortal() {
                 Custom Group Tour to {lead.destination}
               </h1>
               <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                Prepared for <strong className="text-foreground">{lead.contact_name}</strong> · Submitted on {new Date(lead.created_at).toLocaleDateString()}
+                Prepared for <strong className="text-foreground">{lead.contact_name}</strong> · Submitted on {new Date(lead.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
               </p>
             </div>
 
@@ -233,7 +233,7 @@ function CustomerQuotesPortal() {
                           </span>
                           {q.valid_until && (
                             <span className="text-[10px] text-amber-400/80 block mt-0.5 font-semibold">
-                              ⏳ Valid until {new Date(q.valid_until).toLocaleDateString()}
+                              ⏳ Valid until {new Date(q.valid_until).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                             </span>
                           )}
                         </div>

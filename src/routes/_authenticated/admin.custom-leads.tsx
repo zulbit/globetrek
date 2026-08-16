@@ -268,7 +268,7 @@ function AdminCustomLeads() {
                         <div>
                           <p className="font-semibold text-foreground">{uv.profiles?.full_name}</p>
                           <p className="text-[10px] text-muted-foreground mt-0.5">
-                            Unlocked: {new Date(uv.purchased_at).toLocaleDateString()}
+                            Unlocked: {new Date(uv.purchased_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                           </p>
                         </div>
                         <a

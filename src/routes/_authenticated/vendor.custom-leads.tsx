@@ -321,7 +321,7 @@ export function VendorCustomLeadsPage() {
                       Custom Tour to {l.destination}
                     </h3>
                     <p className="text-[11px] text-muted-foreground mt-0.5">
-                      Submitted {new Date(l.created_at).toLocaleDateString()}
+                      Submitted {new Date(l.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                     </p>
                   </div>
 

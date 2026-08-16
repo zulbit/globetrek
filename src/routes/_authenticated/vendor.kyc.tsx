@@ -219,7 +219,7 @@ function VendorKYCPage() {
             <Clock className="size-4 shrink-0 text-amber-400 mt-0.5" />
             <div className="leading-relaxed">
               <strong className="text-amber-300 font-bold block mb-0.5">Application Submitted — Admin Review in Progress (24h SLA):</strong>
-              Your verification credentials were submitted {existingKyc?.submittedAt ? `on ${new Date(existingKyc.submittedAt).toLocaleDateString()}` : "recently"}. GlobeTrek PK Admins are reviewing your DTS license and contact details. You will receive an automated WhatsApp confirmation once approved.
+              Your verification credentials were submitted {existingKyc?.submittedAt ? `on ${new Date(existingKyc.submittedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}` : "recently"}. GlobeTrek PK Admins are reviewing your DTS license and contact details. You will receive an automated WhatsApp confirmation once approved.
             </div>
           </div>
         )}

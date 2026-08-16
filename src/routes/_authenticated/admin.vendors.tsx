@@ -201,7 +201,7 @@ function AdminVendors() {
                     </h4>
                     <p className="text-[11px] text-muted-foreground truncate">{vendor.email}</p>
                     <p className="text-[10px] text-amber-400/90 font-medium mt-0.5">
-                      Submitted: {vendor.kycSubmittedAt ? new Date(vendor.kycSubmittedAt).toLocaleDateString() : "Recently"}
+                      Submitted: {vendor.kycSubmittedAt ? new Date(vendor.kycSubmittedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "Recently"}
                     </p>
                   </div>
                   <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-[9px] uppercase font-bold">
@@ -501,7 +501,7 @@ function VendorRow({
                 }`}
               >
                 {new Date(p.kycDetails.dts_expiry_date) < new Date() ? "⚠️ Exp: " : "Exp: "}
-                {p.kycDetails.dts_expiry_date}
+                {new Date(p.kycDetails.dts_expiry_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
               </span>
             )}
           </div>

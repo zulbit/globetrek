@@ -391,7 +391,7 @@ function CustomerDashboard() {
                                             </span>
                                           </h5>
                                           <p className="text-[11px] text-muted-foreground">
-                                            Submitted {new Date(q.created_at).toLocaleDateString()}
+                                            Submitted {new Date(q.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                                           </p>
                                         </div>
                                       </div>
@@ -513,7 +513,7 @@ function CustomerDashboard() {
                                 </Badge>
                               </div>
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                Submitted on {new Date(inq.created_at).toLocaleDateString()} {inq.message ? `· "${inq.message}"` : ""}
+                                Submitted on {new Date(inq.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })} {inq.message ? `· "${inq.message}"` : ""}
                               </p>
                             </div>
                             {inq.tour_id && (

@@ -326,7 +326,7 @@ export function AdminFinancials() {
                       </span>
                     </td>
                     <td className="p-3.5 text-muted-foreground font-mono">
-                      {new Date(tx.date).toLocaleDateString()} {new Date(tx.date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      {new Date(tx.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })} {new Date(tx.date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </td>
                     <td className="p-3.5 text-right font-black text-foreground font-mono">
                       Rs {tx.amount.toLocaleString()}
