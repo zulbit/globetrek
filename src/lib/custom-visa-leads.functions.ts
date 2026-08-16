@@ -409,42 +409,43 @@ export const createVisaLeadUnlockCheckout = createServerFn({ method: "POST" })
       : "https://sandbox.api.getsafepay.com";
 
     const secretKey = process.env.SAFEPAY_SECRET_KEY || "c3487d289512e74681b031cd3cf5d6a8d73a22b3c709bd939c3f833e95b7c27a";
-    const apiKey = process.env.SAFEPAY_API_KEY || "sec_44f1c905-ca5b-432d-8b04-a690ea3da59f";
 
-    // Create SafePay Tracker (Advanced Flow) — customer prefill via API body is stored server-side
     let trackerId = `fallback_${Date.now()}`;
+    let safepayUrl = ""; // The actual SafePay checkout page URL
     const noteText = `Unlock Custom Visa Lead (${targetLead.destination_country} - ${targetLead.visa_category})`;
 
     try {
-      const trackerRes = await fetch(`${baseUrl}/order/payments/v3/`, {
+      const qlRes = await fetch(`${baseUrl}/invoice/quick-links/v2/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "X-SFPY-MERCHANT-SECRET": secretKey,
         },
         body: JSON.stringify({
-          amount: unlockFee * 100, // SafePay Tracker API uses paisa (minor units)
+          amount: unlockFee,
           currency: "PKR",
-          environment: env,
-          client: apiKey,
+          note: noteText,
+          workflow: "MANUAL",
         }),
       });
 
-      if (trackerRes.ok) {
-        const trackerJson = (await trackerRes.json()) as any;
-        const token = trackerJson.data?.tracker?.token;
-        if (token) {
-          trackerId = token;
+      if (qlRes.ok) {
+        const qlJson = (await qlRes.json()) as any;
+        const apiTrackerId = qlJson.data?.id;
+        const recipientUrl = qlJson.data?.metadata?.[0]?.recipient_view_url;
+        if (apiTrackerId) {
+          trackerId = apiTrackerId;
+          safepayUrl = recipientUrl || `${baseUrl}/io/quick-link?ql=${apiTrackerId}`;
         }
       } else {
-        console.warn("[createVisaLeadUnlockCheckout] SafePay Tracker API failed:", await trackerRes.text());
+        console.warn("[createVisaLeadUnlockCheckout] SafePay QuickLink API failed:", await qlRes.text());
       }
     } catch (apiErr) {
-      console.warn("[createVisaLeadUnlockCheckout] SafePay Tracker API call failed:", apiErr);
+      console.warn("[createVisaLeadUnlockCheckout] SafePay QuickLink API call failed:", apiErr);
     }
 
-    // Build internal checkout URL — our in-app page with pre-filled vendor details
-    const checkoutUrl = `/vendor/checkout?tracker=${encodeURIComponent(trackerId)}&leadId=${encodeURIComponent(data.leadId)}&type=visa&amount=${unlockFee}&note=${encodeURIComponent(noteText)}&env=${env}`;
+    // Build internal checkout URL — our in-app page shows pre-filled vendor details + SafePay pay button
+    const checkoutUrl = `/vendor/checkout?safepayUrl=${encodeURIComponent(safepayUrl)}&leadId=${encodeURIComponent(data.leadId)}&type=visa&amount=${unlockFee}&note=${encodeURIComponent(noteText)}&trackerId=${encodeURIComponent(trackerId)}`;
 
     // Record pending transaction
     const { data: paymentsRow } = await supabaseAdmin

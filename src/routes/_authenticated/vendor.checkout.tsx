@@ -38,12 +38,12 @@ function VendorCheckoutPage() {
 
   // Read checkout params from URL
   const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
-  const tracker = searchParams.get("tracker") || "";
+  const safepayUrl = searchParams.get("safepayUrl") || "";
   const leadId = searchParams.get("leadId") || "";
   const type = searchParams.get("type") || "visa"; // "visa" or "tour"
   const amount = searchParams.get("amount") || "750";
   const note = searchParams.get("note") || "Lead Unlock";
-  const env = searchParams.get("env") || "sandbox";
+  const trackerId = searchParams.get("trackerId") || "";
 
   // Fetch vendor profile + KYC for prefilled display
   const { data: vendorData } = useQuery({
@@ -80,15 +80,6 @@ function VendorCheckoutPage() {
       };
     },
   });
-
-  // SafePay iframe URL — the /components hosted checkout with just the card form
-  const safepayBaseUrl = env === "production" || env === "live"
-    ? "https://api.getsafepay.com"
-    : "https://sandbox.api.getsafepay.com";
-
-  const safepayIframeUrl = tracker
-    ? `${safepayBaseUrl}/components?beacon=${tracker}&entry_mode=hosted&env=${env}&source=custom`
-    : "";
 
   // Listen for SafePay postMessage events from the iframe
   useEffect(() => {
@@ -144,7 +135,7 @@ function VendorCheckoutPage() {
     }
   };
 
-  if (!tracker || !leadId) {
+  if (!safepayUrl || !leadId) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Card className="p-8 text-center max-w-md">
@@ -273,8 +264,8 @@ function VendorCheckoutPage() {
                     <Button
                       className="w-full gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-base py-6 shadow-lg hover:shadow-xl transition-all"
                       onClick={() => {
-                        if (safepayIframeUrl) {
-                          window.open(safepayIframeUrl, "_blank", "noopener,noreferrer");
+                        if (safepayUrl) {
+                          window.open(safepayUrl, "_blank", "noopener,noreferrer");
                           setPaymentOpened(true);
                         }
                       }}
