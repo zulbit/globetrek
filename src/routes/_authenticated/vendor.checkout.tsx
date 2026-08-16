@@ -169,6 +169,10 @@ function VendorCheckoutPage() {
 
         const instance = Component({
           env: env === "production" || env === "live" ? "production" : "sandbox",
+          client: {
+            sandbox: "sec_8a895a91-cdc7-47de-96b2-49c9c6885682",
+            production: "sec_8a895a91-cdc7-47de-96b2-49c9c6885682" // Note: requires VITE_ env var later
+          },
           tracker: tracker,
           onPayment: (data: any) => {
             console.log("[SafePay] Payment complete:", data);
