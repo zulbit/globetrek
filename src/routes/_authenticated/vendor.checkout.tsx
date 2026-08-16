@@ -335,7 +335,7 @@ function VendorCheckoutPage() {
                   <div
                     id="safepay-button-container"
                     ref={safepayContainerRef}
-                    className="min-h-[60px] flex flex-col items-center justify-center text-center"
+                    className="w-full h-[60px] flex flex-col items-center justify-center text-center relative overflow-hidden"
                   >
                     {sdkError && (
                       <div className="text-destructive text-sm font-medium bg-destructive/10 p-3 rounded-md w-full">
@@ -350,6 +350,15 @@ function VendorCheckoutPage() {
                       </>
                     )}
                   </div>
+                  
+                  {isButtonReady && !sdkError && (
+                    <div className="text-xs text-center text-muted-foreground mt-2" onClick={() => {
+                      const container = document.getElementById('safepay-button-container');
+                      toast.info(`Container innerHTML length: ${container?.innerHTML.length}. Has iframe? ${!!container?.querySelector('iframe')}`);
+                    }}>
+                      (If button is missing, click here to debug)
+                    </div>
+                  )}
                 </div>
 
                 <hr className="border-border" />
