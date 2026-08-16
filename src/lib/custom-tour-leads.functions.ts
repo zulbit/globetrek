@@ -240,7 +240,7 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
 
     // Create SafePay Tracker (needed for Button SDK popup checkout)
     const secretKey = process.env.SAFEPAY_SECRET_KEY || "c3487d289512e74681b031cd3cf5d6a8d73a22b3c709bd939c3f833e95b7c27a";
-    const apiKey = process.env.SAFEPAY_API_KEY || "sec_44f1c905-ca5b-432d-8b04-a690ea3da59f";
+    const apiKey = process.env.SAFEPAY_API_KEY || "sec_8a895a91-cdc7-47de-96b2-49c9c6885682";
 
     let trackerToken = `fallback_${Date.now()}`;
 
