@@ -24,7 +24,7 @@ export const getAdminFinancialMetrics = createServerFn({ method: "GET" })
     if (pErr) console.error("[getAdminFinancialMetrics] profiles error:", pErr);
 
     // 2. Fetch completed lead unlocks and real SafePay payments
-    const [lpRes, payRes, dbPlansRes, addonGatewayData] = await Promise.all([
+    const [lpRes, payRes, dbPlansRes, addonGatewayData, visaLeadPurchasesRes] = await Promise.all([
       supabaseAdmin
         .from("lead_unlock_payments")
         .select("id, lead_id, vendor_id, amount, created_at, status, profiles(full_name, company_name, email)")
@@ -44,6 +44,11 @@ export const getAdminFinancialMetrics = createServerFn({ method: "GET" })
         .from("payment_gateway_settings")
         .select("config")
         .eq("provider", "vendor_active_addons")
+        .maybeSingle(),
+      supabaseAdmin
+        .from("payment_gateway_settings")
+        .select("config")
+        .eq("provider", "visa_lead_purchases")
         .maybeSingle()
     ]);
 
@@ -51,6 +56,31 @@ export const getAdminFinancialMetrics = createServerFn({ method: "GET" })
     if (payRes.error) console.error("[getAdminFinancialMetrics] payments error:", payRes.error);
 
     const validLeads = lpRes.data ?? [];
+    
+    // Merge visa lead purchases into validLeads
+    let visaPurchases: any[] = [];
+    if (visaLeadPurchasesRes.data?.config) {
+      const parsed = typeof visaLeadPurchasesRes.data.config === "string" ? JSON.parse(visaLeadPurchasesRes.data.config) : visaLeadPurchasesRes.data.config;
+      if (Array.isArray(parsed.purchases)) {
+        visaPurchases = parsed.purchases;
+      }
+    }
+    
+    const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
+    
+    visaPurchases.forEach(vp => {
+      const vProfile = profileMap.get(vp.vendor_id);
+      validLeads.push({
+        id: vp.id || `visa-${vp.lead_id}-${vp.vendor_id}`,
+        lead_id: vp.lead_id,
+        vendor_id: vp.vendor_id,
+        amount: vp.amount_paid || 750,
+        created_at: vp.purchased_at || new Date().toISOString(),
+        status: "completed",
+        profiles: vProfile
+      } as any);
+    });
+
     const realPayments = payRes.data ?? [];
 
     const realSubPayments = realPayments.filter((p) => (p.metadata as any)?.type === "subscription");
@@ -171,7 +201,6 @@ export const getAdminFinancialMetrics = createServerFn({ method: "GET" })
     }
 
     // 8. Recent Transaction Feed
-    const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
 
     const recentTransactions = realSubPayments
       .map((p: any) => {
