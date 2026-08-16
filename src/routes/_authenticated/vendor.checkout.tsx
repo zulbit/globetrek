@@ -173,7 +173,11 @@ function VendorCheckoutPage() {
             sandbox: "sec_8a895a91-cdc7-47de-96b2-49c9c6885682",
             production: "sec_8a895a91-cdc7-47de-96b2-49c9c6885682" // Note: requires VITE_ env var later
           },
+          // Some versions read tracker directly, others require the payment function to return it
           tracker: tracker,
+          payment: (data: any, actions: any) => {
+            return tracker;
+          },
           onPayment: (data: any) => {
             console.log("[SafePay] Payment complete:", data);
             setIsPaid(true);
