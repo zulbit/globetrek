@@ -751,39 +751,8 @@ function VendorLeads() {
                         </div>
 
                         <div className="flex gap-2">
-                          {l.has_pending_payment ? (
-                            // Payment was initiated but not yet verified — only show Verify
-                            <div className="flex flex-col gap-2 w-full">
                               <Button
-                                className="w-full gap-2 bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow hover:from-amber-600 hover:to-amber-700"
-                                disabled={verifyPaymentMutation.isPending}
-                                onClick={() => verifyPaymentMutation.mutate(l.id)}
-                              >
-                                {verifyPaymentMutation.isPending ? (
-                                  <Loader2 className="size-4 animate-spin" />
-                                ) : (
-                                  <RefreshCw className="size-4" />
-                                )}
-                                Confirm Payment &amp; Unlock
-                              </Button>
-                              <Button
-                                variant="outline"
-                                className="w-full gap-2 text-xs border-amber-500/30 hover:bg-amber-500/10 hover:text-amber-500"
-                                disabled={unlockMutation.isPending}
-                                onClick={() => unlockMutation.mutate(l.id)}
-                              >
-                                {unlockMutation.isPending ? (
-                                  <Loader2 className="size-3 animate-spin" />
-                                ) : (
-                                  <ExternalLink className="size-3" />
-                                )}
-                                Restart Payment Checkout
-                              </Button>
-                            </div>
-                          ) : (
-                            <>
-                              <Button
-                                className="flex-1 gap-2 bg-gradient-to-r from-amber-500 to-primary text-white shadow-glow hover:from-amber-600 hover:to-primary/90"
+                                className="flex-1 w-full gap-2 bg-gradient-to-r from-amber-500 to-primary text-white shadow-glow hover:from-amber-600 hover:to-primary/90"
                                 disabled={unlockMutation.isPending}
                                 onClick={() => unlockMutation.mutate(l.id)}
                               >
@@ -794,22 +763,6 @@ function VendorLeads() {
                                 )}
                                 Unlock Lead Info — ₨ 5,000
                               </Button>
-                              <Button
-                                variant="outline"
-                                className="border-primary/20 hover:bg-primary/5 hover:text-primary gap-1.5"
-                                disabled={verifyPaymentMutation.isPending}
-                                onClick={() => verifyPaymentMutation.mutate(l.id)}
-                                title="Verify if you have already completed payment"
-                              >
-                                {verifyPaymentMutation.isPending ? (
-                                  <Loader2 className="size-4 animate-spin" />
-                                ) : (
-                                  <RefreshCw className="size-4" />
-                                )}
-                                Verify Payment
-                              </Button>
-                            </>
-                          )}
                         </div>
                       </div>
                     )}

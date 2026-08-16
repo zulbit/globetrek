@@ -459,35 +459,6 @@ export function VendorCustomLeadsPage() {
                     </div>
 
                     <div className="flex gap-2">
-                      {l.has_pending_payment ? (
-                        <div className="flex flex-col gap-2 w-full">
-                          <Button
-                            className="w-full gap-2 bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow hover:from-amber-600 hover:to-amber-700 rounded-xl"
-                            disabled={verifyPaymentMutation.isPending}
-                            onClick={() => verifyPaymentMutation.mutate(l.id)}
-                          >
-                            {verifyPaymentMutation.isPending ? (
-                              <Loader2 className="size-4 animate-spin" />
-                            ) : (
-                              <RefreshCw className="size-4" />
-                            )}
-                            Confirm Payment &amp; Unlock
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="w-full gap-2 text-xs border-amber-500/30 hover:bg-amber-500/10 hover:text-amber-500 rounded-xl"
-                            disabled={unlockMutation.isPending}
-                            onClick={() => unlockMutation.mutate(l.id)}
-                          >
-                            {unlockMutation.isPending ? (
-                              <Loader2 className="size-3 animate-spin" />
-                            ) : (
-                              <ExternalLink className="size-3" />
-                            )}
-                            Restart Payment Checkout
-                          </Button>
-                        </div>
-                      ) : (
                         <Button
                           className="w-full gap-2 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow hover:opacity-95 rounded-xl font-bold"
                           disabled={unlockMutation.isPending}
@@ -512,7 +483,6 @@ export function VendorCustomLeadsPage() {
                           )}
                           Unlock Contact — Rs 5,000
                         </Button>
-                      )}
                     </div>
                   </div>
                 )}
