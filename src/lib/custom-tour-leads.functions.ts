@@ -256,6 +256,8 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
           currency: "PKR",
           environment: env,
           client: apiKey,
+          success_url: `https://globetrek.pk/vendor/custom-leads`,
+          cancel_url: `https://globetrek.pk/vendor/custom-leads`,
         }),
       });
 

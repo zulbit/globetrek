@@ -427,6 +427,8 @@ export const createVisaLeadUnlockCheckout = createServerFn({ method: "POST" })
           currency: "PKR",
           environment: env,
           client: apiKey,
+          success_url: `https://globetrek.pk/vendor/custom-visa-leads`,
+          cancel_url: `https://globetrek.pk/vendor/custom-visa-leads`,
         }),
       });
 
