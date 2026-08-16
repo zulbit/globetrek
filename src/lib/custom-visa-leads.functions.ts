@@ -942,35 +942,4 @@ export const updateVisaLeadStatusServer = createServerFn({ method: "POST" })
   });
 
 
-// -------- 10. Admin: Update Custom Visa Lead Status --------
-export const updateVisaLeadStatusServer = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .validator((input: { leadId: string; status: "verified" | "accepted" | "closed" }) => input)
-  .handler(async ({ data: input, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("Forbidden: Admin access required");
 
-    const { data: leadsRow } = await supabaseAdmin
-      .from("payment_gateway_settings")
-      .select("config")
-      .eq("provider", "custom_visa_leads")
-      .maybeSingle();
-
-    const leads: CustomVisaLeadItem[] = leadsRow?.config?.leads || [];
-    const targetLead = leads.find((l) => l.id === input.leadId);
-    if (!targetLead) throw new Error("Custom Visa Lead not found");
-
-    targetLead.status = input.status;
-
-    await supabaseAdmin.from("payment_gateway_settings").upsert({
-      provider: "custom_visa_leads",
-      config: { leads },
-      updated_at: new Date().toISOString(),
-    });
-
-    return { ok: true, status: input.status };
-  });
