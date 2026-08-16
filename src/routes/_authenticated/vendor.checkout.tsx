@@ -112,41 +112,62 @@ function VendorCheckoutPage() {
     }
   }, [leadId, type, navigate, qc]);
 
-  // Dynamically load and render SafePay Button SDK
+  // Dynamically load SafePay Button SDK via script tag (zoid-based SDK needs window at eval time)
   useEffect(() => {
-    if (!tracker || !safepayContainerRef.current || buttonRendered.current || isPaid) return;
+    if (!tracker || buttonRendered.current || isPaid) return;
 
-    const renderButton = async () => {
-      try {
-        // @ts-ignore — browser-only SDK
-        const sfpy = await import("@sfpy/checkout-components");
-        const safepay = sfpy.default || sfpy;
+    const containerId = "safepay-button-container";
 
-        if (safepay?.Button?.render) {
-          safepay.Button.render({
-            env: env === "production" || env === "live" ? "production" : "sandbox",
-            tracker: tracker,
-            onPayment: (data: any) => {
-              console.log("[SafePay] Payment complete:", data);
-              setIsPaid(true);
-              toast.success("Payment received! Verifying and unlocking your lead...");
-              handleVerify();
-            },
-            onCancel: (data: any) => {
-              console.log("[SafePay] Payment cancelled:", data);
-              toast.info("Payment was cancelled. You can try again.");
-            },
-          }, "#safepay-button-container");
-          buttonRendered.current = true;
+    // Check if SDK is already loaded globally
+    if ((window as any).safepay?.Button?.render) {
+      renderSafepayButton((window as any).safepay, containerId);
+      return;
+    }
+
+    // Load SDK via script tag
+    const existingScript = document.getElementById("sfpy-checkout-sdk");
+    if (!existingScript) {
+      const script = document.createElement("script");
+      script.id = "sfpy-checkout-sdk";
+      script.src = "https://unpkg.com/@sfpy/checkout-components@1.0.1/dist/sfpy-checkout.js";
+      script.async = true;
+      script.onload = () => {
+        if ((window as any).safepay?.Button?.render) {
+          renderSafepayButton((window as any).safepay, containerId);
         } else {
-          console.warn("[SafePay] Button.render not found in SDK, keys:", Object.keys(safepay));
+          console.warn("[SafePay] SDK loaded but safepay.Button.render not found. Global keys:", Object.keys((window as any).safepay || {}));
         }
-      } catch (err) {
-        console.error("[SafePay] Failed to load checkout SDK:", err);
-      }
-    };
+      };
+      script.onerror = () => {
+        console.error("[SafePay] Failed to load checkout SDK from CDN");
+      };
+      document.body.appendChild(script);
+    }
 
-    renderButton();
+    function renderSafepayButton(safepay: any, target: string) {
+      try {
+        const container = document.getElementById(target);
+        if (container) container.innerHTML = ""; // Clear loading spinner
+
+        safepay.Button.render({
+          env: env === "production" || env === "live" ? "production" : "sandbox",
+          tracker: tracker,
+          onPayment: (data: any) => {
+            console.log("[SafePay] Payment complete:", data);
+            setIsPaid(true);
+            toast.success("Payment received! Verifying and unlocking your lead...");
+            handleVerify();
+          },
+          onCancel: (data: any) => {
+            console.log("[SafePay] Payment cancelled:", data);
+            toast.info("Payment was cancelled. You can try again.");
+          },
+        }, `#${target}`);
+        buttonRendered.current = true;
+      } catch (err) {
+        console.error("[SafePay] Button.render() failed:", err);
+      }
+    }
   }, [tracker, env, isPaid, handleVerify]);
 
   if (!tracker || !leadId) {
