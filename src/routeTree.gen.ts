@@ -67,7 +67,6 @@ import { Route as AuthenticatedAdminWhatsappRouteImport } from './routes/_authen
 import { Route as AuthenticatedCustomerIndexRouteImport } from './routes/_authenticated/customer.index'
 import { Route as AuthenticatedVendorIndexRouteImport } from './routes/_authenticated/vendor.index'
 import { Route as AuthenticatedVendorBillingRouteImport } from './routes/_authenticated/vendor.billing'
-import { Route as AuthenticatedVendorCheckoutRouteImport } from './routes/_authenticated/vendor.checkout'
 import { Route as AuthenticatedVendorCustomLeadsRouteImport } from './routes/_authenticated/vendor.custom-leads'
 import { Route as AuthenticatedVendorCustomVisaLeadsRouteImport } from './routes/_authenticated/vendor.custom-visa-leads'
 import { Route as AuthenticatedVendorInsuranceRouteImport } from './routes/_authenticated/vendor.insurance'
@@ -386,12 +385,6 @@ const AuthenticatedVendorBillingRoute =
     path: '/billing',
     getParentRoute: () => AuthenticatedVendorRoute,
   } as any)
-const AuthenticatedVendorCheckoutRoute =
-  AuthenticatedVendorCheckoutRouteImport.update({
-    id: '/checkout',
-    path: '/checkout',
-    getParentRoute: () => AuthenticatedVendorRoute,
-  } as any)
 const AuthenticatedVendorCustomLeadsRoute =
   AuthenticatedVendorCustomLeadsRouteImport.update({
     id: '/custom-leads',
@@ -516,7 +509,6 @@ export interface FileRoutesByFullPath {
   '/admin/vendors': typeof AuthenticatedAdminVendorsRoute
   '/admin/whatsapp': typeof AuthenticatedAdminWhatsappRoute
   '/vendor/billing': typeof AuthenticatedVendorBillingRoute
-  '/vendor/checkout': typeof AuthenticatedVendorCheckoutRoute
   '/vendor/custom-leads': typeof AuthenticatedVendorCustomLeadsRoute
   '/vendor/custom-visa-leads': typeof AuthenticatedVendorCustomVisaLeadsRoute
   '/vendor/insurance': typeof AuthenticatedVendorInsuranceRoute
@@ -582,7 +574,6 @@ export interface FileRoutesByTo {
   '/admin/vendors': typeof AuthenticatedAdminVendorsRoute
   '/admin/whatsapp': typeof AuthenticatedAdminWhatsappRoute
   '/vendor/billing': typeof AuthenticatedVendorBillingRoute
-  '/vendor/checkout': typeof AuthenticatedVendorCheckoutRoute
   '/vendor/custom-leads': typeof AuthenticatedVendorCustomLeadsRoute
   '/vendor/custom-visa-leads': typeof AuthenticatedVendorCustomVisaLeadsRoute
   '/vendor/insurance': typeof AuthenticatedVendorInsuranceRoute
@@ -656,7 +647,6 @@ export interface FileRoutesById {
   '/_authenticated/admin/vendors': typeof AuthenticatedAdminVendorsRoute
   '/_authenticated/admin/whatsapp': typeof AuthenticatedAdminWhatsappRoute
   '/_authenticated/vendor/billing': typeof AuthenticatedVendorBillingRoute
-  '/_authenticated/vendor/checkout': typeof AuthenticatedVendorCheckoutRoute
   '/_authenticated/vendor/custom-leads': typeof AuthenticatedVendorCustomLeadsRoute
   '/_authenticated/vendor/custom-visa-leads': typeof AuthenticatedVendorCustomVisaLeadsRoute
   '/_authenticated/vendor/insurance': typeof AuthenticatedVendorInsuranceRoute
@@ -730,7 +720,6 @@ export interface FileRouteTypes {
     | '/admin/vendors'
     | '/admin/whatsapp'
     | '/vendor/billing'
-    | '/vendor/checkout'
     | '/vendor/custom-leads'
     | '/vendor/custom-visa-leads'
     | '/vendor/insurance'
@@ -796,7 +785,6 @@ export interface FileRouteTypes {
     | '/admin/vendors'
     | '/admin/whatsapp'
     | '/vendor/billing'
-    | '/vendor/checkout'
     | '/vendor/custom-leads'
     | '/vendor/custom-visa-leads'
     | '/vendor/insurance'
@@ -869,7 +857,6 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/vendors'
     | '/_authenticated/admin/whatsapp'
     | '/_authenticated/vendor/billing'
-    | '/_authenticated/vendor/checkout'
     | '/_authenticated/vendor/custom-leads'
     | '/_authenticated/vendor/custom-visa-leads'
     | '/_authenticated/vendor/insurance'
@@ -1325,13 +1312,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedVendorBillingRouteImport
       parentRoute: typeof AuthenticatedVendorRoute
     }
-    '/_authenticated/vendor/checkout': {
-      id: '/_authenticated/vendor/checkout'
-      path: '/checkout'
-      fullPath: '/vendor/checkout'
-      preLoaderRoute: typeof AuthenticatedVendorCheckoutRouteImport
-      parentRoute: typeof AuthenticatedVendorRoute
-    }
     '/_authenticated/vendor/custom-leads': {
       id: '/_authenticated/vendor/custom-leads'
       path: '/custom-leads'
@@ -1469,7 +1449,6 @@ const AuthenticatedAdminRouteWithChildren =
 
 interface AuthenticatedVendorRouteChildren {
   AuthenticatedVendorBillingRoute: typeof AuthenticatedVendorBillingRoute
-  AuthenticatedVendorCheckoutRoute: typeof AuthenticatedVendorCheckoutRoute
   AuthenticatedVendorCustomLeadsRoute: typeof AuthenticatedVendorCustomLeadsRoute
   AuthenticatedVendorCustomVisaLeadsRoute: typeof AuthenticatedVendorCustomVisaLeadsRoute
   AuthenticatedVendorInsuranceRoute: typeof AuthenticatedVendorInsuranceRoute
@@ -1485,7 +1464,6 @@ interface AuthenticatedVendorRouteChildren {
 
 const AuthenticatedVendorRouteChildren: AuthenticatedVendorRouteChildren = {
   AuthenticatedVendorBillingRoute: AuthenticatedVendorBillingRoute,
-  AuthenticatedVendorCheckoutRoute: AuthenticatedVendorCheckoutRoute,
   AuthenticatedVendorCustomLeadsRoute: AuthenticatedVendorCustomLeadsRoute,
   AuthenticatedVendorCustomVisaLeadsRoute:
     AuthenticatedVendorCustomVisaLeadsRoute,

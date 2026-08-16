@@ -102,8 +102,8 @@ export function VendorCustomVisaLeadsPage() {
     mutationFn: (leadId: string) => createVisaLeadUnlockCheckout({ data: { leadId } }),
     onSuccess: (res) => {
       if (res.checkoutUrl) {
-        toast.info("Redirecting to secure checkout...");
-        window.location.href = res.checkoutUrl;
+        toast.info("Opening SafePay checkout window for Rs 750...");
+        window.open(res.checkoutUrl, "_blank");
       }
     },
     onError: (err: Error) => {
