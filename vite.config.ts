@@ -7,11 +7,13 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
-  preview: {
-    allowedHosts: true,
-  },
-  server: {
-    allowedHosts: true,
+  vite: {
+    preview: {
+      allowedHosts: true,
+    },
+    server: {
+      allowedHosts: true,
+    },
   },
   nitro: {
     preset: "node-server",

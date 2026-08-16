@@ -216,7 +216,7 @@ export const Route = createFileRoute("/api/public/safepay-webhook")({
                 .from("lead_unlock_payments")
                 .update({ status: "failed", payment_intent_id: token })
                 .eq("id", leadPayment.id);
-              return Response.json({ ok: true, failed_lead: leadPayment.id });
+              return Response.json({ ok: true, failed_lead: (leadPayment as any).id });
             }
           }
 
@@ -251,10 +251,11 @@ export const Route = createFileRoute("/api/public/safepay-webhook")({
               
             try {
               const { data: profile } = await supabaseAdmin.from("profiles").select("phone, full_name").eq("id", payment.owner_id).single();
-              if (profile?.phone) {
+              const p = profile as any;
+              if (p?.phone) {
                 const { sendWhatsAppMessage } = await import("@/lib/whatsapp.functions");
-                const msg = `💳 *GlobeTrek PK — Subscription Upgraded!* 🎉\n\nDear *${profile.full_name || "Vendor"}*,\n\nYour payment of *Rs ${payment.amount}* via SafePay was successful! You have been upgraded to the *${meta.tier.toUpperCase()} Plan*!\n\nManage your subscription:\nhttps://globetrek.pk/vendor/billing`;
-                await sendWhatsAppMessage({ data: { phone: profile.phone, message: msg, skipDeduplication: true } });
+                const msg = `💳 *GlobeTrek PK — Subscription Upgraded!* 🎉\n\nDear *${p.full_name || "Vendor"}*,\n\nYour payment of *Rs ${payment.amount}* via SafePay was successful! You have been upgraded to the *${meta.tier.toUpperCase()} Plan*!\n\nManage your subscription:\nhttps://globetrek.pk/vendor/billing`;
+                await sendWhatsAppMessage({ data: { phone: p.phone, message: msg, skipDeduplication: true } });
               }
             } catch (waErr) {
               console.error("Subscription upgrade WhatsApp alert error:", waErr);
@@ -299,22 +300,23 @@ export const Route = createFileRoute("/api/public/safepay-webhook")({
           }
 
           // Trigger affiliate commission for subscription payments
-          try {
-            const { data: booking } = await supabaseAdmin
-              .from("bookings")
-              .select("vendor_id, service_type, total_amount")
-              .eq("id", payment.booking_id)
-              .maybeSingle();
-            if (booking?.vendor_id) {
-              const { triggerAffiliateCommission } = await import("@/lib/affiliate.functions");
-              await triggerAffiliateCommission({
-                vendorUserId: booking.vendor_id,
-                planName: booking.service_type ?? "subscription",
-                planAmountPkr: booking.total_amount ?? 0,
-                paymentRef: token,
-                isUpgrade: false,
-              });
-            }
+            try {
+              const { data: booking } = await supabaseAdmin
+                .from("bookings")
+                .select("vendor_id, service_type, total_amount")
+                .eq("id", payment.booking_id)
+                .maybeSingle();
+              const b = booking as any;
+              if (b?.vendor_id) {
+                const { triggerAffiliateCommission } = await import("@/lib/affiliate.functions");
+                await triggerAffiliateCommission({
+                  vendorUserId: b.vendor_id,
+                  planName: b.service_type ?? "subscription",
+                  planAmountPkr: b.total_amount ?? 0,
+                  paymentRef: token,
+                  isUpgrade: false,
+                });
+              }
           } catch (affErr) {
             console.error("[Affiliate commission trigger error]", affErr);
           }

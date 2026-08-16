@@ -505,7 +505,7 @@ function PricingPage() {
                           {t.tagline}
                         </p>
                         <div className="mt-3 flex flex-wrap gap-1">
-                          {t.covers.map((c) => {
+                          {t.covers.map((c: any) => {
                             const CIcon = CATEGORY_ICON[c];
                             return (
                               <span
