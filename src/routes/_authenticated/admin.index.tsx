@@ -157,8 +157,23 @@ function AdminOverview() {
         else freeCount++;
       });
 
-      // Monthly baseline subscription recurring revenue across all tiers
-      const monthlySubRev = starterCount * 4000 + proCount * 10000 + agencyCount * 25000;
+      // Fetch dynamic pricing for MRR and real payments for actual revenue
+      const [pricingRes, realPaymentsRes] = await Promise.all([
+        supabase.from("payment_gateway_settings").select("config").eq("provider", "subscription_plans").maybeSingle(),
+        supabase.from("payments").select("amount, created_at, metadata").eq("status", "paid")
+      ]);
+
+      const dbPlans = pricingRes.data?.config || [];
+      const dynamicPrices: Record<string, number> = { starter: 4000, pro: 7500, agency: 12000 };
+      if (Array.isArray(dbPlans)) {
+        dbPlans.forEach((p: any) => {
+          if (p.id && p.price_pkr !== undefined) dynamicPrices[p.id] = Number(p.price_pkr) || 0;
+        });
+      }
+
+      // Monthly baseline subscription recurring revenue across all tiers (MRR Projection)
+      const monthlySubRev = starterCount * (dynamicPrices.starter || 4000) + proCount * (dynamicPrices.pro || 10000) + agencyCount * (dynamicPrices.agency || 25000);
+      
       const totalTourUnlockRev = tourUnlocks.reduce((acc, u) => acc + (u.amount || 5000), 0);
       const totalVisaUnlockRev = visaPurchases.reduce((acc, v) => acc + (v.amount_paid || 750), 0);
       const totalLeadUnlockRev = totalTourUnlockRev + totalVisaUnlockRev;
@@ -166,6 +181,19 @@ function AdminOverview() {
       // Timeframe calculations (Today, 7d, 30d, 90d, All Time)
       const nowMs = Date.now();
       const oneDayMs = 24 * 60 * 60 * 1000;
+
+      // Real Subscription & Addon payments by period
+      const realPayments = realPaymentsRes.data || [];
+      const subAndAddonPayments = realPayments.filter(p => {
+        const meta = p.metadata as any;
+        return meta?.type === "subscription" || meta?.type === "addon";
+      });
+
+      const subAddonToday = subAndAddonPayments.filter((p) => new Date(p.created_at).getTime() >= nowMs - oneDayMs).reduce((a, b) => a + (b.amount || 0), 0);
+      const subAddon7d = subAndAddonPayments.filter((p) => new Date(p.created_at).getTime() >= nowMs - 7 * oneDayMs).reduce((a, b) => a + (b.amount || 0), 0);
+      const subAddon30d = subAndAddonPayments.filter((p) => new Date(p.created_at).getTime() >= nowMs - 30 * oneDayMs).reduce((a, b) => a + (b.amount || 0), 0);
+      const subAddon90d = subAndAddonPayments.filter((p) => new Date(p.created_at).getTime() >= nowMs - 90 * oneDayMs).reduce((a, b) => a + (b.amount || 0), 0);
+      const subAddonAll = subAndAddonPayments.reduce((a, b) => a + (b.amount || 0), 0);
 
       // Tour lead unlocks by period
       const tourUnlockToday = tourUnlocks.filter((u) => new Date(u.created_at).getTime() >= nowMs - oneDayMs).reduce((a, b) => a + (b.amount || 5000), 0);
@@ -184,12 +212,13 @@ function AdminOverview() {
       const unlock30d = tourUnlock30d + visaUnlock30d;
       const unlock90d = tourUnlock90d + visaUnlock90d;
 
+      // ACTUAL revenue totals (no projections)
       const revenueTotals = {
-        today: Math.round(monthlySubRev / 30) + unlockToday,
-        "7d": Math.round((monthlySubRev / 30) * 7) + unlock7d,
-        "30d": monthlySubRev + unlock30d,
-        "90d": monthlySubRev * 3 + unlock90d,
-        all: monthlySubRev * 3 + totalLeadUnlockRev,
+        today: subAddonToday + unlockToday,
+        "7d": subAddon7d + unlock7d,
+        "30d": subAddon30d + unlock30d,
+        "90d": subAddon90d + unlock90d,
+        all: subAddonAll + totalLeadUnlockRev,
       };
 
       return {

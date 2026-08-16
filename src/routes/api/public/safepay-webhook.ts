@@ -176,10 +176,10 @@ export const Route = createFileRoute("/api/public/safepay-webhook")({
           return Response.json({ ok: true, lead_state: state });
         }
 
-        // 2. Try matching with regular booking payments
+        // 2. Try matching with regular payments (bookings, subscriptions, addons)
         let { data: payment } = await supabaseAdmin
           .from("payments")
-          .select("id, booking_id, status")
+          .select("id, booking_id, status, owner_id, amount, metadata")
           .eq("reference", token)
           .maybeSingle();
 
@@ -223,7 +223,7 @@ export const Route = createFileRoute("/api/public/safepay-webhook")({
           // Fallback to recent pending standard payment
           const { data: recent } = await supabaseAdmin
             .from("payments")
-            .select("id, booking_id, status")
+            .select("id, booking_id, status, owner_id, amount, metadata")
             .eq("method", "safepay")
             .eq("status", "pending")
             .gte("created_at", thirtyMinAgo)
@@ -239,7 +239,59 @@ export const Route = createFileRoute("/api/public/safepay-webhook")({
             .from("payments")
             .update({ status: "paid", reference: token })
             .eq("id", payment.id);
-          if (payment.booking_id) {
+
+          const meta = payment.metadata as any;
+
+          if (meta?.type === "subscription" && meta.tier && payment.owner_id) {
+            // Fulfill subscription
+            await supabaseAdmin
+              .from("profiles")
+              .update({ subscription_tier: meta.tier as never, pending_downgrade_tier: null } as any)
+              .eq("id", payment.owner_id);
+              
+            try {
+              const { data: profile } = await supabaseAdmin.from("profiles").select("phone, full_name").eq("id", payment.owner_id).single();
+              if (profile?.phone) {
+                const { sendWhatsAppMessage } = await import("@/lib/whatsapp.functions");
+                const msg = `💳 *GlobeTrek PK — Subscription Upgraded!* 🎉\n\nDear *${profile.full_name || "Vendor"}*,\n\nYour payment of *Rs ${payment.amount}* via SafePay was successful! You have been upgraded to the *${meta.tier.toUpperCase()} Plan*!\n\nManage your subscription:\nhttps://globetrek.pk/vendor/billing`;
+                await sendWhatsAppMessage({ data: { phone: profile.phone, message: msg, skipDeduplication: true } });
+              }
+            } catch (waErr) {
+              console.error("Subscription upgrade WhatsApp alert error:", waErr);
+            }
+          } else if (meta?.type === "addon" && meta.addonId && payment.owner_id) {
+            // Fulfill addon
+            const startsAt = new Date();
+            const expiresAt = new Date();
+            let durationDays = 30;
+            if (meta.billingPeriod?.includes("week") || meta.billingPeriod?.includes("7")) durationDays = 7;
+            expiresAt.setDate(expiresAt.getDate() + durationDays);
+
+            const { data: existing } = await supabaseAdmin
+              .from("payment_gateway_settings")
+              .select("config")
+              .eq("provider", "vendor_active_addons")
+              .maybeSingle();
+
+            const currentList: any[] = (existing?.config as any[]) || [];
+            currentList.unshift({
+              id: `addon_sub_${Date.now()}`,
+              vendor_id: payment.owner_id,
+              addon_id: meta.addonId,
+              addon_title: meta.addonTitle,
+              amount_pkr: payment.amount,
+              billing_period: meta.billingPeriod || "monthly",
+              starts_at: startsAt.toISOString(),
+              expires_at: expiresAt.toISOString(),
+              status: "active",
+            });
+
+            await supabaseAdmin.from("payment_gateway_settings").upsert(
+              { provider: "vendor_active_addons", config: currentList, enabled: true, updated_at: new Date().toISOString() },
+              { onConflict: "provider" }
+            );
+          } else if (payment.booking_id) {
+            // Fulfill booking
             await supabaseAdmin
               .from("bookings")
               .update({ status: "confirmed" })

@@ -428,50 +428,26 @@ export const activateVendorAddon = createServerFn({ method: "POST" })
       }
     }
 
-    // 2. Save to vendor_addon_subscriptions table
-    try {
-      await supabaseAdmin.from("vendor_addon_subscriptions").insert({
-        vendor_id: context.userId,
-        addon_id: data.addonId,
-        addon_title: data.addonTitle,
-        amount_pkr: Number(data.amountPKR || 0),
-        billing_period: data.billingPeriod || "monthly",
-        starts_at: startsAt.toISOString(),
-        expires_at: expiresAt.toISOString(),
-        status: "active",
-      });
-    } catch {
-      // Table fallback handled below
+    // 2. Log pending transaction in `payments` ledger
+    const { data: pendingPayment, error: payErr } = await supabaseAdmin
+      .from("payments")
+      .insert({
+        owner_id: context.userId,
+        amount: Math.round(data.amountPKR || 0),
+        currency: "PKR",
+        method: "safepay",
+        status: "pending",
+        metadata: { type: "addon", addonId: data.addonId, addonTitle: data.addonTitle, billingPeriod: data.billingPeriod, env },
+      })
+      .select("id")
+      .single();
+
+    if (payErr) {
+      console.error("[activateVendorAddon] Payment ledger init failed:", payErr);
+      throw new Error("Failed to initialize payment ledger.");
     }
 
-    // 3. Save to payment_gateway_settings as vendor_active_addons fallback
-    const { data: existing } = await supabaseAdmin
-      .from("payment_gateway_settings")
-      .select("config")
-      .eq("provider", "vendor_active_addons")
-      .maybeSingle();
-
-    const currentList: any[] = (existing?.config as any[]) || [];
-    const newAddonRecord = {
-      id: `addon_sub_${Date.now()}`,
-      vendor_id: context.userId,
-      addon_id: data.addonId,
-      addon_title: data.addonTitle,
-      amount_pkr: Number(data.amountPKR || 0),
-      billing_period: data.billingPeriod || "monthly",
-      starts_at: startsAt.toISOString(),
-      expires_at: expiresAt.toISOString(),
-      status: "active",
-    };
-
-    currentList.unshift(newAddonRecord);
-
-    await supabaseAdmin.from("payment_gateway_settings").upsert(
-      { provider: "vendor_active_addons", config: currentList, enabled: true, updated_at: new Date().toISOString() },
-      { onConflict: "provider" }
-    );
-
-    return { ok: true, activeAddon: newAddonRecord, checkoutUrl };
+    return { ok: true, activeAddon: null, checkoutUrl, paymentId: pendingPayment.id };
   });
 
 // -------- Vendor: get active addon subscriptions --------

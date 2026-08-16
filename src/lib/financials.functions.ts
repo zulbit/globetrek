@@ -49,10 +49,30 @@ export const getAdminFinancialMetrics = createServerFn({ method: "GET" })
       else freeCount++;
     });
 
+    // Fetch dynamic pricing
+    const { data: dbPlansRes } = await supabaseAdmin
+      .from("payment_gateway_settings")
+      .select("config")
+      .eq("provider", "subscription_plans")
+      .maybeSingle();
+      
+    const dbPlans = dbPlansRes?.config || [];
+    const dynamicPrices: Record<string, number> = {
+      starter: 4000,
+      pro: 7500,
+      agency: 12000,
+      ...TIER_PRICES, // Fallback base structure
+    };
+    if (Array.isArray(dbPlans)) {
+      dbPlans.forEach((p: any) => {
+        if (p.id && p.price_pkr !== undefined) dynamicPrices[p.id] = Number(p.price_pkr) || 0;
+      });
+    }
+
     const mrrSubscriptions =
-      proCount * TIER_PRICES.pro +
-      starterCount * TIER_PRICES.starter +
-      agencyCount * TIER_PRICES.agency;
+      proCount * (dynamicPrices.pro || 10000) +
+      starterCount * (dynamicPrices.starter || 4000) +
+      agencyCount * (dynamicPrices.agency || 25000);
 
     // 4. Compute Custom Lead Unlocks collections
     const totalLeadUnlocks = validLeads.length;
@@ -243,54 +263,52 @@ export const getVendorInvoices = createServerFn({ method: "GET" })
       });
     });
 
-    // Add subscription invoice if on paid tier
-    const tier = (profile?.subscription_tier || "free").toLowerCase();
-    if (tier !== "free" && TIER_PRICES[tier]) {
-      const tierName = tier.charAt(0).toUpperCase() + tier.slice(1);
-      const subDate = profile?.updated_at || profile?.created_at || new Date().toISOString();
-      const subDateStr = subDate.split("T")[0];
-      const invMonth = new Date(subDate).toLocaleDateString("en-US", { month: "short", year: "numeric" });
-      
-      const subExpire = new Date(subDate);
-      subExpire.setDate(subExpire.getDate() + 30);
+    // 3. Fetch real subscription & addon invoices from payments ledger
+    const { data: realPayments } = await supabaseAdmin
+      .from("payments")
+      .select("id, amount, created_at, status, method, metadata")
+      .eq("owner_id", vendorId)
+      .eq("status", "paid")
+      .order("created_at", { ascending: false });
 
-      invoices.push({
-        id: `INV-SUB-${profile?.subscription_tier?.toUpperCase()}-${new Date(subDate).getMonth() + 1}26`,
-        date: subDateStr,
-        description: `${tierName} Partner Monthly Subscription`,
-        amount_pkr: TIER_PRICES[tier],
-        status: "paid",
-        method: "SafePay PKR (Recurring)",
-        period: `${invMonth} Billing Period`,
-        expires_at: subExpire.toISOString().split("T")[0],
-      });
-    }
+    (realPayments ?? []).forEach((p: any) => {
+      const meta = p.metadata || {};
+      const dateStr = p.created_at ? p.created_at.split("T")[0] : new Date().toISOString().split("T")[0];
+      const refSuffix = p.id.slice(-6).toUpperCase();
 
-    // 3. Fetch vendor active add-on subscriptions & flash banner invoices
-    const { data: gatewayData } = await supabaseAdmin
-      .from("payment_gateway_settings")
-      .select("config")
-      .eq("provider", "vendor_active_addons")
-      .maybeSingle();
+      if (meta.type === "subscription") {
+        const tierName = (meta.tier || "Subscription").charAt(0).toUpperCase() + (meta.tier || "Subscription").slice(1);
+        const invMonth = new Date(dateStr).toLocaleDateString("en-US", { month: "short", year: "numeric" });
+        const subExpire = new Date(dateStr);
+        subExpire.setDate(subExpire.getDate() + 30);
+        invoices.push({
+          id: `INV-SUB-${meta.tier?.toUpperCase() || "PRO"}-${refSuffix}`,
+          date: dateStr,
+          description: `${tierName} Partner Monthly Subscription`,
+          amount_pkr: p.amount || 0,
+          status: p.status === "paid" ? "paid" : "pending",
+          method: "SafePay PKR",
+          period: `${invMonth} Billing Period`,
+          expires_at: subExpire.toISOString().split("T")[0],
+        });
+      } else if (meta.type === "addon") {
+        let durationDays = 30;
+        if (meta.billingPeriod?.includes("week") || meta.billingPeriod?.includes("7")) durationDays = 7;
+        const subExpire = new Date(dateStr);
+        subExpire.setDate(subExpire.getDate() + durationDays);
 
-    if (gatewayData?.config && Array.isArray(gatewayData.config)) {
-      const myAddons = (gatewayData.config as any[]).filter((a) => a.vendor_id === vendorId);
-      myAddons.forEach((a) => {
-        const dateStr = a.starts_at ? a.starts_at.split("T")[0] : new Date().toISOString().split("T")[0];
-        const expireStr = a.expires_at ? a.expires_at.split("T")[0] : undefined;
-        const refSuffix = a.id ? a.id.slice(-6).toUpperCase() : Math.random().toString(36).slice(-6).toUpperCase();
         invoices.push({
           id: `INV-BOOST-${refSuffix}`,
           date: dateStr,
-          description: `${a.addon_title} (${a.billing_period || "Campaign"})`,
-          amount_pkr: Number(a.amount_pkr || 0),
-          status: "paid",
-          method: "SafePay PKR (QuickLink)",
-          period: `${a.billing_period === "weekly" ? "7 Days Flash Campaign" : a.billing_period || "Monthly"} Active Boost`,
-          expires_at: expireStr,
+          description: `${meta.addonTitle || "Addon Boost"} (${meta.billingPeriod || "Campaign"})`,
+          amount_pkr: p.amount || 0,
+          status: p.status === "paid" ? "paid" : "pending",
+          method: "SafePay PKR",
+          period: `${durationDays === 7 ? "7 Days Flash Campaign" : meta.billingPeriod || "Monthly"} Active Boost`,
+          expires_at: subExpire.toISOString().split("T")[0],
         });
-      });
-    }
+      }
+    });
 
     return invoices.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   });

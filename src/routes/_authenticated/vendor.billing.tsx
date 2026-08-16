@@ -195,10 +195,18 @@ function BillingPage() {
 
   const mutation = useMutation({
     mutationFn: (tier: Tier) => change({ data: { tier } }),
-    onSuccess: (_res, tier) => {
+    onSuccess: (res: any, tier) => {
+      if (res?.checkoutUrl) {
+        toast.success(`Redirecting to SafePay...`, {
+          description: res.message,
+        });
+        window.location.href = res.checkoutUrl;
+        return;
+      }
+      
       const name = TIERS.find((t) => t.id === tier)?.name ?? tier;
-      toast.success(`Switched to ${name} plan`, {
-        description: "Real payment processing is coming soon — this is a demo switch.",
+      toast.success(res.isDowngrade ? `Scheduled downgrade to ${name}` : `Switched to ${name} plan`, {
+        description: res.message,
       });
       qc.invalidateQueries({ queryKey: ["vendor-billing"] });
       qc.invalidateQueries({ queryKey: ["vendor-overview"] });
@@ -217,14 +225,6 @@ function BillingPage() {
 
   return (
     <div className="space-y-6">
-      {/* Demo notice */}
-      <div className="flex items-start gap-3 rounded-xl border border-highlight/30 bg-highlight/5 px-4 py-3 text-xs text-highlight/90">
-        <Sparkles className="mt-0.5 size-4 shrink-0" />
-        <p>
-          Payment processing isn't live yet. Switching plans here updates your account instantly
-          so you can preview locked features — no card is charged.
-        </p>
-      </div>
 
       {/* Current plan hero */}
       <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-linear-to-br from-primary/10 via-card to-card p-6 shadow-card">
