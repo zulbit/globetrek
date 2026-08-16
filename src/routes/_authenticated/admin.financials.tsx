@@ -250,6 +250,8 @@ export function AdminFinancials() {
                   <Tooltip
                     formatter={(val: any) => [`Rs ${Number(val).toLocaleString()} PKR`, "Amount"]}
                     contentStyle={{ backgroundColor: "#0f172a", borderRadius: "12px", border: "1px solid #334155" }}
+                    itemStyle={{ color: "#f8fafc", fontWeight: 600 }}
+                    labelStyle={{ color: "#94a3b8" }}
                   />
                 </PieChart>
               </ResponsiveContainer>
