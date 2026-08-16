@@ -22,6 +22,7 @@ const NAV = [
   { to: "/admin/custom-visa", label: "Custom Visa Leads", icon: FileCheck, badge: "HOT" },
   { to: "/admin/vendors", label: "Vendors & Subscriptions", icon: Users },
   { to: "/admin/subscriptions", label: "Subscription Plans", icon: Sparkles },
+  { to: "/admin/financials", label: "Financial Ledger", icon: Wallet },
   { to: "/admin/tours", label: "Tours Catalog", icon: Globe2 },
   { to: "/admin/services", label: "Services Catalog", icon: Boxes },
   { to: "/admin/payments", label: "Payment gateways", icon: CreditCard },
