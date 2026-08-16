@@ -570,7 +570,13 @@ function VendorInvoicesPage() {
                       Rs {inv.amount_pkr.toLocaleString()}
                     </td>
                     <td className="py-3 px-3 text-center">
-                      <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] uppercase font-bold">
+                      <Badge className={`text-[10px] uppercase font-bold ${
+                        inv.status.toLowerCase() === "pending" 
+                          ? "bg-amber-500/20 text-amber-400 border-amber-500/30" 
+                          : inv.status.toLowerCase() === "failed" || inv.status.toLowerCase() === "cancelled"
+                            ? "bg-rose-500/20 text-rose-400 border-rose-500/30"
+                            : "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                      }`}>
                         {inv.status}
                       </Badge>
                     </td>
