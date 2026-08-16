@@ -940,38 +940,7 @@ export const updateVisaLeadStatusServer = createServerFn({ method: "POST" })
 
     return { ok: true, status: input.status };
   });
-const profileMap = new Map((profiles || []).map((p) => [p.id, p]));
 
-if (input?.filterStatus && input.filterStatus !== "all") {
-  allLeads = allLeads.filter((l) => l.status === input.filterStatus);
-}
-
-return allLeads.map((lead) => {
-  const leadPurchases = purchases.filter((p) => p.lead_id === lead.id);
-  const unlockedVendors = leadPurchases.map((p) => {
-    const prof = profileMap.get(p.vendor_id);
-    return {
-      vendor_id: p.vendor_id,
-      purchased_at: p.purchased_at,
-      amount_paid: p.amount_paid,
-      profiles: {
-        full_name: prof?.company_name || prof?.full_name || "Verified Visa Agent",
-        email: prof?.email || "",
-        phone: prof?.phone || "",
-      },
-    };
-  });
-
-  const leadQuotes = allQuotes.filter((q) => q.lead_id === lead.id);
-
-  return {
-    ...lead,
-    unlocked_vendors: unlockedVendors,
-    quotes: leadQuotes,
-    quote_count: leadQuotes.length,
-  };
-});
-  });
 
 // -------- 10. Admin: Update Custom Visa Lead Status --------
 export const updateVisaLeadStatusServer = createServerFn({ method: "POST" })

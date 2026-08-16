@@ -820,51 +820,5 @@ export const getCustomerCustomRequestsWithQuotes = createServerFn({ method: "GET
     });
   });
 
-const { data: profile } = await supabaseAdmin
-  .from("profiles")
-  .select("email")
-  .eq("id", userId)
-  .maybeSingle();
 
-const userEmail = profile?.email || context.email || "";
-
-let query = supabaseAdmin
-  .from("custom_tour_leads")
-  .select("*")
-  .order("created_at", { ascending: false });
-
-if (userEmail) {
-  query = query.ilike("contact_email", userEmail);
-}
-
-const { data: leads, error } = await query;
-if (error) {
-  console.error("[getCustomerCustomRequestsWithQuotes] error:", error);
-  return [];
-}
-
-const leadList = leads || [];
-if (leadList.length === 0) return [];
-
-// Fetch quotes store
-const { data: settingRow } = await supabaseAdmin
-  .from("payment_gateway_settings")
-  .select("config")
-  .eq("provider", "lead_quotes")
-  .maybeSingle();
-
-const allQuotes: LeadQuoteItem[] = settingRow?.config?.quotes || [];
-
-return leadList.map((lead: any) => {
-  const quotes = allQuotes.filter((q) => q.lead_id === lead.id);
-  const minPrice = quotes.length > 0 ? Math.min(...quotes.map((q) => q.quote_amount)) : null;
-
-  return {
-    ...lead,
-    quotes_count: quotes.length,
-    lowest_quote_amount: minPrice,
-    quotes,
-  };
-});
-  });
 
