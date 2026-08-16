@@ -112,6 +112,8 @@ function VendorCheckoutPage() {
     }
   }, [leadId, type, navigate, qc]);
 
+  const [sdkError, setSdkError] = useState("");
+
   // Dynamically load SafePay Button SDK via script tag (zoid-based SDK needs window at eval time)
   useEffect(() => {
     if (!tracker || buttonRendered.current || isPaid) return;
@@ -132,16 +134,29 @@ function VendorCheckoutPage() {
       script.src = "https://unpkg.com/@sfpy/checkout-components@1.0.1/dist/sfpy-checkout.js";
       script.async = true;
       script.onload = () => {
-        if ((window as any).safepay?.Button?.render) {
-          renderSafepayButton((window as any).safepay, containerId);
+        const sf = (window as any).safepay;
+        if (sf?.Button?.render) {
+          renderSafepayButton(sf, containerId);
+        } else if (sf?.Checkout?.render) {
+          renderSafepayButton({ Button: sf.Checkout }, containerId); // Fallback for Checkout alias
         } else {
-          console.warn("[SafePay] SDK loaded but safepay.Button.render not found. Global keys:", Object.keys((window as any).safepay || {}));
+          const keys = sf ? Object.keys(sf).join(", ") : "safepay is undefined";
+          setSdkError(`SDK Loaded but render not found. Keys: ${keys}`);
         }
       };
       script.onerror = () => {
-        console.error("[SafePay] Failed to load checkout SDK from CDN");
+        setSdkError("Failed to load checkout SDK from CDN.");
       };
       document.body.appendChild(script);
+    } else if ((window as any).safepay) {
+        // If script already in DOM but maybe just finished loading
+        const sf = (window as any).safepay;
+        if (sf?.Button?.render) {
+          renderSafepayButton(sf, containerId);
+        } else {
+          const keys = sf ? Object.keys(sf).join(", ") : "safepay is undefined";
+          setSdkError(`Script exists but render not found. Keys: ${keys}`);
+        }
     }
 
     function renderSafepayButton(safepay: any, target: string) {
@@ -164,8 +179,8 @@ function VendorCheckoutPage() {
           },
         }, `#${target}`);
         buttonRendered.current = true;
-      } catch (err) {
-        console.error("[SafePay] Button.render() failed:", err);
+      } catch (err: any) {
+        setSdkError(`Button.render() failed: ${err.message}`);
       }
     }
   }, [tracker, env, isPaid, handleVerify]);
@@ -296,10 +311,18 @@ function VendorCheckoutPage() {
                   <div
                     id="safepay-button-container"
                     ref={safepayContainerRef}
-                    className="min-h-[60px] flex items-center justify-center"
+                    className="min-h-[60px] flex flex-col items-center justify-center text-center"
                   >
-                    <Loader2 className="size-5 animate-spin text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground ml-2">Loading payment button...</span>
+                    {sdkError ? (
+                      <div className="text-destructive text-sm font-medium bg-destructive/10 p-3 rounded-md w-full">
+                        {sdkError}
+                      </div>
+                    ) : (
+                      <>
+                        <Loader2 className="size-5 animate-spin text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground mt-2">Loading payment button...</span>
+                      </>
+                    )}
                   </div>
                 </div>
 
