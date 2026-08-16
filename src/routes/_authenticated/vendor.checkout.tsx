@@ -200,10 +200,10 @@ function VendorCheckoutPage() {
         // Hide spinner and let Zoid take over the container
         setIsButtonReady(true);
         
-        // Zoid components render asynchronously. Pass raw DOM node and delay until React finishes DOM mutation
+        // Zoid components render asynchronously. Pass string selector and delay until React finishes DOM mutation
         setTimeout(() => {
-          if (container) {
-            instance.render(container).catch((err: any) => {
+          if (document.getElementById(target)) {
+            instance.render(`#${target}`).catch((err: any) => {
               console.error("Zoid render promise rejected:", err);
               setSdkError(`Zoid render failed: ${err.message || String(err)}`);
             });
