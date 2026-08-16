@@ -200,3 +200,30 @@ export const updateAdminVendorTier = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { success: true };
   });
+
+export async function enforceVendorLimits(supabase: any, vendorId: string, attemptingToActivate: boolean = true) {
+  if (!attemptingToActivate) return; // Allow deactivation or draft edits
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("subscription_tier")
+    .eq("id", vendorId)
+    .maybeSingle();
+
+  if (profile?.subscription_tier !== "free") return;
+
+  const [tours, visa, insurance, tickets] = await Promise.all([
+    supabase.from("tours").select("id", { count: "exact", head: true }).eq("vendor_id", vendorId).eq("is_active", true),
+    supabase.from("visa_services").select("id", { count: "exact", head: true }).eq("vendor_id", vendorId).eq("is_active", true),
+    supabase.from("insurance_plans").select("id", { count: "exact", head: true }).eq("vendor_id", vendorId).eq("is_active", true),
+    supabase.from("ticket_services").select("id", { count: "exact", head: true }).eq("vendor_id", vendorId).eq("is_active", true),
+  ]);
+
+  const totalActive = (tours.count || 0) + (visa.count || 0) + (insurance.count || 0) + (tickets.count || 0);
+
+  if (totalActive >= 3) {
+    throw new Error(
+      `Account Over Limit: Your Free tier allows a maximum of 3 active listings, but you currently have ${totalActive}. Please deactivate older listings or upgrade your plan to publish this listing.`
+    );
+  }
+}

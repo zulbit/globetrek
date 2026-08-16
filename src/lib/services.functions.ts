@@ -46,6 +46,9 @@ export const saveServiceListing = createServerFn({ method: "POST" })
       }
     }
 
+    const { enforceVendorLimits } = await import("@/lib/vendors.functions");
+    await enforceVendorLimits(context.supabase, context.userId, isActive);
+
     const payload = { ...data.data, vendor_id: context.userId };
     if (data.id) {
       const { error } = await context.supabase
@@ -87,6 +90,9 @@ export const toggleServiceActive = createServerFn({ method: "POST" })
         );
       }
     }
+
+    const { enforceVendorLimits } = await import("@/lib/vendors.functions");
+    await enforceVendorLimits(context.supabase, context.userId, data.is_active);
 
     const table = TABLES[data.serviceType];
     const { error } = await context.supabase

@@ -78,6 +78,7 @@ import { Route as AuthenticatedVendorTicketsRouteImport } from './routes/_authen
 import { Route as AuthenticatedVendorToursRouteImport } from './routes/_authenticated/vendor.tours'
 import { Route as AuthenticatedVendorVisaRouteImport } from './routes/_authenticated/vendor.visa'
 import { Route as ApiAuthRegisterRouteImport } from './routes/api/auth.register'
+import { Route as ApiCronSubscriptionsRouteImport } from './routes/api/cron/subscriptions'
 import { Route as ApiPublicSafepayWebhookRouteImport } from './routes/api/public/safepay-webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -448,6 +449,11 @@ const ApiAuthRegisterRoute = ApiAuthRegisterRouteImport.update({
   path: '/api/auth/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCronSubscriptionsRoute = ApiCronSubscriptionsRouteImport.update({
+  id: '/api/cron/subscriptions',
+  path: '/api/cron/subscriptions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicSafepayWebhookRoute = ApiPublicSafepayWebhookRouteImport.update({
   id: '/api/public/safepay-webhook',
   path: '/api/public/safepay-webhook',
@@ -520,6 +526,7 @@ export interface FileRoutesByFullPath {
   '/vendor/tours': typeof AuthenticatedVendorToursRoute
   '/vendor/visa': typeof AuthenticatedVendorVisaRoute
   '/api/auth/register': typeof ApiAuthRegisterRoute
+  '/api/cron/subscriptions': typeof ApiCronSubscriptionsRoute
   '/api/public/safepay-webhook': typeof ApiPublicSafepayWebhookRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/customer/': typeof AuthenticatedCustomerIndexRoute
@@ -585,6 +592,7 @@ export interface FileRoutesByTo {
   '/vendor/tours': typeof AuthenticatedVendorToursRoute
   '/vendor/visa': typeof AuthenticatedVendorVisaRoute
   '/api/auth/register': typeof ApiAuthRegisterRoute
+  '/api/cron/subscriptions': typeof ApiCronSubscriptionsRoute
   '/api/public/safepay-webhook': typeof ApiPublicSafepayWebhookRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/customer': typeof AuthenticatedCustomerIndexRoute
@@ -658,6 +666,7 @@ export interface FileRoutesById {
   '/_authenticated/vendor/tours': typeof AuthenticatedVendorToursRoute
   '/_authenticated/vendor/visa': typeof AuthenticatedVendorVisaRoute
   '/api/auth/register': typeof ApiAuthRegisterRoute
+  '/api/cron/subscriptions': typeof ApiCronSubscriptionsRoute
   '/api/public/safepay-webhook': typeof ApiPublicSafepayWebhookRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/customer/': typeof AuthenticatedCustomerIndexRoute
@@ -731,6 +740,7 @@ export interface FileRouteTypes {
     | '/vendor/tours'
     | '/vendor/visa'
     | '/api/auth/register'
+    | '/api/cron/subscriptions'
     | '/api/public/safepay-webhook'
     | '/admin/'
     | '/customer/'
@@ -796,6 +806,7 @@ export interface FileRouteTypes {
     | '/vendor/tours'
     | '/vendor/visa'
     | '/api/auth/register'
+    | '/api/cron/subscriptions'
     | '/api/public/safepay-webhook'
     | '/admin'
     | '/customer'
@@ -868,6 +879,7 @@ export interface FileRouteTypes {
     | '/_authenticated/vendor/tours'
     | '/_authenticated/vendor/visa'
     | '/api/auth/register'
+    | '/api/cron/subscriptions'
     | '/api/public/safepay-webhook'
     | '/_authenticated/admin/'
     | '/_authenticated/customer/'
@@ -901,6 +913,7 @@ export interface RootRouteChildren {
   CustomerQuotesRoute: typeof CustomerQuotesRoute
   CustomerVisaQuotesRoute: typeof CustomerVisaQuotesRoute
   ApiAuthRegisterRoute: typeof ApiAuthRegisterRoute
+  ApiCronSubscriptionsRoute: typeof ApiCronSubscriptionsRoute
   ApiPublicSafepayWebhookRoute: typeof ApiPublicSafepayWebhookRoute
 }
 
@@ -1389,6 +1402,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthRegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/cron/subscriptions': {
+      id: '/api/cron/subscriptions'
+      path: '/api/cron/subscriptions'
+      fullPath: '/api/cron/subscriptions'
+      preLoaderRoute: typeof ApiCronSubscriptionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/safepay-webhook': {
       id: '/api/public/safepay-webhook'
       path: '/api/public/safepay-webhook'
@@ -1576,6 +1596,7 @@ const rootRouteChildren: RootRouteChildren = {
   CustomerQuotesRoute: CustomerQuotesRoute,
   CustomerVisaQuotesRoute: CustomerVisaQuotesRoute,
   ApiAuthRegisterRoute: ApiAuthRegisterRoute,
+  ApiCronSubscriptionsRoute: ApiCronSubscriptionsRoute,
   ApiPublicSafepayWebhookRoute: ApiPublicSafepayWebhookRoute,
 }
 export const routeTree = rootRouteImport

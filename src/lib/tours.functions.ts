@@ -104,6 +104,9 @@ export const saveTourServer = createServerFn({ method: "POST" })
       }
     }
 
+    const { enforceVendorLimits } = await import("@/lib/vendors.functions");
+    await enforceVendorLimits(context.supabase, context.userId, data.is_active);
+
     const payload = {
       vendor_id: data.vendor_id,
       title: data.title.trim(),
@@ -161,6 +164,9 @@ export const setTourPublishedServer = createServerFn({ method: "POST" })
         );
       }
     }
+
+    const { enforceVendorLimits } = await import("@/lib/vendors.functions");
+    await enforceVendorLimits(context.supabase, context.userId, data.is_active);
 
     const { error } = await context.supabase
       .from("tours")

@@ -137,10 +137,10 @@ export const getMarketplaceLeads = createServerFn({ method: "GET" })
         my_quote: myQuotesMap.get(lead.id),
         ...(isUnlocked
           ? {
-              contact_name: lead.contact_name,
-              contact_email: lead.contact_email,
-              contact_phone: lead.contact_phone,
-            }
+            contact_name: lead.contact_name,
+            contact_email: lead.contact_email,
+            contact_phone: lead.contact_phone,
+          }
           : {}),
       };
     });
@@ -197,22 +197,8 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
       .eq("user_id", vendorId)
       .maybeSingle();
 
-    const { data: kycRow } = await supabaseAdmin
-      .from("payment_gateway_settings")
-      .select("config")
-      .eq("provider", `vendor_kyc_${vendorId}`)
-      .maybeSingle();
-
-    let isKycApproved = false;
-    if (kycRow?.config) {
-      try {
-        const parsed = typeof kycRow.config === "string" ? JSON.parse(kycRow.config) : kycRow.config;
-        isKycApproved = parsed.status === "approved";
-      } catch {}
-    }
-
     const isAdmin = roleRow?.role === "admin";
-    const isApproved = vendorProfile?.vendor_status === "approved" || isKycApproved;
+    const isApproved = vendorProfile?.vendor_status === "approved";
 
     if (!isAdmin && !isApproved) {
       throw new Error(
@@ -220,18 +206,15 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
       );
     }
 
-    const kycFields = kycRow?.config
-      ? (typeof kycRow.config === "string" ? JSON.parse(kycRow.config) : kycRow.config).fields || {}
-      : {};
-
-    const contactName = (vendorProfile?.full_name || kycFields.company_name || vendorProfile?.company_name || "Partner").trim();
-    const [firstName, ...rest] = contactName.split(/\s+/);
-    const lastName = rest.join(" ") || (vendorProfile?.company_name || "Agency");
-    const vendorEmail = vendorProfile?.email || "partner@globetrek.pk";
-    const rawPhone = (kycFields.phone || vendorProfile?.phone || "+923001234567").replace(/\D/g, "").replace(/^0+/, "");
+    const [firstName, ...rest] = (vendorProfile?.full_name || vendorProfile?.company_name || "Travel Partner").trim().split(/\s+/);
+    const lastName = rest.join(" ") || (vendorProfile?.company_name ? "Agency" : "Vendor");
+    const vendorEmail = vendorProfile?.email || "vendor@globetrek.pk";
+    const rawPhone = (vendorProfile?.phone || "+923001234567").replace(/\D/g, "").replace(/^0+/, "");
     const vendorPhone = rawPhone.startsWith("92") ? `+${rawPhone}` : `+92${rawPhone}`;
-    const vendorCity = kycFields.city || vendorProfile?.city || "Karachi";
-    const streetAddress = kycFields.office_address || (vendorProfile?.company_name ? `${vendorProfile.company_name} Office` : "Main Commercial Office");
+    const vendorCity = vendorProfile?.city || "Karachi";
+    const streetAddress = vendorProfile?.company_name
+      ? `${vendorProfile.company_name} Commercial Office`
+      : "Main Commercial Boulevard, Shahrah-e-Faisal";
 
     // Helper to format full pre-filled SafePay QuickLink URL with all query parameters
     const formatSafePayUrl = (baseUrlStr: string) => {
@@ -261,15 +244,6 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
       return { ok: true, checkoutUrl: existingUrl, trackerToken: pendingRows[0].payment_intent_id };
     }
 
-    // Fetch lead details for note description
-    const { data: leadRow } = await supabaseAdmin
-      .from("custom_tour_leads")
-      .select("destination, contact_name")
-      .eq("id", data.leadId)
-      .maybeSingle();
-
-    const destinationTitle = leadRow?.destination || "Custom Tour Itinerary";
-
     // 4. Create SafePay QuickLink v2
     const secretKey = process.env.SAFEPAY_SECRET_KEY || "c3487d289512e74681b031cd3cf5d6a8d73a22b3c709bd939c3f833e95b7c27a";
 
@@ -282,7 +256,7 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
       body: JSON.stringify({
         amount: 5000,
         currency: "PKR",
-        note: `Unlock Custom Tour Lead – ${destinationTitle}`,
+        note: `Unlock Custom Tour Lead – ${lead.destination}`,
         workflow: "MANUAL",
         customer: {
           first_name: firstName,
@@ -844,5 +818,53 @@ export const getCustomerCustomRequestsWithQuotes = createServerFn({ method: "GET
         quotes,
       };
     });
+  });
+
+const { data: profile } = await supabaseAdmin
+  .from("profiles")
+  .select("email")
+  .eq("id", userId)
+  .maybeSingle();
+
+const userEmail = profile?.email || context.email || "";
+
+let query = supabaseAdmin
+  .from("custom_tour_leads")
+  .select("*")
+  .order("created_at", { ascending: false });
+
+if (userEmail) {
+  query = query.ilike("contact_email", userEmail);
+}
+
+const { data: leads, error } = await query;
+if (error) {
+  console.error("[getCustomerCustomRequestsWithQuotes] error:", error);
+  return [];
+}
+
+const leadList = leads || [];
+if (leadList.length === 0) return [];
+
+// Fetch quotes store
+const { data: settingRow } = await supabaseAdmin
+  .from("payment_gateway_settings")
+  .select("config")
+  .eq("provider", "lead_quotes")
+  .maybeSingle();
+
+const allQuotes: LeadQuoteItem[] = settingRow?.config?.quotes || [];
+
+return leadList.map((lead: any) => {
+  const quotes = allQuotes.filter((q) => q.lead_id === lead.id);
+  const minPrice = quotes.length > 0 ? Math.min(...quotes.map((q) => q.quote_amount)) : null;
+
+  return {
+    ...lead,
+    quotes_count: quotes.length,
+    lowest_quote_amount: minPrice,
+    quotes,
+  };
+});
   });
 

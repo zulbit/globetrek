@@ -168,7 +168,7 @@ export const submitCustomVisaLead = createServerFn({ method: "POST" })
       try {
         const { data: u } = await supabaseAdmin.auth.getUser();
         if (u.user) registeredUserId = u.user.id;
-      } catch {}
+      } catch { }
     }
 
     const leadId = crypto.randomUUID();
@@ -374,22 +374,8 @@ export const createVisaLeadUnlockCheckout = createServerFn({ method: "POST" })
       .eq("user_id", vendorId)
       .maybeSingle();
 
-    const { data: kycRow } = await supabaseAdmin
-      .from("payment_gateway_settings")
-      .select("config")
-      .eq("provider", `vendor_kyc_${vendorId}`)
-      .maybeSingle();
-
-    let isKycApproved = false;
-    if (kycRow?.config) {
-      try {
-        const parsed = typeof kycRow.config === "string" ? JSON.parse(kycRow.config) : kycRow.config;
-        isKycApproved = parsed.status === "approved";
-      } catch {}
-    }
-
     const isAdmin = roleRow?.role === "admin";
-    const isApproved = profile?.vendor_status === "approved" || isKycApproved;
+    const isApproved = profile?.vendor_status === "approved";
 
     if (!isAdmin && !isApproved) {
       throw new Error(
@@ -397,18 +383,15 @@ export const createVisaLeadUnlockCheckout = createServerFn({ method: "POST" })
       );
     }
 
-    const kycFields = kycRow?.config
-      ? (typeof kycRow.config === "string" ? JSON.parse(kycRow.config) : kycRow.config).fields || {}
-      : {};
-
     const unlockFee = targetLead.unlock_fee_pkr || 750;
-    const contactName = (profile?.full_name || kycFields.company_name || profile?.company_name || "Partner").trim();
-    const [firstName, ...rest] = contactName.split(/\s+/);
-    const lastName = rest.join(" ") || (profile?.company_name || "Agency");
-    const vendorEmail = profile?.email || "partner@globetrek.pk";
-    const vendorCity = kycFields.city || profile?.city || "Karachi";
-    const streetAddress = kycFields.office_address || (profile?.company_name ? `${profile.company_name} Office` : "Main Commercial Office");
-    const rawPhone = (kycFields.phone || profile?.phone || "+923001234567").replace(/\D/g, "").replace(/^0+/, "");
+    const [firstName, ...rest] = (profile?.full_name || profile?.company_name || "Travel Partner").trim().split(/\s+/);
+    const lastName = rest.join(" ") || (profile?.company_name ? "Agency" : "Vendor");
+    const vendorEmail = profile?.email || "vendor@globetrek.pk";
+    const vendorCity = profile?.city || "Islamabad";
+    const streetAddress = profile?.company_name
+      ? `${profile.company_name} Commercial Office`
+      : "Main Commercial Boulevard, Shahrah-e-Faisal";
+    const rawPhone = (profile?.phone || "+923001234567").replace(/\D/g, "").replace(/^0+/, "");
     const vendorPhone = rawPhone.startsWith("92") ? `+${rawPhone}` : `+92${rawPhone}`;
 
     const env = (process.env.SAFEPAY_ENV || "sandbox").toLowerCase();
@@ -923,6 +906,71 @@ export const getAdminCustomVisaLeadsServer = createServerFn({ method: "GET" })
         quote_count: leadQuotes.length,
       };
     });
+  });
+
+// -------- 10. Admin: Update Custom Visa Lead Status --------
+export const updateVisaLeadStatusServer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: { leadId: string; status: "verified" | "accepted" | "closed" }) => input)
+  .handler(async ({ data: input, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden: Admin access required");
+
+    const { data: leadsRow } = await supabaseAdmin
+      .from("payment_gateway_settings")
+      .select("config")
+      .eq("provider", "custom_visa_leads")
+      .maybeSingle();
+
+    const leads: CustomVisaLeadItem[] = leadsRow?.config?.leads || [];
+    const targetLead = leads.find((l) => l.id === input.leadId);
+    if (!targetLead) throw new Error("Custom Visa Lead not found");
+
+    targetLead.status = input.status;
+
+    await supabaseAdmin.from("payment_gateway_settings").upsert({
+      provider: "custom_visa_leads",
+      config: { leads },
+      updated_at: new Date().toISOString(),
+    });
+
+    return { ok: true, status: input.status };
+  });
+const profileMap = new Map((profiles || []).map((p) => [p.id, p]));
+
+if (input?.filterStatus && input.filterStatus !== "all") {
+  allLeads = allLeads.filter((l) => l.status === input.filterStatus);
+}
+
+return allLeads.map((lead) => {
+  const leadPurchases = purchases.filter((p) => p.lead_id === lead.id);
+  const unlockedVendors = leadPurchases.map((p) => {
+    const prof = profileMap.get(p.vendor_id);
+    return {
+      vendor_id: p.vendor_id,
+      purchased_at: p.purchased_at,
+      amount_paid: p.amount_paid,
+      profiles: {
+        full_name: prof?.company_name || prof?.full_name || "Verified Visa Agent",
+        email: prof?.email || "",
+        phone: prof?.phone || "",
+      },
+    };
+  });
+
+  const leadQuotes = allQuotes.filter((q) => q.lead_id === lead.id);
+
+  return {
+    ...lead,
+    unlocked_vendors: unlockedVendors,
+    quotes: leadQuotes,
+    quote_count: leadQuotes.length,
+  };
+});
   });
 
 // -------- 10. Admin: Update Custom Visa Lead Status --------
