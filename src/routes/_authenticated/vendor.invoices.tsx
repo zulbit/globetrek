@@ -584,9 +584,9 @@ function VendorInvoicesPage() {
                       <div className="flex items-center justify-end gap-1.5">
                         <Button
                           size="sm"
-                          disabled={downloadingInvId === inv.id}
+                          disabled={downloadingInvId === inv.id || inv.status.toLowerCase() !== "paid"}
                           onClick={() => handleDirectPDFDownload(inv)}
-                          className="h-7 text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg gap-1 px-2.5"
+                          className="h-7 text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg gap-1 px-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Download className="size-3" />
                           {downloadingInvId === inv.id ? "Downloading..." : "Download PDF"}
@@ -595,8 +595,9 @@ function VendorInvoicesPage() {
                         <Button
                           size="sm"
                           variant="outline"
+                          disabled={inv.status.toLowerCase() !== "paid"}
                           onClick={() => handlePrintInvoiceWindow(inv)}
-                          className="h-7 text-xs font-medium border-border hover:bg-surface rounded-lg gap-1 px-2.5"
+                          className="h-7 text-xs font-medium border-border hover:bg-surface rounded-lg gap-1 px-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <FileText className="size-3" /> Print
                         </Button>
