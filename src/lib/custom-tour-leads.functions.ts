@@ -261,6 +261,15 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
       return { ok: true, checkoutUrl: existingUrl, trackerToken: pendingRows[0].payment_intent_id };
     }
 
+    // Fetch lead details for note description
+    const { data: leadRow } = await supabaseAdmin
+      .from("custom_tour_leads")
+      .select("destination, contact_name")
+      .eq("id", data.leadId)
+      .maybeSingle();
+
+    const destinationTitle = leadRow?.destination || "Custom Tour Itinerary";
+
     // 4. Create SafePay QuickLink v2
     const secretKey = process.env.SAFEPAY_SECRET_KEY || "c3487d289512e74681b031cd3cf5d6a8d73a22b3c709bd939c3f833e95b7c27a";
 
@@ -273,7 +282,7 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
       body: JSON.stringify({
         amount: 5000,
         currency: "PKR",
-        note: `Unlock Custom Tour Lead – ${lead.destination}`,
+        note: `Unlock Custom Tour Lead – ${destinationTitle}`,
         workflow: "MANUAL",
         customer: {
           first_name: firstName,
