@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { generateEnterpriseDemoAIServer, DemoItineraryStructure } from "@/lib/guide-ai.functions";
+import { trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -211,6 +212,13 @@ const COMPARISON_DATA = [
     wordpress: false,
   },
   {
+    feature: "Real-Time Google Analytics (GA4) & Audience Traffic Intelligence",
+    globetrek: true,
+    cloneScript: false,
+    saasPms: false,
+    wordpress: false,
+  },
+  {
     feature: "WhatsApp Event Automation & Audience Template Engine",
     globetrek: true,
     cloneScript: false,
@@ -301,6 +309,10 @@ const FAQS = [
     q: "How does the Custom Visa Consultation & Refusal Rectification Engine operate?",
     a: "Travelers facing complex visa requirements, drop-box submissions (Gerry's, VFS, Anatolia), or previous visa rejections (UK, Schengen, US, Canada) submit their case details and intended travel dates at /custom-visa. The engine auto-registers a free Traveler Hub account and broadcasts the verified inquiry to the B2B marketplace. Verified Pakistani visa consultants unlock applicant contact details for ₨ 750 via SafePay (capped at 5 unlocking agencies to preserve lead quality). Unlocked agencies submit structured proposals with fee breakdowns and consultation modes (in-person vs remote e-filing), triggering automated WhatsApp notifications and online comparison links for the traveler.",
   },
+  {
+    q: "How does Google Analytics (GA4) & Real-Time Traffic Intelligence work?",
+    a: "GlobeTrek PK integrates Google Analytics (GA4) with native Single Page Application (SPA) route change tracking. Client-side navigations across tour, visa, insurance, and vendor portals are captured in real-time. Lead generation funnels, ₨ 5,000 custom lead unlocks, and SafePay subscriptions are instrumented as custom conversion events with PKR monetary value for comprehensive marketing and audience analytics.",
+  },
 ];
 
 function EnterpriseShowcase() {
@@ -316,6 +328,10 @@ function EnterpriseShowcase() {
   const handleGenerateAIDemo = async () => {
     if (!demoDestination.trim()) return;
     setIsGeneratingDemo(true);
+    trackEvent("enterprise_ai_demo_generate", {
+      destination: demoDestination,
+      duration_days: demoDuration,
+    });
     try {
       const res = await generateEnterpriseDemoAIServer({
         data: { destination: demoDestination, duration_days: demoDuration },
@@ -377,7 +393,11 @@ function EnterpriseShowcase() {
               </Button>
             </Link>
 
-            <a href="mailto:enterprise@globetrek.pk" className="inline-flex">
+            <a
+              href="mailto:enterprise@globetrek.pk"
+              onClick={() => trackEvent("contact_enterprise_click", { method: "email" })}
+              className="inline-flex"
+            >
               <Button size="lg" variant="outline" className="gap-2 font-semibold">
                 Request Enterprise Demo
               </Button>
@@ -945,6 +965,19 @@ function EnterpriseShowcase() {
               </p>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 Secure real-time impersonation of vendor accounts with sticky warning header and one-click exit back to platform admin console.
+              </p>
+            </Card>
+
+            <Card className="p-6 space-y-3 border-border bg-card">
+              <div className="size-10 rounded-2xl bg-primary/20 text-primary flex items-center justify-center font-bold text-lg">
+                📊
+              </div>
+              <h3 className="font-bold text-base text-foreground">Google Analytics (GA4) Engine</h3>
+              <p className="text-xs text-muted-foreground font-medium">
+                <strong>Heading: Real-Time Traffic &amp; Monetization Tracking</strong>
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Native GA4 integration with automated Single Page Application (SPA) route tracking, PKR lead conversion funnels, and real-time audience analytics.
               </p>
             </Card>
           </div>
