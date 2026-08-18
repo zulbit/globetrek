@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site-header";
 import { BottomNav } from "@/components/bottom-nav";
-import { Mountain, MessageSquare, ShieldCheck, Sparkles } from "lucide-react";
+import { Mountain, MessageSquare, ShieldCheck, Sparkles, Star } from "lucide-react";
 
 export function SiteShell({ children }: { children: ReactNode }) {
   return (
@@ -28,7 +28,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
               <p className="text-xs text-muted-foreground leading-relaxed">
                 Pakistan's first AI-driven international travel discovery platform. Connecting travelers directly with DTS-licensed tour operators, visa desks &amp; insurance providers with 0% booking commission.
               </p>
-              <div className="pt-1">
+              <div className="pt-1 flex flex-col gap-2">
                 <a
                   href="https://wa.me/923490386131?text=Assalam-o-Alaikum%20GlobeTrek%20PK%20Support"
                   target="_blank"
@@ -37,6 +37,15 @@ export function SiteShell({ children }: { children: ReactNode }) {
                 >
                   <MessageSquare className="size-3.5" />
                   <span>WhatsApp: +92 349 0386131</span>
+                </a>
+                <a
+                  href="https://g.page/r/CQCdMHtDuZ3oEAE/review"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/15 border border-amber-500/30 px-3 py-1.5 text-xs font-bold text-amber-400 hover:bg-amber-500/25 transition-colors w-fit"
+                >
+                  <Star className="size-3.5 fill-amber-400" />
+                  <span>Review on Google (5★)</span>
                 </a>
               </div>
             </div>
@@ -128,6 +137,17 @@ export function SiteShell({ children }: { children: ReactNode }) {
                 <li className="flex items-center gap-1.5 text-emerald-400 font-medium pt-1">
                   <ShieldCheck className="size-3.5 shrink-0" />
                   <span>DTS-Verified Agencies</span>
+                </li>
+                <li>
+                  <a
+                    href="https://g.page/r/CQCdMHtDuZ3oEAE/review"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-primary transition-colors flex items-center gap-1.5 text-amber-400 font-semibold pt-1"
+                  >
+                    <Star className="size-3.5 fill-amber-400" />
+                    <span>Rate us on Google (5★)</span>
+                  </a>
                 </li>
               </ul>
             </div>
