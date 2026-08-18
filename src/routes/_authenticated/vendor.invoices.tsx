@@ -35,7 +35,7 @@ function VendorInvoicesPage() {
 
   const { data: realInvoices = [], isLoading: invoicesLoading } = useQuery({
     queryKey: ["vendor-real-invoices", user?.id],
-    queryFn: () => getVendorInvoices(),
+    queryFn: () => getVendorInvoices({ data: { targetVendorId: user?.id } }),
     refetchInterval: 5000,
   });
 
@@ -44,19 +44,7 @@ function VendorInvoicesPage() {
     (profile?.full_name && profile?.full_name !== "GlobeTrek Admin" ? profile.full_name : null) ||
     "Registered Vendor Agency";
 
-  const fallbackSampleInvoices = [
-    {
-      id: "INV-2026-001",
-      date: "2026-07-01",
-      description: "Full Agency Tier Monthly Subscription",
-      amount_pkr: 12000,
-      status: "paid" as const,
-      method: "SafePay PKR",
-      period: "Jul 1, 2026 – Aug 1, 2026",
-    },
-  ];
-
-  const invoiceList = realInvoices.length > 0 ? realInvoices : fallbackSampleInvoices;
+  const invoiceList = realInvoices;
 
   const filteredInvoices = invoiceList.filter((inv) => {
     const matchesSearch =
@@ -554,12 +542,14 @@ function VendorInvoicesPage() {
 
         {/* Table / Invoices List */}
         {filteredInvoices.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border p-10 text-center text-xs space-y-2 bg-surface/20">
-            <div className="grid size-12 place-items-center rounded-full bg-surface text-muted-foreground mx-auto">
-              <Receipt className="size-6" />
+          <div className="text-center py-12 bg-slate-900/60 rounded-2xl border border-slate-800 space-y-3 p-6">
+            <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
+              <FileText className="w-6 h-6" />
             </div>
-            <p className="font-semibold text-foreground">No Invoices Found</p>
-            <p className="text-muted-foreground">Invoices will automatically generate here when plan payments complete.</p>
+            <h4 className="text-white font-bold text-sm">No Invoices Found</h4>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
+              You are currently on the <strong className="text-emerald-400">Free Partner Plan</strong>. Official tax invoices and SafePay receipts will appear here when you upgrade your subscription or complete custom lead unlocks.
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">

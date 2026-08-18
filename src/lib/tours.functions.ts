@@ -75,40 +75,45 @@ function cleanAccommodation(acc?: TourAccommodation) {
 
 export const saveTourServer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: TourInput) => data)
+  .validator((data: TourInput) => data)
   .handler(async ({ data, context }) => {
     const err = validateTour(data);
     if (err) throw new Error(err);
 
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Check if caller is admin
+    const { data: roleRow } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+
+    const isAdmin = roleRow?.role === "admin";
+    const targetVendorId = data.vendor_id || context.userId;
+
     // Enforce KYC verification for live publishing
-    if (data.is_active) {
+    if (data.is_active && !isAdmin) {
       const { data: profile } = await context.supabase
         .from("profiles")
         .select("vendor_status")
-        .eq("id", context.userId)
+        .eq("id", targetVendorId)
         .maybeSingle();
 
-      const { data: roleRow } = await context.supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", context.userId)
-        .maybeSingle();
-
-      const isAdmin = roleRow?.role === "admin";
       const isApproved = profile?.vendor_status === "approved";
-
-      if (!isAdmin && !isApproved) {
+      if (!isApproved) {
         throw new Error(
           "Agency Verification Required: Unverified accounts can only save listings as Draft in Setup Mode. Submit and complete your KYC verification to publish live on GlobeTrek PK."
         );
       }
     }
 
+    const client = isAdmin ? supabaseAdmin : context.supabase;
     const { enforceVendorLimits } = await import("@/lib/vendors.functions");
-    await enforceVendorLimits(context.supabase, context.userId, data.is_active);
+    await enforceVendorLimits(client, targetVendorId, data.is_active);
 
     const payload = {
-      vendor_id: data.vendor_id,
+      vendor_id: targetVendorId,
       title: data.title.trim(),
       description: data.description,
       destination_country: data.destination_country,
@@ -125,11 +130,11 @@ export const saveTourServer = createServerFn({ method: "POST" })
     };
 
     if (data.id) {
-      const { error } = await context.supabase.from("tours").update(payload as never).eq("id", data.id);
+      const { error } = await client.from("tours").update(payload as never).eq("id", data.id);
       if (error) throw new Error(error.message);
       return { id: data.id, mode: "update" as const };
     }
-    const { data: inserted, error } = await context.supabase
+    const { data: inserted, error } = await client
       .from("tours")
       .insert(payload as never)
       .select("id")
@@ -140,35 +145,39 @@ export const saveTourServer = createServerFn({ method: "POST" })
 
 export const setTourPublishedServer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { id: string; is_active: boolean }) => data)
+  .validator((data: { id: string; is_active: boolean; targetVendorId?: string }) => data)
   .handler(async ({ data, context }) => {
-    if (data.is_active) {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: roleRow } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+
+    const isAdmin = roleRow?.role === "admin";
+    const targetVendorId = data.targetVendorId || context.userId;
+
+    if (data.is_active && !isAdmin) {
       const { data: profile } = await context.supabase
         .from("profiles")
         .select("vendor_status")
-        .eq("id", context.userId)
+        .eq("id", targetVendorId)
         .maybeSingle();
 
-      const { data: roleRow } = await context.supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", context.userId)
-        .maybeSingle();
-
-      const isAdmin = roleRow?.role === "admin";
       const isApproved = profile?.vendor_status === "approved";
-
-      if (!isAdmin && !isApproved) {
+      if (!isApproved) {
         throw new Error(
           "Agency Verification Required: You must complete KYC verification and receive Admin approval before publishing live tour packages."
         );
       }
     }
 
+    const client = isAdmin ? supabaseAdmin : context.supabase;
     const { enforceVendorLimits } = await import("@/lib/vendors.functions");
-    await enforceVendorLimits(context.supabase, context.userId, data.is_active);
+    await enforceVendorLimits(client, targetVendorId, data.is_active);
 
-    const { error } = await context.supabase
+    const { error } = await client
       .from("tours")
       .update({ is_active: data.is_active })
       .eq("id", data.id);

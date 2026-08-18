@@ -596,6 +596,7 @@ export const submitVisaLeadQuote = createServerFn({ method: "POST" })
       consultation_mode: "in_person" | "remote_efiling";
       inclusions: string[];
       proposal_notes: string;
+      targetVendorId?: string;
     }) => {
       if (!input.lead_id) throw new Error("Lead ID is required");
       if (!input.quote_amount_pkr || input.quote_amount_pkr <= 0) {
@@ -606,7 +607,18 @@ export const submitVisaLeadQuote = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const vendorId = context.userId;
+    let vendorId = context.userId;
+
+    const { data: roleRow } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+
+    const isAdmin = roleRow?.role === "admin";
+    if (isAdmin && data.targetVendorId) {
+      vendorId = data.targetVendorId;
+    }
 
     // Load vendor details
     const { data: vendorProfile } = await supabaseAdmin

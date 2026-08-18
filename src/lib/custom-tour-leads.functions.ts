@@ -427,6 +427,7 @@ export const submitLeadQuote = createServerFn({ method: "POST" })
     advanceDepositPercent?: number;
     pdfUrl?: string;
     validUntil?: string;
+    targetVendorId?: string;
   }) => {
     if (!input.leadId) throw new Error("Lead ID required");
     if (!input.quoteAmount || input.quoteAmount <= 0) throw new Error("Valid price required");
@@ -434,19 +435,32 @@ export const submitLeadQuote = createServerFn({ method: "POST" })
     return input;
   })
   .handler(async ({ data, context }) => {
-    const vendorId = context.userId;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let vendorId = context.userId;
 
-    // Verify vendor has unlocked this lead
-    const { data: purchase } = await supabaseAdmin
-      .from("vendor_lead_purchases")
-      .select("id")
-      .eq("lead_id", data.leadId)
-      .eq("vendor_id", vendorId)
+    const { data: roleRow } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
       .maybeSingle();
 
-    if (!purchase) {
-      throw new Error("You must unlock this lead before submitting a quotation.");
+    const isAdmin = roleRow?.role === "admin";
+    if (isAdmin && data.targetVendorId) {
+      vendorId = data.targetVendorId;
+    }
+
+    // Verify vendor has unlocked this lead (or if admin is submitting)
+    if (!isAdmin) {
+      const { data: purchase } = await supabaseAdmin
+        .from("vendor_lead_purchases")
+        .select("id")
+        .eq("lead_id", data.leadId)
+        .eq("vendor_id", vendorId)
+        .maybeSingle();
+
+      if (!purchase) {
+        throw new Error("You must unlock this lead before submitting a quotation.");
+      }
     }
 
     // Get vendor profile details

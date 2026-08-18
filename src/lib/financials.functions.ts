@@ -278,11 +278,23 @@ export interface VendorInvoiceItem {
   departure_city?: string;
 }
 
-export const getVendorInvoices = createServerFn({ method: "GET" })
+export const getVendorInvoices = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<VendorInvoiceItem[]> => {
+  .validator((input?: { targetVendorId?: string }) => input)
+  .handler(async ({ data: input, context }): Promise<VendorInvoiceItem[]> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const vendorId = context.userId;
+    let vendorId = context.userId;
+
+    if (input?.targetVendorId && input.targetVendorId !== context.userId) {
+      const { data: roleRow } = await context.supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", context.userId)
+        .maybeSingle();
+      if (roleRow?.role === "admin") {
+        vendorId = input.targetVendorId;
+      }
+    }
 
     // 1. Fetch vendor's lead unlock payments
     const { data: leadPayments, error: lpErr } = await supabaseAdmin
