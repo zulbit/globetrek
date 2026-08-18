@@ -1,1 +1,0 @@
-import { supabaseAdmin } from "@/integrations/supabase/client.server"; async function run() { const { data, error } = await supabaseAdmin.from("vendor_guide_sections").select("*"); console.log("Sections count:", data?.length, error); } run();
