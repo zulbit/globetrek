@@ -39,7 +39,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
                   <span>WhatsApp: +92 349 0386131</span>
                 </a>
                 <a
-                  href="https://g.page/r/CQCdMHtDuZ3oEAE/review"
+                  href="https://g.page/r/CQCdMHtdUz3oEAE/review"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/15 border border-amber-500/30 px-3 py-1.5 text-xs font-bold text-amber-400 hover:bg-amber-500/25 transition-colors w-fit"
@@ -137,17 +137,6 @@ export function SiteShell({ children }: { children: ReactNode }) {
                 <li className="flex items-center gap-1.5 text-emerald-400 font-medium pt-1">
                   <ShieldCheck className="size-3.5 shrink-0" />
                   <span>DTS-Verified Agencies</span>
-                </li>
-                <li>
-                  <a
-                    href="https://g.page/r/CQCdMHtDuZ3oEAE/review"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-primary transition-colors flex items-center gap-1.5 text-amber-400 font-semibold pt-1"
-                  >
-                    <Star className="size-3.5 fill-amber-400" />
-                    <span>Rate us on Google (5★)</span>
-                  </a>
                 </li>
               </ul>
             </div>
