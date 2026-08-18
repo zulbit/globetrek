@@ -17,6 +17,9 @@ import {
   ArrowRight,
   Loader2,
   Compass,
+  Clock,
+  Building2,
+  AlertTriangle,
 } from "lucide-react";
 
 import type { LucideIcon } from "lucide-react";
@@ -57,11 +60,12 @@ function AdminOverview() {
       monthStart.setHours(0, 0, 0, 0);
       const iso = monthStart.toISOString();
 
-      // Fetch all vendor profiles, tour lead unlocks, and visa lead unlock purchases
+      // Fetch all vendor profiles, KYC settings, tour lead unlocks, and visa lead unlock purchases
       const [
         vendors,
         customers,
         vendorProfilesRes,
+        kycRecordsRes,
         leadUnlocksRes,
         visaLeadPurchasesRes,
         customVisaLeadsCountRes,
@@ -77,7 +81,8 @@ function AdminOverview() {
       ] = await Promise.all([
         supabase.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "vendor"),
         supabase.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "customer"),
-        supabase.from("profiles").select("id, subscription_tier, created_at, updated_at"),
+        supabase.from("profiles").select("id, email, full_name, company_name, vendor_status, subscription_tier, created_at, updated_at"),
+        supabase.from("payment_gateway_settings").select("provider, config").like("provider", "vendor_kyc_%"),
         supabase.from("lead_unlock_payments").select("id, amount, status, created_at").eq("status", "completed"),
         supabase.from("payment_gateway_settings").select("config").eq("provider", "visa_lead_purchases").maybeSingle(),
         supabase.from("payment_gateway_settings").select("config").eq("provider", "custom_visa_leads").maybeSingle(),
@@ -157,6 +162,54 @@ function AdminOverview() {
         else freeCount++;
       });
 
+      // Parse KYC submissions map
+      const kycSettings = kycRecordsRes.data ?? [];
+      const kycMap = new Map<string, boolean>();
+      kycSettings.forEach((r) => {
+        const uId = r.provider.replace("vendor_kyc_", "");
+        try {
+          const parsed = typeof r.config === "string" ? JSON.parse(r.config) : r.config;
+          if (parsed) {
+            const fields = parsed.fields || {};
+            const hasMeaningfulDocs = Boolean(
+              fields.dts_license?.trim() ||
+              fields.ntn_number?.trim() ||
+              fields.cnic_number?.trim() ||
+              fields.office_address?.trim()
+            );
+            const isSubmitted = parsed.is_submitted === true || (parsed.is_submitted !== false && hasMeaningfulDocs);
+            if (isSubmitted) {
+              kycMap.set(uId, true);
+            }
+          }
+        } catch {}
+      });
+
+      const allVendorProfiles = profiles.filter((p: any) => {
+        if (p.company_name) return true;
+        if (p.vendor_status === "pending") return true;
+        if (p.email && p.email.toLowerCase().includes("vendor")) return true;
+        if (p.email && !p.email.includes("customer.demo") && !p.email.includes("admin.demo")) return true;
+        return false;
+      });
+
+      let setupModeCount = 0;
+      let inReviewCount = 0;
+      let verifiedVendorsCount = 0;
+      let bannedVendorsCount = 0;
+
+      allVendorProfiles.forEach((v: any) => {
+        if (v.vendor_status === "approved") {
+          verifiedVendorsCount++;
+        } else if (v.vendor_status === "banned") {
+          bannedVendorsCount++;
+        } else if (kycMap.get(v.id)) {
+          inReviewCount++;
+        } else {
+          setupModeCount++;
+        }
+      });
+
       // Fetch dynamic pricing for MRR and real payments for actual revenue
       const [pricingRes, realPaymentsRes] = await Promise.all([
         supabase.from("payment_gateway_settings").select("config").eq("provider", "subscription_plans").maybeSingle(),
@@ -222,7 +275,12 @@ function AdminOverview() {
       };
 
       return {
-        vendors: vendors.count ?? 0,
+        vendors: allVendorProfiles.length || (vendors.count ?? 0),
+        setupModeCount,
+        inReviewCount,
+        verifiedVendorsCount,
+        bannedVendorsCount,
+        freeCount,
         customers: customers.count ?? 0,
         proVendors: proCount,
         starterVendors: starterCount,
@@ -265,17 +323,44 @@ function AdminOverview() {
 
   return (
     <div className="space-y-8 pb-10 w-full">
+      {/* 0. Actionable Onboarding Notice if any agency is in Setup Mode or KYC In Review */}
+      {((data?.setupModeCount ?? 0) > 0 || (data?.inReviewCount ?? 0) > 0) && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-3.5 text-xs shadow-xs">
+          <div className="flex items-center gap-2.5 text-amber-300">
+            <AlertTriangle className="size-4 shrink-0 text-amber-400" />
+            <span>
+              <strong>{data?.setupModeCount ?? 0} Agency in Setup Mode</strong> (unsubmitted KYC) and{" "}
+              <strong>{data?.inReviewCount ?? 0} in KYC Review</strong> awaiting verification.
+            </span>
+          </div>
+          <Link
+            to="/admin/vendors"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-slate-950 hover:bg-amber-400 transition shadow-xs"
+          >
+            Manage Vendors &amp; Impersonate <ArrowRight className="size-3" />
+          </Link>
+        </div>
+      )}
+
       {/* 1. Primary Metrics Grid (Top) */}
       <section className="w-full">
-        <h2 className="mb-4 text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold">Community & Membership</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 w-full">
+        <h2 className="mb-4 text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold">Community &amp; Membership</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 w-full">
           <MetricCard
             to="/admin/vendors"
             icon={Users}
             label="Total vendors"
             value={data?.vendors ?? 0}
-            hint={`${data?.proVendors ?? 0} Pro · ${data?.starterVendors ?? 0} Free`}
+            hint={`${data?.verifiedVendorsCount ?? 0} Verified · ${data?.freeCount ?? 0} Free`}
             tone="emerald"
+          />
+          <MetricCard
+            to="/admin/vendors"
+            icon={Clock}
+            label="Setup Mode"
+            value={data?.setupModeCount ?? 0}
+            hint={`${data?.inReviewCount ?? 0} In Review · KYC Pending`}
+            tone="amber"
           />
           <MetricCard
             to="/admin/vendors"
@@ -283,7 +368,7 @@ function AdminOverview() {
             label="Pro subscribers"
             value={data?.proVendors ?? 0}
             hint={`${formatPKR(PRO_MONTHLY_PKR)} / mo subscription`}
-            tone="amber"
+            tone="sky"
           />
           <MetricCard
             to="/admin/users"
@@ -415,10 +500,18 @@ function AdminOverview() {
         {/* Dynamic mini summary */}
         <div className="rounded-3xl border border-border bg-card/60 p-6 flex flex-col justify-between">
           <div>
-            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-sky-400">
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-sky-400 font-bold">
               <Calendar className="h-3.5 w-3.5" /> Quick Status
             </div>
             <div className="mt-4 space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Setup Mode Agencies:</span>
+                <span className="font-bold text-amber-400">{data?.setupModeCount ?? 0}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Pending KYC Reviews:</span>
+                <span className="font-bold text-emerald-400">{data?.inReviewCount ?? 0}</span>
+              </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Total Listings:</span>
                 <span className="font-semibold text-foreground">
