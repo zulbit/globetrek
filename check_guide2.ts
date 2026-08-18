@@ -1,0 +1,1 @@
+import { supabaseAdmin } from "@/integrations/supabase/client.server"; async function run() { const { data, error } = await supabaseAdmin.from("payment_gateway_settings").select("config").eq("provider", "vendor_guide_store").single(); console.log(data?.config?.sections[4]?.content.slice(0, 1000)); } run();

@@ -208,6 +208,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         type: "application/ld+json",
         children: JSON.stringify(organizationSchema),
       },
+      {
+        src: "https://www.googletagmanager.com/gtag/js?id=G-EY3KWPZKVV",
+        async: true,
+      },
+      {
+        children: `window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());gtag('config', 'G-EY3KWPZKVV');`,
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -288,6 +295,17 @@ function RootComponent() {
     });
     return () => sub.subscription.unsubscribe();
   }, [router, queryClient]);
+
+  // Track SPA route changes in Google Analytics (GA4)
+  useEffect(() => {
+    if (typeof window !== "undefined" && typeof (window as any).gtag === "function") {
+      (window as any).gtag("event", "page_view", {
+        page_path: router.state.location.pathname,
+        page_location: window.location.href,
+        page_title: typeof document !== "undefined" ? document.title : "",
+      });
+    }
+  }, [router.state.location.pathname]);
 
   return (
     <QueryClientProvider client={queryClient}>
