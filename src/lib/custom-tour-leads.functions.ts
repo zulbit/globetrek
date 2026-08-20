@@ -197,8 +197,15 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
       .eq("user_id", vendorId)
       .maybeSingle();
 
-    const isAdmin = roleRow?.role === "admin";
-    const isApproved = vendorProfile?.vendor_status === "approved";
+    // Check verification status from profiles table as well as payment_gateway_settings KYC store
+    const { data: kycStore } = await supabaseAdmin
+      .from("payment_gateway_settings")
+      .select("config")
+      .eq("provider", `vendor_kyc_${vendorId}`)
+      .maybeSingle();
+
+    const kycConfig = kycStore?.config ? (typeof kycStore.config === "string" ? JSON.parse(kycStore.config) : kycStore.config) : null;
+    const isApproved = vendorProfile?.vendor_status === "approved" || vendorProfile?.vendor_status === "verified" || kycConfig?.status === "approved";
 
     if (!isAdmin && !isApproved) {
       throw new Error(
