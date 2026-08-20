@@ -44,6 +44,39 @@ function NotFoundComponent() {
   );
 }
 
+// Register proactive Vite chunk preload error listener
+if (typeof window !== "undefined") {
+  window.addEventListener("vite:preloadError", (event) => {
+    event.preventDefault();
+    const key = "last_chunk_reload_time";
+    const now = Date.now();
+    const lastReload = Number(sessionStorage.getItem(key) || "0");
+    if (now - lastReload > 3_000) {
+      sessionStorage.setItem(key, String(now));
+      window.location.reload();
+    }
+  });
+
+  window.addEventListener("unhandledrejection", (event) => {
+    const msg = String(event.reason?.message || event.reason || "");
+    if (
+      msg.includes("Failed to fetch dynamically imported module") ||
+      msg.includes("Importing a module script failed") ||
+      msg.includes("error loading dynamically imported module") ||
+      msg.includes("ChunkLoadError")
+    ) {
+      event.preventDefault();
+      const key = "last_chunk_reload_time";
+      const now = Date.now();
+      const lastReload = Number(sessionStorage.getItem(key) || "0");
+      if (now - lastReload > 3_000) {
+        sessionStorage.setItem(key, String(now));
+        window.location.reload();
+      }
+    }
+  });
+}
+
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
@@ -56,13 +89,14 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
       (error.message.includes("Failed to fetch dynamically imported module") ||
         error.message.includes("Importing a module script failed") ||
         error.message.includes("dynamically imported module") ||
+        error.message.includes("error loading") ||
         error.name === "ChunkLoadError");
 
     if (isChunkError && typeof window !== "undefined") {
       const key = "last_chunk_reload_time";
       const now = Date.now();
       const lastReload = Number(sessionStorage.getItem(key) || "0");
-      if (now - lastReload > 10_000) {
+      if (now - lastReload > 3_000) {
         sessionStorage.setItem(key, String(now));
         window.location.reload();
       }
