@@ -13,7 +13,7 @@ const CHIP_REGEX = /\[\[(?:choose|confirm):\s*([^\]]+)\]\]/i;
 const GREETING: ChatMessage = {
   role: "assistant",
   content:
-    "Assalam-o-Alaikum! ✈️ Welcome to **GlobeTrek PK** — your 24/7 travel concierge!\n\nAap English ya Roman Urdu mein baat kar sakte hain. Aapko kis cheez mein madad chahiye?\n\n[[choose: 🇵🇰 Roman Urdu | 🇬🇧 English | 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets]]",
+    "Assalam-o-Alaikum! ✈️ Welcome to **GlobeTrek PK** — your 24/7 luxury travel concierge!\n\nWhere would you like to travel next? I can help you discover packages, check visa requirements, get travel insurance, or book flight tickets.\n\n[[choose: 🌴 Tour Packages | 📄 Visa Services | 🛡️ Travel Insurance | ✈️ Flight Tickets | 🇵🇰 Roman Urdu]]",
 };
 
 function parseChips(content: string): { text: string; chips: string[] } {
@@ -53,18 +53,18 @@ function parseChips(content: string): { text: string; chips: string[] } {
       } else if (lower.includes("flight") || lower.includes("ticket") || lower.includes("umrah")) {
         chips.push("✈️ Request Ticket Quote", "🕋 Umrah Flight Desk", "🌴 Custom Trip");
       } else if (lower.includes("dubai") || lower.includes("uae")) {
-        chips.push("💳 Reserve Slots", "📄 Dubai Visa Info", "🌴 Custom Dubai Trip");
+        chips.push("🎟️ View Dubai Packages", "🇹🇷 Turkey", "🇦🇿 Baku", "📄 Dubai Visa Info", "🌴 Custom Dubai Trip");
       } else if (lower.includes("turkey") || lower.includes("istanbul")) {
-        chips.push("💳 Reserve Slots", "📄 Turkey Visa Info", "🌴 Custom Turkey Trip");
+        chips.push("🎟️ View Turkey Packages", "🇦🇪 Dubai", "🇪🇺 Europe", "📄 Turkey Visa Info", "🌴 Custom Turkey Trip");
       } else if (lower.includes("europe") || lower.includes("paris") || lower.includes("switzerland")) {
-        chips.push("💳 Reserve Slots", "📄 Schengen Visa Info", "🌴 Custom Europe Trip");
+        chips.push("🎟️ View Europe Packages", "🇹🇷 Turkey", "🇦🇪 Dubai", "📄 Schengen Visa Info", "🌴 Custom Europe Trip");
       } else {
-        chips.push("🇦🇪 Dubai", "🇹🇷 Turkey", "🇪🇺 Europe", "🌴 Build Custom Tour");
+        chips.push("🇹🇷 Turkey", "🇦🇪 Dubai", "🇦🇿 Baku", "🇪🇺 Europe", "🇵🇰 Hunza & Skardu", "🌴 Build Custom Tour");
       }
     }
   }
 
-  return { text, chips: Array.from(new Set(chips)).slice(0, 5) };
+  return { text, chips: Array.from(new Set(chips)).slice(0, 6) };
 }
 
 const COUNTRY_FLAGS: Record<string, string> = {
@@ -72,6 +72,10 @@ const COUNTRY_FLAGS: Record<string, string> = {
   thailand: "🇹🇭",
   uae: "🇦🇪",
   dubai: "🇦🇪",
+  baku: "🇦🇿",
+  azerbaijan: "🇦🇿",
+  hunza: "🇵🇰",
+  skardu: "🇵🇰",
   europe: "🇪🇺",
   malaysia: "🇲🇾",
   singapore: "🇸🇬",

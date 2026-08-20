@@ -17,6 +17,44 @@ const DEFAULT_TOURS = [
     price_pkr: 385000,
     vendor: "Silk Route Holidays",
     description: "Two nights of hot air balloons over Cappadocia, Bosphorus cruise, Hagia Sophia & Grand Bazaar.",
+    departure_date: "2026-09-15",
+    booking_deadline: "2026-09-05",
+  },
+  {
+    id: "dubai-highlights-5d",
+    title: "5-Day Dubai & Abu Dhabi Highlights",
+    destination_country: "UAE",
+    departure_city: "Islamabad",
+    duration_days: 5,
+    price_pkr: 250000,
+    vendor: "Gulf Wings Travel",
+    description: "At the Top Burj Khalifa, sunset desert safari with BBQ, Palm Jumeirah, Dubai Mall & Sheikh Zayed Grand Mosque.",
+    departure_date: "2026-09-20",
+    booking_deadline: "2026-09-10",
+  },
+  {
+    id: "baku-azerbaijan-5d",
+    title: "5-Day Baku & Fire Mountain (Azerbaijan)",
+    destination_country: "Azerbaijan",
+    departure_city: "Karachi",
+    duration_days: 5,
+    price_pkr: 220000,
+    vendor: "Caspian Voyages",
+    description: "Flame Towers, Old City Icherisheher, Yanar Dag (Fire Mountain), Gobustan Rock Art & Mud Volcanoes.",
+    departure_date: "2026-10-05",
+    booking_deadline: "2026-09-25",
+  },
+  {
+    id: "hunza-skardu-8d",
+    title: "8-Day Hunza Valley & Skardu Shangrila Escape",
+    destination_country: "Pakistan",
+    departure_city: "Islamabad",
+    duration_days: 8,
+    price_pkr: 145000,
+    vendor: "Karakoram Expeditions",
+    description: "Attabad Lake boating, Baltit & Altit Forts, Shangrila Resort Skardu, Upper Kachura Lake & Deosai Plains.",
+    departure_date: "2026-09-10",
+    booking_deadline: "2026-09-01",
   },
   {
     id: "bangkok-phuket-5d",
@@ -27,6 +65,8 @@ const DEFAULT_TOURS = [
     price_pkr: 245000,
     vendor: "Orient Escapes",
     description: "Bangkok street food & temples, Phi Phi island speedboat tour & Patong beach in Phuket.",
+    departure_date: "2026-10-12",
+    booking_deadline: "2026-10-01",
   },
   {
     id: "grand-europe-10d",
@@ -37,36 +77,8 @@ const DEFAULT_TOURS = [
     price_pkr: 895000,
     vendor: "Voyage Continental",
     description: "Paris, Interlaken, Venice & Rome — classic 4-country loop with Schengen visa support.",
-  },
-  {
-    id: "dubai-city-break-4d",
-    title: "4-Day Dubai City Break",
-    destination_country: "UAE",
-    departure_city: "Karachi",
-    duration_days: 4,
-    price_pkr: 165000,
-    vendor: "Gulf Wings Travel",
-    description: "At the Top Burj Khalifa, sunset desert safari with dune bashing & Old Dubai souks.",
-  },
-  {
-    id: "singapore-family-5d",
-    title: "5-Day Singapore Family Fun",
-    destination_country: "Singapore",
-    departure_city: "Lahore",
-    duration_days: 5,
-    price_pkr: 315000,
-    vendor: "Orient Escapes",
-    description: "Universal Studios Sentosa, S.E.A. Aquarium, Gardens by the Bay & Chinatown.",
-  },
-  {
-    id: "vietnam-halong-7d",
-    title: "7-Day Vietnam: Hanoi & Halong Bay",
-    destination_country: "Vietnam",
-    departure_city: "Islamabad",
-    duration_days: 7,
-    price_pkr: 335000,
-    vendor: "Indochina Trails",
-    description: "Overnight junk boat cruise in Halong Bay, Hanoi Old Quarter & Da Nang lanterns.",
+    departure_date: "2026-10-15",
+    booking_deadline: "2026-09-30",
   },
   {
     id: "malaysia-kl-langkawi-6d",
@@ -77,16 +89,20 @@ const DEFAULT_TOURS = [
     price_pkr: 275000,
     vendor: "Orient Escapes",
     description: "Petronas Twin Towers in KL, Langkawi skybridge cable car & island hopping.",
+    departure_date: "2026-11-01",
+    booking_deadline: "2026-10-20",
   },
   {
-    id: "uk-london-edinburgh-8d",
-    title: "8-Day UK: London & Edinburgh",
-    destination_country: "UK",
-    departure_city: "Islamabad",
-    duration_days: 8,
-    price_pkr: 725000,
-    vendor: "Voyage Continental",
-    description: "Westminster & Tower of London, LNER scenic train to Royal Mile Edinburgh & Highlands.",
+    id: "umrah-premium-15d",
+    title: "15-Day Premium Umrah Package",
+    destination_country: "Saudi Arabia",
+    departure_city: "Lahore",
+    duration_days: 15,
+    price_pkr: 320000,
+    vendor: "ZamZam Travels",
+    description: "Clock Tower 4-star hotel in Makkah, 4-star near Prophet's Mosque in Madinah, visa & VIP transport included.",
+    departure_date: "2026-09-25",
+    booking_deadline: "2026-09-15",
   },
 ];
 
@@ -221,10 +237,10 @@ export const Route = createFileRoute("/api/ai-chat")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
         // Preload active catalog snippets for grounding across all 4 services
-        let catalogList = DEFAULT_TOURS;
-        let visaList = DEFAULT_VISAS;
-        let insuranceList = DEFAULT_INSURANCE;
-        let ticketsList = DEFAULT_TICKETS;
+        let catalogList = [...DEFAULT_TOURS];
+        let visaList = [...DEFAULT_VISAS];
+        let insuranceList = [...DEFAULT_INSURANCE];
+        let ticketsList = [...DEFAULT_TICKETS];
 
         try {
           const { data: dbTours } = await supabaseAdmin
@@ -233,32 +249,39 @@ export const Route = createFileRoute("/api/ai-chat")({
             .eq("is_active", true)
             .order("price_pkr", { ascending: true })
             .limit(30);
+
           if (dbTours && dbTours.length > 0) {
-            catalogList = dbTours.map((t) => {
+            const formattedDbTours = dbTours.map((t) => {
               const acc = (t.accommodation as Record<string, unknown> | null) || {};
               return {
                 id: t.id,
                 vendor_id: t.vendor_id,
                 title: String(t.title || "Tour Package"),
-                destination_country: String(t.destination_country || "Europe"),
+                destination_country: String(t.destination_country || "UAE"),
                 departure_city: String(t.departure_city || "Lahore"),
-                duration_days: Number(t.duration_days || 7),
+                duration_days: Number(t.duration_days || 5),
                 price_pkr: Number(t.price_pkr || 250000),
                 vendor: "Verified Vendor",
                 description: String(t.description || ""),
-                departure_date: typeof acc.departure_date === "string" ? acc.departure_date : null,
+                departure_date: typeof acc.departure_date === "string" ? acc.departure_date : "2026-09-20",
                 return_date: typeof acc.return_date === "string" ? acc.return_date : null,
-                booking_deadline: typeof acc.booking_deadline === "string" ? acc.booking_deadline : null,
+                booking_deadline: typeof acc.booking_deadline === "string" ? acc.booking_deadline : "2026-09-10",
               };
             });
+
+            // Merge: keep DB tours, and supplement with default tours for missing destinations
+            const existingCountries = new Set(formattedDbTours.map((t) => t.destination_country.toLowerCase()));
+            const supplementalDefaults = DEFAULT_TOURS.filter((dt) => !existingCountries.has(dt.destination_country.toLowerCase()));
+            catalogList = [...formattedDbTours, ...supplementalDefaults];
           }
 
           const { data: dbVisas } = await supabaseAdmin
             .from("visa_services")
             .select("id, vendor_id, country, visa_type, processing_days, price_pkr, service_fee_pkr, success_rate, description, profiles:vendor_id(company_name, full_name, city)")
             .eq("is_active", true);
+
           if (dbVisas && dbVisas.length > 0) {
-            visaList = dbVisas.map((v) => {
+            const formattedDbVisas = dbVisas.map((v) => {
               const vendorObj = (v as unknown as { profiles: { company_name?: string; full_name?: string; city?: string } | null }).profiles;
               const vendorName = vendorObj?.company_name || vendorObj?.full_name || "Verified Consultant";
               const cityTag = vendorObj?.city ? ` (${vendorObj.city})` : "";
@@ -275,12 +298,16 @@ export const Route = createFileRoute("/api/ai-chat")({
                 description: String(v.description || ""),
               };
             });
+            const existingVisaCountries = new Set(formattedDbVisas.map((v) => v.country.toLowerCase()));
+            const supplementalVisas = DEFAULT_VISAS.filter((dv) => !existingVisaCountries.has(dv.country.toLowerCase()));
+            visaList = [...formattedDbVisas, ...supplementalVisas];
           }
 
           const { data: dbInsurance } = await supabaseAdmin
             .from("insurance_plans")
             .select("id, vendor_id, plan_name, coverage_type, coverage_amount_pkr, duration_days, price_pkr, description")
             .eq("is_active", true);
+
           if (dbInsurance && dbInsurance.length > 0) {
             insuranceList = dbInsurance.map((i) => ({
               id: i.id,
@@ -298,6 +325,7 @@ export const Route = createFileRoute("/api/ai-chat")({
             .from("ticket_services")
             .select("id, vendor_id, service_name, route_type, airlines_supported, service_fee_pkr, refundable, description")
             .eq("is_active", true);
+
           if (dbTickets && dbTickets.length > 0) {
             ticketsList = dbTickets.map((tk) => ({
               id: tk.id,
@@ -312,10 +340,13 @@ export const Route = createFileRoute("/api/ai-chat")({
           }
         } catch (error) {
           console.error("[AI Catalog Load Error]:", error);
-        }        // Pre-Retrieval Grounding (RAG): Search database for user's explicit query BEFORE invoking LLM
+        }
+
+        // Pre-Retrieval Grounding (RAG): Search database for user's explicit query BEFORE invoking LLM
         const lastUserPrompt = (messages[messages.length - 1]?.content || "").trim();
-        const isRomanUrdu = /\b(batao|bataen|chahiye|hain|hai|karo|apna|chahta|shukriya|shamil|kardein|pasand|din|kahan|kaise|mujhe|humare|koi|aur)\b/i.test(lastUserPrompt);
-        const detectedLanguage = isRomanUrdu ? "Roman Urdu" : "English";
+        const isExplicitRomanUrdu = /\b(batao|bataen|chahiye|hain|hai|karo|apna|chahta|shukriya|shamil|kardein|pasand|din|kahan|kaise|mujhe|humare|koi|aur|karwa|bhejo)\b/i.test(lastUserPrompt) || /roman urdu/i.test(lastUserPrompt);
+        const isEnglishSelection = /^(tour packages|visa services|travel insurance|flight tickets|english|submit visa request|document checklist|embassy fees|custom trip|view .* packages)/i.test(lastUserPrompt.replace(/[^\w\s]/g, "").trim());
+        const detectedLanguage = (isExplicitRomanUrdu && !isEnglishSelection) ? "Roman Urdu" : "English";
 
         let preSearchQuery = "";
         let preSearchResults: string[] = [];
@@ -323,12 +354,13 @@ export const Route = createFileRoute("/api/ai-chat")({
         const lowerPrompt = lastUserPrompt.toLowerCase();
         const isGenericTourQuery = /\b(tour|tours|package|packages|trip|trips)\b/i.test(lowerPrompt);
         const isGenericVisaQuery = /\b(visa|visas|embassy|file|filing)\b/i.test(lowerPrompt);
+        const isSubmitVisaQuery = /submit visa|apply visa|visa application|visa form|custom visa/i.test(lowerPrompt);
         const isGenericInsuranceQuery = /\b(insurance|policy|cover|shield)\b/i.test(lowerPrompt);
         const isGenericFlightQuery = /\b(flight|flights|ticket|tickets|airline|umrah)\b/i.test(lowerPrompt);
 
         // Match 2+ letter words so 2-letter countries ("UK", "US", "EU", "PK") are captured
         const locWords = lastUserPrompt.match(/\b[A-Za-z]{2,}\b/g) || [];
-        const ignoreWords = new Set(["you", "have", "any", "listing", "tour", "tours", "package", "packages", "trip", "trips", "from", "with", "about", "show", "tell", "what", "there", "here", "want", "like", "need", "book", "good", "best", "some", "details", "please", "the", "for", "and", "are", "near", "future", "services", "service"]);
+        const ignoreWords = new Set(["you", "have", "any", "listing", "tour", "tours", "package", "packages", "trip", "trips", "from", "with", "about", "show", "tell", "what", "there", "here", "want", "like", "need", "book", "good", "best", "some", "details", "please", "the", "for", "and", "are", "near", "future", "services", "service", "submit", "request"]);
         const targetKeywords = locWords.filter((w) => !ignoreWords.has(w.toLowerCase()));
 
         if (targetKeywords.length > 0) {
@@ -348,9 +380,15 @@ export const Route = createFileRoute("/api/ai-chat")({
               return `- MATCHED TOUR: ${t.title} (${t.duration_days}d) · from ${t.departure_city} · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")}${dateStr}${deadlineStr} · id=${t.id}`;
             });
           }
+        } else if (isSubmitVisaQuery) {
+          preSearchQuery = "Submit Visa Request";
+          preSearchResults = [
+            "DIRECT APPLICATION LINK: [📄 Open Custom Visa Application Form](/custom-visa)",
+            "EXPERT GUIDANCE: Travelers can fill the form at [📄 Custom Visa Request](/custom-visa) or provide their Full Name & WhatsApp number in chat to be assigned a verified visa consultant.",
+          ];
         } else if (isGenericTourQuery && catalogList.length > 0) {
           preSearchQuery = "Tour Packages";
-          preSearchResults = catalogList.slice(0, 3).map((t) => {
+          preSearchResults = catalogList.slice(0, 4).map((t) => {
             const item = t as any;
             const formattedDate = formatDateReadable(item.departure_date);
             const formattedDeadline = formatDateReadable(item.booking_deadline);
@@ -370,7 +408,7 @@ export const Route = createFileRoute("/api/ai-chat")({
         }
 
         const catalogText = catalogList
-          .slice(0, 3)
+          .slice(0, 5)
           .map((t) => {
             const item = t as any;
             const formattedDate = formatDateReadable(item.departure_date);
@@ -403,67 +441,67 @@ export const Route = createFileRoute("/api/ai-chat")({
 
         const systemPrompt = `You are the Senior Luxury Travel Sales Concierge for GlobeTrek PK (Pakistan's premier travel & tour marketplace).
 
-YOUR MISSION & PERSONALITY:
-- You are an energetic, warm, and highly engaging travel advisor who loves helping travelers discover the world.
-- NEVER sound like a dry database lookup or slap raw bullet points without warmth, hospitality, and excitement.
+CRITICAL LANGUAGE RULE (USER LANGUAGE FOR THIS TURN: ${detectedLanguage.toUpperCase()}):
+- If USER LANGUAGE is ENGLISH (default):
+  You MUST respond ENTIRELY in 100% fluent, elegant, and professional English.
+  ABSOLUTELY NO Urdu or Hindi words (NEVER use words like "samaya", "kahaniyan", "tayari", "bata raha hoon", "kisi aur", etc.).
+- If USER LANGUAGE is ROMAN URDU (only when user explicitly typed in Roman Urdu or clicked '🇵🇰 Roman Urdu'):
+  Respond in polite, natural Pakistani Roman Urdu (e.g. "Assalam-o-Alaikum! GlobeTrek PK par khushamdeed. Hamare paas Turkey, Dubai, Baku, aur Northern Pakistan ke shandar packages available hain!").
+  NEVER use Hindi vocabulary (no "samaya", "dhanyawad", "mitra", etc.).
 
-RULE 1: MANDATORY CONVERSATIONAL SANDWICH (WITH DIVERSE, ROTATING OPENINGS)
-EVERY response presenting a destination, package, or service MUST follow this 3-part structure:
-1. Dynamic, Topic-Accurate Opening Hook:
-   - Match your opening hook strictly to the specific destination or service requested (e.g. If asking for Insurance, open with travel protection; if for Visas, open with visa filing).
-   - NEVER repeat "Great choice" or "Awesome choice" on every turn! Rotate naturally across diverse, lively travel openers:
-   - For Dubai: "Dubai is pure luxury, desert adventures, and dazzling skylines! 🌆✨" / "Ready to experience the heights of Burj Khalifa and desert safaris? 🇦🇪" / "An iconic UAE getaway is always thrilling!"
-   - For Turkey: "From the fairy chimneys of Cappadocia to the Bosphorus sunset, Turkey is truly enchanting! 🇹🇷" / "Steeped in rich Ottoman history and vibrant bazaars, Turkey never fails to amaze!"
-   - For Europe: "A grand European journey is on everyone's bucket list! 🌍🏰" / "From romantic Parisian streets to the snow-capped Swiss Alps, you're in for an unforgettable tour!"
-   - For Southeast Asia / Malaysia: "Tropical breezes, rich cultural sights, and vibrant street food await! 🌴🍜"
-   - For Travel Insurance: "Smart travel planning! Having comprehensive medical and trip protection guarantees complete peace of mind abroad. 🛡️" / "Traveling worry-free is the true definition of a seamless vacation! ✈️🛡️"
-   - For Visa Services: "Let's make your visa application smooth, accurate, and completely stress-free! 📄" / "Our verified partner agencies specialize in getting your visa approved without hassle! 🛂"
-   - For Roman Urdu: "Safar ki tayari mein GlobeTrek PK aap ke saath hai! ✈️" / "Yeh destination hamesha se Pakistani travelers ki favorite rahi hai! 🌟" / "Shandar plan! Is safar ki memories hamesha yaad rahein gi."
-2. Package / Service Summary (Clean & Professional):
-   - Title with duration: **[Package Title]**
-   - 📍 **Departure:** [City]
-   - 💰 **Price:** **₨ [Amount]** per person
-   - 🗓️ **Departs:** [DD MMM YYYY] *(Booking Deadline: [DD MMM YYYY])*
-   - 🌟 **Highlights:** [Top 3-4 attractions/coverage points]
-3. Mandatory Engagement Question:
-   - NEVER stop at bullet points! ALWAYS ask 1-2 friendly consultative questions before the chips to advance the traveler toward booking.
+RULE 1: PRESENTING PACKAGES & MULTIPLE DESTINATIONS
+1. When user asks for "Tour Packages", "Tours", or generic travel options:
+   - Present a diverse showcase of top-rated destinations (e.g. Turkey 🇹🇷, UAE/Dubai 🇦🇪, Azerbaijan/Baku 🇦🇿, Northern Pakistan (Hunza & Skardu) 🇵🇰, or Europe 🇪🇺) with duration, departure city, price in bold PKR, and departure dates.
+   - Ask which destination excites them, or if they would like to customize a private trip.
+   - Your action chips MUST include buttons for each destination!
+2. When user asks about a specific destination (e.g. Dubai):
+   - Present the package summary cleanly with price in bold PKR, departure city, dates, and top attractions.
+   - Ask if these dates work for them, or if they'd also like to explore other popular destinations like Turkey 🇹🇷, Baku 🇦🇿, or Europe 🇪🇺.
+   - Include action chips for that destination AND other alternative destinations!
 
-RULE 2: MANDATORY INTERACTIVE ACTION CHIPS (ZERO EXCEPTIONS)
-You MUST ALWAYS end EVERY single response with a line of interactive double-bracket action chips: [[choose: Option 1 | Option 2 | Option 3]].
-Keep traveler typing to the absolute minimum by providing the most logical next 3-4 steps:
-- For Insurance inquiries: [[choose: 🛡️ Schengen Silver | 🌍 Worldwide Cover | 📄 Policy Details | 🌴 Build Custom Tour]]
-- For Dubai inquiries: [[choose: 🎟️ View Dubai Packages | 📄 Dubai Visa Info | 🌴 Custom Dubai Trip]]
-- For Turkey inquiries: [[choose: 🎟️ View Turkey Packages | 📄 Turkey Visa Info | 🌴 Custom Turkey Trip]]
-- For Europe inquiries: [[choose: 🎟️ View Europe Packages | 📄 Schengen Visa Info | 🌴 Custom Europe Trip]]
-- For Visa inquiries: [[choose: 📄 Submit Visa Request | 📋 Document Checklist | 💰 Embassy Fees | 🌴 Custom Tour]]
-- For Flight inquiries: [[choose: ✈️ Request Ticket Quote | 🕋 Umrah Flight Desk | 🌴 Custom Trip]]
-- For Group / Date questions: [[choose: 👨‍👩‍👧‍👦 Family (4+) | 👫 Couple | 🎒 Solo / Friends | 🌴 Custom Plan]]
-- For General / Mixed: [[choose: 🇦🇪 Dubai | 🇹🇷 Turkey | 🇪🇺 Europe | 🌴 Build Custom Tour]]
+RULE 2: VISA APPLICATIONS & DIRECT FORMS (NO VAGUE WALKTHROUGHS)
+When the user asks to "Submit Visa Request", "Apply for Visa", or asks how visa filing works:
+1. ALWAYS provide the direct clickable link immediately:
+   👉 **[📄 Open Visa Application Form](/custom-visa)**
+2. Clearly explain their 2 convenient options:
+   - Option A: Fill out the online application at [📄 Custom Visa Request](/custom-visa) to receive competitive quotes from verified visa consultants.
+   - Option B: Share their **Full Name, WhatsApp Number, and Target Country** right here in chat to have an expert visa consultant contact them directly!
+3. NEVER say "would you prefer a walkthrough of the form" or talk about a form without providing the direct link [📄 Open Visa Application](/custom-visa).
+4. NEVER repeat the chip "Submit Visa Request" when they just clicked it! Give the next logical steps:
+   [[choose: 📋 Document Checklist | 💰 Embassy Fees | ✈️ Flight Tickets | 🌴 Tour Packages]]
 
-RULE 3: STRICT SINGLE-KEYWORD INPUT HOOK
-If the user inputs a single destination word (like "Dubai", "Turkey", "Europe", "Lahore", "Insurance", "Visa"), DO NOT give a dry database dump. Treat it as an excited inquiry! Acknowledge their choice warmly, present key options with dates/pricing in bold PKR, ask a consultative question, and provide actionable next-step chips.
+RULE 3: CUSTOM TRIP CREATION
+When the user asks to customize a trip or build a tour:
+1. ALWAYS provide the direct link: 👉 **[🌴 Build Your Custom Tour](/custom-tour)**
+2. They can submit their group size, hotel preference, and dates on the portal to get verified agency bids.
+3. Chips: [[choose: 👨‍👩‍👧‍👦 Family (4+) | 👫 Couple | 🎒 Solo / Friends | 🎟️ Browse All Tours]]
 
-RULE 4: STRICT PLATFORM CAPABILITIES & NEGATIVE CONSTRAINTS (CRITICAL)
+RULE 4: DYNAMIC ACTION CHIPS (STRICT CONTEXT AWARENESS)
+You MUST ALWAYS end EVERY single response with a line of interactive double-bracket action chips: [[choose: Option 1 | Option 2 | Option 3 | Option 4]].
+The chips MUST match the specific options, destinations, or questions you presented in your message:
+- For Tour Packages overview: [[choose: 🇹🇷 Turkey | 🇦🇪 Dubai | 🇦🇿 Baku | 🇪🇺 Europe | 🇵🇰 Hunza & Skardu | 🌴 Build Custom Tour]]
+- For Dubai / UAE inquiries: [[choose: 🎟️ View Dubai Packages | 🇹🇷 Turkey | 🇦🇿 Baku | 📄 Dubai Visa Info | 🌴 Custom Dubai Trip]]
+- For Turkey inquiries: [[choose: 🎟️ View Turkey Packages | 🇦🇪 Dubai | 🇪🇺 Europe | 📄 Turkey Visa Info | 🌴 Custom Turkey Trip]]
+- For Europe inquiries: [[choose: 🎟️ View Europe Packages | 🇹🇷 Turkey | 🇦🇪 Dubai | 📄 Schengen Visa Info | 🌴 Custom Europe Trip]]
+- For Baku / Azerbaijan inquiries: [[choose: 🎟️ View Baku Packages | 🇹🇷 Turkey | 🇦🇪 Dubai | 📄 Baku Visa Info | 🌴 Custom Baku Trip]]
+- For Visa inquiry: [[choose: 📄 Open Visa Form | 📋 Document Checklist | 💰 Embassy Fees | 🌴 Tour Packages]]
+- For "Submit Visa Request" click: [[choose: 📋 Document Checklist | 💰 Embassy Fees | ✈️ Flight Tickets | 🌴 Tour Packages]]
+- For Insurance inquiry: [[choose: 🛡️ Schengen Silver | 🌍 Worldwide Cover | 📄 Policy Details | 🌴 Build Custom Tour]]
+- For Flight inquiry: [[choose: ✈️ Request Ticket Quote | 🕋 Umrah Flight Desk | 🌴 Tour Packages]]
+
+RULE 5: STRICT PLATFORM REALITIES
 1. NO PHONE CALL / CALENDAR / TIME-SLOT SCHEDULING:
    - GlobeTrek PK is an ONLINE TRAVEL MARKETPLACE, NOT a call center.
-   - We DO NOT offer telephone call bookings, calendar invites, or morning/afternoon time slots (e.g. NEVER ask "Morning Slot (9 AM - 12 PM)", "Afternoon Slot", "Zoom call", "Google Meet invite").
-   - NEVER promise a calendar invite or phone callback.
-2. ACTUAL HOW IT WORKS ON GLOBETREK PK:
-   - For Custom Tours: Travelers submit requirements at [🌴 Build Your Custom Tour](/custom-tour) to get custom quotes from verified agencies.
-   - For Custom Visas: Travelers submit details at [📄 Submit Visa Request](/custom-visa) where expert visa consultants review the case.
-   - For Direct Inquiries: Travelers can browse [🎟️ Browse Tours](/tours), [📄 Visa Services](/visa), [🛡️ Travel Insurance](/insurance), [✈️ Flight Tickets](/tickets), or reach verified agencies directly.
-
-CRITICAL CONSTRAINTS:
-1. NO INTERNAL MONOLOGUE / THOUGHTS: Never output reasoning steps, chain-of-thought, or meta commentary. Output ONLY the final message for the traveler.
-2. LANGUAGE: Match the traveler's language directly. If English, reply in 100% natural, fluent, hospitable English. If Roman Urdu, reply in warm, respectful Pakistani Roman Urdu.
-3. MANDATORY CHIPS ON LAST LINE: NEVER omit the [[choose: ...]] line on the final line of your reply.
-4. FORMATTING: Use clean markdown bolding, bullet points, and clickable markdown links:
-   - [🌴 Build Your Custom Tour](/custom-tour)
-   - [🎟️ Browse Tours](/tours)
-   - [📄 Visa Services](/visa)
-   - [📄 Submit Visa Request](/custom-visa)
-   - [🛡️ Travel Insurance](/insurance)
-   - [✈️ Flight Tickets](/tickets)
+   - NEVER offer telephone appointment slots (e.g. NEVER ask "Morning Slot (9 AM - 12 PM)", "Afternoon Slot", "Zoom call", "Google Meet").
+2. CONSTRAINTS:
+   - NO internal thinking or meta commentary. Output ONLY the polished message for the traveler.
+   - Use clean markdown bolding and clickable markdown links:
+     - [🌴 Build Your Custom Tour](/custom-tour)
+     - [🎟️ Browse Tours](/tours)
+     - [📄 Visa Services](/visa)
+     - [📄 Submit Visa Request](/custom-visa)
+     - [🛡️ Travel Insurance](/insurance)
+     - [✈️ Flight Tickets](/tickets)
 
 MATCHED / PRE-RETRIEVED LISTINGS:
 ${preSearchResults.length > 0 ? preSearchResults.join("\n") : "No direct keyword match."}
@@ -972,66 +1010,80 @@ ${ticketsCatalogText}`;
 
         if (!leadCaptured && !fullText?.trim()) {
           const lastUserMsg = (messages[messages.length - 1]?.content || "").trim();
-          const isEnglish = !/hai|hain|karo|batao|apna|chahta|shukriya|shamil|kardein|pasand|din/i.test(lastUserMsg);
+          const isEnglish = detectedLanguage === "English";
 
           const isDubai = /\bdubai\b|\buae\b/i.test(lastUserMsg);
           const isTurkey = /\bturkey\b|\btürkiye\b|\bistanbul\b/i.test(lastUserMsg);
           const isEurope = /\beurope\b|\bparis\b|\bswitzerland\b|\bschengen\b/i.test(lastUserMsg);
+          const isBaku = /\bbaku\b|\bazerbaijan\b/i.test(lastUserMsg);
+          const isHunza = /\bhunza\b|\bskardu\b|\bpakistan\b/i.test(lastUserMsg);
+          const isSubmitVisa = /submit visa|apply visa|visa application|visa form|custom visa/i.test(lastUserMsg);
 
-          let actionChips = "[[choose: 🇦🇪 Dubai | 🇹🇷 Turkey | 🇪🇺 Europe | 🌴 Build Custom Tour]]";
-          if (isDubai) actionChips = "[[choose: 🎟️ Dubai Packages | 📄 Dubai Visa Info | 🌴 Custom Dubai Trip]]";
-          else if (isTurkey) actionChips = "[[choose: 🎟️ Turkey Packages | 📄 Turkey Visa Info | 🌴 Custom Turkey Trip]]";
-          else if (isEurope) actionChips = "[[choose: 🎟️ Europe Packages | 📄 Schengen Visa Info | 🌴 Custom Europe Trip]]";
+          let actionChips = "[[choose: 🇹🇷 Turkey | 🇦🇪 Dubai | 🇦🇿 Baku | 🇪🇺 Europe | 🇵🇰 Hunza & Skardu | 🌴 Build Custom Tour]]";
+          if (isSubmitVisa) actionChips = "[[choose: 📋 Document Checklist | 💰 Embassy Fees | ✈️ Flight Tickets | 🌴 Tour Packages]]";
+          else if (isDubai) actionChips = "[[choose: 🎟️ View Dubai Packages | 🇹🇷 Turkey | 🇦🇿 Baku | 📄 Dubai Visa Info | 🌴 Custom Dubai Trip]]";
+          else if (isTurkey) actionChips = "[[choose: 🎟️ View Turkey Packages | 🇦🇪 Dubai | 🇪🇺 Europe | 📄 Turkey Visa Info | 🌴 Custom Turkey Trip]]";
+          else if (isEurope) actionChips = "[[choose: 🎟️ View Europe Packages | 🇹🇷 Turkey | 🇦🇪 Dubai | 📄 Schengen Visa Info | 🌴 Custom Europe Trip]]";
+          else if (isBaku) actionChips = "[[choose: 🎟️ View Baku Packages | 🇹🇷 Turkey | 🇦🇪 Dubai | 📄 Baku Visa Info | 🌴 Custom Baku Trip]]";
+          else if (isHunza) actionChips = "[[choose: 🎟️ View Hunza Packages | 🇦🇪 Dubai | 🇹🇷 Turkey | 🌴 Custom Northern Trip]]";
 
-          if (preSearchResults.length > 0) {
+          if (isSubmitVisa) {
+            fullText = isEnglish
+              ? `Let's get your visa application moving! 📄✨\n\nYou can submit your visa requirements directly online:\n👉 **[📄 Open Custom Visa Application Form](/custom-visa)**\n\nOur verified visa consultants will review your passport and document profile to provide tailored filing quotes. Alternatively, simply reply with your **Full Name, WhatsApp Number, and Destination Country** right here, and an expert consultant will reach out to assist you!\n\n${actionChips}`
+              : `Visa application ke liye GlobeTrek PK aapki mukammal madad karega! 📄✨\n\nAap directly online form submit kar sakte hain:\n👉 **[📄 Open Custom Visa Application Form](/custom-visa)**\n\nYa phir apna **Naam, WhatsApp Number, aur Destination** yahan chat mein share karein taake verified visa consultant aap se direct rabta karein!\n\n${actionChips}`;
+          } else if (preSearchResults.length > 0) {
             const formattedMatches = preSearchResults.map(m => m.replace(/^[-\s]*MATCHED TOUR:\s*/i, "• ").replace(/·\s*id=[\w-]+/i, "")).join("\n");
             fullText = isEnglish
-              ? `Awesome choice! 🌆✨ Here are the details for your requested destination:\n\n${formattedMatches}\n\nIs this departure date convenient for your travel plans, or would you like us to customize a private itinerary for your family/group? [🌴 Build Your Custom Tour](/custom-tour)\n\n${actionChips}`
-              : `Aap ne zabardast destination select ki hai! 🌴 GlobeTrek PK par aapke liye yeh verified options available hain:\n\n${formattedMatches}\n\nKya yeh dates aapke travel plan ke mutabiq hain, ya aap family/group ke liye customized itinerary chahte hain? [🌴 Build Your Custom Tour](/custom-tour)\n\n${actionChips}`;
+              ? `Awesome choice! 🌆✨ Here are the top packages matching your request:\n\n${formattedMatches}\n\nDo these dates and pricing suit your schedule, or would you like a private tailor-made itinerary for your family/group? [🌴 Build Your Custom Tour](/custom-tour)\n\n${actionChips}`
+              : `Zabardast choice! 🌴 GlobeTrek PK par aapke liye yeh verified options available hain:\n\n${formattedMatches}\n\nKya yeh dates aapke travel plan ke mutabiq hain, ya aap family/group ke liye customized itinerary chahte hain? [🌴 Build Your Custom Tour](/custom-tour)\n\n${actionChips}`;
           } else if (isGenericTourQuery && catalogList.length > 0) {
-            const toursList = catalogList.slice(0, 3).map(t => `• **${t.title}** (${t.duration_days}d) · from **${t.departure_city}** · **₨ ${Number(t.price_pkr).toLocaleString("en-PK")}**`).join("\n");
+            const toursList = catalogList.slice(0, 4).map(t => `• **${t.title}** (${t.duration_days}d) · from **${t.departure_city}** · **₨ ${Number(t.price_pkr).toLocaleString("en-PK")}**`).join("\n");
             fullText = isEnglish
-              ? `Welcome to GlobeTrek PK! 🌟 Here are our top-selling featured tour packages:\n\n${toursList}\n\nWhich destination excites you most, or would you like a tailor-made private package? [🌴 Build Your Custom Tour](/custom-tour)\n\n[[choose: 🇦🇪 Dubai | 🇹🇷 Turkey | 🇪🇺 Europe | 🌴 Build Custom Tour]]`
-              : `GlobeTrek PK mein khushamdeed! 🌟 Humare top featured tour packages yeh hain:\n\n${toursList}\n\nKaunsi destination aapke liye best rahegi, ya aap custom family package plan karna chahte hain? [🌴 Build Your Custom Tour](/custom-tour)\n\n[[choose: 🇦🇪 Dubai | 🇹🇷 Turkey | 🇪🇺 Europe | 🌴 Build Custom Tour]]`;
+              ? `Welcome to GlobeTrek PK! 🌟 Here are our top-selling featured tour packages across popular destinations:\n\n${toursList}\n\nWhich destination excites you most, or would you like a customized package tailored to your exact dates? [🌴 Build Your Custom Tour](/custom-tour)\n\n[[choose: 🇹🇷 Turkey | 🇦🇪 Dubai | 🇦🇿 Baku | 🇪🇺 Europe | 🇵🇰 Hunza & Skardu | 🌴 Build Custom Tour]]`
+              : `GlobeTrek PK mein khushamdeed! 🌟 Humare top featured tour packages yeh hain:\n\n${toursList}\n\nKaunsi destination aapke liye best rahegi, ya aap custom family package plan karna chahte hain? [🌴 Build Your Custom Tour](/custom-tour)\n\n[[choose: 🇹🇷 Turkey | 🇦🇪 Dubai | 🇦🇿 Baku | 🇪🇺 Europe | 🇵🇰 Hunza & Skardu | 🌴 Build Custom Tour]]`;
           } else if (isGenericVisaQuery && visaList.length > 0) {
             const visas = visaList.slice(0, 3).map(v => `• **${v.country} ${v.visa_type}** · Total **₨ ${(v.price_pkr + v.service_fee_pkr).toLocaleString("en-PK")}** · ~${v.processing_days} days`).join("\n");
             fullText = isEnglish
-              ? `Planning an international trip? 📄 Here are our featured visa filing services:\n\n${visas}\n\nDo you have a complex case, bank statement question, or previous refusal? [📄 Submit Custom Visa Request](/custom-visa)\n\n[[choose: 🇺🇸 USA | 🇹🇷 Turkey | 🇸🇬 Singapore | 📄 Submit Visa Request]]`
-              : `Visa filing ke liye GlobeTrek PK par khushamdeed! 📄 Featured visa services:\n\n${visas}\n\nKya aapko bank statement guidance ya refusal support chahiye? [📄 Submit Custom Visa Request](/custom-visa)\n\n[[choose: 🇺🇸 USA | 🇹🇷 Turkey | 🇸🇬 Singapore | 📄 Submit Visa Request]]`;
+              ? `Planning an international journey? 📄 Here are our featured visa filing services:\n\n${visas}\n\nNeed assistance with bank statements, document checklist, or custom filing? [📄 Submit Custom Visa Request](/custom-visa)\n\n[[choose: 📄 Open Visa Form | 📋 Document Checklist | 💰 Embassy Fees | 🌴 Tour Packages]]`
+              : `Visa filing ke liye GlobeTrek PK par khushamdeed! 📄 Featured visa services:\n\n${visas}\n\nKya aapko bank statement guidance ya visa filing assistance chahiye? [📄 Submit Custom Visa Request](/custom-visa)\n\n[[choose: 📄 Open Visa Form | 📋 Document Checklist | 💰 Embassy Fees | 🌴 Tour Packages]]`;
           } else if (isGenericInsuranceQuery && insuranceList.length > 0) {
             const ins = insuranceList.slice(0, 3).map(i => `• **${i.plan_name}** (${i.coverage_type}) · **₨ ${i.price_pkr.toLocaleString("en-PK")}**`).join("\n");
             fullText = isEnglish
-              ? `Travel with peace of mind! 🛡️ Here are our top travel insurance plans:\n\n${ins}\n\nWhere are you traveling to, and what coverage duration do you need? [🛡️ Explore All Insurance Plans](/insurance)\n\n[[choose: 🇪🇺 Schengen Shield | 🌍 Worldwide Cover | 🌴 Build Custom Tour]]`
-              : `Travel Insurance Plans 🛡️:\n\n${ins}\n\nAap kis mulk travel kar rahe hain taake best insurance plan suggest kar sakein? [🛡️ Tamam Plans Dekhein](/insurance)\n\n[[choose: 🇪🇺 Schengen Shield | 🌍 Worldwide Cover | 🌴 Build Custom Tour]]`;
+              ? `Travel with total peace of mind! 🛡️ Here are our top travel insurance plans:\n\n${ins}\n\nWhere are you traveling to, and what coverage duration do you need? [🛡️ Explore All Insurance Plans](/insurance)\n\n[[choose: 🛡️ Schengen Silver | 🌍 Worldwide Cover | 📄 Policy Details | 🌴 Build Custom Tour]]`
+              : `Travel Insurance Plans 🛡️:\n\n${ins}\n\nAap kis mulk travel kar rahe hain taake best insurance plan suggest kar sakein? [🛡️ Tamam Plans Dekhein](/insurance)\n\n[[choose: 🛡️ Schengen Silver | 🌍 Worldwide Cover | 📄 Policy Details | 🌴 Build Custom Tour]]`;
           } else if (isGenericFlightQuery && ticketsList.length > 0) {
             const tk = ticketsList.slice(0, 3).map(t => `• **${t.service_name}** (${t.route_type}) · Service Fee: **₨ ${t.service_fee_pkr.toLocaleString("en-PK")}**`).join("\n");
             fullText = isEnglish
-              ? `Ready to fly? ✈️ Here are our active ticketing desks:\n\n${tk}\n\nWhich route and travel dates are you looking for? [✈️ Browse Flight Services](/tickets)\n\n[[choose: ✈️ International Flight | 🕋 Umrah Flight | 🌴 Build Custom Tour]]`
-              : `Flight Booking Desks ✈️:\n\n${tk}\n\nAap kis route aur date par flight search kar rahe hain? [✈️ Tamam Flight Services](/tickets)\n\n[[choose: ✈️ International Flight | 🕋 Umrah Flight | 🌴 Build Custom Tour]]`;
+              ? `Ready to fly? ✈️ Here are our active ticketing desks:\n\n${tk}\n\nWhich route and travel dates are you looking for? [✈️ Browse Flight Services](/tickets)\n\n[[choose: ✈️ Request Ticket Quote | 🕋 Umrah Flight Desk | 🌴 Tour Packages]]`
+              : `Flight Booking Desks ✈️:\n\n${tk}\n\nAap kis route aur date par flight search kar rahe hain? [✈️ Tamam Flight Services](/tickets)\n\n[[choose: ✈️ Request Ticket Quote | 🕋 Umrah Flight Desk | 🌴 Tour Packages]]`;
           } else if (isEnglish) {
-            fullText = "Awesome! We have exciting tour packages for Dubai 🇦🇪, Turkey 🇹🇷, and Europe 🇪🇺 ready for booking.\n\nWhich destination are you considering, or would you like to plan a private tailor-made trip? [🌴 Build Your Custom Tour](/custom-tour)\n\n[[choose: 🇦🇪 Dubai | 🇹🇷 Turkey | 🇪🇺 Europe | 🌴 Build Custom Tour]]";
+            fullText = "Awesome! We have exciting tour packages ready for Turkey 🇹🇷, Dubai 🇦🇪, Azerbaijan (Baku) 🇦🇿, Europe 🇪🇺, and Northern Pakistan 🇵🇰.\n\nWhich destination are you planning for, or would you like to create a custom trip? [🌴 Build Your Custom Tour](/custom-tour)\n\n[[choose: 🇹🇷 Turkey | 🇦🇪 Dubai | 🇦🇿 Baku | 🇪🇺 Europe | 🇵🇰 Hunza & Skardu | 🌴 Build Custom Tour]]";
           } else {
-            fullText = "Zabardast! Humare paas Dubai 🇦🇪, Turkey 🇹🇷, aur Europe 🇪🇺 ke shandar packages available hain.\n\nAap kis destination par travel karne ka plan kar rahe hain? [🌴 Build Your Custom Tour](/custom-tour)\n\n[[choose: 🇦🇪 Dubai | 🇹🇷 Turkey | 🇪🇺 Europe | 🌴 Build Custom Tour]]";
+            fullText = "Zabardast! Humare paas Turkey 🇹🇷, Dubai 🇦🇪, Baku 🇦🇿, Europe 🇪🇺, aur Northern Pakistan 🇵🇰 ke shandar packages available hain.\n\nAap kis destination par travel karne ka plan kar rahe hain? [🌴 Build Your Custom Tour](/custom-tour)\n\n[[choose: 🇹🇷 Turkey | 🇦🇪 Dubai | 🇦🇿 Baku | 🇪🇺 Europe | 🇵🇰 Hunza & Skardu | 🌴 Build Custom Tour]]";
           }
         }
 
         // Server-Side Guaranteed Action Chips Injection (Zero exceptions)
         if (!fullText.includes("[[choose:")) {
           const combined = (lastUserPrompt + " " + fullText).toLowerCase();
-          let guaranteedChips = "[[choose: 🇦🇪 Dubai | 🇹🇷 Turkey | 🇪🇺 Europe | 🌴 Build Custom Tour]]";
+          let guaranteedChips = "[[choose: 🇹🇷 Turkey | 🇦🇪 Dubai | 🇦🇿 Baku | 🇪🇺 Europe | 🇵🇰 Hunza & Skardu | 🌴 Build Custom Tour]]";
 
           if (combined.includes("insurance") || combined.includes("schengen") || combined.includes("coverage") || combined.includes("medical")) {
             guaranteedChips = "[[choose: 🛡️ Schengen Silver | 🌍 Worldwide Cover | 📄 Policy Details | 🌴 Build Custom Tour]]";
+          } else if (combined.includes("submit visa") || combined.includes("apply visa")) {
+            guaranteedChips = "[[choose: 📋 Document Checklist | 💰 Embassy Fees | ✈️ Flight Tickets | 🌴 Tour Packages]]";
           } else if (combined.includes("visa") || combined.includes("embassy") || combined.includes("refusal") || combined.includes("passport")) {
-            guaranteedChips = "[[choose: 📄 Submit Visa Request | 📋 Document Checklist | 🇹🇷 Turkey Visa | 🌴 Custom Trip]]";
+            guaranteedChips = "[[choose: 📄 Open Visa Form | 📋 Document Checklist | 💰 Embassy Fees | 🌴 Tour Packages]]";
           } else if (combined.includes("flight") || combined.includes("ticket") || combined.includes("airline") || combined.includes("umrah")) {
-            guaranteedChips = "[[choose: ✈️ Request Ticket Quote | 🕋 Umrah Flights | 🌴 Custom Trip]]";
+            guaranteedChips = "[[choose: ✈️ Request Ticket Quote | 🕋 Umrah Flights | 🌴 Tour Packages]]";
           } else if (combined.includes("dubai") || combined.includes("uae") || combined.includes("burj")) {
-            guaranteedChips = "[[choose: 🎟️ Dubai Packages | 📄 Dubai Visa Info | 🌴 Custom Dubai Trip]]";
+            guaranteedChips = "[[choose: 🎟️ View Dubai Packages | 🇹🇷 Turkey | 🇦🇿 Baku | 📄 Dubai Visa Info | 🌴 Custom Dubai Trip]]";
           } else if (combined.includes("turkey") || combined.includes("türkiye") || combined.includes("istanbul") || combined.includes("cappadocia")) {
-            guaranteedChips = "[[choose: 🎟️ Turkey Packages | 📄 Turkey Visa Info | 🌴 Custom Turkey Trip]]";
+            guaranteedChips = "[[choose: 🎟️ View Turkey Packages | 🇦🇪 Dubai | 🇪🇺 Europe | 📄 Turkey Visa Info | 🌴 Custom Turkey Trip]]";
+          } else if (combined.includes("baku") || combined.includes("azerbaijan")) {
+            guaranteedChips = "[[choose: 🎟️ View Baku Packages | 🇹🇷 Turkey | 🇦🇪 Dubai | 📄 Baku Visa Info | 🌴 Custom Baku Trip]]";
           } else if (combined.includes("europe") || combined.includes("paris") || combined.includes("switzerland") || combined.includes("italy")) {
-            guaranteedChips = "[[choose: 🎟️ Europe Packages | 📄 Schengen Visa Info | 🌴 Custom Europe Trip]]";
+            guaranteedChips = "[[choose: 🎟️ View Europe Packages | 🇹🇷 Turkey | 🇦🇪 Dubai | 📄 Schengen Visa Info | 🌴 Custom Europe Trip]]";
           } else if (combined.includes("family") || combined.includes("couple") || combined.includes("solo") || combined.includes("group")) {
             guaranteedChips = "[[choose: 👨‍👩‍👧‍👦 Family (4+) | 👫 Couple | 🎒 Solo / Friends | 🌴 Custom Budget]]";
           }
