@@ -21,14 +21,14 @@ const DEFAULT_TOURS = [
     booking_deadline: "2026-09-05",
   },
   {
-    id: "dubai-highlights-5d",
-    title: "5-Day Dubai & Abu Dhabi Highlights",
+    id: "dubai-city-break-4d",
+    title: "4-Day Dubai City Break",
     destination_country: "UAE",
-    departure_city: "Islamabad",
-    duration_days: 5,
-    price_pkr: 250000,
+    departure_city: "Karachi",
+    duration_days: 4,
+    price_pkr: 165000,
     vendor: "Gulf Wings Travel",
-    description: "At the Top Burj Khalifa, sunset desert safari with BBQ, Palm Jumeirah, Dubai Mall & Sheikh Zayed Grand Mosque.",
+    description: "At the Top Burj Khalifa, sunset desert safari with dune bashing & Old Dubai souks.",
     departure_date: "2026-09-20",
     booking_deadline: "2026-09-10",
   },
@@ -81,6 +81,30 @@ const DEFAULT_TOURS = [
     booking_deadline: "2026-09-30",
   },
   {
+    id: "singapore-family-5d",
+    title: "5-Day Singapore Family Fun",
+    destination_country: "Singapore",
+    departure_city: "Lahore",
+    duration_days: 5,
+    price_pkr: 315000,
+    vendor: "Orient Escapes",
+    description: "Universal Studios Sentosa, S.E.A. Aquarium, Gardens by the Bay & Chinatown.",
+    departure_date: "2026-10-20",
+    booking_deadline: "2026-10-10",
+  },
+  {
+    id: "vietnam-halong-7d",
+    title: "7-Day Vietnam: Hanoi & Halong Bay",
+    destination_country: "Vietnam",
+    departure_city: "Islamabad",
+    duration_days: 7,
+    price_pkr: 335000,
+    vendor: "Indochina Trails",
+    description: "Overnight junk boat cruise in Halong Bay, Hanoi Old Quarter & Da Nang lanterns.",
+    departure_date: "2026-10-25",
+    booking_deadline: "2026-10-15",
+  },
+  {
     id: "malaysia-kl-langkawi-6d",
     title: "6-Day Malaysia: KL & Langkawi",
     destination_country: "Malaysia",
@@ -91,6 +115,18 @@ const DEFAULT_TOURS = [
     description: "Petronas Twin Towers in KL, Langkawi skybridge cable car & island hopping.",
     departure_date: "2026-11-01",
     booking_deadline: "2026-10-20",
+  },
+  {
+    id: "uk-london-edinburgh-8d",
+    title: "8-Day UK: London & Edinburgh",
+    destination_country: "UK",
+    departure_city: "Islamabad",
+    duration_days: 8,
+    price_pkr: 725000,
+    vendor: "Voyage Continental",
+    description: "Westminster & Tower of London, LNER scenic train to Royal Mile Edinburgh & Highlands.",
+    departure_date: "2026-11-10",
+    booking_deadline: "2026-10-30",
   },
   {
     id: "umrah-premium-15d",
@@ -377,7 +413,7 @@ export const Route = createFileRoute("/api/ai-chat")({
               const formattedDeadline = formatDateReadable(item.booking_deadline);
               const dateStr = formattedDate ? ` · Departs: ${formattedDate}` : "";
               const deadlineStr = formattedDeadline ? ` · Booking Deadline: ${formattedDeadline}` : "";
-              return `- MATCHED TOUR: ${t.title} (${t.duration_days}d) · from ${t.departure_city} · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")}${dateStr}${deadlineStr} · id=${t.id}`;
+              return `- MATCHED TOUR: ${t.title} (${t.duration_days}d) · from ${t.departure_city} · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")}${dateStr}${deadlineStr} · Link: [View Details](/tours/${t.id})`;
             });
           }
         } else if (isSubmitVisaQuery) {
@@ -394,28 +430,28 @@ export const Route = createFileRoute("/api/ai-chat")({
             const formattedDeadline = formatDateReadable(item.booking_deadline);
             const dateStr = formattedDate ? ` · Departs: ${formattedDate}` : "";
             const deadlineStr = formattedDeadline ? ` · Booking Deadline: ${formattedDeadline}` : "";
-            return `- FEATURED TOUR: ${t.title} (${t.duration_days}d) · from ${t.departure_city} · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")}${dateStr}${deadlineStr} · id=${t.id}`;
+            return `- FEATURED TOUR: ${t.title} (${t.duration_days}d) · from ${t.departure_city} · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")}${dateStr}${deadlineStr} · Link: [View Details](/tours/${t.id})`;
           });
         } else if (isGenericVisaQuery && visaList.length > 0) {
           preSearchQuery = "Visa Services";
-          preSearchResults = visaList.slice(0, 3).map((v) => `- FEATURED VISA: ${v.country} ${v.visa_type} by ${v.vendor} · Total ₨ ${(v.price_pkr + v.service_fee_pkr).toLocaleString("en-PK")} · ~${v.processing_days} days · id=${v.id}`);
+          preSearchResults = visaList.slice(0, 3).map((v) => `- FEATURED VISA: ${v.country} ${v.visa_type} by ${v.vendor} · Total ₨ ${(v.price_pkr + v.service_fee_pkr).toLocaleString("en-PK")} · ~${v.processing_days} days · Link: [📄 Visa Services](/visa)`);
         } else if (isGenericInsuranceQuery && insuranceList.length > 0) {
           preSearchQuery = "Travel Insurance";
-          preSearchResults = insuranceList.slice(0, 3).map((i) => `- FEATURED INSURANCE: ${i.plan_name} (${i.coverage_type}) · ₨ ${i.price_pkr.toLocaleString("en-PK")} · id=${i.id}`);
+          preSearchResults = insuranceList.slice(0, 3).map((i) => `- FEATURED INSURANCE: ${i.plan_name} (${i.coverage_type}) · ₨ ${i.price_pkr.toLocaleString("en-PK")} · Link: [🛡️ Insurance Plans](/insurance)`);
         } else if (isGenericFlightQuery && ticketsList.length > 0) {
           preSearchQuery = "Flight Tickets";
-          preSearchResults = ticketsList.slice(0, 3).map((tk) => `- FEATURED FLIGHT: ${tk.service_name} (${tk.route_type}) · Fee ₨ ${tk.service_fee_pkr.toLocaleString("en-PK")} · id=${tk.id}`);
+          preSearchResults = ticketsList.slice(0, 3).map((tk) => `- FEATURED FLIGHT: ${tk.service_name} (${tk.route_type}) · Fee ₨ ${tk.service_fee_pkr.toLocaleString("en-PK")} · Link: [✈️ Flight Services](/tickets)`);
         }
 
         const catalogText = catalogList
-          .slice(0, 5)
+          .slice(0, 6)
           .map((t) => {
             const item = t as any;
             const formattedDate = formatDateReadable(item.departure_date);
             const formattedDeadline = formatDateReadable(item.booking_deadline);
             const dateStr = formattedDate ? ` · Departs: ${formattedDate}` : "";
             const deadlineStr = formattedDeadline ? ` · Booking Deadline: ${formattedDeadline}` : "";
-            return `- TOUR: ${t.title} (${t.duration_days}d) · from ${t.departure_city} · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")}${dateStr}${deadlineStr} · id=${t.id}`;
+            return `- TOUR: ${t.title} (${t.duration_days}d) · from ${t.departure_city} · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")}${dateStr}${deadlineStr} · Link: [View Details](/tours/${t.id})`;
           })
           .join("\n");
 
@@ -423,18 +459,18 @@ export const Route = createFileRoute("/api/ai-chat")({
 
         const visaCatalogText = visaList.length > 0
           ? visaList
-              .map((v) => `- VISA SERVICE: ${v.country} ${v.visa_type} by ${v.vendor} · Total ₨ ${(v.price_pkr + v.service_fee_pkr).toLocaleString("en-PK")} · ~${v.processing_days} days · id=${v.id}`)
+              .map((v) => `- VISA SERVICE: ${v.country} ${v.visa_type} by ${v.vendor} · Total ₨ ${(v.price_pkr + v.service_fee_pkr).toLocaleString("en-PK")} · ~${v.processing_days} days · Link: [📄 Visa Services](/visa)`)
               .join("\n")
           : "No active vendor visa filing services currently available in database.";
 
         const insuranceCatalogText = insuranceList
           .slice(0, 3)
-          .map((i) => `- INS: ${i.plan_name} (${i.coverage_type}) · ₨ ${i.price_pkr.toLocaleString("en-PK")} · id=${i.id}`)
+          .map((i) => `- INS: ${i.plan_name} (${i.coverage_type}) · ₨ ${i.price_pkr.toLocaleString("en-PK")} · Link: [🛡️ Insurance Plans](/insurance)`)
           .join("\n");
 
         const ticketsCatalogText = ticketsList
           .slice(0, 3)
-          .map((tk) => `- FLIGHT: ${tk.service_name} (${tk.route_type}) · Fee ₨ ${tk.service_fee_pkr.toLocaleString("en-PK")} · id=${tk.id}`)
+          .map((tk) => `- FLIGHT: ${tk.service_name} (${tk.route_type}) · Fee ₨ ${tk.service_fee_pkr.toLocaleString("en-PK")} · Link: [✈️ Flight Services](/tickets)`)
           .join("\n");
 
         const { openRouterModel } = await import("@/integrations/openrouter/openrouter.server");
@@ -442,6 +478,12 @@ export const Route = createFileRoute("/api/ai-chat")({
         const isFollowUp = messages.length > 1;
 
         const systemPrompt = `You are the Senior Luxury Travel Sales Concierge for GlobeTrek PK (Pakistan's premier travel & tour marketplace).
+
+CRITICAL ANTI-HALLUCINATION & LINK ACCURACY RULES (ZERO FAKE PACKAGES):
+- You MUST ONLY recommend and link tour packages that actually exist in the MATCHED / PRE-RETRIEVED LISTINGS or the search results below.
+- NEVER invent, fabricate, or hallucinate non-existent package titles or durations (e.g. for Turkey, recommend ONLY the real '7-Day Turkey Explorer (Istanbul & Cappadocia)'. NEVER invent 5-day or 6-day Turkey packages!).
+- When linking to a tour, you MUST use the exact link provided in the listings: [View Details](/tours/[id]) (e.g. [View Details](/tours/turkey-explorer-7d), [View Details](/tours/dubai-city-break-4d), [View Details](/tours/baku-azerbaijan-5d)). NEVER make up custom URL slugs like '/tours/6-day-istanbul-bosphorus-cruise'!
+- If the traveler asks for a custom duration (e.g. a 5-day trip) or a destination without a fixed pre-made package, present the closest real package and invite them to build a tailor-made itinerary: [🌴 Build Your Custom Tour](/custom-tour).
 
 CRITICAL CONVERSATION CONTINUITY (STRICT RULE):
 - You are in an ACTIVE, ONGOING conversation with the traveler (Message Turn #${messages.length}).
@@ -458,12 +500,12 @@ CRITICAL LANGUAGE RULE (USER LANGUAGE FOR THIS TURN: ${detectedLanguage.toUpperC
 
 RULE 1: PRESENTING PACKAGES & MULTIPLE DESTINATIONS
 1. When user asks for "Tour Packages", "Tours", or generic travel options:
-   - Present a diverse showcase of top-rated destinations (e.g. Turkey 🇹🇷, UAE/Dubai 🇦🇪, Azerbaijan/Baku 🇦🇿, Northern Pakistan (Hunza & Skardu) 🇵🇰, or Europe 🇪🇺) with duration, departure city, price in bold PKR, and departure dates.
+   - Present a diverse showcase of top-rated real destinations (e.g. Turkey 🇹🇷, UAE/Dubai 🇦🇪, Azerbaijan/Baku 🇦🇿, Northern Pakistan (Hunza & Skardu) 🇵🇰, or Europe 🇪🇺) with duration, departure city, price in bold PKR, departure dates, and exact [View Details](/tours/[id]) link.
    - Ask which destination excites them, or if they would like to customize a private trip.
    - Your action chips MUST include buttons for each destination!
-2. When user asks about a specific destination (e.g. Dubai):
-   - Present the package summary cleanly with price in bold PKR, departure city, dates, and top attractions.
-   - Ask if these dates work for them, or if they'd also like to explore other popular destinations like Turkey 🇹🇷, Baku 🇦🇿, or Europe 🇪🇺.
+2. When user asks about a specific destination (e.g. Turkey or Dubai):
+   - Present the real package summary cleanly with price in bold PKR, departure city, dates, top attractions, and the exact [View Details](/tours/[id]) link.
+   - Ask if these dates work for them, or if they'd also like to explore other popular destinations like Dubai 🇦🇪, Baku 🇦🇿, or Europe 🇪🇺.
    - Include action chips for that destination AND other alternative destinations!
 
 RULE 2: VISA APPLICATIONS & DIRECT FORMS (NO VAGUE WALKTHROUGHS)
@@ -563,7 +605,23 @@ ${ticketsCatalogText}`;
                       const formattedDeadline = formatDateReadable(typeof acc.booking_deadline === "string" ? acc.booking_deadline : null);
                       const dateStr = formattedDate ? ` · Departs: ${formattedDate}` : "";
                       const deadlineStr = formattedDeadline ? ` · Booking Deadline: ${formattedDeadline}` : "";
-                      results.push(`- TOUR: ${t.title} (${t.duration_days}d) · from ${t.departure_city} · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")}${dateStr}${deadlineStr} · id=${t.id}`);
+                      results.push(`- TOUR: ${t.title} (${t.duration_days}d) · from ${t.departure_city} · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")}${dateStr}${deadlineStr} · Link: [View Details](/tours/${t.id})`);
+                    });
+                  }
+
+                  // If database had fewer than 2 matches, search fallback catalogList
+                  if (results.length < 2) {
+                    const fallbackMatches = catalogList.filter((t) => {
+                      const text = `${t.title} ${t.destination_country} ${t.departure_city} ${t.description}`.toLowerCase();
+                      return isGenericTour || text.includes(cleanQuery);
+                    });
+                    fallbackMatches.slice(0, 3 - results.length).forEach((t) => {
+                      const item = t as any;
+                      const formattedDate = formatDateReadable(item.departure_date);
+                      const formattedDeadline = formatDateReadable(item.booking_deadline);
+                      const dateStr = formattedDate ? ` · Departs: ${formattedDate}` : "";
+                      const deadlineStr = formattedDeadline ? ` · Booking Deadline: ${formattedDeadline}` : "";
+                      results.push(`- TOUR: ${t.title} (${t.duration_days}d) · from ${t.departure_city} · ₨ ${Number(t.price_pkr).toLocaleString("en-PK")}${dateStr}${deadlineStr} · Link: [View Details](/tours/${t.id})`);
                     });
                   }
                 }
@@ -582,7 +640,7 @@ ${ticketsCatalogText}`;
 
                   if (dbVisas && dbVisas.length > 0) {
                     dbVisas.forEach((v) => {
-                      results.push(`- VISA SERVICE: ${v.country} ${v.visa_type} · Total ₨ ${(v.price_pkr + v.service_fee_pkr).toLocaleString("en-PK")} · ~${v.processing_days} days · id=${v.id}`);
+                      results.push(`- VISA SERVICE: ${v.country} ${v.visa_type} · Total ₨ ${(v.price_pkr + v.service_fee_pkr).toLocaleString("en-PK")} · ~${v.processing_days} days · Link: [📄 Visa Services](/visa)`);
                     });
                   }
                 }
