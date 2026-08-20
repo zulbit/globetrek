@@ -240,7 +240,9 @@ export const getAdminFinancialMetrics = createServerFn({ method: "GET" })
           refundReason: refund?.refund_reason || (isRefunded ? "Subscription Refund / Reversal" : null),
           refundTransactionId: refund?.refund_transaction_id || null,
           refundedAt: refund?.refunded_at || null,
-          refundAmountPkr: refund?.refund_amount_pkr || (isRefunded ? p.amount : null),
+          refundAmountPkr: refund?.refund_amount_pkr || (isRefunded ? Math.round(p.amount * 0.95) : null),
+          deductionPercent: refund?.deduction_percent || (isRefunded ? 5 : null),
+          deductionFeePkr: refund?.deduction_fee_pkr || (isRefunded ? Math.round(p.amount * 0.05) : null),
           refundNotes: refund?.refund_notes || null,
         };
       })
@@ -265,7 +267,9 @@ export const getAdminFinancialMetrics = createServerFn({ method: "GET" })
             refundReason: refund?.refund_reason || (isRefunded ? "Addon Boost Refund" : null),
             refundTransactionId: refund?.refund_transaction_id || null,
             refundedAt: refund?.refunded_at || null,
-            refundAmountPkr: refund?.refund_amount_pkr || (isRefunded ? p.amount : null),
+            refundAmountPkr: refund?.refund_amount_pkr || (isRefunded ? Math.round(p.amount * 0.95) : null),
+            deductionPercent: refund?.deduction_percent || (isRefunded ? 5 : null),
+            deductionFeePkr: refund?.deduction_fee_pkr || (isRefunded ? Math.round(p.amount * 0.05) : null),
             refundNotes: refund?.refund_notes || null,
           };
         })
@@ -275,6 +279,7 @@ export const getAdminFinancialMetrics = createServerFn({ method: "GET" })
           const refKey = lp.id;
           const refund = refundMap.get(refKey) || refundMap.get(`unlock-${lp.id.slice(0, 8)}`) || refundMap.get(lp.lead_id);
           const isRefunded = lp.status === "refunded" || !!refund;
+          const leadAmt = lp.amount || LEAD_UNLOCK_FEE_PKR;
           return {
             id: `unlock-${lp.id.slice(0, 8)}`,
             rawId: lp.id,
@@ -285,14 +290,16 @@ export const getAdminFinancialMetrics = createServerFn({ method: "GET" })
             vendorName: lp.profiles?.company_name || lp.profiles?.full_name || "Travel Partner",
             email: lp.profiles?.email || "vendor@globetrek.pk",
             tier: "LEAD UNLOCK",
-            amount: lp.amount || LEAD_UNLOCK_FEE_PKR,
+            amount: leadAmt,
             date: lp.created_at,
             status: isRefunded ? "Refunded" : "Settled (SafePay)",
             isRefunded,
             refundReason: refund?.refund_reason || (isRefunded ? "Lead Unlock Refund" : null),
             refundTransactionId: refund?.refund_transaction_id || lp.payment_intent_id || null,
             refundedAt: refund?.refunded_at || null,
-            refundAmountPkr: refund?.refund_amount_pkr || (isRefunded ? (lp.amount || LEAD_UNLOCK_FEE_PKR) : null),
+            refundAmountPkr: refund?.refund_amount_pkr || (isRefunded ? Math.round(leadAmt * 0.95) : null),
+            deductionPercent: refund?.deduction_percent || (isRefunded ? 5 : null),
+            deductionFeePkr: refund?.deduction_fee_pkr || (isRefunded ? Math.round(leadAmt * 0.05) : null),
             refundNotes: refund?.refund_notes || null,
           };
         })
@@ -339,6 +346,8 @@ export interface VendorInvoiceItem {
   refund_transaction_id?: string;
   refunded_at?: string;
   refund_amount_pkr?: number;
+  deduction_percent?: number;
+  deduction_fee_pkr?: number;
 }
 
 export const getVendorInvoices = createServerFn({ method: "POST" })
@@ -394,15 +403,16 @@ export const getVendorInvoices = createServerFn({ method: "POST" })
       const refSuffix = p.payment_intent_id ? p.payment_intent_id.replace(/^link_/, "").slice(-6).toUpperCase() : p.id.slice(-6).toUpperCase();
       const refund = refundMap.get(p.id) || refundMap.get(`unlock-${p.id.slice(0, 8)}`) || refundMap.get(p.lead_id);
       const isRefunded = p.status === "refunded" || !!refund;
+      const leadAmt = p.amount || 5000;
 
       invoices.push({
         id: `INV-LEAD-${refSuffix}`,
         date: p.created_at ? p.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
         description: `Custom Tour Lead Unlock — ${dest}${dep}`,
-        amount_pkr: p.amount || 5000,
+        amount_pkr: leadAmt,
         status: isRefunded ? "refunded" : p.status === "completed" ? "paid" : "pending",
         method: "SafePay PKR (QuickLink)",
-        period: isRefunded ? "Reversed / Refunded" : "Instant Lead Access & B2B Quotation Desk",
+        period: isRefunded ? "Reversed / Refunded (5% Gateway Retained)" : "Instant Lead Access & B2B Quotation Desk",
         payment_intent_id: p.payment_intent_id,
         destination: dest,
         departure_city: p.custom_tour_leads?.departure_city,
@@ -410,7 +420,9 @@ export const getVendorInvoices = createServerFn({ method: "POST" })
         refund_reason: refund?.refund_reason || (isRefunded ? "Lead Unlock Refund" : undefined),
         refund_transaction_id: refund?.refund_transaction_id || undefined,
         refunded_at: refund?.refunded_at || undefined,
-        refund_amount_pkr: refund?.refund_amount_pkr || (isRefunded ? p.amount : undefined),
+        refund_amount_pkr: refund?.refund_amount_pkr || (isRefunded ? Math.round(leadAmt * 0.95) : undefined),
+        deduction_percent: refund?.deduction_percent || (isRefunded ? 5 : undefined),
+        deduction_fee_pkr: refund?.deduction_fee_pkr || (isRefunded ? Math.round(leadAmt * 0.05) : undefined),
       });
     });
 
@@ -421,6 +433,7 @@ export const getVendorInvoices = createServerFn({ method: "POST" })
       const refSuffix = p.id.slice(-6).toUpperCase();
       const refund = refundMap.get(p.id) || refundMap.get(`sub-${p.id.slice(0, 8)}`) || refundMap.get(`boost-${p.id.slice(0, 8)}`);
       const isRefunded = p.status === "refunded" || !!refund;
+      const origAmt = p.amount || 0;
 
       if (meta.type === "subscription") {
         const tierName = (meta.tier || "Subscription").charAt(0).toUpperCase() + (meta.tier || "Subscription").slice(1);
@@ -431,16 +444,18 @@ export const getVendorInvoices = createServerFn({ method: "POST" })
           id: `INV-SUB-${meta.tier?.toUpperCase() || "PRO"}-${refSuffix}`,
           date: dateStr,
           description: `${tierName} Partner Monthly Subscription`,
-          amount_pkr: p.amount || 0,
+          amount_pkr: origAmt,
           status: isRefunded ? "refunded" : p.status === "paid" ? "paid" : "pending",
           method: "SafePay PKR",
-          period: isRefunded ? "Reversed / Refunded" : `${invMonth} Billing Period`,
+          period: isRefunded ? "Reversed / Refunded (5% Gateway Retained)" : `${invMonth} Billing Period`,
           expires_at: subExpire.toISOString().split("T")[0],
           is_refunded: isRefunded,
           refund_reason: refund?.refund_reason || (isRefunded ? "Subscription Refund" : undefined),
           refund_transaction_id: refund?.refund_transaction_id || undefined,
           refunded_at: refund?.refunded_at || undefined,
-          refund_amount_pkr: refund?.refund_amount_pkr || (isRefunded ? p.amount : undefined),
+          refund_amount_pkr: refund?.refund_amount_pkr || (isRefunded ? Math.round(origAmt * 0.95) : undefined),
+          deduction_percent: refund?.deduction_percent || (isRefunded ? 5 : undefined),
+          deduction_fee_pkr: refund?.deduction_fee_pkr || (isRefunded ? Math.round(origAmt * 0.05) : undefined),
         });
       } else if (meta.type === "addon") {
         let durationDays = 30;
@@ -452,16 +467,18 @@ export const getVendorInvoices = createServerFn({ method: "POST" })
           id: `INV-BOOST-${refSuffix}`,
           date: dateStr,
           description: `${meta.addonTitle || "Addon Boost"} (${meta.billingPeriod || "Campaign"})`,
-          amount_pkr: p.amount || 0,
+          amount_pkr: origAmt,
           status: isRefunded ? "refunded" : p.status === "paid" ? "paid" : "pending",
           method: "SafePay PKR",
-          period: isRefunded ? "Reversed / Refunded" : `${durationDays === 7 ? "7 Days Flash Campaign" : meta.billingPeriod || "Monthly"} Active Boost`,
+          period: isRefunded ? "Reversed / Refunded (5% Gateway Retained)" : `${durationDays === 7 ? "7 Days Flash Campaign" : meta.billingPeriod || "Monthly"} Active Boost`,
           expires_at: subExpire.toISOString().split("T")[0],
           is_refunded: isRefunded,
           refund_reason: refund?.refund_reason || (isRefunded ? "Addon Boost Refund" : undefined),
           refund_transaction_id: refund?.refund_transaction_id || undefined,
           refunded_at: refund?.refunded_at || undefined,
-          refund_amount_pkr: refund?.refund_amount_pkr || (isRefunded ? p.amount : undefined),
+          refund_amount_pkr: refund?.refund_amount_pkr || (isRefunded ? Math.round(origAmt * 0.95) : undefined),
+          deduction_percent: refund?.deduction_percent || (isRefunded ? 5 : undefined),
+          deduction_fee_pkr: refund?.deduction_fee_pkr || (isRefunded ? Math.round(origAmt * 0.05) : undefined),
         });
       }
     });
@@ -475,6 +492,9 @@ export const processOrRecordRefund = createServerFn({ method: "POST" })
   .validator((input: {
     paymentId: string;
     paymentType?: "lead_unlock" | "subscription" | "payment";
+    originalAmountPkr?: number;
+    deductionPercent?: number;
+    deductionFeePkr?: number;
     refundReason: string;
     refundTransactionId: string;
     refundDate?: string;
@@ -486,6 +506,9 @@ export const processOrRecordRefund = createServerFn({ method: "POST" })
     if (!input.refundReason?.trim()) throw new Error("Refund Reason required");
     if (!input.refundTransactionId?.trim()) throw new Error("SafePay Transaction ID required");
     if (!input.refundAmountPkr || input.refundAmountPkr <= 0) throw new Error("Valid refund amount required");
+    if (input.deductionPercent !== undefined && input.deductionPercent < 5) {
+      throw new Error("Minimum gateway refund deduction is 5% to cover SafePay / Cybersource processing fees.");
+    }
     return input;
   })
   .handler(async ({ data: input, context }) => {
@@ -503,15 +526,21 @@ export const processOrRecordRefund = createServerFn({ method: "POST" })
     }
 
     const refundedAt = input.refundDate ? new Date(input.refundDate).toISOString() : new Date().toISOString();
+    const origAmt = Number(input.originalAmountPkr || input.refundAmountPkr);
+    const deductPct = Number(input.deductionPercent !== undefined ? input.deductionPercent : 5);
+    const deductFee = Number(input.deductionFeePkr !== undefined ? input.deductionFeePkr : Math.round(origAmt * (deductPct / 100)));
 
     const refundEntry = {
       id: `ref_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       payment_id: input.paymentId,
       payment_type: input.paymentType || "lead_unlock",
+      original_amount_pkr: origAmt,
+      deduction_percent: deductPct,
+      deduction_fee_pkr: deductFee,
+      refund_amount_pkr: Number(input.refundAmountPkr),
       refund_reason: input.refundReason.trim(),
       refund_transaction_id: input.refundTransactionId.trim(),
       refunded_at: refundedAt,
-      refund_amount_pkr: Number(input.refundAmountPkr),
       refund_notes: input.refundNotes?.trim() || "",
       refunded_by: context.userId,
       created_at: new Date().toISOString(),
@@ -573,7 +602,7 @@ export const processOrRecordRefund = createServerFn({ method: "POST" })
 
     return {
       ok: true,
-      message: `Refund of Rs ${input.refundAmountPkr.toLocaleString()} recorded successfully with SafePay ID: ${input.refundTransactionId.trim()}`,
+      message: `Refund of Rs ${input.refundAmountPkr.toLocaleString()} (after ${deductPct}% gateway deduction of Rs ${deductFee.toLocaleString()}) recorded successfully with SafePay ID: ${input.refundTransactionId.trim()}`,
       refund: refundEntry,
     };
   });

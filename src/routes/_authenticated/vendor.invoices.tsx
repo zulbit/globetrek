@@ -589,12 +589,15 @@ function VendorInvoicesPage() {
                       )}
                     </td>
                     <td className="py-3 px-3 text-right font-mono font-bold text-foreground">
-                      <span className={inv.is_refunded ? "line-through text-muted-foreground" : ""}>
+                      <span className={inv.is_refunded ? "line-through text-muted-foreground text-[11px]" : ""}>
                         Rs {inv.amount_pkr.toLocaleString()}
                       </span>
                       {inv.is_refunded && (
-                        <div className="text-[10px] text-rose-400">
-                          -Rs {(inv.refund_amount_pkr || inv.amount_pkr).toLocaleString()} (Refunded)
+                        <div className="text-[10px] text-rose-400 font-bold">
+                          -Rs {(inv.refund_amount_pkr || Math.round(inv.amount_pkr * 0.95)).toLocaleString()}
+                          <span className="block text-[9px] text-muted-foreground font-normal">
+                            ({inv.deduction_percent || 5}% gateway fee retained)
+                          </span>
                         </div>
                       )}
                     </td>

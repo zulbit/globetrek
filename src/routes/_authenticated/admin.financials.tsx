@@ -82,7 +82,12 @@ export function AdminFinancials() {
   const [customReasonText, setCustomReasonText] = useState<string>("");
   const [refundTransactionId, setRefundTransactionId] = useState<string>("");
   const [refundDate, setRefundDate] = useState<string>(new Date().toISOString().slice(0, 16));
-  const [refundAmount, setRefundAmount] = useState<string>("");
+  
+  // Deduction & Calculation States (Min 5% deduction required)
+  const [deductionPercent, setDeductionPercent] = useState<number>(5);
+  const [refundAmount, setRefundAmount] = useState<string>("4750");
+  const [deductionFee, setDeductionFee] = useState<number>(250);
+  
   const [refundNotes, setRefundNotes] = useState<string>("");
   const [revokeAccess, setRevokeAccess] = useState<boolean>(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -97,6 +102,9 @@ export function AdminFinancials() {
     mutationFn: (vars: {
       paymentId: string;
       paymentType?: "lead_unlock" | "subscription" | "payment";
+      originalAmountPkr?: number;
+      deductionPercent?: number;
+      deductionFeePkr?: number;
       refundReason: string;
       refundTransactionId: string;
       refundDate?: string;
@@ -117,7 +125,14 @@ export function AdminFinancials() {
 
   const handleOpenRefundModal = (tx: any) => {
     setSelectedTxForRefund(tx);
-    setRefundAmount(String(tx.amount || 5000));
+    const orig = Number(tx.amount || 5000);
+    const pct = 5; // Default 5% min deduction
+    const fee = Math.round(orig * (pct / 100));
+    const net = Math.max(0, orig - fee);
+
+    setDeductionPercent(pct);
+    setDeductionFee(fee);
+    setRefundAmount(String(tx.refundAmountPkr || net));
     setRefundTransactionId(tx.refundTransactionId || tx.paymentIntentId || `track_${Date.now()}`);
     setRefundReason(tx.refundReason || "Invalid Traveler / Lead Contact Info");
     setRefundDate(tx.refundedAt ? new Date(tx.refundedAt).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16));
@@ -125,8 +140,30 @@ export function AdminFinancials() {
     setRefundModalOpen(true);
   };
 
+  const handlePercentChange = (newPct: number) => {
+    setDeductionPercent(newPct);
+    if (!selectedTxForRefund) return;
+    const orig = Number(selectedTxForRefund.amount || 5000);
+    const fee = Math.round(orig * (newPct / 100));
+    const net = Math.max(0, orig - fee);
+    setDeductionFee(fee);
+    setRefundAmount(String(net));
+  };
+
+  const handleNetRefundAmountChange = (valStr: string) => {
+    setRefundAmount(valStr);
+    if (!selectedTxForRefund) return;
+    const orig = Number(selectedTxForRefund.amount || 5000);
+    const net = Number(valStr) || 0;
+    const fee = Math.max(0, orig - net);
+    const impliedPct = orig > 0 ? ((fee / orig) * 100) : 5;
+    setDeductionFee(fee);
+    setDeductionPercent(Math.round(impliedPct * 10) / 10);
+  };
+
   const handleSubmitRefund = () => {
     if (!selectedTxForRefund) return;
+    const orig = Number(selectedTxForRefund.amount || 5000);
     const finalReason = refundReason === "Other (Custom)" ? customReasonText.trim() || "Administrative Refund" : refundReason;
     if (!refundTransactionId.trim()) {
       toast.error("SafePay Related Transaction ID is required.");
@@ -138,9 +175,19 @@ export function AdminFinancials() {
       return;
     }
 
+    if (deductionPercent < 5) {
+      toast.error("Minimum gateway fee deduction is 5%.", {
+        description: `Max allowable refund for Rs ${orig.toLocaleString()} is Rs ${Math.floor(orig * 0.95).toLocaleString()} PKR.`,
+      });
+      return;
+    }
+
     refundMutation.mutate({
       paymentId: selectedTxForRefund.rawId || selectedTxForRefund.id,
       paymentType: selectedTxForRefund.paymentType || "lead_unlock",
+      originalAmountPkr: orig,
+      deductionPercent,
+      deductionFeePkr: deductionFee,
       refundReason: finalReason,
       refundTransactionId: refundTransactionId.trim(),
       refundDate: refundDate ? new Date(refundDate).toISOString() : new Date().toISOString(),
@@ -516,12 +563,15 @@ export function AdminFinancials() {
                       </div>
                     </td>
                     <td className="p-3.5 text-right font-black text-foreground font-mono">
-                      <span className={cn(tx.isRefunded && "line-through text-muted-foreground")}>
+                      <span className={cn(tx.isRefunded && "line-through text-muted-foreground text-[11px]")}>
                         Rs {tx.amount.toLocaleString()}
                       </span>
                       {tx.isRefunded && (
                         <div className="text-[10px] font-bold text-rose-400">
-                          -Rs {(tx.refundAmountPkr || tx.amount).toLocaleString()}
+                          -Rs {(tx.refundAmountPkr || Math.round(tx.amount * 0.95)).toLocaleString()}
+                          <span className="block text-[9px] text-muted-foreground font-normal">
+                            ({tx.deductionPercent || 5}% MDR fee deducted)
+                          </span>
                         </div>
                       )}
                     </td>
@@ -598,8 +648,8 @@ export function AdminFinancials() {
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
               {selectedTxForRefund?.isRefunded
-                ? "Review the recorded reason, date, and SafePay transaction reference for this refund."
-                : "Record a full or partial refund issued via SafePay dashboard with audit tracking."}
+                ? "Review the recorded reason, date, gateway fee deduction, and SafePay transaction reference for this refund."
+                : "Calculate and record net refund with mandatory gateway MDR deduction (Min 5%)."}
             </DialogDescription>
           </DialogHeader>
 
@@ -616,7 +666,7 @@ export function AdminFinancials() {
                   <span className="font-bold text-foreground">{selectedTxForRefund.vendorName}</span>
                 </div>
                 <div className="flex items-center justify-between text-muted-foreground">
-                  <span>Original Amount:</span>
+                  <span>Original Principal Amount:</span>
                   <span className="font-mono font-bold text-emerald-400">Rs {selectedTxForRefund.amount.toLocaleString()} PKR</span>
                 </div>
                 <div className="flex items-center justify-between text-muted-foreground">
@@ -625,6 +675,79 @@ export function AdminFinancials() {
                     {new Date(selectedTxForRefund.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                   </span>
                 </div>
+              </div>
+
+              {/* Gateway Fee Deduction Percentage Section */}
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/[0.04] p-3.5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                      <DollarSign className="size-3.5 text-amber-400" /> Gateway Fee Deduction Rate
+                    </span>
+                    <p className="text-[11px] text-muted-foreground">
+                      Covers non-refundable SafePay / Cybersource merchant fee. <strong className="text-amber-400">Min 5%</strong>
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      min={5}
+                      max={100}
+                      step={0.5}
+                      value={deductionPercent}
+                      onChange={(e) => handlePercentChange(Number(e.target.value))}
+                      className="h-8 w-16 text-center text-xs font-mono font-bold rounded-lg border-amber-500/40 bg-card"
+                    />
+                    <span className="font-bold text-foreground">%</span>
+                  </div>
+                </div>
+
+                {/* Quick Presets */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  {[
+                    { label: "5% (Min Gateway MDR)", val: 5 },
+                    { label: "7.5%", val: 7.5 },
+                    { label: "10% (Late Cancel)", val: 10 },
+                    { label: "15% (Dispute)", val: 15 },
+                  ].map((preset) => (
+                    <button
+                      key={preset.val}
+                      type="button"
+                      onClick={() => handlePercentChange(preset.val)}
+                      className={cn(
+                        "px-2.5 py-1 rounded-lg text-[10px] font-bold border transition",
+                        deductionPercent === preset.val
+                          ? "border-amber-500 bg-amber-500 text-black font-extrabold"
+                          : "border-border bg-card text-muted-foreground hover:text-foreground hover:border-amber-500/50"
+                      )}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Net Breakdown Computation Banner */}
+                <div className="rounded-lg border border-border/80 bg-card p-2.5 space-y-1.5 text-[11px] font-mono">
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span>Gross Principal:</span>
+                    <span>Rs {Number(selectedTxForRefund.amount || 5000).toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-amber-400">
+                    <span>SafePay Retained Fee ({deductionPercent}%):</span>
+                    <span>-Rs {deductionFee.toLocaleString()} PKR</span>
+                  </div>
+                  <div className="flex items-center justify-between font-bold text-emerald-400 border-t border-border pt-1.5 text-xs">
+                    <span>Net Refund to Return:</span>
+                    <span className="text-sm">Rs {Number(refundAmount || 0).toLocaleString()} PKR</span>
+                  </div>
+                </div>
+
+                {deductionPercent < 5 && (
+                  <div className="flex items-center gap-1.5 text-rose-400 text-[11px] font-semibold">
+                    <AlertTriangle className="size-3.5 shrink-0" />
+                    <span>Deduction cannot be less than 5% (Min gateway fee recovery).</span>
+                  </div>
+                )}
               </div>
 
               {/* Refund Reason Selection */}
@@ -666,7 +789,7 @@ export function AdminFinancials() {
                 <div className="relative">
                   <Input
                     id="safepay-ref"
-                    placeholder="e.g. track_6a7515d8-4047-4583-8781-fa860d6e9f8c or 7868960550696425704806"
+                    placeholder="e.g. track_6a7515d8-4047-4583-8781-fa860d6e9f8c or link_ac44bbe4-..."
                     value={refundTransactionId}
                     onChange={(e) => setRefundTransactionId(e.target.value)}
                     className="h-9 text-xs font-mono rounded-xl pl-8"
@@ -678,7 +801,7 @@ export function AdminFinancials() {
                 </p>
               </div>
 
-              {/* Refund Date & Amount Row */}
+              {/* Refund Date & Net Amount Row */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="refund-date" className="text-xs font-bold text-foreground">
@@ -695,14 +818,14 @@ export function AdminFinancials() {
 
                 <div className="space-y-1.5">
                   <Label htmlFor="refund-amount" className="text-xs font-bold text-foreground">
-                    Refund Amount (PKR) <span className="text-rose-400">*</span>
+                    Net Refund Returned (PKR) <span className="text-rose-400">*</span>
                   </Label>
                   <Input
                     id="refund-amount"
                     type="number"
                     value={refundAmount}
-                    onChange={(e) => setRefundAmount(e.target.value)}
-                    className="h-9 text-xs font-mono font-bold rounded-xl"
+                    onChange={(e) => handleNetRefundAmountChange(e.target.value)}
+                    className="h-9 text-xs font-mono font-bold rounded-xl text-emerald-400"
                   />
                 </div>
               </div>
@@ -714,10 +837,10 @@ export function AdminFinancials() {
                 </Label>
                 <Textarea
                   id="refund-notes"
-                  placeholder="e.g. Cardholder requested reversal via WhatsApp support; refunded in SafePay sandbox."
+                  placeholder="e.g. 5% SafePay MDR deducted (Rs 250 fee retained, Rs 4,750 net returned)."
                   value={refundNotes}
                   onChange={(e) => setRefundNotes(e.target.value)}
-                  className="text-xs rounded-xl min-h-[60px]"
+                  className="text-xs rounded-xl min-h-[55px]"
                 />
               </div>
 
@@ -747,7 +870,7 @@ export function AdminFinancials() {
               variant="default"
               size="sm"
               className="gap-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold"
-              disabled={refundMutation.isPending}
+              disabled={refundMutation.isPending || deductionPercent < 5}
               onClick={handleSubmitRefund}
             >
               {refundMutation.isPending ? (
@@ -756,7 +879,7 @@ export function AdminFinancials() {
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="size-3.5" /> Save Refund Record
+                  <CheckCircle2 className="size-3.5" /> Confirm &amp; Save Refund Record
                 </>
               )}
             </Button>
