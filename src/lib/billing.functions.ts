@@ -149,10 +149,11 @@ export const changeSubscriptionTier = createServerFn({ method: "POST" })
       } else {
         const errTxt = await qlRes.text();
         console.error("[changeVendorPlan] SafePay QuickLink error:", qlRes.status, errTxt);
+        throw new Error(`SafePay API returned (${qlRes.status}): ${errTxt.slice(0, 200)}`);
       }
     }
 
-    if (!checkoutUrl) throw new Error("Failed to generate SafePay checkout session.");
+    if (!checkoutUrl) throw new Error("Failed to generate SafePay checkout session. Check SAFEPAY credentials.");
 
     // Log pending transaction in `payments` ledger
     const { data: pendingPayment, error: payErr } = await supabaseAdmin
