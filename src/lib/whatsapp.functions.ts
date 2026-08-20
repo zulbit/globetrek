@@ -21,16 +21,16 @@ function isDuplicateWhatsAppMessage(phone: string, text: string): boolean {
 
 export function getWhatsAppApiKey(): string {
   const val = process.env.WHATSAPP_API_KEY;
-  if (!val || val === "1082e6d8-9d6c-41ef-9a44-09c38ff6e075" || val.includes("-")) {
-    return "bef0066b8598f3c97dc16e7af12e95b98e773430";
+  if (!val || val === "1082e6d8-9d6c-41ef-9a44-09c38ff6e075" || val.includes("-") || val === "bef0066b8598f3c97dc16e7af12e95b98e773430") {
+    return "10e916da76bac02be1ac10635b9a04735450d8e2";
   }
   return val;
 }
 
 export function getWhatsAppAccountId(): string {
   const val = process.env.WHATSAPP_ACCOUNT_ID;
-  if (!val || val.length < 10) {
-    return "1765976556c4ca4238a0b923820dcc509a6f75849b6942a9ec027d2";
+  if (!val || val.length < 10 || val.startsWith("176597")) {
+    return "1787195284c4ca4238a0b923820dcc509a6f75849b6a866f94c2329";
   }
   return val;
 }
