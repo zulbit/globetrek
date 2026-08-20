@@ -84,12 +84,17 @@ export const changeSubscriptionTier = createServerFn({ method: "POST" })
     const baseUrl = env === "production" || env === "live"
       ? "https://api.getsafepay.com"
       : "https://sandbox.api.getsafepay.com";
-    const secretKey = process.env.SAFEPAY_SECRET_KEY;
+    const secretKey = process.env.SAFEPAY_SECRET_KEY || "c3487d289512e74681b031cd3cf5d6a8d73a22b3c709bd939c3f833e95b7c27a";
 
     if (secretKey) {
-      const vendorName = profile?.full_name || "GlobeTrek Vendor";
+      const vendorName = profile?.full_name || profile?.company_name || "GlobeTrek Partner";
       const [firstName, ...rest] = vendorName.trim().split(/\s+/);
-      const lastName = rest.join(" ") || "Partner";
+      const lastName = rest.join(" ") || firstName;
+      const vendorEmail = profile?.email || context.userEmail || "vendor@globetrek.pk";
+      const rawPhone = profile?.phone || "+923001234567";
+      const digits = rawPhone.replace(/\D/g, "").replace(/^0+/, "");
+      const phone = digits.startsWith("92") ? `+${digits}` : `+92${digits || "3001234567"}`;
+      const vendorCity = profile?.city || "Karachi";
 
       const qlRes = await fetch(`${baseUrl}/invoice/quick-links/v2/`, {
         method: "POST",
@@ -100,27 +105,50 @@ export const changeSubscriptionTier = createServerFn({ method: "POST" })
         body: JSON.stringify({
           amount: Math.round(dynamicPrice),
           currency: "PKR",
-          note: `GlobeTrek PK — ${targetMeta?.name || data.tier} Subscription Upgrade`,
+          note: `GlobeTrek PK — ${targetMeta?.name || data.tier} Plan Subscription`,
           workflow: "MANUAL",
           customer: {
             first_name: firstName,
             last_name: lastName,
-            email: "vendor@globetrek.pk",
-            phone_number: "+923001234567",
+            email: vendorEmail,
+            phone_number: phone,
+            city: vendorCity,
+            address: "Shahrah-e-Faisal",
+            country: "PK",
+          },
+          billing_address: {
+            city: vendorCity,
+            street: "Shahrah-e-Faisal",
+            country: "PK",
           },
         }),
       });
 
       if (qlRes.ok) {
         const qlJson = (await qlRes.json()) as any;
-        const recipientUrl = qlJson.data?.metadata?.[0]?.recipient_view_url;
+        const trackerId = qlJson.data?.id;
+        const recipientUrl = qlJson.data?.metadata?.[0]?.recipient_view_url || (trackerId ? `${baseUrl}/io/quick-link?ql=${trackerId}` : "");
         if (recipientUrl) {
-          const url = new URL(recipientUrl);
-          url.searchParams.set("email", "vendor@globetrek.pk");
-          url.searchParams.set("first_name", firstName);
-          url.searchParams.set("last_name", lastName);
-          checkoutUrl = url.toString();
+          try {
+            const url = new URL(recipientUrl);
+            url.searchParams.set("email", vendorEmail);
+            url.searchParams.set("first_name", firstName);
+            url.searchParams.set("last_name", lastName);
+            url.searchParams.set("name", `${firstName} ${lastName}`);
+            url.searchParams.set("phone", phone);
+            url.searchParams.set("phone_number", phone);
+            url.searchParams.set("city", vendorCity);
+            url.searchParams.set("country", "Pakistan");
+            url.searchParams.set("country_code", "PK");
+            url.searchParams.set("postal_code", "74000");
+            checkoutUrl = url.toString();
+          } catch (_) {
+            checkoutUrl = recipientUrl;
+          }
         }
+      } else {
+        const errTxt = await qlRes.text();
+        console.error("[changeVendorPlan] SafePay QuickLink error:", qlRes.status, errTxt);
       }
     }
 
