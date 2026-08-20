@@ -439,14 +439,21 @@ export const Route = createFileRoute("/api/ai-chat")({
 
         const { openRouterModel } = await import("@/integrations/openrouter/openrouter.server");
 
+        const isFollowUp = messages.length > 1;
+
         const systemPrompt = `You are the Senior Luxury Travel Sales Concierge for GlobeTrek PK (Pakistan's premier travel & tour marketplace).
+
+CRITICAL CONVERSATION CONTINUITY (STRICT RULE):
+- You are in an ACTIVE, ONGOING conversation with the traveler (Message Turn #${messages.length}).
+- ${isFollowUp ? "DO NOT say 'Assalam-o-Alaikum', 'Hello', 'Hi', 'Welcome to GlobeTrek PK', or introduce yourself! The traveler was ALREADY greeted in message #1. Jump STRAIGHT into answering their request or presenting the destination seamlessly!" : "Welcome the traveler warmly."}
+- Never start responses in ongoing chats with repetitive boilerplate greetings. Open directly with enthusiasm about the specific destination or service requested (e.g. 'From Cappadocia's hot air balloons to the Bosphorus sunset, Turkey is truly enchanting! 🇹🇷', 'Dubai is pure luxury and adventure! 🇦🇪', 'Let's get your visa application moving smoothly! 📄').
 
 CRITICAL LANGUAGE RULE (USER LANGUAGE FOR THIS TURN: ${detectedLanguage.toUpperCase()}):
 - If USER LANGUAGE is ENGLISH (default):
   You MUST respond ENTIRELY in 100% fluent, elegant, and professional English.
   ABSOLUTELY NO Urdu or Hindi words (NEVER use words like "samaya", "kahaniyan", "tayari", "bata raha hoon", "kisi aur", etc.).
 - If USER LANGUAGE is ROMAN URDU (only when user explicitly typed in Roman Urdu or clicked '🇵🇰 Roman Urdu'):
-  Respond in polite, natural Pakistani Roman Urdu (e.g. "Assalam-o-Alaikum! GlobeTrek PK par khushamdeed. Hamare paas Turkey, Dubai, Baku, aur Northern Pakistan ke shandar packages available hain!").
+  Respond in polite, natural Pakistani Roman Urdu.
   NEVER use Hindi vocabulary (no "samaya", "dhanyawad", "mitra", etc.).
 
 RULE 1: PRESENTING PACKAGES & MULTIPLE DESTINATIONS
@@ -987,6 +994,15 @@ ${ticketsCatalogText}`;
               .replace(/^\s*(let me (check|search|look)|checking live database|searching database)[^.\n]*[.!]?\s*/gim, "")
               .replace(/^User Safety: safe\s*/gim, "")
               .trim();
+
+            // 6. Strip mid-conversation repetitive greeting restarts
+            if (isFollowUp) {
+              fullText = fullText
+                .replace(/^Assalam-?o-?Alaikum[^\n.!]*[.!]?\s*(Welcome to GlobeTrek PK[^\n.!]*[.!]?)?\s*/gi, "")
+                .replace(/^Welcome to GlobeTrek PK[^\n.!]*[.!]?\s*/gi, "")
+                .replace(/^(Hello|Hi|Hey)[^\n.!]*[.!]?\s*(Welcome to GlobeTrek PK[^\n.!]*[.!]?)?\s*/gi, "")
+                .trim();
+            }
 
             // Detect if capture_lead tool was called in any step
             const hasCaptureLeadCall = result.steps.some((step) =>
