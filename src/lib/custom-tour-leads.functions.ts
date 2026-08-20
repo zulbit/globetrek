@@ -197,6 +197,8 @@ export const createLeadUnlockCheckout = createServerFn({ method: "POST" })
       .eq("user_id", vendorId)
       .maybeSingle();
 
+    const isAdmin = roleRow?.role === "admin";
+
     // Check verification status from profiles table as well as payment_gateway_settings KYC store
     const { data: kycStore } = await supabaseAdmin
       .from("payment_gateway_settings")
