@@ -522,20 +522,20 @@ function VendorInvoicesPage() {
               Paid
             </button>
             <button
+              onClick={() => setStatusFilter("refunded" as any)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+                statusFilter === ("refunded" as any) ? "bg-rose-500/20 text-rose-400 border border-rose-500/30" : "text-muted-foreground hover:bg-surface"
+              }`}
+            >
+              Refunded
+            </button>
+            <button
               onClick={() => setStatusFilter("pending")}
               className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
                 statusFilter === "pending" ? "bg-amber-500/20 text-amber-400 border border-amber-500/30" : "text-muted-foreground hover:bg-surface"
               }`}
             >
               Pending
-            </button>
-            <button
-              onClick={() => setStatusFilter("failed")}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
-                statusFilter === "failed" ? "bg-rose-500/20 text-rose-400 border border-rose-500/30" : "text-muted-foreground hover:bg-surface"
-              }`}
-            >
-              Failed
             </button>
           </div>
         </div>
@@ -548,7 +548,7 @@ function VendorInvoicesPage() {
             </div>
             <h4 className="text-white font-bold text-sm">No Invoices Found</h4>
             <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
-              You are currently on the <strong className="text-emerald-400">Free Partner Plan</strong>. Official tax invoices and SafePay receipts will appear here when you upgrade your subscription or complete custom lead unlocks.
+              Official tax invoices, SafePay receipts, and refund credits will appear here when you unlock custom leads or upgrade your subscription.
             </p>
           </div>
         ) : (
@@ -559,7 +559,7 @@ function VendorInvoicesPage() {
                   <th className="py-2.5 px-3">Invoice ID</th>
                   <th className="py-2.5 px-3">Date</th>
                   <th className="py-2.5 px-3">Description</th>
-                  <th className="py-2.5 px-3">Period</th>
+                  <th className="py-2.5 px-3">Period / Audit</th>
                   <th className="py-2.5 px-3 text-right">Amount (PKR)</th>
                   <th className="py-2.5 px-3 text-center">Status</th>
                   <th className="py-2.5 px-3 text-right">Action</th>
@@ -572,18 +572,41 @@ function VendorInvoicesPage() {
                     <td className="py-3 px-3 text-muted-foreground whitespace-nowrap">
                       {new Date(inv.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                     </td>
-                    <td className="py-3 px-3 font-semibold text-foreground">{inv.description}</td>
-                    <td className="py-3 px-3 text-muted-foreground">{inv.period}</td>
+                    <td className="py-3 px-3 font-semibold text-foreground">
+                      <div>{inv.description}</div>
+                      {inv.is_refunded && inv.refund_reason && (
+                        <div className="text-[10px] text-rose-400 font-normal">
+                          Reason: {inv.refund_reason}
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-3 px-3 text-muted-foreground">
+                      <div>{inv.period}</div>
+                      {inv.refund_transaction_id && (
+                        <div className="text-[10px] font-mono text-muted-foreground/80 truncate max-w-[150px]">
+                          Ref: {inv.refund_transaction_id}
+                        </div>
+                      )}
+                    </td>
                     <td className="py-3 px-3 text-right font-mono font-bold text-foreground">
-                      Rs {inv.amount_pkr.toLocaleString()}
+                      <span className={inv.is_refunded ? "line-through text-muted-foreground" : ""}>
+                        Rs {inv.amount_pkr.toLocaleString()}
+                      </span>
+                      {inv.is_refunded && (
+                        <div className="text-[10px] text-rose-400">
+                          -Rs {(inv.refund_amount_pkr || inv.amount_pkr).toLocaleString()} (Refunded)
+                        </div>
+                      )}
                     </td>
                     <td className="py-3 px-3 text-center">
                       <Badge className={`text-[10px] uppercase font-bold ${
-                        inv.status.toLowerCase() === "pending" 
-                          ? "bg-amber-500/20 text-amber-400 border-amber-500/30" 
-                          : inv.status.toLowerCase() === "failed" || inv.status.toLowerCase() === "cancelled"
-                            ? "bg-rose-500/20 text-rose-400 border-rose-500/30"
-                            : "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                        inv.status.toLowerCase() === "refunded" || inv.is_refunded
+                          ? "bg-rose-500/20 text-rose-400 border-rose-500/30"
+                          : inv.status.toLowerCase() === "pending" 
+                            ? "bg-amber-500/20 text-amber-400 border-amber-500/30" 
+                            : inv.status.toLowerCase() === "failed" || inv.status.toLowerCase() === "cancelled"
+                              ? "bg-rose-500/20 text-rose-400 border-rose-500/30"
+                              : "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
                       }`}>
                         {inv.status}
                       </Badge>
@@ -592,7 +615,7 @@ function VendorInvoicesPage() {
                       <div className="flex items-center justify-end gap-1.5">
                         <Button
                           size="sm"
-                          disabled={downloadingInvId === inv.id || inv.status.toLowerCase() !== "paid"}
+                          disabled={downloadingInvId === inv.id || (inv.status.toLowerCase() !== "paid" && inv.status.toLowerCase() !== "refunded")}
                           onClick={() => handleDirectPDFDownload(inv)}
                           className="h-7 text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg gap-1 px-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -603,7 +626,7 @@ function VendorInvoicesPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          disabled={inv.status.toLowerCase() !== "paid"}
+                          disabled={inv.status.toLowerCase() !== "paid" && inv.status.toLowerCase() !== "refunded"}
                           onClick={() => handlePrintInvoiceWindow(inv)}
                           className="h-7 text-xs font-medium border-border hover:bg-surface rounded-lg gap-1 px-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
