@@ -62,8 +62,8 @@ function AdminOverview() {
 
       // Fetch all vendor profiles, KYC settings, tour lead unlocks, and visa lead unlock purchases
       const [
-        vendors,
-        customers,
+        vendorRolesRes,
+        customerRolesRes,
         vendorProfilesRes,
         kycRecordsRes,
         leadUnlocksRes,
@@ -79,8 +79,8 @@ function AdminOverview() {
         insuranceCount,
         ticketCount,
       ] = await Promise.all([
-        supabase.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "vendor"),
-        supabase.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "customer"),
+        supabase.from("user_roles").select("user_id").eq("role", "vendor"),
+        supabase.from("user_roles").select("user_id").eq("role", "customer"),
         supabase.from("profiles").select("id, email, full_name, company_name, vendor_status, subscription_tier, created_at, updated_at"),
         supabase.from("payment_gateway_settings").select("provider, config").like("provider", "vendor_kyc_%"),
         supabase.from("lead_unlock_payments").select("id, amount, status, created_at").eq("status", "completed"),
@@ -149,14 +149,25 @@ function AdminOverview() {
       const profiles = vendorProfilesRes.data ?? [];
       const tourUnlocks = leadUnlocksRes.data ?? [];
 
+      const vendorUserIds = new Set((vendorRolesRes.data ?? []).map((r: any) => r.user_id));
+      const customerUserIds = new Set((customerRolesRes.data ?? []).map((r: any) => r.user_id));
+
+      const allVendorProfiles = profiles.filter((p: any) => {
+        if (vendorUserIds.has(p.id)) return true;
+        if (p.company_name) return true;
+        if (p.vendor_status === "pending") return true;
+        if (p.email && p.email.toLowerCase().includes("vendor")) return true;
+        return false;
+      });
+
       let starterCount = 0;
       let proCount = 0;
       let agencyCount = 0;
       let freeCount = 0;
 
-      profiles.forEach((p) => {
+      allVendorProfiles.forEach((p) => {
         const tier = (p.subscription_tier || "free").toLowerCase();
-        if (tier === "starter") starterCount++;
+        if (tier === "starter" || tier === "tour operator") starterCount++;
         else if (tier === "pro") proCount++;
         else if (tier === "agency") agencyCount++;
         else freeCount++;
@@ -185,21 +196,14 @@ function AdminOverview() {
         } catch {}
       });
 
-      const allVendorProfiles = profiles.filter((p: any) => {
-        if (p.company_name) return true;
-        if (p.vendor_status === "pending") return true;
-        if (p.email && p.email.toLowerCase().includes("vendor")) return true;
-        if (p.email && !p.email.includes("customer.demo") && !p.email.includes("admin.demo")) return true;
-        return false;
-      });
-
       let setupModeCount = 0;
       let inReviewCount = 0;
       let verifiedVendorsCount = 0;
       let bannedVendorsCount = 0;
 
       allVendorProfiles.forEach((v: any) => {
-        if (v.vendor_status === "approved") {
+        const isApproved = v.vendor_status === "approved" || v.vendor_status === "verified";
+        if (isApproved) {
           verifiedVendorsCount++;
         } else if (v.vendor_status === "banned") {
           bannedVendorsCount++;
@@ -209,6 +213,8 @@ function AdminOverview() {
           setupModeCount++;
         }
       });
+
+      const customerCount = customerUserIds.size || profiles.filter((p: any) => !vendorUserIds.has(p.id) && !allVendorProfiles.some(v => v.id === p.id)).length;
 
       // Fetch dynamic pricing for MRR and real payments for actual revenue
       const [pricingRes, realPaymentsRes] = await Promise.all([
@@ -275,13 +281,14 @@ function AdminOverview() {
       };
 
       return {
-        vendors: allVendorProfiles.length || (vendors.count ?? 0),
+        vendors: allVendorProfiles.length,
         setupModeCount,
         inReviewCount,
         verifiedVendorsCount,
         bannedVendorsCount,
         freeCount,
-        customers: customers.count ?? 0,
+        paidVendorsCount: starterCount + proCount + agencyCount,
+        customers: customerCount,
         proVendors: proCount,
         starterVendors: starterCount,
         agencyVendors: agencyCount,
