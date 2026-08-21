@@ -198,9 +198,9 @@ function AdminOverview() {
         if (isApproved) {
           verifiedVendorsCount++;
           const tier = (v.subscription_tier || "free").toLowerCase();
-          if (tier === "starter" || tier === "tour operator") starterCount++;
-          else if (tier === "pro") proCount++;
-          else if (tier === "agency") agencyCount++;
+          if (tier === "pro" || tier === "tour operator") proCount++;
+          else if (tier === "starter" || tier === "travel desk") starterCount++;
+          else if (tier === "agency" || tier === "full agency") agencyCount++;
           else freeCount++;
         } else if (v.vendor_status === "banned") {
           bannedVendorsCount++;
@@ -355,7 +355,7 @@ function AdminOverview() {
             icon={Users}
             label="Approved vendors"
             value={data?.verifiedVendorsCount ?? 0}
-            hint={`${data?.starterVendors ?? 0} Tour Operators · ${data?.freeCount ?? 0} Free`}
+            hint={`${data?.proVendors ?? 0} Tour Operators · ${data?.freeCount ?? 0} Free`}
             tone="emerald"
           />
           <MetricCard
@@ -371,7 +371,7 @@ function AdminOverview() {
             icon={Crown}
             label="Tour Operators / Paid"
             value={data?.paidVendorsCount ?? 0}
-            hint={`${data?.starterVendors ?? 0} Tour Operators · ${data?.proVendors ?? 0} Pro`}
+            hint={`${data?.proVendors ?? 0} Tour Operators · Active Tiers`}
             tone="sky"
           />
           <MetricCard
