@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, MessageSquare, Info, Save, RotateCcw, AlertTriangle, Plus, Trash2, Wifi, WifiOff, RefreshCw, Image as ImageIcon, Upload, Send, Key, Check } from "lucide-react";
+import { Loader2, MessageSquare, Info, Save, RotateCcw, AlertTriangle, Plus, Trash2, Wifi, WifiOff, RefreshCw, Image as ImageIcon, Upload, Send, Key, Check, Eye, EyeOff } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -84,6 +84,7 @@ function AdminWhatsAppConsole() {
   const [sendingTest, setSendingTest] = useState(false);
 
   // API Key State
+  const [showApiKey, setShowApiKey] = useState<boolean>(false);
   const [apiKeyInput, setApiKeyInput] = useState<string>(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("WHATSAPP_API_KEY");
@@ -534,52 +535,95 @@ function AdminWhatsAppConsole() {
       </div>
 
       {/* Gateway API Key & Device Configuration Card */}
-      <div className="rounded-2xl border border-border bg-card p-5 space-y-4 shadow-sm">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-border/50">
           <div className="flex items-center gap-3">
             <div className="size-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Key className="size-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-foreground">WhatsApp Gateway API Key</span>
+                <span className="text-sm font-bold text-foreground">WhatsApp Gateway Configuration</span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30 font-bold">
                   wa.yello.bid
                 </span>
               </div>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
-                Active Key: <code className="font-mono text-emerald-400">{apiKeyInput}</code>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Configure your API key and device routing ID to send automated WhatsApp notifications.
               </p>
             </div>
           </div>
+        </div>
 
-          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-            <div className="flex items-center gap-2 flex-1 lg:flex-initial min-w-[240px]">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 pt-4 items-end">
+          <div className="md:col-span-6 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <span>WhatsApp API Secret Key</span>
+                <span className="text-rose-500">*</span>
+              </Label>
+              <button
+                type="button"
+                onClick={() => setShowApiKey(!showApiKey)}
+                className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                title={showApiKey ? "Hide API key" : "Show API key"}
+              >
+                {showApiKey ? (
+                  <>
+                    <EyeOff className="size-3.5" />
+                    <span>Hide</span>
+                  </>
+                ) : (
+                  <>
+                    <Eye className="size-3.5" />
+                    <span>Show</span>
+                  </>
+                )}
+              </button>
+            </div>
+            <div className="relative">
               <Input
-                type="password"
+                type={showApiKey ? "text" : "password"}
                 value={apiKeyInput}
                 onChange={(e) => setApiKeyInput(e.target.value)}
-                placeholder="Enter WhatsApp API key"
-                className="text-xs font-mono rounded-xl bg-background border-border"
+                placeholder="Enter WhatsApp Gateway API Key (e.g. 10e916...)"
+                className="text-xs font-mono rounded-xl bg-background border-border pr-10"
               />
+              <button
+                type="button"
+                onClick={() => setShowApiKey(!showApiKey)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={showApiKey ? "Hide API key" : "Show API key"}
+              >
+                {showApiKey ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
             </div>
-            <div className="flex items-center gap-2 flex-1 lg:flex-initial min-w-[160px]">
-              <Input
-                value={deviceIdInput}
-                onChange={(e) => setDeviceIdInput(e.target.value)}
-                placeholder="e.g. 03293089377 (Optional)"
-                className="text-xs font-mono rounded-xl bg-background border-border"
-              />
-            </div>
+          </div>
+
+          <div className="md:col-span-4 space-y-1.5">
+            <Label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+              <span>Device ID / Sender Number</span>
+              <span className="text-[11px] text-muted-foreground font-normal">(Optional)</span>
+            </Label>
+            <Input
+              value={deviceIdInput}
+              onChange={(e) => setDeviceIdInput(e.target.value)}
+              placeholder="e.g. 03293089377"
+              className="text-xs font-mono rounded-xl bg-background border-border"
+            />
+          </div>
+
+          <div className="md:col-span-2">
             <Button
-              size="sm"
+              size="default"
               onClick={() => {
                 saveCustomApiKey(apiKeyInput);
                 saveDeviceId(deviceIdInput);
                 connection.refetch();
               }}
-              className="text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl shrink-0"
+              className="w-full text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl gap-1.5 shadow-sm h-9"
             >
+              <Save className="size-3.5" />
               Save Key
             </Button>
           </div>
