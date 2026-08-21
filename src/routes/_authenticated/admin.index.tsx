@@ -160,19 +160,6 @@ function AdminOverview() {
         return false;
       });
 
-      let starterCount = 0;
-      let proCount = 0;
-      let agencyCount = 0;
-      let freeCount = 0;
-
-      allVendorProfiles.forEach((p) => {
-        const tier = (p.subscription_tier || "free").toLowerCase();
-        if (tier === "starter" || tier === "tour operator") starterCount++;
-        else if (tier === "pro") proCount++;
-        else if (tier === "agency") agencyCount++;
-        else freeCount++;
-      });
-
       // Parse KYC submissions map
       const kycSettings = kycRecordsRes.data ?? [];
       const kycMap = new Map<string, boolean>();
@@ -201,10 +188,20 @@ function AdminOverview() {
       let verifiedVendorsCount = 0;
       let bannedVendorsCount = 0;
 
+      let starterCount = 0;
+      let proCount = 0;
+      let agencyCount = 0;
+      let freeCount = 0;
+
       allVendorProfiles.forEach((v: any) => {
         const isApproved = v.vendor_status === "approved" || v.vendor_status === "verified";
         if (isApproved) {
           verifiedVendorsCount++;
+          const tier = (v.subscription_tier || "free").toLowerCase();
+          if (tier === "starter" || tier === "tour operator") starterCount++;
+          else if (tier === "pro") proCount++;
+          else if (tier === "agency") agencyCount++;
+          else freeCount++;
         } else if (v.vendor_status === "banned") {
           bannedVendorsCount++;
         } else if (kycMap.get(v.id)) {
@@ -356,9 +353,9 @@ function AdminOverview() {
           <MetricCard
             to="/admin/vendors"
             icon={Users}
-            label="Total vendors"
-            value={data?.vendors ?? 0}
-            hint={`${data?.verifiedVendorsCount ?? 0} Verified · ${data?.freeCount ?? 0} Free`}
+            label="Approved vendors"
+            value={data?.verifiedVendorsCount ?? 0}
+            hint={`${data?.starterVendors ?? 0} Tour Operators · ${data?.freeCount ?? 0} Free`}
             tone="emerald"
           />
           <MetricCard
@@ -372,9 +369,9 @@ function AdminOverview() {
           <MetricCard
             to="/admin/vendors"
             icon={Crown}
-            label="Pro subscribers"
-            value={data?.proVendors ?? 0}
-            hint={`${formatPKR(PRO_MONTHLY_PKR)} / mo subscription`}
+            label="Tour Operators / Paid"
+            value={data?.paidVendorsCount ?? 0}
+            hint={`${data?.starterVendors ?? 0} Tour Operators · ${data?.proVendors ?? 0} Pro`}
             tone="sky"
           />
           <MetricCard
