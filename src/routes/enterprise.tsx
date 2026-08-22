@@ -36,6 +36,12 @@ import {
   CheckCircle2,
   Clock,
   Layers,
+  Database,
+  Radio,
+  Send,
+  Server,
+  Filter,
+  Flame,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -136,6 +142,27 @@ const COMPARISON_DATA = [
   },
   {
     feature: "Automated WhatsApp Alerts & Receipts",
+    globetrek: true,
+    cloneScript: false,
+    saasPms: false,
+    wordpress: false,
+  },
+  {
+    feature: "Automated B2B Lead Scraping Fleet (Apify + 12 Hub Cities)",
+    globetrek: true,
+    cloneScript: false,
+    saasPms: false,
+    wordpress: false,
+  },
+  {
+    feature: "High-Throughput Serverless Cloudflare D1 Lead Database",
+    globetrek: true,
+    cloneScript: false,
+    saasPms: false,
+    wordpress: false,
+  },
+  {
+    feature: "Containerized WhatsApp Dispatcher Engine (wa-server-gcp on GCP)",
     globetrek: true,
     cloneScript: false,
     saasPms: false,
@@ -308,6 +335,14 @@ const FAQS = [
   {
     q: "How does the Custom Visa Consultation & Refusal Rectification Engine operate?",
     a: "Travelers facing complex visa requirements, drop-box submissions (Gerry's, VFS, Anatolia), or previous visa rejections (UK, Schengen, US, Canada) submit their case details and intended travel dates at /custom-visa. The engine auto-registers a free Traveler Hub account and broadcasts the verified inquiry to the B2B marketplace. Verified Pakistani visa consultants unlock applicant contact details for ₨ 750 via SafePay (capped at 5 unlocking agencies to preserve lead quality). Unlocked agencies submit structured proposals with fee breakdowns and consultation modes (in-person vs remote e-filing), triggering automated WhatsApp notifications and online comparison links for the traveler.",
+  },
+  {
+    q: "How does the Autonomous B2B Lead Scraping Engine (Apify + Cloudflare D1) work?",
+    a: "GlobeTrek PK includes a standalone autonomous lead scraping subsystem (Leads-Globetrek repo) powered by serverless Apify actors targeting Pakistani travel businesses across 12 tier-1 and tier-2 hubs (Karachi, Lahore, Islamabad, Peshawar, Faisalabad, etc.). The scraper harvests DTS tourism registry records, Google Maps Places, and Facebook directory listings, normalizing phone numbers (+92 format) and ingesting them into high-throughput Cloudflare D1 (Serverless SQLite) with automatic deduplication and lead quality scoring.",
+  },
+  {
+    q: "How does the Containerized WhatsApp Outreach & Webhook Server (wa-server-gcp) work?",
+    a: "The ecosystem includes a dedicated, containerized Node.js service (wa-server-gcp repo) deployed on Google Cloud Platform (Cloud Run). It manages an automated outreach dispatch engine with humanized pacing (45–90s randomized intervals) and anti-ban safeguards, sending bilingual invitation links to verified travel agency owners. Inbound replies pass through a two-way REST webhook bridge (wa.yello.bid) that routes live traveler quote alerts, customer booking receipts, and lead unlock notifications to vendors directly on WhatsApp.",
   },
   {
     q: "How does Google Analytics (GA4) & Real-Time Traffic Intelligence work?",
@@ -801,6 +836,195 @@ function EnterpriseShowcase() {
         </div>
       </section>
 
+      {/* Autonomous Lead Generation & WhatsApp Outreach Subsystem Section */}
+      <section className="py-16 border-t bg-gradient-to-b from-amber-500/5 via-surface/40 to-background">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12">
+          <div className="text-center space-y-3 max-w-3xl mx-auto">
+            <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 font-bold px-3 py-1 text-xs gap-1.5">
+              <Radio className="size-3.5" /> Turnkey Ecosystem Subsystems (Acquisition Assets)
+            </Badge>
+            <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-foreground">
+              Autonomous B2B Lead Engine &amp; Containerized WhatsApp Server
+            </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium leading-relaxed">
+              Included in the 100% intellectual property transfer: 3 fully integrated production repositories automating outbound agency acquisition, high-throughput lead storage, and real-time WhatsApp conversion.
+            </p>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Subsystem 1: Lead Engine & Cloudflare D1 */}
+            <Card className="p-6 sm:p-8 space-y-6 border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-card to-card shadow-lg flex flex-col justify-between">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between gap-3 border-b border-border/80 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="size-12 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-xl">
+                      <Database className="size-6" />
+                    </div>
+                    <div>
+                      <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px] font-bold">
+                        Repo: Leads-Globetrek
+                      </Badge>
+                      <h3 className="font-bold text-lg text-foreground mt-0.5">
+                        Autonomous Scraping Fleet &amp; Cloudflare D1
+                      </h3>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="border-emerald-500/30 text-emerald-400 text-xs font-mono">
+                    10,000+ Enriched Records
+                  </Badge>
+                </div>
+
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Distributed Apify serverless scrapers targeting travel agencies, tour operators, and visa desks across 12 Pakistani cities (Karachi, Lahore, Islamabad, Peshawar, Faisalabad, etc.). Ingests verified phone numbers directly into Cloudflare D1 (Serverless SQLite) to eliminate database load on the core transactional database.
+                </p>
+
+                <div className="space-y-2.5">
+                  <div className="rounded-2xl border border-border bg-surface/80 p-3.5 space-y-1.5">
+                    <span className="text-[11px] font-bold text-foreground flex items-center gap-2">
+                      <CheckCircle2 className="size-3.5 text-emerald-400" /> Multi-Source Harvesting &amp; Phone Sanitizer
+                    </span>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      Cross-references DTS tourism registry, Google Maps Places API, and Facebook directories into sanitized E.164 formats (+92 3XX XXXXXXX).
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-border bg-surface/80 p-3.5 space-y-1.5">
+                    <span className="text-[11px] font-bold text-foreground flex items-center gap-2">
+                      <CheckCircle2 className="size-3.5 text-emerald-400" /> Instant Deduplication &amp; Lead Scoring
+                    </span>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      Unique phone indexes guarantee zero duplicate outreach while scoring agencies (80–100) based on review volume and physical office verification.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-border/80 pt-4 flex items-center justify-between text-xs text-muted-foreground">
+                <span className="font-semibold text-foreground">Storage Layer:</span>
+                <span className="font-mono text-primary font-bold">Cloudflare Serverless D1 SQLite</span>
+              </div>
+            </Card>
+
+            {/* Subsystem 2: Containerized WhatsApp Dispatcher */}
+            <Card className="p-6 sm:p-8 space-y-6 border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-card to-card shadow-lg flex flex-col justify-between">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between gap-3 border-b border-border/80 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="size-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-xl">
+                      <Server className="size-6" />
+                    </div>
+                    <div>
+                      <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] font-bold">
+                        Repo: wa-server-gcp
+                      </Badge>
+                      <h3 className="font-bold text-lg text-foreground mt-0.5">
+                        WhatsApp Outreach &amp; Webhook Dispatcher
+                      </h3>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="border-emerald-500/30 text-emerald-400 text-xs font-mono">
+                    GCP Cloud Run
+                  </Badge>
+                </div>
+
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Containerized Node.js service running on Google Cloud Platform. Dispatches automated bilingual invitation copy (English &amp; Roman Urdu) to agency owners with randomized anti-ban pacing (45–90s), and powers a two-way REST webhook bridge for live traveler alerts.
+                </p>
+
+                <div className="space-y-2.5">
+                  <div className="rounded-2xl border border-border bg-surface/80 p-3.5 space-y-1.5">
+                    <span className="text-[11px] font-bold text-foreground flex items-center gap-2">
+                      <CheckCircle2 className="size-3.5 text-emerald-400" /> Humanized Anti-Ban Outreach Engine
+                    </span>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      Dispatches tailored onboarding invitations during business hours (Mon–Sat PKT) with one-time profile claiming magic links.
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-border bg-surface/80 p-3.5 space-y-1.5">
+                    <span className="text-[11px] font-bold text-foreground flex items-center gap-2">
+                      <CheckCircle2 className="size-3.5 text-emerald-400" /> Real-Time Two-Way Webhook Alerts
+                    </span>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      Instant WhatsApp alerts for custom quote requests, booking confirmations, SafePay receipt verifications, and lead unlocks.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-border/80 pt-4 flex items-center justify-between text-xs text-muted-foreground">
+                <span className="font-semibold text-foreground">Outreach Host:</span>
+                <span className="font-mono text-emerald-400 font-bold">Google Cloud Platform (Cloud Run)</span>
+              </div>
+            </Card>
+          </div>
+
+          {/* Pay-Per-Lead Marketplace Workflow Box */}
+          <div className="rounded-3xl border border-border bg-surface/80 p-6 sm:p-8 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-5">
+              <div className="space-y-1">
+                <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px] font-bold">
+                  Monetization Architecture
+                </Badge>
+                <h3 className="text-xl font-bold text-foreground">
+                  Integrated Pay-Per-Lead &amp; Vendor Management Portal (/vendor/leads)
+                </h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs">
+                  ₨ 5,000 / Tour Lead
+                </Badge>
+                <Badge className="bg-sky-500/10 text-sky-400 border border-sky-500/20 text-xs">
+                  ₨ 750 / Visa Lead
+                </Badge>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-2xl border border-border bg-card p-4 space-y-2">
+                <div className="size-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
+                  1
+                </div>
+                <h4 className="font-bold text-xs text-foreground">Inquiry Submission</h4>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Traveler submits custom tour or visa request via web forms or AI Concierge conversation.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-card p-4 space-y-2">
+                <div className="size-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
+                  2
+                </div>
+                <h4 className="font-bold text-xs text-foreground">Masked Broadcast</h4>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  City, budget, and travel dates broadcasted to verified agencies via WhatsApp &amp; Vendor Portal.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-card p-4 space-y-2">
+                <div className="size-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
+                  3
+                </div>
+                <h4 className="font-bold text-xs text-foreground">SafePay Unlock</h4>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  First 3–5 verified agencies unlock traveler phone numbers with competitive bidding caps.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-card p-4 space-y-2">
+                <div className="size-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
+                  4
+                </div>
+                <h4 className="font-bold text-xs text-foreground">Direct Conversion</h4>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Agencies submit structured quotations with instant WhatsApp alerts and direct chat links for travelers.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Screenshot Showcase Gallery */}
       <section className="py-16 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
         <div className="text-center space-y-2 max-w-2xl mx-auto">
@@ -978,6 +1202,32 @@ function EnterpriseShowcase() {
               </p>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 Native GA4 integration with automated Single Page Application (SPA) route tracking, PKR lead conversion funnels, and real-time audience analytics.
+              </p>
+            </Card>
+
+            <Card className="p-6 space-y-3 border-border bg-card border-amber-500/40 bg-amber-500/5">
+              <div className="size-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-lg">
+                📡
+              </div>
+              <h3 className="font-bold text-base text-foreground">B2B Lead Engine &amp; D1</h3>
+              <p className="text-xs text-muted-foreground font-medium">
+                <strong>Heading: Autonomous Apify Fleet</strong>
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Serverless Apify scrapers harvesting 10,000+ Pakistani agencies across 12 cities into high-throughput Cloudflare D1 with automatic deduplication.
+              </p>
+            </Card>
+
+            <Card className="p-6 space-y-3 border-border bg-card border-emerald-500/40 bg-emerald-500/5">
+              <div className="size-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-lg">
+                📲
+              </div>
+              <h3 className="font-bold text-base text-foreground">WhatsApp Server (GCP)</h3>
+              <p className="text-xs text-muted-foreground font-medium">
+                <strong>Heading: Two-Way Outreach Bridge</strong>
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Containerized Node.js service on GCP Cloud Run handling automated bilingual invitation dispatch and real-time quote alert webhooks.
               </p>
             </Card>
           </div>
