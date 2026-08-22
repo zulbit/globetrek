@@ -10,8 +10,8 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                       🏢 SELLER / ASSIGNOR ENTITY                           │
-│   Refusion Private Limited (Incorporated under the Companies Act)           │
+│                       👤 SELLER / ASSIGNOR (INDIVIDUAL)                     │
+│   [Your Full Legal Name] (Independent Developer & Sole Proprietor)          │
 │   • Holds 100% sole, absolute, and unencumbered title to GlobeTrek PK       │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │
@@ -20,7 +20,7 @@
 │                    📦 PURCHASED ASSETS (SCHEDULE A, B, C)                   │
 │   • Schedule A: Repositories (globetrek, Leads-Globetrek, wa-server-gcp)    │
 │   • Schedule B: Domain & Infrastructure (globetrek.pk, Supabase, Cloudflare)│
-│   • Schedule C: Creative IP (Camtasia 2025 Bilingual Video Scripts, Schemas)│
+│   • Schedule C: Creative IP (Video Scripts, Schemas)                        │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │
                                        ▼
@@ -46,11 +46,11 @@
 This **Intellectual Property Assignment Agreement and Bill of Sale** (the *"Agreement"*) is made and entered into as of the Effective Date, by and between:
 
 1. **THE SELLER (ASSIGNOR):**
-   * **Company Name:** `Refusion Private Limited`
-   * **Corporate Registration:** Registered under the Companies Act of Pakistan
-   * **Authorized Representative:** `[Zulqarnain / Director Name]`
-   * **Registered Address:** `[Insert Registered Office Address, Pakistan]`
-   * **Notice Email:** `legal@refusion.io` / `admin@globetrek.pk`
+   * **Full Legal Name:** `[Your Full Legal Name, e.g., Zulqarnain]`
+   * **Identity / Passport No.:** `[Insert CNIC / Passport Number]`
+   * **Capacity:** Sole Developer, Creator & Absolute Legal Owner
+   * **Residential Address:** `[Insert Your Residential / Mailing Address, Pakistan]`
+   * **Notice Email:** `[Your Personal Email Address]` / `admin@globetrek.pk`
 
 2. **THE BUYER (ASSIGNEE):**
    * **Entity / Individual Name:** `[Insert Buyer Entity or Individual Name]`
@@ -64,7 +64,7 @@ This **Intellectual Property Assignment Agreement and Bill of Sale** (the *"Agre
 
 ## 🧭 RECITALS
 
-**WHEREAS**, Seller is the sole, absolute, and unencumbered owner of all right, title, and interest in and to the digital travel marketplace software, automated lead infrastructure, brand assets, source code repositories, databases, and associated intellectual property collectively known as **"GlobeTrek PK"**; and
+**WHEREAS**, Seller as an individual creator and engineer is the sole, absolute, and unencumbered owner of all right, title, and interest in and to the digital travel marketplace software, automated lead infrastructure, brand assets, source code repositories, databases, and associated intellectual property collectively known as **"GlobeTrek PK"**; and
 
 **WHEREAS**, Seller desires to sell, convey, assign, transfer, and deliver to Buyer, and Buyer desires to purchase and acquire from Seller, all right, title, and interest in and to the Transferred Intellectual Property and Assets as set forth herein;
 
@@ -127,35 +127,24 @@ Seller hereby irrevocably, unconditionally, and perpetually grants, assigns, tra
 │  • Cloud Storage & D1: Storage buckets, triggers, and RPC search procedures │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  SCHEDULE C: Creative, Video & Brand Assets                                 │
-│  • Video Onboarding IP: Camtasia 2025 bilingual video scripts (EN / Roman)  │
+│  • Video Onboarding IP: Multi-module bilingual video scripts (EN / Roman)   │
 │  • Brand Assets: High-resolution vector logos, SVG icons, and typography    │
 │  • SEO Infrastructure: Validated JSON-LD schemas and XML dynamic sitemaps   │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Detailed Schedule Breakdown:
-* **Core Marketplace Repository (`globetrek`):**
-  * Built with TanStack Start (React 19), Nitro Server, Tailwind CSS v4, Radix UI.
-  * Includes Bilingual AI Concierge (OpenRouter), Safepay PKR Payment Gateway, and Leaflet Geospatial mapping.
-* **Lead Scraper & Enrichment Engine (`Leads-Globetrek`):**
-  * Apify automation actors, city-precision geo-targeting, Cloudflare D1 storage.
-* **Automated WhatsApp Bridge Backend (`wa-server-gcp`):**
-  * Google Cloud Platform Node.js server with webhook receivers, automated quotation dispatchers, and template engines.
-* **Primary Domain:** `globetrek.pk` (EPP Authorization code transferred to Buyer registrar).
-* **Database Infrastructure:** Complete Supabase PostgreSQL schema with RLS security policies, stored procedures (`search_marketplace`), and triggers.
-
 ---
 
 ## 4. 📝 REPRESENTATIONS AND WARRANTIES
 
-Seller (Refusion Private Limited) hereby warrants and represents to Buyer:
+Seller hereby warrants and represents to Buyer:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                     SELLER WARRANTIES & INDEMNIFICATION                     │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  ✓ Sole Ownership          │ Seller is the exclusive legal owner of 100% of │
-│                            │ the IP and has full authority to sell.         │
+│  ✓ Sole Ownership          │ Seller is the exclusive individual owner of    │
+│                            │ 100% of the IP and has full authority to sell. │
 ├────────────────────────────┼────────────────────────────────────────────────┤
 │  ✓ Zero Encumbrances       │ Assets are free of all liens, mortgages, debt, │
 │                            │ claims, or third-party security interests.     │
@@ -181,9 +170,6 @@ Seller agrees to provide up to **thirty (30) consecutive calendar days** of tech
 * Assistance with Supabase, Cloudflare, and GCP DNS cutover.
 * Configuration assistance for Buyer's Safepay and OpenRouter API keys.
 
-### 5.2 Further Assurances
-Seller agrees to execute and deliver any additional transfer deeds, domain registrar transfer confirmations, or IP assignment affidavits reasonably requested by Buyer to perfect Buyer’s absolute title.
-
 ---
 
 ## 6. ⚖️ GOVERNING LAW & DISPUTE RESOLUTION
@@ -194,17 +180,15 @@ This Agreement shall be governed by and construed in accordance with the laws go
 
 ## ✍️ EXECUTION & SIGNATURES
 
-**IN WITNESS WHEREOF**, the Parties hereto have executed this **Intellectual Property Assignment Agreement and Bill of Sale** by their duly authorized representatives as of the Effective Date.
+**IN WITNESS WHEREOF**, the Parties hereto have executed this **Intellectual Property Assignment Agreement and Bill of Sale** as of the Effective Date.
 
-### FOR SELLER:
-**Refusion Private Limited**
+### FOR SELLER (INDIVIDUAL OWNER):
 
 \
 By: ___________________________________________  
-**Name:** `[Zulqarnain / Director Name]`  
-**Title:** Authorized Director / Founder  
+**Name:** `[Your Full Legal Name]`  
+**Capacity:** Sole Developer & Legal Owner  
 **Date:** `[Insert Date]`  
-**Corporate Seal:** *(Signed & Sealed)*  
 
 ---
 
