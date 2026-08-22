@@ -8,57 +8,32 @@
 
 ## 🧭 END-TO-END SYSTEM ARCHITECTURE
 
-```mermaid
-flowchart TB
-    subgraph CLIENT_TIER["🖥️ CLIENT TIER (EDGE ROUTING)"]
-        A1["Public Users & Travelers<br/>(Desktop & Mobile)"]
-        A2["Verified Travel Vendors<br/>(Tour / Visa / Insurance / Tickets)"]
-        A3["Platform Administrators<br/>(Executive Operating System)"]
-    end
-
-    subgraph CDN_EDGE["⚡ CDN & EDGE INGRESS"]
-        B1["Cloudflare Edge Network / SSL Termination"]
-        B2["DDoS Shield & Automated Rate Limiting"]
-        B3["Dynamic Sitemaps & OpenGraph Meta Injector"]
-    end
-
-    subgraph COMPUTE_TIER["⚙️ APPLICATION COMPUTE & RUNTIME"]
-        C1["TanStack Start Full-Stack App<br/>(React 19, TanStack Router RPC)"]
-        C2["Nitro Server Engine<br/>(Cloudflare Pages / Node.js 22 Runtime)"]
-        C3["Contabo Production VPS<br/>(Ubuntu 24.04 LTS, Nginx, Fail2ban)"]
-    end
-
-    subgraph DATA_SERVICES["🗄️ PERSISTENCE & DATA PIPELINE"]
-        D1["Supabase Managed PostgreSQL<br/>(Row Level Security RLS, Realtime)"]
-        D2["Cloudflare D1 SQLite Database<br/>(High-Volume Lead Pipeline)"]
-        D3["Supabase Storage Buckets<br/>(KYC Licenses, Tour Images, Invoices)"]
-    end
-
-    subgraph EXTERNAL_INTEGRATIONS["🔌 EXTERNAL API SERVICES"]
-        E1["OpenRouter AI Engine<br/>(GPT-4o-mini, DeepSeek LLM)"]
-        E2["Safepay PKR Gateway<br/>(Cards, EasyPaisa, JazzCash, 1Link)"]
-        E3["WhatsApp Gateway Server (GCP)<br/>(wa.yello.bid / WhatsClient REST API)"]
-        E4["Apify Web Scraping Fleet<br/>(Google Maps & Facebook Leads)"]
-    end
-
-    CLIENT_TIER --> B1
-    B1 --> B2
-    B2 --> C1
-    C1 <--> C2
-    C2 <--> C3
-    C1 <--> D1
-    C1 <--> D3
-    C2 <--> E1
-    C2 <--> E2
-    C2 <--> E3
-    E4 --> D2
-    D2 --> C1
-
-    style CLIENT_TIER fill:#0f172a,stroke:#3b82f6,stroke-width:2px,color:#fff
-    style CDN_EDGE fill:#1e293b,stroke:#0ea5e9,stroke-width:2px,color:#fff
-    style COMPUTE_TIER fill:#1e1b4b,stroke:#8b5cf6,stroke-width:2px,color:#fff
-    style DATA_SERVICES fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#fff
-    style EXTERNAL_INTEGRATIONS fill:#451a03,stroke:#f59e0b,stroke-width:2px,color:#fff
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          1. CLIENT & EDGE TIER                              │
+│   • Public Travelers (Desktop & Mobile Web)                                 │
+│   • Verified Travel Vendors (Tour Operators, Visa Desks, Insurance, Flight) │
+│   • Cloudflare Edge CDN (DDoS Shield, SSL, Brotli, Dynamic Sitemaps)        │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          2. APPLICATION & COMPUTE                           │
+│   • TanStack Start Full-Stack App (React 19, Server Functions, Type-Safe RPC│
+│   • Nitro Server Runtime (Cloudflare Pages / Node.js 22 Engine)             │
+│   • Contabo Production VPS (Ubuntu 24.04 LTS, Nginx, Fail2ban Jails)        │
+└──────────────────┬───────────────────┬───────────────────┬──────────────────┘
+                   │                   │                   │
+                   ▼                   ▼                   ▼
+┌──────────────────────┐  ┌────────────────────────┐  ┌───────────────────────┐
+│   3. DATA PERSISTENCE│  │   4. EXTERNAL APIS     │  │  5. AUTOMATION FLEET  │
+│ • Supabase PostgreSQL│  │ • OpenRouter AI LLMs   │  │ • Apify Web Scraping  │
+│   (Row Level Sec RLS)│  │   (GPT-4o-mini/DeepSeek│  │   (Google Maps / DTS) │
+│ • Cloudflare D1 Lead │  │ • Safepay PKR Gateway  │  │ • wa-server-gcp       │
+│   Database (SQLite)  │  │   (Cards/JazzCash/EP)  │  │   (WhatsApp Webhook)  │
+│ • Supabase Storage   │  │ • WhatsApp Gateway API │  │ • Automated Cron Jobs │
+│   (KYC Licenses/Docs)│  │   (wa.yello.bid REST)  │  │   (Weekly Sub Sync)   │
+└──────────────────────┘  └────────────────────────┘  └───────────────────────┘
 ```
 
 ---

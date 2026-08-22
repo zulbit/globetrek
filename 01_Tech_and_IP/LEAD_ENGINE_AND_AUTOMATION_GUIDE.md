@@ -6,48 +6,39 @@
 
 ---
 
-## 🧭 END-TO-END LEAD ENGINE PIPELINE
+## 🧭 END-TO-END LEAD PIPELINE ARCHITECTURE
 
-```mermaid
-flowchart TD
-    subgraph SOURCES["📡 1. MULTI-CHANNEL DATA HARVESTING"]
-        S1["Google Maps Places API / Scraper<br/>(Travel Agencies & Tour Operators)"]
-        S2["Facebook Ads & Page Directory<br/>(Umrah & Northern Tour Organizers)"]
-        S3["DTS Tourism Registry Directory<br/>(Licensed Pakistani Travel Desks)"]
-    end
-
-    subgraph INGESTION["⚡ 2. INGESTION & NORMALIZATION"]
-        I1["Apify Serverless Actor Fleet"]
-        I2["Phone Sanitizer (+92 3XX XXXXXXX)<br/>City Mapping & DTS Deduplication"]
-        I3["Cloudflare D1 Lead Database<br/>(10,000+ Enriched Records)"]
-    end
-
-    subgraph AUTOMATION["📲 3. OUTREACH & CONVERSATION BRIDGE"]
-        A1["Automated Outreach Engine<br/>(wa-server-gcp on Google Cloud)"]
-        A2["Bilingual WhatsApp Dispatcher<br/>(English & Roman Urdu Templates)"]
-        A3["wa.yello.bid Gateway API Instance"]
-    end
-
-    subgraph CONVERSION["🎯 4. QUALIFICATION & MONETIZATION"]
-        C1["Vendor Clicks Invitation Link"]
-        C2["Self-Service KYC Submission<br/>(DTS / NTN / CNIC Upload)"]
-        C3["Tier Upgrade & Lead Wallet Top-Up<br/>(Safepay PKR / Escrow Activation)"]
-    end
-
-    SOURCES --> I1
-    I1 --> I2
-    I2 --> I3
-    I3 --> A1
-    A1 --> A2
-    A2 --> A3
-    A3 --> C1
-    C1 --> C2
-    C2 --> C3
-
-    style SOURCES fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#fff
-    style INGESTION fill:#0f172a,stroke:#0ea5e9,stroke-width:2px,color:#fff
-    style AUTOMATION fill:#1e1b4b,stroke:#8b5cf6,stroke-width:2px,color:#fff
-    style CONVERSION fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#fff
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                     1. MULTI-CHANNEL DATA HARVESTING                        │
+│   • Google Maps Places API / Scraper (Travel Agencies & Tour Operators)     │
+│   • Facebook Ads & Page Directory (Umrah & Northern Tour Organizers)        │
+│   • DTS Tourism Registry Directory (Licensed Pakistani Travel Desks)        │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                     2. INGESTION & DATA NORMALIZATION                       │
+│   • Apify Serverless Fleet (Distributed Scraping & Enrichment)              │
+│   • Phone Number Sanitizer (+92 3XX XXXXXXX Standard Format)                │
+│   • Cloudflare D1 Distributed Lead Database (10,000+ Enriched Records)      │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                     3. AUTOMATED OUTREACH & CONVERSATION                    │
+│   • Automated Outreach Engine (wa-server-gcp on Google Cloud Platform)      │
+│   • Bilingual WhatsApp Dispatcher (English & Roman Urdu Templates)          │
+│   • Two-Way Webhook Bridge via WhatsApp Gateway API (wa.yello.bid)          │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                     4. QUALIFICATION & MONETIZATION                         │
+│   • Vendor Clicks One-Time Invitation Link & Claims Profile                 │
+│   • Self-Service KYC Verification (DTS License, NTN, CNIC Upload)           │
+│   • Subscription Tier Upgrade & Lead Wallet Top-Up via Safepay PKR Escrow   │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -59,6 +50,7 @@ The lead scraper automatically gathers verified Pakistani travel businesses acro
 * **Target Cities:** Karachi, Lahore, Islamabad, Rawalpindi, Peshawar, Faisalabad, Multan, Sialkot, Gujranwala, Quetta, Abbottabad, Gilgit.
 * **Extracted Attributes:** Business Name, Direct WhatsApp Number, Physical Office Address, Google Reviews Rating, Website URL, Operating Category (Tour Operator, Visa Desk, Umrah Organizer).
 
+#### Sample Enriched Lead Payload:
 ```json
 {
   "agency_name": "Solo Click Travel & Tours Pvt Ltd",
@@ -162,7 +154,7 @@ WHATSAPP_DEVICE_ID="03293089377"
 
 ## 📈 PERFORMANCE & ROI SUMMARY
 
-* **Total Scraped Database:** 10,000+ Travel Agencys in Pakistan
+* **Total Scraped Database:** 10,000+ Travel Agencies in Pakistan
 * **Average WhatsApp Open Rate:** **84.2%**
 * **Self-Service Registration Rate:** **11.6%**
 * **Pay-Per-Lead Conversion Margin:** **85%+ gross profit margin** on automated lead unlocks.
