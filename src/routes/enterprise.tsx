@@ -76,9 +76,9 @@ const SCREENSHOTS = [
     caption: "30-Day service-filtered lead activity line chart, quick stats, custom lead teaser, and inbox.",
   },
   {
-    src: "/images/guide/vendor-leads-marketplace.png",
-    title: "Custom Lead Bidding & Online Quotation Dialog",
-    caption: "Verified custom lead bidding with Max 3 unlock limits, safe payment unlocks, and online proposal builder.",
+    src: "/images/guide/admin-custom-tour-leads.png",
+    title: "Platform Admin Custom Tour Leads Console",
+    caption: "Full lead verification, group itinerary details, traveler contacts, and real-time vendor unlock management.",
   },
   {
     src: "/images/guide/vendor-custom-visa-leads.png",
