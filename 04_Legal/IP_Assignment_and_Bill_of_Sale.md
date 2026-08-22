@@ -26,7 +26,7 @@
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                       🔒 SECURE ESCROW SETTLEMENT                           │
-│   1. Buyer deposits $22,500 USD into Escrow.com / Flippa Escrow.            │
+│   1. Buyer deposits $23,000 USD into Escrow.com / Flippa Escrow.            │
 │   2. Seller transfers 100% repositories, domain auth code, and DB access.   │
 │   3. Buyer completes technical verification during 3–5 day inspection window│
 │   4. Escrow releases funds to Seller upon approval.                         │
@@ -75,13 +75,13 @@ This **Intellectual Property Assignment Agreement and Bill of Sale** (the *"Agre
 ## 1. 💼 PURCHASE PRICE & ESCROW CLOSING MECHANISM
 
 ### 1.1 Total Purchase Price
-The total agreed purchase price for the Transferred Assets is **$22,500 USD** (*Twenty-Two Thousand Five Hundred United States Dollars*), payable in full via escrow.
+The total agreed purchase price for the Transferred Assets is **$23,000 USD** (*Twenty-Three Thousand United States Dollars*), payable in full via escrow.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                       ESCROW SETTLEMENT LIFECYCLE                           │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  Step 1: Escrow Creation   │  Buyer deposits $22,500 USD into Escrow.com /  │
+│  Step 1: Escrow Creation   │  Buyer deposits $23,000 USD into Escrow.com /  │
 │                            │  Flippa Escrow.                                │
 ├────────────────────────────┼────────────────────────────────────────────────┤
 │  Step 2: Asset Delivery    │  Seller transfers 100% GitHub repos, domain,   │
