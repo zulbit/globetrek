@@ -21,7 +21,7 @@
 │                          2. APPLICATION & COMPUTE                           │
 │   • TanStack Start Full-Stack App (React 19, Server Functions, Type-Safe RPC│
 │   • Nitro Server Runtime (Cloudflare Pages / Node.js 22 Engine)             │
-│   • Contabo Production VPS (Ubuntu 24.04 LTS, Nginx, Fail2ban Jails)        │
+│   • Production VPS (Ubuntu 24.04 LTS, Nginx, Fail2ban Jails)        │
 └──────────────────┬───────────────────┬───────────────────┬──────────────────┘
                    │                   │                   │
                    ▼                   ▼                   ▼

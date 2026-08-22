@@ -8,35 +8,35 @@
 
 ## 📌 TRANSACTION ARCHITECTURE & CHAIN OF TITLE
 
-```mermaid
-flowchart TD
-    subgraph SELLER["🏢 SELLER ENTITY"]
-        A[Refusion Private Limited<br/>Registered Corporate Entity] -->|Holds 100% Unencumbered IP| B[GlobeTrek PK Ecosystem]
-    end
-
-    subgraph ASSETS["📦 PURCHASED ASSETS (SCHEDULE A, B, C)"]
-        B --> C1[Core Marketplace: globetrek]
-        B --> C2[Lead Scraper: Leads-Globetrek]
-        B --> C3[WhatsApp Bridge: wa-server-gcp]
-        B --> C4[Domain: globetrek.pk]
-        B --> C5[Supabase DB & Cloudflare D1 Schemas]
-        B --> C6[Bilingual Camtasia 2025 Video IP]
-    end
-
-    subgraph ESCROW["🔒 SECURE ESCROW CLOSING"]
-        D[Buyer Deposits Funds<br/>$22,500 USD] --> E{Escrow Verification & Inspection Period}
-        B -->|Complete Source Code & Domain Transfer| F[Buyer Technical Verification]
-        F -->|Release Approval| G[Escrow Disburses Funds to Seller]
-    end
-
-    subgraph BUYER["👤 BUYER / ACQUIRER"]
-        G --> H[Full, Irrevocable & Worldwide Title Assigned to Buyer]
-    end
-
-    style SELLER fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#fff
-    style ASSETS fill:#0f172a,stroke:#10b981,stroke-width:2px,color:#fff
-    style ESCROW fill:#1e1b4b,stroke:#8b5cf6,stroke-width:2px,color:#fff
-    style BUYER fill:#064e3b,stroke:#059669,stroke-width:2px,color:#fff
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       🏢 SELLER / ASSIGNOR ENTITY                           │
+│   Refusion Private Limited (Incorporated under the Companies Act)           │
+│   • Holds 100% sole, absolute, and unencumbered title to GlobeTrek PK       │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    📦 PURCHASED ASSETS (SCHEDULE A, B, C)                   │
+│   • Schedule A: Repositories (globetrek, Leads-Globetrek, wa-server-gcp)    │
+│   • Schedule B: Domain & Infrastructure (globetrek.pk, Supabase, Cloudflare)│
+│   • Schedule C: Creative IP (Camtasia 2025 Bilingual Video Scripts, Schemas)│
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       🔒 SECURE ESCROW SETTLEMENT                           │
+│   1. Buyer deposits $22,500 USD into Escrow.com / Flippa Escrow.            │
+│   2. Seller transfers 100% repositories, domain auth code, and DB access.   │
+│   3. Buyer completes technical verification during 3–5 day inspection window│
+│   4. Escrow releases funds to Seller upon approval.                         │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         👤 BUYER / ACQUIRER                                 │
+│   Full, perpetual, irrevocable, worldwide legal title assigned to Buyer.    │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -112,30 +112,28 @@ Seller hereby irrevocably, unconditionally, and perpetually grants, assigns, tra
 
 ## 3. 📦 SCHEDULE OF TRANSFERRED ASSETS
 
-```mermaid
-graph LR
-    subgraph SCHED_A["📂 SCHEDULE A: REPOSITORIES"]
-        A1["1. globetrek (Core App)"]
-        A2["2. Leads-Globetrek (Scraper)"]
-        A3["3. wa-server-gcp (WhatsApp Bridge)"]
-    end
-
-    subgraph SCHED_B["🌐 SCHEDULE B: DOMAIN & CLOUD"]
-        B1["1. globetrek.pk Domain"]
-        B2["2. Supabase PostgreSQL Schema"]
-        B3["3. Cloudflare D1 Lead Database"]
-        B4["4. Google Cloud Platform Run Config"]
-    end
-
-    subgraph SCHED_C["🎨 SCHEDULE C: BRAND & MEDIA"]
-        C1["1. High-Res Brand Kits & Vector Logos"]
-        C2["2. Camtasia 2025 Bilingual Video Scripts"]
-        C3["3. SEO Metadata & JSON-LD Schemas"]
-        C4["4. Full Technical Architecture Manuals"]
-    end
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      SCHEDULE OF TRANSFERRED ASSETS                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  SCHEDULE A: Software Repositories & Source Code                            │
+│  • Core Marketplace App: globetrek (React 19 / TanStack Start / Nitro)      │
+│  • Lead Scraper & Ingestion Engine: Leads-Globetrek (Apify / Cloudflare D1) │
+│  • WhatsApp Automation Bridge: wa-server-gcp (GCP Cloud Run / Node.js)      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  SCHEDULE B: Domains & Cloud Infrastructure                                 │
+│  • Primary Production Domain: globetrek.pk (EPP auth code transfer)        │
+│  • Database Schema: Complete Supabase PostgreSQL with 14 RLS tables         │
+│  • Cloud Storage & D1: Storage buckets, triggers, and RPC search procedures │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  SCHEDULE C: Creative, Video & Brand Assets                                 │
+│  • Video Onboarding IP: Camtasia 2025 bilingual video scripts (EN / Roman)  │
+│  • Brand Assets: High-resolution vector logos, SVG icons, and typography    │
+│  • SEO Infrastructure: Validated JSON-LD schemas and XML dynamic sitemaps   │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### SCHEDULE A: Software Repositories & Source Code
+### Detailed Schedule Breakdown:
 * **Core Marketplace Repository (`globetrek`):**
   * Built with TanStack Start (React 19), Nitro Server, Tailwind CSS v4, Radix UI.
   * Includes Bilingual AI Concierge (OpenRouter), Safepay PKR Payment Gateway, and Leaflet Geospatial mapping.
@@ -143,15 +141,8 @@ graph LR
   * Apify automation actors, city-precision geo-targeting, Cloudflare D1 storage.
 * **Automated WhatsApp Bridge Backend (`wa-server-gcp`):**
   * Google Cloud Platform Node.js server with webhook receivers, automated quotation dispatchers, and template engines.
-
-### SCHEDULE B: Domains & Cloud Infrastructure
 * **Primary Domain:** `globetrek.pk` (EPP Authorization code transferred to Buyer registrar).
 * **Database Infrastructure:** Complete Supabase PostgreSQL schema with RLS security policies, stored procedures (`search_marketplace`), and triggers.
-* **API Configurations:** Complete environment variables template (`.env.production`), Safepay webhook certificates, and Google Cloud Run deployment scripts.
-
-### SCHEDULE C: Digital & Creative Media Assets
-* **Video Production Assets:** Full multi-module vendor training video scripts and master project files generated in Camtasia 2025 with bilingual English and Roman Urdu voiceover tracks.
-* **Search Engine Optimizations:** Verified Google Search Console profiles, dynamic XML sitemaps, and validated JSON-LD schema graphs.
 
 ---
 
