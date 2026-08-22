@@ -96,6 +96,11 @@ export function SiteShell({ children }: { children: ReactNode }) {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/enterprise" className="hover:text-primary transition-colors">
+                    Enterprise Solutions
+                  </Link>
+                </li>
+                <li>
                   <Link to="/vendor-guide" className="hover:text-primary transition-colors">
                     Agency Operating Guide
                   </Link>
